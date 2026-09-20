@@ -7,7 +7,7 @@ import { updatePassword } from "firebase/auth";
 import { 
   Award, ArrowLeft, Search, Users, Check, Save, Download, 
   Sun, Moon, ChevronDown, CheckCheck, RefreshCw, Calendar, Plus,
-  LogOut, PhoneIncoming, PhoneOutgoing, Camera, X, Trash2, FileText, MessageSquare, ShieldCheck, UserPlus, ExternalLink
+  LogOut, PhoneIncoming, PhoneOutgoing, Camera, X, Trash2, FileText, MessageSquare, ShieldCheck, UserPlus, ExternalLink, Link2
 } from "lucide-react";
 
 interface QualityDashboardProps {
@@ -357,6 +357,7 @@ export default function QualityDashboard({
     callLabel: string;
     score: string;
     noteText: string;
+    linkUrl: string;
   } | null>(null);
   const [savingNote, setSavingNote] = useState(false);
 
@@ -392,6 +393,18 @@ export default function QualityDashboard({
     return "main";
   });
   const [cShiftRoster, setCShiftRoster] = useState<string[]>([]);
+  const [cShiftWeeklyAdded, setCShiftWeeklyAdded] = useState<Record<string, string[]>>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("qa_c_shift_weekly_added");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === "object") return parsed;
+        } catch (e) {}
+      }
+    }
+    return {};
+  });
   const [showAddCShiftModal, setShowAddCShiftModal] = useState(false);
   const [cShiftSearchTerm, setCShiftSearchTerm] = useState("");
 
@@ -399,7 +412,7 @@ export default function QualityDashboard({
     return isChatTeam && dlshadShift === "c_shift";
   }, [isChatTeam, dlshadShift]);
 
-  // Load and listen to C Shift roster from Firestore and localStorage
+  // Load and listen to C Shift roster and weekly added from Firestore and localStorage
   useEffect(() => {
     const savedLocal = localStorage.getItem("c_shift_roster");
     if (savedLocal) {
@@ -421,7 +434,24 @@ export default function QualityDashboard({
       console.error("Error listening to c_shift_roster:", err);
     });
 
-    return () => unsubCShift();
+    const unsubWeekly = onSnapshot(doc(db, "quality_evaluations", "config_c_shift_weekly"), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data && typeof data.weekly === "object") {
+          setCShiftWeeklyAdded(prev => ({ ...prev, ...(data.weekly || {}) }));
+          if (typeof window !== "undefined") {
+            localStorage.setItem("qa_c_shift_weekly_added", JSON.stringify(data.weekly || {}));
+          }
+        }
+      }
+    }, (err) => {
+      console.error("Error listening to config_c_shift_weekly:", err);
+    });
+
+    return () => {
+      unsubCShift();
+      unsubWeekly();
+    };
   }, []);
 
   const eveningCallTeamMembers = useMemo(() => {
@@ -436,33 +466,69 @@ export default function QualityDashboard({
   }, [rosterMembers]);
 
   const handleAddCShiftAgent = async (agentName: string) => {
-    if (!agentName || cShiftRoster.includes(agentName)) return;
-    const nextList = [...cShiftRoster, agentName].sort((a, b) => a.localeCompare(b));
-    setCShiftRoster(nextList);
-    localStorage.setItem("c_shift_roster", JSON.stringify(nextList));
-    try {
-      await setDoc(doc(db, "quality_evaluations", "config_c_shift_roster"), {
-        year: selectedYear,
-        agents: nextList,
-        updated_at: new Date().toISOString()
-      }, { merge: true });
-    } catch (e) {
-      console.error("Error saving C shift roster:", e);
+    if (!agentName) return;
+    const weekKey = `${selectedYear}_${selectedQuarter}_w${selectedWeek}`;
+    const currentList = cShiftWeeklyAdded[weekKey] || [];
+    if (!currentList.includes(agentName)) {
+      const nextList = [...currentList, agentName].sort((a, b) => a.localeCompare(b));
+      const updated = { ...cShiftWeeklyAdded, [weekKey]: nextList };
+      setCShiftWeeklyAdded(updated);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("qa_c_shift_weekly_added", JSON.stringify(updated));
+      }
+      try {
+        await setDoc(doc(db, "quality_evaluations", "config_c_shift_weekly"), {
+          weekly: updated,
+          updated_at: new Date().toISOString()
+        }, { merge: true });
+      } catch (e) {
+        console.error("Error saving C shift weekly agent:", e);
+      }
     }
   };
 
   const handleRemoveCShiftAgent = async (agentName: string) => {
-    const nextList = cShiftRoster.filter(a => a !== agentName);
-    setCShiftRoster(nextList);
-    localStorage.setItem("c_shift_roster", JSON.stringify(nextList));
+    const weekKey = `${selectedYear}_${selectedQuarter}_w${selectedWeek}`;
+    const currentList = cShiftWeeklyAdded[weekKey] || [];
+    const nextList = currentList.filter(a => a !== agentName);
+    const updated = { ...cShiftWeeklyAdded, [weekKey]: nextList };
+    setCShiftWeeklyAdded(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("qa_c_shift_weekly_added", JSON.stringify(updated));
+    }
+
+    // Clear scores for this week in evalData & Firestore
+    const slug = agentName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    const docId = `${selectedYear}_${selectedQuarter}_mohammed_dlshad_c_shift_${slug}`;
+    const updatedScores = { ...((evalData[docId]?.scores) || {}) };
+    delete updatedScores[`w${selectedWeek}_chat_1`];
+    delete updatedScores[`w${selectedWeek}_chat_2`];
+    delete updatedScores[`w${selectedWeek}_chat_3`];
+
+    setEvalData(prev => {
+      if (!prev[docId]) return prev;
+      return {
+        ...prev,
+        [docId]: {
+          ...prev[docId],
+          scores: updatedScores,
+          updated_at: new Date().toISOString()
+        }
+      };
+    });
+
     try {
-      await setDoc(doc(db, "quality_evaluations", "config_c_shift_roster"), {
-        year: selectedYear,
-        agents: nextList,
+      await setDoc(doc(db, "quality_evaluations", "config_c_shift_weekly"), {
+        weekly: updated,
+        updated_at: new Date().toISOString()
+      }, { merge: true });
+
+      await setDoc(doc(db, "quality_evaluations", docId), {
+        scores: updatedScores,
         updated_at: new Date().toISOString()
       }, { merge: true });
     } catch (e) {
-      console.error("Error saving C shift roster:", e);
+      console.error("Error removing C shift agent:", e);
     }
   };
 
@@ -781,29 +847,10 @@ export default function QualityDashboard({
     return result;
   }, [rosterMembers]);
 
-  const currentCsrs = useMemo(() => {
-    let list: string[] = [];
-    if (isCallMon) {
-      list = callMonRoster;
-    } else if (isCShift) {
-      list = cShiftRoster;
-    } else {
-      list = sectionCSRs[currentSection.id] || [];
-    }
-    if (!searchTerm.trim()) return list;
-    return list.filter(name => name.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [sectionCSRs, currentSection, searchTerm, isCShift, cShiftRoster, isCallMon, callMonRoster]);
-
-  const weeksList = useMemo(() => {
-    return Array.from({ length: 12 }, (_, i) => i + 1);
-  }, []);
-
   // Month names for dropdown
   const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
   // Map a calendar month (0-11) to { quarter, weekStart, weekEnd } within that quarter
-  // Each quarter has 3 months: months 0-2 of Q1, 3-5 of Q2, 6-8 of Q3, 9-11 of Q4
-  // Each month maps to ~4 weeks: month0→w1-4, month1→w5-8, month2→w9-12
   const getMonthWeekRange = (month: number): { quarter: string; weekStart: number; weekEnd: number } => {
     const qIdx = Math.floor(month / 3); // 0=Q1, 1=Q2, 2=Q3, 3=Q4
     const quarter = ["Q1","Q2","Q3","Q4"][qIdx];
@@ -812,6 +859,65 @@ export default function QualityDashboard({
     const weekEnd = monthInQ === 2 ? 12 : monthInQ * 4 + 4;
     return { quarter, weekStart, weekEnd };
   };
+
+  const currentCsrs = useMemo(() => {
+    let list: string[] = [];
+    if (isCallMon) {
+      list = callMonRoster;
+    } else if (isCShift) {
+      // For C Shift: ONLY show agents who have evaluation data in the active week(s),
+      // or who were explicitly added for this week!
+      const activeWeeks: number[] = [];
+      if (selectedMonthFilter !== null) {
+        const { weekStart, weekEnd } = getMonthWeekRange(selectedMonthFilter);
+        for (let w = weekStart; w <= weekEnd; w++) {
+          activeWeeks.push(w);
+        }
+      } else {
+        activeWeeks.push(selectedWeek);
+      }
+
+      const agentsSet = new Set<string>();
+
+      // 1. Check agents explicitly added for the active weeks
+      activeWeeks.forEach(w => {
+        const wKey = `${selectedYear}_${selectedQuarter}_w${w}`;
+        (cShiftWeeklyAdded[wKey] || []).forEach(name => agentsSet.add(name));
+      });
+
+      // 2. Scan all docs in evalData that belong to C shift for this year & quarter
+      const prefix = `${selectedYear}_${selectedQuarter}_mohammed_dlshad_c_shift_`;
+      Object.entries(evalData).forEach(([docId, docData]: [string, any]) => {
+        if (docId.startsWith(prefix) && docData.csr_name) {
+          const scores = docData.scores || {};
+          const hasScore = activeWeeks.some(w => {
+            const s1 = scores[`w${w}_chat_1`];
+            const s2 = scores[`w${w}_chat_2`];
+            const s3 = scores[`w${w}_chat_3`];
+            return (s1 !== undefined && s1 !== "" && s1 !== "-") ||
+                   (s2 !== undefined && s2 !== "" && s2 !== "-") ||
+                   (s3 !== undefined && s3 !== "" && s3 !== "-");
+          });
+          if (hasScore) {
+            agentsSet.add(docData.csr_name);
+          }
+        }
+      });
+
+      list = Array.from(agentsSet).sort((a, b) => a.localeCompare(b));
+    } else {
+      list = sectionCSRs[currentSection.id] || [];
+    }
+    if (!searchTerm.trim()) return list;
+    return list.filter(name => name.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [
+    sectionCSRs, currentSection, searchTerm, isCShift, isCallMon, callMonRoster,
+    selectedMonthFilter, selectedWeek, selectedYear, selectedQuarter, evalData, cShiftWeeklyAdded
+  ]);
+
+  const weeksList = useMemo(() => {
+    return Array.from({ length: 12 }, (_, i) => i + 1);
+  }, []);
 
   // Compute team statistics for top card (Sentence case, no "Audit", only "Quality")
   const teamQualityStats = useMemo(() => {
@@ -1365,22 +1471,32 @@ export default function QualityDashboard({
     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
     const docId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
     const existingNote = (evalData[docId]?.notes || {})[key] || "";
+    let existingLink = (evalData[docId]?.links || {})[key] || "";
     const scoreVal = (evalData[docId]?.scores || {})[key] || "";
+
+    // If no explicit link is stored, check if the note text contains an HTTP link
+    if (!existingLink && existingNote) {
+      const match = existingNote.match(/https?:\/\/[^\s<>"]+/);
+      if (match) {
+        existingLink = match[0];
+      }
+    }
 
     setActiveNoteModal({
       csrName,
       key,
       callLabel,
       score: scoreVal,
-      noteText: existingNote
+      noteText: existingNote,
+      linkUrl: existingLink
     });
   };
 
-  // Save note to Firestore
+  // Save note & link to Firestore
   const handleSaveNote = async () => {
     if (!activeNoteModal) return;
     setSavingNote(true);
-    const { csrName, key, noteText } = activeNoteModal;
+    const { csrName, key, noteText, linkUrl } = activeNoteModal;
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
     const sectionSlug = isCallMon ? "mohammed_azad_call_mon" : isCShift ? "mohammed_dlshad_c_shift" : currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
@@ -1396,6 +1512,15 @@ export default function QualityDashboard({
         delete updatedNotes[key];
       }
 
+      const updatedLinks = {
+        ...((evalData[docId]?.links) || {})
+      };
+      if (linkUrl.trim()) {
+        updatedLinks[key] = linkUrl.trim();
+      } else {
+        delete updatedLinks[key];
+      }
+
       setEvalData(prev => {
         const currentDoc = prev[docId] || {
           year: selectedYear,
@@ -1404,13 +1529,15 @@ export default function QualityDashboard({
           team: currentSection.team,
           csr_name: csrName,
           scores: {},
-          notes: {}
+          notes: {},
+          links: {}
         };
         return {
           ...prev,
           [docId]: {
             ...currentDoc,
             notes: updatedNotes,
+            links: updatedLinks,
             updated_at: new Date().toISOString()
           }
         };
@@ -1423,6 +1550,7 @@ export default function QualityDashboard({
         team: currentSection.team,
         csr_name: csrName,
         notes: updatedNotes,
+        links: updatedLinks,
         updated_at: new Date().toISOString()
       }, { merge: true });
 
@@ -1434,7 +1562,7 @@ export default function QualityDashboard({
     }
   };
 
-  // Delete note from Firestore
+  // Delete note & link from Firestore
   const handleDeleteNote = async () => {
     if (!activeNoteModal) return;
     setSavingNote(true);
@@ -1448,6 +1576,9 @@ export default function QualityDashboard({
       const updatedNotes = { ...((evalData[docId]?.notes) || {}) };
       delete updatedNotes[key];
 
+      const updatedLinks = { ...((evalData[docId]?.links) || {}) };
+      delete updatedLinks[key];
+
       setEvalData(prev => {
         const currentDoc = prev[docId];
         if (!currentDoc) return prev;
@@ -1456,6 +1587,7 @@ export default function QualityDashboard({
           [docId]: {
             ...currentDoc,
             notes: updatedNotes,
+            links: updatedLinks,
             updated_at: new Date().toISOString()
           }
         };
@@ -1463,6 +1595,7 @@ export default function QualityDashboard({
 
       await setDoc(doc(db, "quality_evaluations", docId), {
         notes: updatedNotes,
+        links: updatedLinks,
         updated_at: new Date().toISOString()
       }, { merge: true });
 
@@ -3092,6 +3225,7 @@ export default function QualityDashboard({
                     const currentDoc = evalData[docId] || {};
                     const currentScores = currentDoc.scores || {};
                     const currentNotes = currentDoc.notes || {};
+                    const currentLinks = currentDoc.links || {};
                     const weekAvg = computeWeekAvg(currentScores, selectedWeek, isChatTeam, selectedYear, selectedQuarter, isCShift);
                     const agentPhoto = memberPhotos[csrName.trim().toLowerCase()] || "";
 
@@ -3132,7 +3266,9 @@ export default function QualityDashboard({
                             const rawVal = currentScores[key] ?? "";
                             const val = String(rawVal);
                             const note = currentNotes[key] ?? "";
+                            const link = currentLinks[key] ?? "";
                             const hasNote = Boolean(note.trim());
+                            const hasLink = Boolean(link.trim());
                             const isV = val.toUpperCase() === "V";
                             const isNA = val.toUpperCase().includes("N/A");
                             const cellLabel = `${MONTH_NAMES[trainerMonth]} Eval ${cNum}`;
@@ -3144,7 +3280,7 @@ export default function QualityDashboard({
                                     <div
                                       onClick={() => handleOpenNote(csrName, key, cellLabel)}
                                       className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10"
-                                      title={`Note: ${note}`}
+                                      title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
                                     />
                                   )}
                                   <input
@@ -3163,18 +3299,32 @@ export default function QualityDashboard({
                                         : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-teal-400 dark:hover:border-teal-500/70 focus:border-[#0f766e] dark:focus:border-teal-400 focus:ring-2 focus:ring-[#0f766e]/20 dark:focus:ring-teal-400/20"
                                     }`}
                                   />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenNote(csrName, key, cellLabel)}
-                                    className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                                      hasNote
-                                        ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 z-10"
-                                        : "bg-gray-100 hover:bg-[#0f766e] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100 z-10"
-                                    }`}
-                                    title={hasNote ? `Note: ${note}` : "Add Note"}
-                                  >
-                                    <FileText size={8} />
-                                  </button>
+                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-10">
+                                    {hasLink && (
+                                      <a
+                                        href={link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-4 h-4 rounded-full bg-[#0f766e] hover:bg-[#0d625b] text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
+                                        title={`Open Conversation Link: ${link}`}
+                                      >
+                                        <ExternalLink size={7} />
+                                      </a>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenNote(csrName, key, cellLabel)}
+                                      className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                                        hasNote
+                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
+                                          : "bg-gray-100 hover:bg-[#0f766e] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100"
+                                      }`}
+                                      title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
+                                    >
+                                      <FileText size={8} />
+                                    </button>
+                                  </div>
                                 </div>
                               </td>
                             );
@@ -3241,7 +3391,9 @@ export default function QualityDashboard({
                             const rawVal = currentScores[key] ?? "";
                             const val = String(rawVal);
                             const note = currentNotes[key] ?? "";
+                            const link = currentLinks[key] ?? "";
                             const hasNote = Boolean(note.trim());
+                            const hasLink = Boolean(link.trim());
                             const isV = val.toUpperCase() === "V";
                             const isNA = val.toUpperCase().includes("N/A");
                             const cellLabel = `${MONTH_NAMES[trainerMonth]} Eval ${cNum}`;
@@ -3253,7 +3405,7 @@ export default function QualityDashboard({
                                     <div 
                                       onClick={() => handleOpenNote(csrName, key, cellLabel)}
                                       className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10" 
-                                      title={`Note: ${note}`}
+                                      title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
                                     />
                                   )}
 
@@ -3274,18 +3426,32 @@ export default function QualityDashboard({
                                     }`}
                                   />
 
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenNote(csrName, key, cellLabel)}
-                                    className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                                      hasNote
-                                        ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 z-10"
-                                        : "bg-gray-100 hover:bg-[#0d9488] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100 z-10"
-                                    }`}
-                                    title={hasNote ? `Note: ${note}` : "Add Note"}
-                                  >
-                                    <FileText size={8} />
-                                  </button>
+                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-10">
+                                    {hasLink && (
+                                      <a
+                                        href={link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-4 h-4 rounded-full bg-[#0d9488] hover:bg-[#0b7a6f] text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
+                                        title={`Open Conversation Link: ${link}`}
+                                      >
+                                        <ExternalLink size={7} />
+                                      </a>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenNote(csrName, key, cellLabel)}
+                                      className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                                        hasNote
+                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
+                                          : "bg-gray-100 hover:bg-[#0d9488] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100"
+                                      }`}
+                                      title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
+                                    >
+                                      <FileText size={8} />
+                                    </button>
+                                  </div>
                                 </div>
                               </td>
                             );
@@ -3329,7 +3495,9 @@ export default function QualityDashboard({
                             const rawVal = currentScores[key] ?? "";
                             const val = String(rawVal || "");
                             const note = currentNotes[key] ?? "";
+                            const link = currentLinks[key] ?? "";
                             const hasNote = Boolean(note.trim());
+                            const hasLink = Boolean(link.trim());
                             const isV = val.toUpperCase() === "V";
                             const isNA = val.toUpperCase().includes("N/A");
                             const cellLabel = `Chat ${cNum}`;
@@ -3341,7 +3509,7 @@ export default function QualityDashboard({
                                     <div 
                                       onClick={() => handleOpenNote(csrName, key, cellLabel)}
                                       className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10" 
-                                      title={`Note: ${note}`}
+                                      title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
                                     />
                                   )}
 
@@ -3362,18 +3530,32 @@ export default function QualityDashboard({
                                     }`}
                                   />
 
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenNote(csrName, key, cellLabel)}
-                                    className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                                      hasNote
-                                        ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 z-10"
-                                        : "bg-gray-100 hover:bg-[#00A991] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100 z-10"
-                                    }`}
-                                    title={hasNote ? `Note: ${note}` : "Add Note"}
-                                  >
-                                    <FileText size={8} />
-                                  </button>
+                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-10">
+                                    {hasLink && (
+                                      <a
+                                        href={link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-4 h-4 rounded-full bg-[#00A991] hover:bg-[#008f7a] text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
+                                        title={`Open Conversation Link: ${link}`}
+                                      >
+                                        <ExternalLink size={7} />
+                                      </a>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenNote(csrName, key, cellLabel)}
+                                      className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                                        hasNote
+                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
+                                          : "bg-gray-100 hover:bg-[#00A991] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100"
+                                      }`}
+                                      title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
+                                    >
+                                      <FileText size={8} />
+                                    </button>
+                                  </div>
                                 </div>
                               </td>
                             );
@@ -3439,7 +3621,9 @@ export default function QualityDashboard({
                           const rawVal = currentScores[key] ?? (isChatTeam ? (currentScores[`w${selectedWeek}_chat_${callIndex}`] ?? currentScores[`w${selectedWeek}_call_${callIndex}`] ?? currentScores[`w${selectedWeek}_call_${cNum}`] ?? "") : "");
                           const val = String(rawVal || "");
                           const note = currentNotes[key] ?? (isChatTeam ? (currentNotes[`w${selectedWeek}_chat_${callIndex}`] ?? currentNotes[`w${selectedWeek}_call_${callIndex}`] ?? "") : "");
+                          const link = currentLinks[key] ?? (isChatTeam ? (currentLinks[`w${selectedWeek}_chat_${callIndex}`] ?? currentLinks[`w${selectedWeek}_call_${callIndex}`] ?? "") : "");
                           const hasNote = Boolean(note.trim());
+                          const hasLink = Boolean(link.trim());
                           const isV = val.toUpperCase() === "V";
                           const isNA = val.toUpperCase().includes("N/A");
                           const cellLabel = isChatTeam ? `Chat ${cNum}` : `Call ${callIndex}`;
@@ -3452,7 +3636,7 @@ export default function QualityDashboard({
                                   <div 
                                     onClick={() => handleOpenNote(csrName, key, cellLabel)}
                                     className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10" 
-                                    title={`Note: ${note}`}
+                                    title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
                                   />
                                 )}
 
@@ -3473,19 +3657,33 @@ export default function QualityDashboard({
                                   }`}
                                 />
 
-                                {/* Visible Note Spot on Cell */}
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenNote(csrName, key, cellLabel)}
-                                  className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                                    hasNote
-                                      ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 z-10"
-                                      : "bg-gray-100 hover:bg-[#1C6B53] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100 z-10"
-                                  }`}
-                                  title={hasNote ? `Note: ${note}` : "Add Note"}
-                                >
-                                  <FileText size={8} />
-                                </button>
+                                {/* Visible Note & Link Buttons */}
+                                <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-10">
+                                  {hasLink && (
+                                    <a
+                                      href={link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="w-4 h-4 rounded-full bg-[#1C6B53] hover:bg-[#155a45] text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
+                                      title={`Open Conversation Link: ${link}`}
+                                    >
+                                      <ExternalLink size={7} />
+                                    </a>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenNote(csrName, key, cellLabel)}
+                                    className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                                      hasNote
+                                        ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
+                                        : "bg-gray-100 hover:bg-[#1C6B53] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100"
+                                    }`}
+                                    title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
+                                  >
+                                    <FileText size={8} />
+                                  </button>
+                                </div>
                               </div>
                             </td>
                           );
@@ -3499,7 +3697,9 @@ export default function QualityDashboard({
                               const rawVal = currentScores[key];
                               const val = String(rawVal ?? "");
                               const note = currentNotes[key] ?? "";
+                              const link = currentLinks[key] ?? "";
                               const hasNote = Boolean(note.trim());
+                              const hasLink = Boolean(link.trim());
                               const isV = val.toUpperCase() === "V";
                               const isNA = val.toUpperCase().includes("N/A");
 
@@ -3509,7 +3709,7 @@ export default function QualityDashboard({
                                     <div 
                                       onClick={() => handleOpenNote(csrName, key, "Outbound")}
                                       className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10" 
-                                      title={`Note: ${note}`}
+                                      title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
                                     />
                                   )}
 
@@ -3530,18 +3730,32 @@ export default function QualityDashboard({
                                     }`}
                                   />
 
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenNote(csrName, key, "Outbound")}
-                                    className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                                      hasNote
-                                        ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 z-10"
-                                        : "bg-amber-100 hover:bg-amber-600 dark:bg-amber-900 text-amber-700 hover:text-white dark:text-amber-300 ring-1 ring-amber-300 dark:ring-amber-700 hover:scale-110 opacity-70 group-hover:opacity-100 z-10"
-                                    }`}
-                                    title={hasNote ? `Note: ${note}` : "Add Note"}
-                                  >
-                                    <FileText size={8} />
-                                  </button>
+                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-10">
+                                    {hasLink && (
+                                      <a
+                                        href={link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-4 h-4 rounded-full bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
+                                        title={`Open Conversation Link: ${link}`}
+                                      >
+                                        <ExternalLink size={7} />
+                                      </a>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenNote(csrName, key, "Outbound")}
+                                      className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                                        hasNote
+                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
+                                          : "bg-amber-100 hover:bg-amber-600 dark:bg-amber-900 text-amber-700 hover:text-white dark:text-amber-300 ring-1 ring-amber-300 dark:ring-amber-700 hover:scale-110 opacity-70 group-hover:opacity-100"
+                                      }`}
+                                      title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
+                                    >
+                                      <FileText size={8} />
+                                    </button>
+                                  </div>
                                 </div>
                               );
                             })()}
@@ -3556,7 +3770,9 @@ export default function QualityDashboard({
                               const rawVal = currentScores[key] ?? currentScores[`w${selectedWeek}_outbound`];
                               const val = String(rawVal ?? "");
                               const note = currentNotes[key] ?? currentNotes[`w${selectedWeek}_outbound`] ?? "";
+                              const link = currentLinks[key] ?? currentLinks[`w${selectedWeek}_outbound`] ?? "";
                               const hasNote = Boolean(note.trim());
+                              const hasLink = Boolean(link.trim());
                               const isV = val.toUpperCase() === "V";
                               const isNA = val.toUpperCase().includes("N/A");
 
@@ -3566,7 +3782,7 @@ export default function QualityDashboard({
                                     <div 
                                       onClick={() => handleOpenNote(csrName, key, "Chat 7")}
                                       className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10" 
-                                      title={`Note: ${note}`}
+                                      title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
                                     />
                                   )}
 
@@ -3587,18 +3803,32 @@ export default function QualityDashboard({
                                     }`}
                                   />
 
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenNote(csrName, key, "Chat 7")}
-                                    className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                                      hasNote
-                                        ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 z-10"
-                                        : "bg-gray-100 hover:bg-[#1C6B53] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100 z-10"
-                                    }`}
-                                    title={hasNote ? `Note: ${note}` : "Add Note"}
-                                  >
-                                    <FileText size={8} />
-                                  </button>
+                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-10">
+                                    {hasLink && (
+                                      <a
+                                        href={link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-4 h-4 rounded-full bg-[#1C6B53] hover:bg-[#155a45] text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
+                                        title={`Open Conversation Link: ${link}`}
+                                      >
+                                        <ExternalLink size={7} />
+                                      </a>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenNote(csrName, key, "Chat 7")}
+                                      className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                                        hasNote
+                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
+                                          : "bg-gray-100 hover:bg-[#1C6B53] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100"
+                                      }`}
+                                      title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
+                                    >
+                                      <FileText size={8} />
+                                    </button>
+                                  </div>
                                 </div>
                               );
                             })()}
@@ -3851,80 +4081,94 @@ export default function QualityDashboard({
 
       </div>
 
-      {/* Note Popover (Matching exact design of Image 1: media_1789757871116.png) */}
+      {/* Note & Conversation Link Modal */}
       {activeNoteModal && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-3">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-2xs" onClick={() => setActiveNoteModal(null)} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-4 w-72 sm:w-80 border border-gray-100 dark:border-gray-800 animate-in fade-in zoom-in-95 duration-100">
+          <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-5 w-80 sm:w-96 border border-gray-100 dark:border-gray-800 animate-in fade-in zoom-in-95 duration-100">
             
-            {/* Header: Green document icon + Call Note + Red trash icon */}
-            <div className="flex justify-between items-center mb-3">
-              <div className="flex items-center gap-2">
-                <FileText size={16} className="text-[#1C6B53] dark:text-emerald-400" />
-                <h4 className="text-sm font-black text-gray-900 dark:text-white">
-                  {isChatTeam ? "Chat Note" : "Call Note"}
-                </h4>
+            {/* Header: Green document icon + CSR Name + Call Label + Trash */}
+            <div className="flex justify-between items-center mb-3.5 pb-2.5 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 flex items-center justify-center">
+                  <FileText size={16} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-gray-900 dark:text-white">
+                    {activeNoteModal.csrName} • {activeNoteModal.callLabel}
+                  </h4>
+                  <p className="text-[10px] text-gray-400 font-medium">
+                    {isChatTeam ? "Chat Evaluation Note & Link" : "Call Evaluation Note & Link"}
+                  </p>
+                </div>
               </div>
-              {activeNoteModal.noteText.trim() && (
+              {(activeNoteModal.noteText.trim() || activeNoteModal.linkUrl.trim()) && (
                 <button
                   type="button"
                   onClick={handleDeleteNote}
                   disabled={savingNote}
-                  className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/50 cursor-pointer disabled:opacity-50"
-                  title="Delete Note"
+                  className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/50 cursor-pointer disabled:opacity-50"
+                  title="Delete Note & Link"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={15} />
                 </button>
               )}
             </div>
 
-            {/* Textarea with green border */}
+            {/* Note Textarea */}
             <div className="mb-3">
+              <label className="block text-[11px] font-black uppercase text-gray-500 dark:text-gray-400 tracking-wider mb-1.5">
+                Evaluation Note / ملاحظة التقييم
+              </label>
               <textarea
                 rows={3}
                 value={activeNoteModal.noteText}
                 onChange={(e) => setActiveNoteModal({ ...activeNoteModal, noteText: e.target.value })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSaveNote();
-                  }
-                }}
-                placeholder="Enter note (e.g. -2, Missing greeting)..."
-                className="w-full p-2.5 border border-[#1C6B53] dark:border-emerald-500 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-[#1C6B53]/20 resize-none font-medium"
+                placeholder="Enter evaluation note (e.g. -2, Missing greeting, incorrect step)..."
+                className="w-full p-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs outline-none focus:border-[#00A991] focus:ring-2 focus:ring-[#00A991]/20 resize-none font-medium transition"
                 autoFocus
               />
             </div>
 
-            {/* Clickable Conversation / Reference Link if detected in note */}
-            {(() => {
-              const urls = (activeNoteModal.noteText.match(/https?:\/\/[^\s<>"]+/g) || []);
-              if (urls.length === 0) return null;
-              return (
-                <div className="mb-3 p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 space-y-1.5">
-                  <div className="text-[10px] font-black uppercase text-emerald-800 dark:text-emerald-300 tracking-wider flex items-center gap-1.5">
-                    <ExternalLink size={12} />
-                    <span>Conversation Link:</span>
-                  </div>
-                  {urls.map((u, uIdx) => (
-                    <a
-                      key={uIdx}
-                      href={u}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 dark:hover:text-white underline break-all"
-                      title="Open conversation link in new tab"
-                    >
-                      <ExternalLink size={11} className="shrink-0" />
-                      <span className="truncate">{u}</span>
-                    </a>
-                  ))}
+            {/* Dedicated Conversation Link Field */}
+            <div className="mb-4">
+              <label className="block text-[11px] font-black uppercase text-gray-500 dark:text-gray-400 tracking-wider mb-1.5">
+                Conversation Link / رابط المحادثة (URL)
+              </label>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <ExternalLink size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="url"
+                    value={activeNoteModal.linkUrl}
+                    onChange={(e) => setActiveNoteModal({ ...activeNoteModal, linkUrl: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSaveNote();
+                      }
+                    }}
+                    placeholder="https://app.intercom.com/..."
+                    className="w-full pl-8 pr-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-[#00A991] font-mono text-[11px]"
+                  />
                 </div>
-              );
-            })()}
+                {activeNoteModal.linkUrl.trim() && (
+                  <a
+                    href={activeNoteModal.linkUrl.trim()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-[#00A991] dark:text-teal-300 rounded-xl text-xs font-black flex items-center gap-1 shrink-0 border border-emerald-200/60 dark:border-emerald-800/40 transition shadow-2xs cursor-pointer"
+                    title="Open link in new tab"
+                  >
+                    <ExternalLink size={12} />
+                    <span>Open ↗</span>
+                  </a>
+                )}
+              </div>
+            </div>
 
-            {/* Footer: Press Enter to save + Save Note Button */}
-            <div className="flex justify-between items-center">
+            {/* Footer: Press Enter to save + Save Note & Link Button */}
+            <div className="flex justify-between items-center pt-2.5 border-t border-gray-100 dark:border-gray-800">
               <span className="text-[11px] text-gray-400 font-medium">
                 Press Enter to save
               </span>
@@ -3932,10 +4176,10 @@ export default function QualityDashboard({
                 type="button"
                 onClick={handleSaveNote}
                 disabled={savingNote}
-                className="bg-[#1C6B53] hover:bg-[#155a45] text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1"
+                className="bg-[#00A991] hover:bg-[#008f7a] text-white text-xs font-black px-4 py-2 rounded-xl transition shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
               >
-                {savingNote ? <RefreshCw size={11} className="animate-spin" /> : null}
-                <span>Save Note</span>
+                {savingNote ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+                <span>Save Note & Link</span>
               </button>
             </div>
 
@@ -3988,7 +4232,7 @@ export default function QualityDashboard({
               {eveningCallTeamMembers
                 .filter(name => !cShiftSearchTerm.trim() || name.toLowerCase().includes(cShiftSearchTerm.toLowerCase()))
                 .map(agentName => {
-                  const isAdded = cShiftRoster.includes(agentName);
+                  const isAdded = currentCsrs.includes(agentName);
                   const photo = memberPhotos[agentName.trim().toLowerCase()] || "";
                   return (
                     <div key={agentName} className="flex items-center justify-between py-2.5 px-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl transition">
@@ -4037,7 +4281,7 @@ export default function QualityDashboard({
             </div>
 
             <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center text-xs text-gray-500">
-              <span>{cShiftRoster.length} agent(s) added</span>
+              <span>{currentCsrs.length} agent(s) in Week {selectedWeek}</span>
               <button
                 type="button"
                 onClick={() => setShowAddCShiftModal(false)}
