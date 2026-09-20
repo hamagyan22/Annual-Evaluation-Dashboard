@@ -4119,8 +4119,8 @@ export default function QualityDashboard({
 
             {/* Note Textarea */}
             <div className="mb-3">
-              <label className="block text-[11px] font-black uppercase text-gray-500 dark:text-gray-400 tracking-wider mb-1.5">
-                Evaluation Note / ملاحظة التقييم
+              <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1.5">
+                Evaluation note
               </label>
               <textarea
                 rows={3}
@@ -4134,8 +4134,8 @@ export default function QualityDashboard({
 
             {/* Dedicated Conversation Link Field */}
             <div className="mb-4">
-              <label className="block text-[11px] font-black uppercase text-gray-500 dark:text-gray-400 tracking-wider mb-1.5">
-                Conversation Link / رابط المحادثة (URL)
+              <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1.5">
+                Conversation link
               </label>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
