@@ -7,7 +7,7 @@ import { updatePassword } from "firebase/auth";
 import { 
   Award, ArrowLeft, Search, Users, Check, Save, Download, 
   Sun, Moon, ChevronDown, CheckCheck, RefreshCw, Calendar, Plus,
-  LogOut, PhoneIncoming, PhoneOutgoing, Camera, X, Trash2, FileText, MessageSquare, ShieldCheck, UserPlus
+  LogOut, PhoneIncoming, PhoneOutgoing, Camera, X, Trash2, FileText, MessageSquare, ShieldCheck, UserPlus, ExternalLink
 } from "lucide-react";
 
 interface QualityDashboardProps {
@@ -3895,6 +3895,33 @@ export default function QualityDashboard({
                 autoFocus
               />
             </div>
+
+            {/* Clickable Conversation / Reference Link if detected in note */}
+            {(() => {
+              const urls = (activeNoteModal.noteText.match(/https?:\/\/[^\s<>"]+/g) || []);
+              if (urls.length === 0) return null;
+              return (
+                <div className="mb-3 p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 space-y-1.5">
+                  <div className="text-[10px] font-black uppercase text-emerald-800 dark:text-emerald-300 tracking-wider flex items-center gap-1.5">
+                    <ExternalLink size={12} />
+                    <span>Conversation Link:</span>
+                  </div>
+                  {urls.map((u, uIdx) => (
+                    <a
+                      key={uIdx}
+                      href={u}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 dark:hover:text-white underline break-all"
+                      title="Open conversation link in new tab"
+                    >
+                      <ExternalLink size={11} className="shrink-0" />
+                      <span className="truncate">{u}</span>
+                    </a>
+                  ))}
+                </div>
+              );
+            })()}
 
             {/* Footer: Press Enter to save + Save Note Button */}
             <div className="flex justify-between items-center">
