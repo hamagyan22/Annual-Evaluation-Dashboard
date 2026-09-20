@@ -733,9 +733,11 @@ export default function QualityDashboard({
   // 2. Real-time listener for quality evaluations in selected year
   useEffect(() => {
     setLoading(true);
+    const numYear = Number(selectedYear);
+    const yearList = !isNaN(numYear) ? [selectedYear, numYear] : [selectedYear];
     const q = query(
       collection(db, "quality_evaluations"),
-      where("year", "==", selectedYear)
+      where("year", "in", yearList)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
