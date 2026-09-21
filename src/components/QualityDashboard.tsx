@@ -147,15 +147,66 @@ function getCurrentPeriod(): { year: string; quarter: string; week: number } {
   };
 }
 
-// Helper to determine if Chat 7 is active for a given team, year, quarter, and week
-function getHasChat7(isChat: boolean, year: string, quarter: string, weekNum: number): boolean {
-  if (!isChat) return false;
-  const y = parseInt(year, 10);
+// Helper to determine if the new evaluation schema applies:
+// 2026: Q4 (all weeks)
+// 2027+: Q1, Q2, Q3, Q4 (all weeks from start of year)
+function isNewEvalSchema(year: string | number, quarter: string): boolean {
+  const y = typeof year === "number" ? year : parseInt(String(year), 10);
+  if (isNaN(y)) return false;
   if (y > 2026) return true;
   if (y < 2026) return false;
-  if (quarter === "Q4") return true;
-  if (quarter === "Q3" && weekNum >= 10) return true;
-  return false;
+  return quarter === "Q4";
+}
+
+// Helper to determine column config for any team, year, quarter, and week
+function getWeekColumnsConfig(isChat: boolean, year: string, quarter: string, weekNum: number) {
+  const isNew = isNewEvalSchema(year, quarter);
+  if (isChat) {
+    if (isNew) {
+      // Starting 2026 Q4 (and 2027+ from start of year): 8 chats, no outbound
+      return {
+        colCount: 8,
+        hasOutbound: false,
+        colType: "chat" as const,
+        callBase: 0,
+      };
+    }
+    const has7 = quarter === "Q3" && weekNum >= 10 && parseInt(String(year), 10) === 2026;
+    if (has7) {
+      // 2026 Q3 W10-12: 7 chats, no outbound
+      return {
+        colCount: 7,
+        hasOutbound: false,
+        colType: "chat" as const,
+        callBase: 0,
+      };
+    }
+    // Earlier: 6 chats + 1 outbound
+    return {
+      colCount: 6,
+      hasOutbound: true,
+      colType: "chat" as const,
+      callBase: 0,
+    };
+  } else {
+    // Call Team: Main Shift
+    // Starting 2026 Q4 (and 2027+ from start of year): 7 calls + 1 outbound
+    // Earlier: 6 calls + 1 outbound
+    const colCount = isNew ? 7 : 6;
+    return {
+      colCount,
+      hasOutbound: true,
+      colType: "call" as const,
+      callBase: (weekNum - 1) * colCount,
+    };
+  }
+}
+
+// Backward-compatible helper to check if chat has 7 or more chats
+function getHasChat7(isChat: boolean, year: string, quarter: string, weekNum: number): boolean {
+  if (!isChat) return false;
+  const cfg = getWeekColumnsConfig(true, year, quarter, weekNum);
+  return cfg.colCount >= 7;
 }
 
 // Helper to compute average from scores in a week
@@ -175,35 +226,23 @@ function computeWeekAvg(
     for (let i = 1; i <= 3; i++) {
       keys.push(`w${weekNum}_chat_${i}`);
     }
-  } else if (isChat) {
-    const callBase = (weekNum - 1) * 6;
-    for (let i = 1; i <= 6; i++) {
-      const possibleKeys = [
-        `w${weekNum}_chat_${i}`,
-        `w${weekNum}_chat_${callBase + i}`,
-        `w${weekNum}_call_${callBase + i}`,
-        `w${weekNum}_call_${i}`
-      ];
-      const foundKey = possibleKeys.find(k => scores[k] !== undefined && scores[k] !== "") || `w${weekNum}_chat_${i}`;
-      keys.push(foundKey);
+  } else {
+    const config = getWeekColumnsConfig(isChat, year, quarter, weekNum);
+    for (let i = 1; i <= config.colCount; i++) {
+      if (isChat) {
+        const possibleKeys = [
+          `w${weekNum}_chat_${i}`,
+          `w${weekNum}_call_${i}`
+        ];
+        const foundKey = possibleKeys.find(k => scores[k] !== undefined && scores[k] !== "") || `w${weekNum}_chat_${i}`;
+        keys.push(foundKey);
+      } else {
+        keys.push(`w${weekNum}_call_${config.callBase + i}`);
+      }
     }
-    if (getHasChat7(true, year, quarter, weekNum)) {
-      const possible7Keys = [
-        `w${weekNum}_chat_7`,
-        `w${weekNum}_chat_${callBase + 7}`,
-        `w${weekNum}_outbound`
-      ];
-      const found7Key = possible7Keys.find(k => scores[k] !== undefined && scores[k] !== "") || `w${weekNum}_chat_7`;
-      keys.push(found7Key);
-    } else {
+    if (config.hasOutbound) {
       keys.push(`w${weekNum}_outbound`);
     }
-  } else {
-    const callBase = (weekNum - 1) * 6;
-    for (let i = 1; i <= 6; i++) {
-      keys.push(`w${weekNum}_call_${callBase + i}`);
-    }
-    keys.push(`w${weekNum}_outbound`);
   }
 
   const vals = keys.map(k => (scores[k] || "").trim().toUpperCase()).filter(v => v !== "");
@@ -317,14 +356,9 @@ export default function QualityDashboard({
         setIsMonthMenuOpen(false);
       }
     };
-    const handleScroll = () => {
-      setIsMonthMenuOpen(false);
-    };
     document.addEventListener("mousedown", handleClickOutside);
-    window.addEventListener("scroll", handleScroll, true);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("scroll", handleScroll, true);
     };
   }, [isMonthMenuOpen]);
 
@@ -1285,9 +1319,15 @@ export default function QualityDashboard({
         (cardPeriodMode === "h1" || cardPeriodMode === "h2") ? 24 : 12;
     }
 
-    // 3 chats for C Shift, 7 calls/chats per week for other teams
-    const callsPerWeek = isCShift ? 3 : 7;
-    const totalTargetCalls = currentCsrs.length * callsPerWeek * totalWeeksInPeriod;
+    // Total target calls calculation based on period and dynamic weekly columns
+    let totalTargetCalls = 0;
+    targetQuarters.forEach(qId => {
+      const qWeeks = weekFilter
+        ? Array.from({ length: 12 }, (_, i) => i + 1).filter(w => weekFilter(qId, w)).length
+        : (cardPeriodMode === "year" || cardPeriodMode === "h1" || cardPeriodMode === "h2" || selectedMonthFilter === null ? 12 : totalWeeksInPeriod);
+      const qCallsPerWeek = isCShift ? 3 : (isNewEvalSchema(selectedYear, qId) ? 8 : 7);
+      totalTargetCalls += currentCsrs.length * qCallsPerWeek * qWeeks;
+    });
 
     currentCsrs.forEach(csrName => {
       const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
@@ -1300,9 +1340,6 @@ export default function QualityDashboard({
         for (let w = 1; w <= 12; w++) {
           // Skip weeks not in the selected month filter
           if (weekFilter && !weekFilter(qId, w)) continue;
-
-          const weekBase = (w - 1) * 6;
-          const weekHasChat7 = getHasChat7(true, selectedYear, qId, w);
 
           if (isCShift) {
             for (let c = 1; c <= 3; c++) {
@@ -1322,9 +1359,11 @@ export default function QualityDashboard({
                 }
               }
             }
-          } else if (isChatTeam) {
-            for (let c = 1; c <= 6; c++) {
-              const val = scores[`w${w}_chat_${c}`] ?? scores[`w${w}_chat_${weekBase + c}`] ?? scores[`w${w}_call_${weekBase + c}`] ?? scores[`w${w}_call_${c}`];
+          } else {
+            const wCfg = getWeekColumnsConfig(isChatTeam, selectedYear, qId, w);
+            for (let c = 1; c <= wCfg.colCount; c++) {
+              const key = isChatTeam ? `w${w}_chat_${c}` : `w${w}_call_${wCfg.callBase + c}`;
+              const val = scores[key] ?? (isChatTeam ? (scores[`w${w}_call_${c}`] ?? scores[`w${w}_call_${wCfg.callBase + c}`]) : undefined);
               const valStr = String(val || "").trim().toUpperCase();
               if (valStr && valStr !== "V" && valStr !== "N/A") {
                 const num = parseFloat(valStr);
@@ -1341,27 +1380,11 @@ export default function QualityDashboard({
               }
             }
 
-            if (weekHasChat7) {
-              const val = scores[`w${w}_chat_7`] ?? scores[`w${w}_chat_${weekBase + 7}`] ?? scores[`w${w}_outbound`];
-              const valStr = String(val || "").trim().toUpperCase();
-              if (valStr && valStr !== "V" && valStr !== "N/A") {
-                const num = parseFloat(valStr);
-                if (!isNaN(num)) {
-                  totalCallsAudited++;
-                  sumScores += num;
-                  if (num >= 90) passCount++;
-                  if (!csrTotals[csrName]) csrTotals[csrName] = { sum: 0, count: 0 };
-                  csrTotals[csrName].sum += num;
-                  csrTotals[csrName].count += 1;
-                  inboundCount++;
-                  weeksWithData.add(`${qId}_w${w}`);
-                }
-              }
-            } else {
-              const val = scores[`w${w}_outbound`];
-              const valStr = String(val || "").trim().toUpperCase();
-              if (valStr && valStr !== "V" && valStr !== "N/A") {
-                const num = parseFloat(valStr);
+            if (wCfg.hasOutbound) {
+              const outVal = scores[`w${w}_outbound`];
+              const outValStr = String(outVal || "").trim().toUpperCase();
+              if (outValStr && outValStr !== "V" && outValStr !== "N/A") {
+                const num = parseFloat(outValStr);
                 if (!isNaN(num)) {
                   totalCallsAudited++;
                   sumScores += num;
@@ -1373,41 +1396,6 @@ export default function QualityDashboard({
                   outboundCount++;
                   weeksWithData.add(`${qId}_w${w}`);
                 }
-              }
-            }
-          } else {
-            for (let c = 1; c <= 6; c++) {
-              const val = scores[`w${w}_call_${weekBase + c}`] ?? scores[`w${w}_call_${c}`];
-              const valStr = String(val || "").trim().toUpperCase();
-              if (valStr && valStr !== "V" && valStr !== "N/A") {
-                const num = parseFloat(valStr);
-                if (!isNaN(num)) {
-                  totalCallsAudited++;
-                  sumScores += num;
-                  if (num >= 90) passCount++;
-                  if (!csrTotals[csrName]) csrTotals[csrName] = { sum: 0, count: 0 };
-                  csrTotals[csrName].sum += num;
-                  csrTotals[csrName].count += 1;
-                  inboundCount++;
-                  weeksWithData.add(`${qId}_w${w}`);
-                }
-              }
-            }
-
-            const outVal = scores[`w${w}_outbound`];
-            const outValStr = String(outVal || "").trim().toUpperCase();
-            if (outValStr && outValStr !== "V" && outValStr !== "N/A") {
-              const num = parseFloat(outValStr);
-              if (!isNaN(num)) {
-                totalCallsAudited++;
-                sumScores += num;
-                if (num >= 90) passCount++;
-                if (!csrTotals[csrName]) csrTotals[csrName] = { sum: 0, count: 0 };
-                csrTotals[csrName].sum += num;
-                csrTotals[csrName].count += 1;
-                outboundSum += num;
-                outboundCount++;
-                weeksWithData.add(`${qId}_w${w}`);
               }
             }
           }
@@ -1447,7 +1435,13 @@ export default function QualityDashboard({
     };
   }, [currentCsrs, currentSection, selectedYear, selectedQuarter, cardPeriodMode, selectedMonthFilter, evalData, isChatTeam, isTrainer, trainerMonth, trainerColCount, bonusColCount, isCShift, isCallMon, isBonus, getActiveSectionSlug]);
 
-  const callBase = (selectedWeek - 1) * 6;
+  const currentWeekConfig = useMemo(() => {
+    return getWeekColumnsConfig(isChatTeam, selectedYear, selectedQuarter, selectedWeek);
+  }, [isChatTeam, selectedYear, selectedQuarter, selectedWeek]);
+
+  const callBase = currentWeekConfig.callBase;
+  const standardColCount = currentWeekConfig.colCount;
+  const showOutbound = currentWeekConfig.hasOutbound;
 
   // Per-agent average quality scores for the selected table month
   const tableMonthAgentAvgs = useMemo(() => {
@@ -1463,36 +1457,24 @@ export default function QualityDashboard({
       let sum = 0; let cnt = 0;
 
       for (let w = weekStart; w <= weekEnd; w++) {
-        const weekBase = (w - 1) * 6;
-        const weekHasChat7 = getHasChat7(isChatTeam, selectedYear, quarter, w);
-
         if (isCShift) {
           for (let c = 1; c <= 3; c++) {
             const val = scores[`w${w}_chat_${c}`];
             const v = parseFloat(String(val || ""));
             if (!isNaN(v)) { sum += v; cnt++; }
           }
-        } else if (isChatTeam) {
-          for (let c = 1; c <= 6; c++) {
-            const val = scores[`w${w}_chat_${c}`] ?? scores[`w${w}_chat_${weekBase + c}`] ?? scores[`w${w}_call_${c}`];
-            const v = parseFloat(String(val || ""));
-            if (!isNaN(v)) { sum += v; cnt++; }
-          }
-          if (weekHasChat7) {
-            const v = parseFloat(String(scores[`w${w}_chat_7`] ?? scores[`w${w}_outbound`] ?? ""));
-            if (!isNaN(v)) { sum += v; cnt++; }
-          } else {
-            const v = parseFloat(String(scores[`w${w}_outbound`] ?? ""));
-            if (!isNaN(v)) { sum += v; cnt++; }
-          }
         } else {
-          for (let c = 1; c <= 6; c++) {
-            const val = scores[`w${w}_call_${weekBase + c}`] ?? scores[`w${w}_call_${c}`];
+          const wCfg = getWeekColumnsConfig(isChatTeam, selectedYear, quarter, w);
+          for (let c = 1; c <= wCfg.colCount; c++) {
+            const key = isChatTeam ? `w${w}_chat_${c}` : `w${w}_call_${wCfg.callBase + c}`;
+            const val = scores[key] ?? (isChatTeam ? (scores[`w${w}_call_${c}`] ?? scores[`w${w}_call_${wCfg.callBase + c}`]) : undefined);
             const v = parseFloat(String(val || ""));
             if (!isNaN(v)) { sum += v; cnt++; }
           }
-          const outV = parseFloat(String(scores[`w${w}_outbound`] ?? ""));
-          if (!isNaN(outV)) { sum += outV; cnt++; }
+          if (wCfg.hasOutbound) {
+            const outV = parseFloat(String(scores[`w${w}_outbound`] ?? ""));
+            if (!isNaN(outV)) { sum += outV; cnt++; }
+          }
         }
       }
 
@@ -2100,7 +2082,7 @@ export default function QualityDashboard({
   const handleCellKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, rowIdx: number, colIdx: number) => {
     let targetRow = rowIdx;
     let targetCol = colIdx;
-    const maxCol = isCallMon ? 2 : isTrainer ? trainerColCount - 1 : isCShift ? 2 : isBonus ? bonusColCount - 1 : 6;
+    const maxCol = isCallMon ? 2 : isTrainer ? trainerColCount - 1 : isCShift ? 2 : isBonus ? bonusColCount - 1 : (standardColCount - 1 + (showOutbound ? 1 : 0));
 
     if (e.key === "ArrowDown" || e.key === "Enter") {
       e.preventDefault();
@@ -2628,19 +2610,16 @@ export default function QualityDashboard({
       const notes = evalData[docId]?.notes || {};
       const weekAvg = computeWeekAvg(scores, selectedWeek, isChatTeam, selectedYear, selectedQuarter);
 
-      const callVals = [1, 2, 3, 4, 5, 6].map(cNum => {
-        const key = isChatTeam ? `w${selectedWeek}_chat_${cNum}` : `w${selectedWeek}_call_${callBase + cNum}`;
-        const val = scores[key] ?? (isChatTeam ? (scores[`w${selectedWeek}_chat_${callBase + cNum}`] ?? scores[`w${selectedWeek}_call_${callBase + cNum}`] ?? scores[`w${selectedWeek}_call_${cNum}`]) : undefined) ?? "-";
-        const note = notes[key] ?? (isChatTeam ? (notes[`w${selectedWeek}_chat_${callBase + cNum}`] ?? notes[`w${selectedWeek}_call_${callBase + cNum}`]) : undefined) ?? "";
+      const config = getWeekColumnsConfig(isChatTeam, selectedYear, selectedQuarter, selectedWeek);
+      const callVals = Array.from({ length: config.colCount }, (_, i) => i + 1).map(cNum => {
+        const key = isChatTeam ? `w${selectedWeek}_chat_${cNum}` : `w${selectedWeek}_call_${config.callBase + cNum}`;
+        const val = scores[key] ?? (isChatTeam ? (scores[`w${selectedWeek}_call_${cNum}`] ?? scores[`w${selectedWeek}_call_${config.callBase + cNum}`]) : undefined) ?? "-";
+        const note = notes[key] ?? (isChatTeam ? (notes[`w${selectedWeek}_call_${cNum}`] ?? notes[`w${selectedWeek}_call_${config.callBase + cNum}`]) : undefined) ?? "";
         return { val, note };
       });
 
-      const outboundVal = (!isChatTeam || !hasChat7)
+      const outboundVal = config.hasOutbound
         ? { val: scores[`w${selectedWeek}_outbound`] || "-", note: notes[`w${selectedWeek}_outbound`] || "" }
-        : null;
-
-      const chat7Val = (isChatTeam && hasChat7)
-        ? { val: scores[`w${selectedWeek}_chat_7`] ?? scores[`w${selectedWeek}_outbound`] ?? "-", note: notes[`w${selectedWeek}_chat_7`] ?? notes[`w${selectedWeek}_outbound`] ?? "" }
         : null;
 
       return {
@@ -2648,18 +2627,18 @@ export default function QualityDashboard({
         csrName,
         callVals,
         outboundVal,
-        chat7Val,
         weekAvg: weekAvg !== "-" && weekAvg !== "V" ? `${weekAvg}%` : weekAvg
       };
     });
 
-    const colAverages = [1, 2, 3, 4, 5, 6].map(cNum => {
-      const key = isChatTeam ? `w${selectedWeek}_chat_${cNum}` : `w${selectedWeek}_call_${callBase + cNum}`;
+    const exportWeekCfg = getWeekColumnsConfig(isChatTeam, selectedYear, selectedQuarter, selectedWeek);
+    const colAverages = Array.from({ length: exportWeekCfg.colCount }, (_, i) => i + 1).map(cNum => {
+      const key = isChatTeam ? `w${selectedWeek}_chat_${cNum}` : `w${selectedWeek}_call_${exportWeekCfg.callBase + cNum}`;
       const nums: number[] = [];
       currentCsrs.forEach(csrName => {
         const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
         const docId = `${selectedYear}_${selectedQuarter}_${exportSectionSlug}_${slug}`;
-        const val = (evalData[docId]?.scores || {})[key] ?? (isChatTeam ? ((evalData[docId]?.scores || {})[`w${selectedWeek}_chat_${callBase + cNum}`] ?? (evalData[docId]?.scores || {})[`w${selectedWeek}_call_${callBase + cNum}`]) : undefined);
+        const val = (evalData[docId]?.scores || {})[key] ?? (isChatTeam ? ((evalData[docId]?.scores || {})[`w${selectedWeek}_call_${cNum}`]) : undefined);
         if (val && val.toUpperCase() !== "V" && val.toUpperCase() !== "N/A") {
           const n = parseFloat(val);
           if (!isNaN(n)) nums.push(n);
@@ -2670,7 +2649,7 @@ export default function QualityDashboard({
 
     let extraColHeader = "";
     let extraColAvg = "-";
-    if (!isChatTeam || !hasChat7) {
+    if (exportWeekCfg.hasOutbound) {
       const outboundNums: number[] = [];
       currentCsrs.forEach(csrName => {
         const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
@@ -2683,19 +2662,6 @@ export default function QualityDashboard({
       });
       extraColAvg = outboundNums.length > 0 ? (outboundNums.reduce((a, b) => a + b, 0) / outboundNums.length).toFixed(1) + "%" : "-";
       extraColHeader = `<th class="outbound-header" style="width: 75px;">Outbound</th>`;
-    } else if (hasChat7) {
-      const chat7Nums: number[] = [];
-      currentCsrs.forEach(csrName => {
-        const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-        const docId = `${selectedYear}_${selectedQuarter}_${exportSectionSlug}_${slug}`;
-        const val = (evalData[docId]?.scores || {})[`w${selectedWeek}_chat_7`] ?? (evalData[docId]?.scores || {})[`w${selectedWeek}_outbound`];
-        if (val && val.toUpperCase() !== "V" && val.toUpperCase() !== "N/A") {
-          const n = parseFloat(val);
-          if (!isNaN(n)) chat7Nums.push(n);
-        }
-      });
-      extraColAvg = chat7Nums.length > 0 ? (chat7Nums.reduce((a, b) => a + b, 0) / chat7Nums.length).toFixed(1) + "%" : "-";
-      extraColHeader = `<th style="width: 60px;">Chat 7</th>`;
     }
 
     const weekAverages: number[] = [];
@@ -2956,7 +2922,7 @@ export default function QualityDashboard({
             </div>
             <div class="meta-item">
               <div class="label">Week Number</div>
-              <div class="val">Week ${selectedWeek} (${isChatTeam ? (hasChat7 ? "Chats 1–7" : "Chats 1–6 + Outbound") : `Calls ${callBase + 1}–${callBase + 6} + Outbound`})</div>
+              <div class="val">Week ${selectedWeek} (${isChatTeam ? `Chats 1–${exportWeekCfg.colCount}${exportWeekCfg.hasOutbound ? " + Outbound" : ""}` : `Calls ${exportWeekCfg.callBase + 1}–${exportWeekCfg.callBase + exportWeekCfg.colCount} + Outbound`})</div>
             </div>
             <div class="meta-item">
               <div class="label">QA Evaluator</div>
@@ -2973,7 +2939,7 @@ export default function QualityDashboard({
               <tr>
                 <th style="width: 32px;">#</th>
                 <th class="agent-col" style="min-width: 170px;">Agent Name</th>
-                ${[1, 2, 3, 4, 5, 6].map(cNum => `<th style="width: 60px;">${isChatTeam ? `Chat ${cNum}` : `Call ${callBase + cNum}`}</th>`).join('')}
+                ${Array.from({ length: exportWeekCfg.colCount }, (_, i) => i + 1).map(cNum => `<th style="width: 60px;">${isChatTeam ? `Chat ${cNum}` : `Call ${exportWeekCfg.callBase + cNum}`}</th>`).join('')}
                 ${extraColHeader}
                 <th class="score-header" style="width: 95px;">Week ${selectedWeek} Score</th>
               </tr>
@@ -2993,7 +2959,7 @@ export default function QualityDashboard({
                       ${c.note ? `<br><span class="note-tag">Note</span>` : ''}
                     </td>
                   `).join('')}
-                  ${(!isChatTeam || !hasChat7) && r.outboundVal ? `
+                  ${r.outboundVal ? `
                     <td class="outbound-col">
                       ${r.outboundVal.val === 'V' 
                         ? '<span class="badge-v">V</span>' 
@@ -3001,16 +2967,6 @@ export default function QualityDashboard({
                         ? '<span class="muted-dash">—</span>' 
                         : `<span style="font-weight: 800; color: #92400e;">${r.outboundVal.val}</span>`}
                       ${r.outboundVal.note ? `<br><span class="note-tag">Note</span>` : ''}
-                    </td>
-                  ` : ''}
-                  ${isChatTeam && hasChat7 && r.chat7Val ? `
-                    <td>
-                      ${r.chat7Val.val === 'V' 
-                        ? '<span class="badge-v">V</span>' 
-                        : r.chat7Val.val === '-' 
-                        ? '<span class="muted-dash">—</span>' 
-                        : `<span style="font-weight: 800; color: #0f172a;">${r.chat7Val.val}</span>`}
-                      ${r.chat7Val.note ? `<br><span class="note-tag">Note</span>` : ''}
                     </td>
                   ` : ''}
                   <td>
@@ -3026,11 +2982,8 @@ export default function QualityDashboard({
               <tr class="total-row">
                 <td colspan="2" style="text-align: left; padding-left: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Team Average</td>
                 ${colAverages.map(avg => `<td>${avg === '-' ? '<span class="muted-dash">—</span>' : avg}</td>`).join('')}
-                ${(!isChatTeam || !hasChat7) ? `
+                ${exportWeekCfg.hasOutbound ? `
                   <td class="outbound-col" style="font-weight: 900; color: #92400e;">${extraColAvg === '-' ? '<span class="muted-dash">—</span>' : extraColAvg}</td>
-                ` : ''}
-                ${isChatTeam && hasChat7 ? `
-                  <td style="font-weight: 900; color: #0f172a;">${extraColAvg === '-' ? '<span class="muted-dash">—</span>' : extraColAvg}</td>
                 ` : ''}
                 <td class="total-avg-cell">${totalWeekTeamAvg}</td>
               </tr>
@@ -3358,7 +3311,7 @@ export default function QualityDashboard({
         </div>
 
         {/* Toolbar: Quarter & Week Selection Bar for Data Entry (Single Row) */}
-        <div className="sticky top-2 z-30 flex items-center gap-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-2 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 w-full shadow-md flex-nowrap overflow-x-auto scrollbar-hide">
+        <div className="sticky top-2 z-30 flex items-center gap-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-2 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 w-full shadow-md flex-nowrap overflow-visible">
           
           {/* Static Left Controls: Year & Month */}
           <div className="flex items-center gap-2 shrink-0">
@@ -3396,9 +3349,14 @@ export default function QualityDashboard({
                 </button>
 
                 {isMonthMenuOpen && (
-                  <div 
-                    className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-2 z-[60] w-48 animate-in fade-in zoom-in-95 duration-150"
-                  >
+                  <>
+                    <div 
+                      className="fixed inset-0 z-50 bg-transparent" 
+                      onClick={() => setIsMonthMenuOpen(false)} 
+                    />
+                    <div 
+                      className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-2 z-[60] w-48 animate-in fade-in zoom-in-95 duration-150"
+                    >
                     <button
                       type="button"
                       onClick={() => {
@@ -3441,6 +3399,7 @@ export default function QualityDashboard({
                       })}
                     </div>
                   </div>
+                </>
                 )}
               </div>
             )}
@@ -3724,10 +3683,12 @@ export default function QualityDashboard({
                   : isBonus
                   ? `${currentSection.evaluator} — Bonus (${bonusColCount} ${isChatTeam ? "Chats" : "Calls"}${isChatTeam ? "" : " • Younis + Ankido Teams"})`
                   : (isChatTeam 
-                      ? (hasChat7 
-                          ? `Chats 1 to 7` 
-                          : `Chats 1 to 6 + Outbound`)
-                      : `Calls ${(selectedWeek - 1) * 6 + 1} to ${(selectedWeek - 1) * 6 + 6} + Outbound`
+                      ? (standardColCount === 8
+                          ? `Chats 1 to 8`
+                          : (standardColCount === 7 
+                              ? `Chats 1 to 7` 
+                              : `Chats 1 to 6 + Outbound`))
+                      : `Calls ${callBase + 1} to ${callBase + standardColCount} + Outbound`
                     )
                 }
               </span>
@@ -3899,7 +3860,7 @@ export default function QualityDashboard({
                     </>
                   ) : (
                     <>
-                      {[1, 2, 3, 4, 5, 6].map(cNum => (
+                      {Array.from({ length: standardColCount }, (_, i) => i + 1).map(cNum => (
                         <th key={cNum} className="px-2.5 py-3 text-center min-w-[100px]">
                           <div className="flex items-center justify-center gap-1 text-emerald-800 dark:text-emerald-300 font-bold">
                             {isChatTeam ? <MessageSquare size={12} /> : <PhoneIncoming size={12} />}
@@ -3907,19 +3868,11 @@ export default function QualityDashboard({
                           </div>
                         </th>
                       ))}
-                      {(!isChatTeam || !hasChat7) && (
+                      {showOutbound && (
                         <th className="px-3 py-3 text-center min-w-[110px] bg-amber-100/70 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border-x border-amber-200 dark:border-amber-900/60 font-bold">
                           <div className="flex items-center justify-center gap-1">
                             <PhoneOutgoing size={12} />
                             <span>Outbound</span>
-                          </div>
-                        </th>
-                      )}
-                      {isChatTeam && hasChat7 && (
-                        <th className="px-2.5 py-3 text-center min-w-[100px]">
-                          <div className="flex items-center justify-center gap-1 text-emerald-800 dark:text-emerald-300 font-bold">
-                            <MessageSquare size={12} />
-                            <span>Chat 7</span>
                           </div>
                         </th>
                       )}
@@ -3934,7 +3887,7 @@ export default function QualityDashboard({
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800 bg-[#FDFCFB] dark:bg-gray-900">
                 {currentCsrs.length === 0 ? (
                   <tr>
-                    <td colSpan={isCallMon ? 5 : isTrainer ? trainerColCount + 2 : isCShift ? 5 : isBonus ? bonusColCount + 1 : 9} className="p-8 text-center text-sm text-gray-400">
+                    <td colSpan={isCallMon ? 5 : isTrainer ? trainerColCount + 2 : isCShift ? 5 : isBonus ? bonusColCount + 1 : (standardColCount + (showOutbound ? 1 : 0) + 2)} className="p-8 text-center text-sm text-gray-400">
                       {isCallMon ? (
                         <div className="flex flex-col items-center justify-center gap-2">
                           <p>No agents in Call Mon roster yet.</p>
@@ -4514,14 +4467,14 @@ export default function QualityDashboard({
                           </div>
                         </td>
 
-                        {/* 6 Inbound Call / Chat Inputs with Modern Larger Styling & Arrow Key Navigation */}
-                        {[1, 2, 3, 4, 5, 6].map((cNum, cIdx) => {
+                        {/* Dynamic Inbound Call / Chat Inputs with Arrow Key Navigation */}
+                        {Array.from({ length: standardColCount }, (_, i) => i + 1).map((cNum, cIdx) => {
                           const callIndex = callBase + cNum;
                           const key = isChatTeam ? `w${selectedWeek}_chat_${cNum}` : `w${selectedWeek}_call_${callIndex}`;
-                          const rawVal = currentScores[key] ?? (isChatTeam ? (currentScores[`w${selectedWeek}_chat_${callIndex}`] ?? currentScores[`w${selectedWeek}_call_${callIndex}`] ?? currentScores[`w${selectedWeek}_call_${cNum}`] ?? "") : "");
+                          const rawVal = currentScores[key] ?? (isChatTeam ? (currentScores[`w${selectedWeek}_call_${cNum}`] ?? currentScores[`w${selectedWeek}_call_${callIndex}`] ?? "") : "");
                           const val = String(rawVal || "");
-                          const note = currentNotes[key] ?? (isChatTeam ? (currentNotes[`w${selectedWeek}_chat_${callIndex}`] ?? currentNotes[`w${selectedWeek}_call_${callIndex}`] ?? "") : "");
-                          const link = currentLinks[key] ?? (isChatTeam ? (currentLinks[`w${selectedWeek}_chat_${callIndex}`] ?? currentLinks[`w${selectedWeek}_call_${callIndex}`] ?? "") : "");
+                          const note = currentNotes[key] ?? (isChatTeam ? (currentNotes[`w${selectedWeek}_call_${cNum}`] ?? currentNotes[`w${selectedWeek}_call_${callIndex}`] ?? "") : "");
+                          const link = currentLinks[key] ?? (isChatTeam ? (currentLinks[`w${selectedWeek}_call_${cNum}`] ?? currentLinks[`w${selectedWeek}_call_${callIndex}`] ?? "") : "");
                           const hasNote = Boolean(note.trim());
                           const hasLink = Boolean(link.trim());
                           const isV = val.toUpperCase() === "V";
@@ -4593,8 +4546,8 @@ export default function QualityDashboard({
                           );
                         })}
 
-                        {/* Call Team: 1 Outbound Call Input (or Chat Team before Q3 W10) */}
-                        {(!isChatTeam || !hasChat7) && (
+                        {/* Outbound Call Input (When showOutbound is true) */}
+                        {showOutbound && (
                           <td className="p-2 text-center bg-amber-50/40 dark:bg-amber-950/20 border-x border-amber-200/60 dark:border-amber-900/40">
                             {(() => {
                               const key = `w${selectedWeek}_outbound`;
@@ -4620,11 +4573,11 @@ export default function QualityDashboard({
                                   )}
 
                                   <input
-                                    id={`qa_cell_${agentIdx}_6`}
+                                    id={`qa_cell_${agentIdx}_${standardColCount}`}
                                     type="text"
                                     value={val}
                                     onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
-                                    onKeyDown={(e) => handleCellKeyDown(e, agentIdx, 6)}
+                                    onKeyDown={(e) => handleCellKeyDown(e, agentIdx, standardColCount)}
                                     onFocus={(e) => e.target.select()}
                                     placeholder="-"
                                     className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
@@ -4658,83 +4611,6 @@ export default function QualityDashboard({
                                         hasNote
                                           ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
                                           : "opacity-0 group-hover:opacity-100 bg-amber-100 hover:bg-amber-600 dark:bg-amber-900 text-amber-700 hover:text-white dark:text-amber-300 ring-1 ring-amber-300 dark:ring-amber-700 hover:scale-110"
-                                      }`}
-                                      title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
-                                    >
-                                      <FileText size={8} />
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </td>
-                        )}
-
-                        {/* Chat Team: Chat 7 Input (Starting Q3 Week 10) - Styled identically to Chat 1-6 */}
-                        {isChatTeam && hasChat7 && (
-                          <td className="p-2 text-center">
-                            {(() => {
-                              const key = `w${selectedWeek}_chat_7`;
-                              const rawVal = currentScores[key] ?? currentScores[`w${selectedWeek}_outbound`];
-                              const val = String(rawVal ?? "");
-                              const note = currentNotes[key] ?? currentNotes[`w${selectedWeek}_outbound`] ?? "";
-                              const link = currentLinks[key] ?? currentLinks[`w${selectedWeek}_outbound`] ?? "";
-                              const hasNote = Boolean(note.trim());
-                              const hasLink = Boolean(link.trim());
-                              const isV = val.toUpperCase() === "V";
-                              const isNA = val.toUpperCase().includes("N/A");
-                              const numVal = parseFloat(val);
-                              const isBelow90 = !isNaN(numVal) && numVal < 90;
-
-                              return (
-                                <div className="relative inline-block group">
-                                  {hasNote && (
-                                    <div 
-                                      onClick={() => handleOpenNote(csrName, key, "Chat 7")}
-                                      className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10" 
-                                      title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
-                                    />
-                                  )}
-
-                                  <input
-                                    id={`qa_cell_${agentIdx}_6`}
-                                    type="text"
-                                    value={val}
-                                    onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
-                                    onKeyDown={(e) => handleCellKeyDown(e, agentIdx, 6)}
-                                    onFocus={(e) => e.target.select()}
-                                    placeholder="-"
-                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
-                                      isV
-                                        ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
-                                        : isNA
-                                        ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
-                                        : isBelow90
-                                        ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
-                                        : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-emerald-400 dark:hover:border-emerald-500/70 focus:border-[#1C6B53] dark:focus:border-emerald-400 focus:ring-2 focus:ring-[#1C6B53]/20 dark:focus:ring-emerald-400/20"
-                                    }`}
-                                  />
-
-                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
-                                    {hasLink && (
-                                      <a
-                                        href={link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="w-4 h-4 rounded-full bg-[#1C6B53] hover:bg-[#155a45] text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
-                                        title={`Open Conversation Link: ${link}`}
-                                      >
-                                        <ExternalLink size={7} />
-                                      </a>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenNote(csrName, key, "Chat 7")}
-                                      className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                                        hasNote
-                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
-                                          : "opacity-0 group-hover:opacity-100 bg-gray-100 hover:bg-[#1C6B53] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
                                       }`}
                                       title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
                                     >
@@ -4932,7 +4808,7 @@ export default function QualityDashboard({
                       </>
                     ) : (
                       <>
-                        {[1, 2, 3, 4, 5, 6].map(cNum => {
+                        {Array.from({ length: standardColCount }, (_, i) => i + 1).map(cNum => {
                           const callIndex = callBase + cNum;
                           const key = isChatTeam ? `w${selectedWeek}_chat_${cNum}` : `w${selectedWeek}_call_${callIndex}`;
                           const nums: number[] = [];
@@ -4941,7 +4817,7 @@ export default function QualityDashboard({
                             const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
                             const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
                             const scores = evalData[docId]?.scores || {};
-                            const val = scores[key] ?? (isChatTeam ? (scores[`w${selectedWeek}_chat_${callIndex}`] ?? scores[`w${selectedWeek}_call_${callIndex}`] ?? scores[`w${selectedWeek}_call_${cNum}`]) : undefined);
+                            const val = scores[key] ?? (isChatTeam ? (scores[`w${selectedWeek}_call_${cNum}`] ?? scores[`w${selectedWeek}_call_${callIndex}`]) : undefined);
                             if (val && val.toUpperCase() !== "V" && val.toUpperCase() !== "N/A") {
                               const n = parseFloat(val);
                               if (!isNaN(n)) nums.push(n);
@@ -4955,8 +4831,8 @@ export default function QualityDashboard({
                           );
                         })}
 
-                        {/* Call Team: Outbound column avg (or Chat Team before Q3 W10) */}
-                        {(!isChatTeam || !hasChat7) && (() => {
+                        {/* Outbound column avg when showOutbound is true */}
+                        {showOutbound && (() => {
                           const nums: number[] = [];
                           currentCsrs.forEach(csrName => {
                             const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
@@ -4972,28 +4848,6 @@ export default function QualityDashboard({
                           return (
                             <td className="p-2 text-center font-black text-amber-800 dark:text-amber-400 bg-amber-100/40 dark:bg-amber-950/30">
                               {outAvg !== "-" ? `${outAvg}%` : "-"}
-                            </td>
-                          );
-                        })()}
-
-                        {/* Chat Team: Chat 7 column avg (Q3 W10+) - Identical to Chat 1-6 */}
-                        {isChatTeam && hasChat7 && (() => {
-                          const nums: number[] = [];
-                          currentCsrs.forEach(csrName => {
-                            const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-                            const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
-                            const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
-                            const scores = evalData[docId]?.scores || {};
-                            const val = scores[`w${selectedWeek}_chat_7`] ?? scores[`w${selectedWeek}_outbound`];
-                            if (val && val.toUpperCase() !== "V" && val.toUpperCase() !== "N/A") {
-                              const n = parseFloat(val);
-                              if (!isNaN(n)) nums.push(n);
-                            }
-                          });
-                          const c7Avg = nums.length > 0 ? (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1) : "-";
-                          return (
-                            <td className="p-2 text-center font-black text-[#1C6B53] dark:text-emerald-300">
-                              {c7Avg !== "-" ? `${c7Avg}%` : "-"}
                             </td>
                           );
                         })()}
