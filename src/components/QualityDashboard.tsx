@@ -3311,7 +3311,7 @@ export default function QualityDashboard({
         </div>
 
         {/* Toolbar: Quarter & Week Selection Bar for Data Entry (Single Row) */}
-        <div className="sticky top-2 z-30 flex items-center gap-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-2 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 w-full shadow-md flex-nowrap overflow-visible">
+        <div className="sticky top-2 z-50 flex items-center gap-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-2 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 w-full shadow-md flex-nowrap overflow-visible">
           
           {/* Static Left Controls: Year & Month */}
           <div className="flex items-center gap-2 shrink-0">
@@ -3331,7 +3331,7 @@ export default function QualityDashboard({
 
             {/* Modern Month Dropdown (For Regular QA: filters month) */}
             {!isTrainer && (
-              <div ref={monthDropdownRef} className="relative shrink-0">
+              <div ref={monthDropdownRef} className={`relative shrink-0 ${isMonthMenuOpen ? "z-50" : ""}`}>
                 <button
                   ref={monthButtonRef}
                   type="button"
@@ -3351,11 +3351,11 @@ export default function QualityDashboard({
                 {isMonthMenuOpen && (
                   <>
                     <div 
-                      className="fixed inset-0 z-50 bg-transparent" 
+                      className="fixed inset-0 z-[60] bg-transparent" 
                       onClick={() => setIsMonthMenuOpen(false)} 
                     />
                     <div 
-                      className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-2 z-[60] w-48 animate-in fade-in zoom-in-95 duration-150"
+                      className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-2 z-[70] w-48 animate-in fade-in zoom-in-95 duration-150"
                     >
                     <button
                       type="button"
