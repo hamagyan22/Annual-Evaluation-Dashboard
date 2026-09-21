@@ -3209,7 +3209,7 @@ export default function Dashboard() {
         {/* Data Table */}
         <div 
           onPaste={handleTablePaste}
-          className={`bg-[#F9F8F4] dark:bg-gray-900 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-sm overflow-x-auto scrollbar-hide overscroll-x-contain touch-pan-x ${isSelecting ? 'select-none cursor-crosshair' : ''}`}
+          className={`bg-[#F9F8F4] dark:bg-gray-900 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-sm overflow-x-auto custom-scrollbar overscroll-x-contain touch-pan-x ${isSelecting ? 'select-none cursor-crosshair' : ''}`}
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {errorMsg && (

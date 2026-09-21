@@ -43,3 +43,37 @@ body.dark {
   overscroll-behavior-x: contain;
 }
 
+/* Custom visible horizontal & vertical scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #00A991 rgba(0, 0, 0, 0.08);
+}
+
+body.dark .custom-scrollbar {
+  scrollbar-color: #00A991 rgba(255, 255, 255, 0.1);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 9px;
+  width: 9px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 9999px;
+  margin: 0 4px;
+}
+
+body.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #00A991;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #1C6B53;
+}
+

@@ -7,7 +7,7 @@ import { collection, query, where, doc, setDoc, onSnapshot } from "firebase/fire
 import { updatePassword } from "firebase/auth";
 import { 
   Award, ArrowLeft, Search, Users, Check, Save, Download, 
-  Sun, Moon, ChevronDown, CheckCheck, RefreshCw, Calendar, Plus,
+  Sun, Moon, ChevronDown, ChevronLeft, ChevronRight, CheckCheck, RefreshCw, Calendar, Plus,
   LogOut, PhoneIncoming, PhoneOutgoing, Camera, X, Trash2, FileText, MessageSquare, ShieldCheck, UserPlus, ExternalLink, Link2
 } from "lucide-react";
 import { compressImageFile } from "@/lib/imageUtils";
@@ -380,6 +380,17 @@ export default function QualityDashboard({
     }
     return 6;
   });
+
+  // Table horizontal scroll container ref & scroll helper
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const handleScrollTable = (direction: "left" | "right") => {
+    if (!tableContainerRef.current) return;
+    const scrollAmount = 360;
+    tableContainerRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth"
+    });
+  };
 
   // Profile Modal State
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -1536,7 +1547,18 @@ export default function QualityDashboard({
 
   // Add bonus evaluation column
   const handleAddBonusColumn = () => {
-    setBonusColCount(prev => prev + 1);
+    setBonusColCount(prev => {
+      const next = prev + 1;
+      setTimeout(() => {
+        if (tableContainerRef.current) {
+          tableContainerRef.current.scrollTo({
+            left: tableContainerRef.current.scrollWidth,
+            behavior: "smooth"
+          });
+        }
+      }, 100);
+      return next;
+    });
   };
 
   // Remove bonus evaluation column (shifts remaining columns or clears column data)
@@ -3473,7 +3495,20 @@ export default function QualityDashboard({
               {!isCallMon && (
                 <button
                   type="button"
-                  onClick={() => setTrainerColCount(prev => prev + 1)}
+                  onClick={() => {
+                    setTrainerColCount(prev => {
+                      const next = prev + 1;
+                      setTimeout(() => {
+                        if (tableContainerRef.current) {
+                          tableContainerRef.current.scrollTo({
+                            left: tableContainerRef.current.scrollWidth,
+                            behavior: "smooth"
+                          });
+                        }
+                      }, 100);
+                      return next;
+                    });
+                  }}
                   className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0d9488] hover:bg-[#0b7f74] text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
                   title="Add Evaluation Column"
                 >
@@ -3608,6 +3643,28 @@ export default function QualityDashboard({
                 </button>
               )}
 
+              {/* Scroll Navigation Buttons for Columns */}
+              <div className="flex items-center gap-1 bg-white dark:bg-gray-800 p-0.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => handleScrollTable("left")}
+                  className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer active:scale-90"
+                  title="Scroll Left"
+                  aria-label="Scroll Left"
+                >
+                  <ChevronLeft size={13} className="stroke-[2.5]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleScrollTable("right")}
+                  className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer active:scale-90"
+                  title="Scroll Right"
+                  aria-label="Scroll Right"
+                >
+                  <ChevronRight size={13} className="stroke-[2.5]" />
+                </button>
+              </div>
+
               {/* Export PDF Button */}
               <button
                 type="button"
@@ -3622,7 +3679,8 @@ export default function QualityDashboard({
           </div>
 
           <div 
-            className="overflow-x-auto scrollbar-hide overscroll-x-contain touch-pan-x"
+            ref={tableContainerRef}
+            className="overflow-x-auto custom-scrollbar overscroll-x-contain touch-pan-x pb-1"
             style={{ WebkitOverflowScrolling: "touch" }}
           >
             <table className="w-full text-xs text-left border-collapse border-spacing-0">
