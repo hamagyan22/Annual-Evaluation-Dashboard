@@ -54,7 +54,18 @@ function sortColumnsByOrder(cols: ColumnConfig[]) {
 
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Camera } from "lucide-react";
-import QualityDashboard from "@/components/QualityDashboard";
+import dynamic from "next/dynamic";
+import { compressImageFile } from "@/lib/imageUtils";
+
+const QualityDashboard = dynamic(() => import("@/components/QualityDashboard"), {
+  loading: () => (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFCFB] dark:bg-gray-950 text-gray-800 dark:text-gray-200">
+      <div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+      <p className="text-xs font-bold text-gray-500 dark:text-gray-400">Loading Quality Dashboard...</p>
+    </div>
+  ),
+  ssr: false,
+});
 
 function toTitleCase(str: string) {
   if (!str) return '';
@@ -514,14 +525,19 @@ function AgentDashboard({
     }
   };
   
-  const handlePhotoUpload = (e: any) => {
-    const file = e.target.files[0];
+  const handlePhotoUpload = async (e: any) => {
+    const file = e.target.files?.[0];
     if(!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-       setEditPhotoUrl(ev.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressed = await compressImageFile(file);
+      setEditPhotoUrl(compressed);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setEditPhotoUrl(ev.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -1355,14 +1371,19 @@ export default function Dashboard() {
     setShowProfileModal(true);
   };
 
-  const handleProfilePhotoUpload = (e: any) => {
+  const handleProfilePhotoUpload = async (e: any) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setProfilePhoto(ev.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressed = await compressImageFile(file);
+      setProfilePhoto(compressed);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setProfilePhoto(ev.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSaveTLProfile = async (e: any) => {

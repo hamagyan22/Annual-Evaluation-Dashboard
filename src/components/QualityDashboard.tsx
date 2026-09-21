@@ -9,6 +9,7 @@ import {
   Sun, Moon, ChevronDown, CheckCheck, RefreshCw, Calendar, Plus,
   LogOut, PhoneIncoming, PhoneOutgoing, Camera, X, Trash2, FileText, MessageSquare, ShieldCheck, UserPlus, ExternalLink, Link2
 } from "lucide-react";
+import { compressImageFile } from "@/lib/imageUtils";
 
 interface QualityDashboardProps {
   userProfile: any;
@@ -1349,14 +1350,19 @@ export default function QualityDashboard({
     setShowProfileModal(true);
   };
 
-  const handleProfilePhotoUpload = (e: any) => {
+  const handleProfilePhotoUpload = async (e: any) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setProfilePhoto(ev.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressed = await compressImageFile(file);
+      setProfilePhoto(compressed);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setProfilePhoto(ev.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSaveProfile = async (e: any) => {
