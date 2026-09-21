@@ -444,6 +444,29 @@ export default function QualityDashboard({
     return isChatTeam && dlshadShift === "c_shift";
   }, [isChatTeam, dlshadShift]);
 
+  // Lara Kamil & Mohammed Jihad Shift State: "main" (Main Team Shift) or "bonus" (Younis + Ankido Teams)
+  const isCallEvaluator = useMemo(() => {
+    return currentSection.id === "lara_kamil" || currentSection.id === "mohammed_jihad";
+  }, [currentSection]);
+
+  const [callShift, setCallShift] = useState<"main" | "bonus">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("qa_call_shift");
+      if (saved === "main" || saved === "bonus") return saved;
+    }
+    return "main";
+  });
+
+  const isBonus = useMemo(() => {
+    return isCallEvaluator && callShift === "bonus";
+  }, [isCallEvaluator, callShift]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("qa_call_shift", callShift);
+    }
+  }, [callShift]);
+
   // Load and listen to C Shift roster and weekly added from Firestore and localStorage
   useEffect(() => {
     const savedLocal = localStorage.getItem("c_shift_roster");
@@ -787,6 +810,16 @@ export default function QualityDashboard({
     return () => unsubscribe();
   }, [selectedYear]);
 
+  // Helper to determine the exact active section slug in Firestore
+  const getActiveSectionSlug = useCallback((evaluatorName?: string) => {
+    if (isCallMon) return "mohammed_azad_call_mon";
+    if (isCShift) return "mohammed_dlshad_c_shift";
+    const name = evaluatorName || currentSection.evaluator;
+    const base = name.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    if (isBonus) return `${base}_bonus`;
+    return base;
+  }, [isCallMon, isCShift, isBonus, currentSection.evaluator]);
+
   // Handle score change with debounced save
   const handleScoreChange = useCallback((
     section: EvaluatorSection,
@@ -795,7 +828,7 @@ export default function QualityDashboard({
     rawVal: string
   ) => {
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-    const sectionSlug = isCallMon ? "mohammed_azad_call_mon" : isCShift ? "mohammed_dlshad_c_shift" : section.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    const sectionSlug = getActiveSectionSlug(section.evaluator);
     const isTrainerSection = section.id === "mohammed_azad" || section.evaluator.toLowerCase().includes("azad");
     const effectiveQuarter = isTrainerSection ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
     const docId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
@@ -854,7 +887,7 @@ export default function QualityDashboard({
         setSaveStatus("idle");
       }
     }, 450);
-  }, [selectedYear, selectedQuarter, trainerMonth, evalData, isCShift, isCallMon]);
+  }, [selectedYear, selectedQuarter, trainerMonth, evalData, isCShift, isCallMon, isBonus, getActiveSectionSlug]);
 
   // Section CSRs strictly pulled and deduplicated from live team_members
   const sectionCSRs = useMemo(() => {
@@ -939,13 +972,20 @@ export default function QualityDashboard({
       });
 
       list = Array.from(agentsSet).sort((a, b) => a.localeCompare(b));
+    } else if (isBonus) {
+      // In Bonus shift: show all employees of both Younis Kamal Team AND Ankido Buya Team (like Mohammed Azad)
+      const combined = rosterMembers
+        .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
+        .map(m => (m.agent_name || m.name || "").trim())
+        .filter(Boolean);
+      list = Array.from(new Set(combined)).sort((a, b) => a.localeCompare(b));
     } else {
       list = sectionCSRs[currentSection.id] || [];
     }
     if (!searchTerm.trim()) return list;
     return list.filter(name => name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [
-    sectionCSRs, currentSection, searchTerm, isCShift, isCallMon, callMonRoster,
+    sectionCSRs, currentSection, searchTerm, isCShift, isCallMon, isBonus, rosterMembers, callMonRoster,
     selectedMonthFilter, selectedWeek, selectedYear, selectedQuarter, evalData, cShiftWeeklyAdded
   ]);
 
@@ -1050,7 +1090,7 @@ export default function QualityDashboard({
 
     currentCsrs.forEach(csrName => {
       const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-      const sectionSlug = isCShift ? "mohammed_dlshad_c_shift" : currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
 
       targetQuarters.forEach(qId => {
         const docId = `${selectedYear}_${qId}_${sectionSlug}_${slug}`;
@@ -1204,7 +1244,7 @@ export default function QualityDashboard({
       topAgent,
       totalAgents: currentCsrs.length
     };
-  }, [currentCsrs, currentSection, selectedYear, selectedQuarter, cardPeriodMode, selectedMonthFilter, evalData, isChatTeam, isTrainer, trainerMonth, trainerColCount, isCShift, isCallMon]);
+  }, [currentCsrs, currentSection, selectedYear, selectedQuarter, cardPeriodMode, selectedMonthFilter, evalData, isChatTeam, isTrainer, trainerMonth, trainerColCount, isCShift, isCallMon, isBonus, getActiveSectionSlug]);
 
   const callBase = (selectedWeek - 1) * 6;
 
@@ -1212,7 +1252,7 @@ export default function QualityDashboard({
   const tableMonthAgentAvgs = useMemo(() => {
     if (selectedMonthFilter === null) return {};
     const { quarter, weekStart, weekEnd } = getMonthWeekRange(selectedMonthFilter);
-    const sectionSlug = isCShift ? "mohammed_dlshad_c_shift" : currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
     const result: Record<string, string> = {};
 
     currentCsrs.forEach(csrName => {
@@ -1259,7 +1299,7 @@ export default function QualityDashboard({
     });
 
     return result;
-  }, [selectedMonthFilter, currentCsrs, currentSection, selectedYear, evalData, isChatTeam, isCShift]);
+  }, [selectedMonthFilter, currentCsrs, currentSection, selectedYear, evalData, isChatTeam, isCShift, isBonus, getActiveSectionSlug]);
 
   // Handler for selecting month from toolbar dropdown (affects both top card and table)
   const handleMonthSelect = (monthIdx: number | null) => {
@@ -1506,7 +1546,7 @@ export default function QualityDashboard({
   // Open note modal for a specific cell
   const handleOpenNote = (csrName: string, key: string, callLabel: string) => {
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-    const sectionSlug = isCallMon ? "mohammed_azad_call_mon" : isCShift ? "mohammed_dlshad_c_shift" : currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
     const docId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
     const existingNote = (evalData[docId]?.notes || {})[key] || "";
@@ -1537,7 +1577,7 @@ export default function QualityDashboard({
     setSavingNote(true);
     const { csrName, key, noteText, linkUrl } = activeNoteModal;
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-    const sectionSlug = isCallMon ? "mohammed_azad_call_mon" : isCShift ? "mohammed_dlshad_c_shift" : currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
     const docId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
 
@@ -1607,7 +1647,7 @@ export default function QualityDashboard({
     setSavingNote(true);
     const { csrName, key } = activeNoteModal;
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-    const sectionSlug = isCallMon ? "mohammed_azad_call_mon" : isCShift ? "mohammed_dlshad_c_shift" : currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
     const docId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
 
@@ -2046,10 +2086,11 @@ export default function QualityDashboard({
       return;
     }
 
+    const exportSectionSlug = getActiveSectionSlug(currentSection.evaluator);
+
     const rowsData = currentCsrs.map((csrName, idx) => {
       const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-      const sectionSlug = currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
-      const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
+      const docId = `${selectedYear}_${selectedQuarter}_${exportSectionSlug}_${slug}`;
       const scores = evalData[docId]?.scores || {};
       const notes = evalData[docId]?.notes || {};
       const weekAvg = computeWeekAvg(scores, selectedWeek, isChatTeam, selectedYear, selectedQuarter);
@@ -2084,8 +2125,7 @@ export default function QualityDashboard({
       const nums: number[] = [];
       currentCsrs.forEach(csrName => {
         const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-        const sectionSlug = currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
-        const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
+        const docId = `${selectedYear}_${selectedQuarter}_${exportSectionSlug}_${slug}`;
         const val = (evalData[docId]?.scores || {})[key] ?? (isChatTeam ? ((evalData[docId]?.scores || {})[`w${selectedWeek}_chat_${callBase + cNum}`] ?? (evalData[docId]?.scores || {})[`w${selectedWeek}_call_${callBase + cNum}`]) : undefined);
         if (val && val.toUpperCase() !== "V" && val.toUpperCase() !== "N/A") {
           const n = parseFloat(val);
@@ -2101,8 +2141,7 @@ export default function QualityDashboard({
       const outboundNums: number[] = [];
       currentCsrs.forEach(csrName => {
         const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-        const sectionSlug = currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
-        const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
+        const docId = `${selectedYear}_${selectedQuarter}_${exportSectionSlug}_${slug}`;
         const val = (evalData[docId]?.scores || {})[`w${selectedWeek}_outbound`];
         if (val && val.toUpperCase() !== "V" && val.toUpperCase() !== "N/A") {
           const n = parseFloat(val);
@@ -2115,8 +2154,7 @@ export default function QualityDashboard({
       const chat7Nums: number[] = [];
       currentCsrs.forEach(csrName => {
         const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-        const sectionSlug = currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
-        const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
+        const docId = `${selectedYear}_${selectedQuarter}_${exportSectionSlug}_${slug}`;
         const val = (evalData[docId]?.scores || {})[`w${selectedWeek}_chat_7`] ?? (evalData[docId]?.scores || {})[`w${selectedWeek}_outbound`];
         if (val && val.toUpperCase() !== "V" && val.toUpperCase() !== "N/A") {
           const n = parseFloat(val);
@@ -2130,8 +2168,7 @@ export default function QualityDashboard({
     const weekAverages: number[] = [];
     currentCsrs.forEach(csrName => {
       const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-      const sectionSlug = currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
-      const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
+      const docId = `${selectedYear}_${selectedQuarter}_${exportSectionSlug}_${slug}`;
       const scores = evalData[docId]?.scores || {};
       const avgStr = computeWeekAvg(scores, selectedWeek, isChatTeam, selectedYear, selectedQuarter);
       if (avgStr !== "-" && avgStr !== "V") {
@@ -2915,6 +2952,38 @@ export default function QualityDashboard({
             </>
           )}
 
+          {/* Lara Kamil & Mohammed Jihad: Shift Switcher (Main Shift vs Bonus) */}
+          {isCallEvaluator && (
+            <>
+              <div className="flex items-center p-0.5 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setCallShift("main")}
+                  className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                    callShift === "main"
+                      ? "bg-[#1C6B53] text-white shadow-xs scale-[1.02]"
+                      : "text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40"
+                  }`}
+                >
+                  Main Shift
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCallShift("bonus")}
+                  className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                    callShift === "bonus"
+                      ? "bg-[#00A991] text-white shadow-xs scale-[1.02]"
+                      : "text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40"
+                  }`}
+                >
+                  Bonus
+                </button>
+              </div>
+
+              <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
+            </>
+          )}
+
           {/* Quarter Tabs (Q1, Q2, Q3, Q4) - ONLY FOR QA EVALUATORS, REMOVED FOR TRAINER */}
           {!isTrainer && (
             <>
@@ -3059,8 +3128,8 @@ export default function QualityDashboard({
           {/* Week Section Subheader */}
           <div className="px-5 py-3.5 bg-gray-50/90 dark:bg-gray-800/90 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-wrap gap-2">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <div className={`px-2.5 py-1 rounded-xl text-white text-xs font-black ${isCallMon ? "bg-[#0f766e]" : isTrainer ? "bg-[#0d9488]" : isCShift ? "bg-[#00A991]" : "bg-[#1C6B53]"}`}>
-                {isCallMon ? `${MONTH_NAMES[trainerMonth]} Call Mon` : isTrainer ? `${MONTH_NAMES[trainerMonth]} Evaluations` : `Week ${selectedWeek}`}
+              <div className={`px-2.5 py-1 rounded-xl text-white text-xs font-black ${isCallMon ? "bg-[#0f766e]" : isTrainer ? "bg-[#0d9488]" : isCShift || isBonus ? "bg-[#00A991]" : "bg-[#1C6B53]"}`}>
+                {isCallMon ? `${MONTH_NAMES[trainerMonth]} Call Mon` : isTrainer ? `${MONTH_NAMES[trainerMonth]} Evaluations` : isBonus ? `Week ${selectedWeek} • Bonus` : `Week ${selectedWeek}`}
               </div>
               <span className="text-xs font-bold text-gray-700 dark:text-gray-200">
                 {isCallMon
@@ -3069,6 +3138,8 @@ export default function QualityDashboard({
                   ? "Mohammed Azad — Call Training Evaluations (Open Count • Morning & Evening)"
                   : isCShift
                   ? "Chats 1 to 3"
+                  : isBonus
+                  ? `${currentSection.evaluator} — Bonus (Calls ${(selectedWeek - 1) * 6 + 1} to ${(selectedWeek - 1) * 6 + 6} + Outbound • Younis + Ankido Teams)`
                   : (isChatTeam 
                       ? (hasChat7 
                           ? `Chats 1 to 7` 
@@ -3263,7 +3334,7 @@ export default function QualityDashboard({
                 ) : (
                   currentCsrs.map((csrName, agentIdx) => {
                     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-                    const sectionSlug = isCallMon ? "mohammed_azad_call_mon" : isCShift ? "mohammed_dlshad_c_shift" : currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
+                    const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
                     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
                     const docId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
                     const currentDoc = evalData[docId] || {};
@@ -4020,7 +4091,7 @@ export default function QualityDashboard({
                           const nums: number[] = [];
                           currentCsrs.forEach(csrName => {
                             const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-                            const sectionSlug = currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
+                            const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
                             const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
                             const scores = evalData[docId]?.scores || {};
                             const val = scores[key] ?? (isChatTeam ? (scores[`w${selectedWeek}_chat_${callIndex}`] ?? scores[`w${selectedWeek}_call_${callIndex}`] ?? scores[`w${selectedWeek}_call_${cNum}`]) : undefined);
@@ -4042,7 +4113,7 @@ export default function QualityDashboard({
                           const nums: number[] = [];
                           currentCsrs.forEach(csrName => {
                             const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-                            const sectionSlug = currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
+                            const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
                             const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
                             const val = (evalData[docId]?.scores || {})[`w${selectedWeek}_outbound`];
                             if (val && val.toUpperCase() !== "V" && val.toUpperCase() !== "N/A") {
@@ -4063,7 +4134,7 @@ export default function QualityDashboard({
                           const nums: number[] = [];
                           currentCsrs.forEach(csrName => {
                             const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-                            const sectionSlug = currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
+                            const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
                             const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
                             const scores = evalData[docId]?.scores || {};
                             const val = scores[`w${selectedWeek}_chat_7`] ?? scores[`w${selectedWeek}_outbound`];
@@ -4095,7 +4166,7 @@ export default function QualityDashboard({
                             const weekAverages: number[] = [];
                             currentCsrs.forEach(csrName => {
                               const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-                              const sectionSlug = currentSection.evaluator.toLowerCase().replace(/[^a-z0-9]/g, "_");
+                              const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
                               const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
                               const scores = evalData[docId]?.scores || {};
                               const avgStr = computeWeekAvg(scores, selectedWeek, isChatTeam, selectedYear, selectedQuarter);
