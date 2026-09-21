@@ -980,10 +980,21 @@ export default function QualityDashboard({
       const secSlug = sec.id;
       const prefix = `${selectedYear}_${selectedQuarter}_${secSlug}_`;
       Object.entries(evalData).forEach(([docId, docData]: [string, any]) => {
+        // Exclude sub-shifts (c_shift, bonus, call_mon)
+        if (docId.includes("_c_shift_") || docId.includes("_bonus_") || docId.includes("_call_mon_")) {
+          return;
+        }
         if (docId.startsWith(prefix) && docData?.csr_name) {
           const cName = getCanonicalAgentName(docData.csr_name.trim());
           if (isValidAgentName(cName)) {
-            teamAgents.push(cName);
+            // Strictly exclude any agent belonging to another team in rosterMembers
+            const isFromOtherTeam = rosterMembers.some(m => {
+              const mName = getCanonicalAgentName((m.agent_name || m.name || "").trim()).toLowerCase();
+              return mName === cName.toLowerCase() && m.team && m.team !== sec.team;
+            });
+            if (!isFromOtherTeam) {
+              teamAgents.push(cName);
+            }
           }
         }
       });
