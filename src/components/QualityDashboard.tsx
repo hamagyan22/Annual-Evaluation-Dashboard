@@ -944,12 +944,21 @@ export default function QualityDashboard({
           .filter(Boolean);
       }
 
+      // Also include any agents who have evalData for this section in current year/quarter
+      const secSlug = sec.id;
+      const prefix = `${selectedYear}_${selectedQuarter}_${secSlug}_`;
+      Object.entries(evalData).forEach(([docId, docData]: [string, any]) => {
+        if (docId.startsWith(prefix) && docData?.csr_name) {
+          teamAgents.push(docData.csr_name.trim());
+        }
+      });
+
       const uniqueSorted = Array.from(new Set(teamAgents)).sort((a, b) => a.localeCompare(b));
       result[sec.id] = uniqueSorted;
     });
 
     return result;
-  }, [rosterMembers]);
+  }, [rosterMembers, evalData, selectedYear, selectedQuarter]);
 
   // Month names for dropdown
   const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -3686,7 +3695,7 @@ export default function QualityDashboard({
             <table className="w-full text-xs text-left border-collapse border-spacing-0">
               <thead>
                 <tr className="bg-gray-100/95 dark:bg-gray-800/95 border-b border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-black text-xs">
-                  <th className="sticky left-0 bg-gray-100 dark:bg-gray-800 z-20 px-5 py-3.5 min-w-[210px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)]">
+                  <th className="sticky left-0 bg-gray-100 dark:bg-gray-800 z-30 px-5 py-3.5 min-w-[210px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)]">
                     Agent
                   </th>
                   {isCallMon ? (
@@ -3776,9 +3785,6 @@ export default function QualityDashboard({
                       <th className="px-4 py-3 text-center min-w-[120px] bg-[#00A991] text-white font-black">
                         Bonus Score
                       </th>
-                      <th className="px-3 py-3 text-center w-12 text-gray-400 font-bold">
-                        Action
-                      </th>
                     </>
                   ) : (
                     <>
@@ -3817,7 +3823,7 @@ export default function QualityDashboard({
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800 bg-[#FDFCFB] dark:bg-gray-900">
                 {currentCsrs.length === 0 ? (
                   <tr>
-                    <td colSpan={isCallMon ? 5 : isTrainer ? trainerColCount + 2 : isCShift ? 5 : isBonus ? bonusColCount + 2 : 9} className="p-8 text-center text-sm text-gray-400">
+                    <td colSpan={isCallMon ? 5 : isTrainer ? trainerColCount + 2 : isCShift ? 5 : isBonus ? bonusColCount + 1 : 9} className="p-8 text-center text-sm text-gray-400">
                       {isCallMon ? (
                         <div className="flex flex-col items-center justify-center gap-2">
                           <p>No agents in Call Mon roster yet.</p>
@@ -3875,7 +3881,7 @@ export default function QualityDashboard({
 
                       return (
                         <tr key={csrName} className="hover:bg-teal-50/30 dark:hover:bg-gray-800/40 transition">
-                          <td className="sticky left-0 bg-white dark:bg-gray-900 z-10 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
+                          <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
                                 <img
@@ -3930,7 +3936,7 @@ export default function QualityDashboard({
                                         : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-teal-400 dark:hover:border-teal-500/70 focus:border-[#0f766e] dark:focus:border-teal-400 focus:ring-2 focus:ring-[#0f766e]/20 dark:focus:ring-teal-400/20"
                                     }`}
                                   />
-                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-10">
+                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
                                     {hasLink && (
                                       <a
                                         href={link}
@@ -3949,7 +3955,7 @@ export default function QualityDashboard({
                                       className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                                         hasNote
                                           ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
-                                          : "bg-gray-100 hover:bg-[#0f766e] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100"
+                                          : "opacity-0 group-hover:opacity-100 bg-gray-100 hover:bg-[#0f766e] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
                                       }`}
                                       title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
                                     >
@@ -4000,7 +4006,7 @@ export default function QualityDashboard({
 
                       return (
                         <tr key={csrName} className="hover:bg-teal-50/30 dark:hover:bg-gray-800/40 transition">
-                          <td className="sticky left-0 bg-white dark:bg-gray-900 z-10 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
+                          <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
                                 <img
@@ -4057,7 +4063,7 @@ export default function QualityDashboard({
                                     }`}
                                   />
 
-                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-10">
+                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
                                     {hasLink && (
                                       <a
                                         href={link}
@@ -4076,7 +4082,7 @@ export default function QualityDashboard({
                                       className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                                         hasNote
                                           ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
-                                          : "bg-gray-100 hover:bg-[#0d9488] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100"
+                                          : "opacity-0 group-hover:opacity-100 bg-gray-100 hover:bg-[#0d9488] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
                                       }`}
                                       title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
                                     >
@@ -4104,7 +4110,7 @@ export default function QualityDashboard({
                     if (isCShift) {
                       return (
                         <tr key={csrName} className="hover:bg-teal-50/30 dark:hover:bg-gray-800/40 transition">
-                          <td className="sticky left-0 bg-white dark:bg-gray-900 z-10 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
+                          <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
                                 <img
@@ -4161,7 +4167,7 @@ export default function QualityDashboard({
                                     }`}
                                   />
 
-                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-10">
+                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
                                     {hasLink && (
                                       <a
                                         href={link}
@@ -4180,7 +4186,7 @@ export default function QualityDashboard({
                                       className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                                         hasNote
                                           ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
-                                          : "bg-gray-100 hover:bg-[#00A991] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100"
+                                          : "opacity-0 group-hover:opacity-100 bg-gray-100 hover:bg-[#00A991] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
                                       }`}
                                       title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
                                     >
@@ -4231,7 +4237,7 @@ export default function QualityDashboard({
                       return (
                         <tr key={csrName} className="hover:bg-emerald-50/30 dark:hover:bg-gray-800/40 transition">
                           {/* Sticky CSR Name with Real Profile Photo if uploaded */}
-                          <td className="sticky left-0 bg-white dark:bg-gray-900 z-10 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
+                          <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
                                 <img
@@ -4288,7 +4294,7 @@ export default function QualityDashboard({
                                         : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-teal-400 dark:hover:border-teal-500/70 focus:border-[#00A991] dark:focus:border-teal-400 focus:ring-2 focus:ring-[#00A991]/20 dark:focus:ring-teal-400/20"
                                     }`}
                                   />
-                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-10">
+                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
                                     {hasLink && (
                                       <a
                                         href={link}
@@ -4307,7 +4313,7 @@ export default function QualityDashboard({
                                       className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                                         hasNote
                                           ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
-                                          : "bg-gray-100 hover:bg-[#00A991] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100"
+                                          : "opacity-0 group-hover:opacity-100 bg-gray-100 hover:bg-[#00A991] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
                                       }`}
                                       title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
                                     >
@@ -4329,11 +4335,6 @@ export default function QualityDashboard({
                               {agentBonusAvg !== "-" && agentBonusAvg !== "V" ? `${agentBonusAvg}%` : agentBonusAvg}
                             </span>
                           </td>
-
-                          {/* Empty action column for consistent grid */}
-                          <td className="p-2 text-center w-12 text-gray-300 dark:text-gray-700">
-                            —
-                          </td>
                         </tr>
                       );
                     }
@@ -4341,7 +4342,7 @@ export default function QualityDashboard({
                     return (
                       <tr key={csrName} className="hover:bg-emerald-50/30 dark:hover:bg-gray-800/40 transition">
                         {/* Sticky CSR Name with Real Profile Photo if uploaded */}
-                        <td className="sticky left-0 bg-white dark:bg-gray-900 z-10 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
+                        <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
                           <div className="flex items-center gap-2.5">
                             {agentPhoto ? (
                               <img
@@ -4402,7 +4403,7 @@ export default function QualityDashboard({
                                 />
 
                                 {/* Visible Note & Link Buttons */}
-                                <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-10">
+                                <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
                                   {hasLink && (
                                     <a
                                       href={link}
@@ -4421,7 +4422,7 @@ export default function QualityDashboard({
                                     className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                                       hasNote
                                         ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
-                                        : "bg-gray-100 hover:bg-[#1C6B53] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100"
+                                        : "opacity-0 group-hover:opacity-100 bg-gray-100 hover:bg-[#1C6B53] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
                                     }`}
                                     title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
                                   >
@@ -4474,7 +4475,7 @@ export default function QualityDashboard({
                                     }`}
                                   />
 
-                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-10">
+                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
                                     {hasLink && (
                                       <a
                                         href={link}
@@ -4493,7 +4494,7 @@ export default function QualityDashboard({
                                       className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                                         hasNote
                                           ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
-                                          : "bg-amber-100 hover:bg-amber-600 dark:bg-amber-900 text-amber-700 hover:text-white dark:text-amber-300 ring-1 ring-amber-300 dark:ring-amber-700 hover:scale-110 opacity-70 group-hover:opacity-100"
+                                          : "opacity-0 group-hover:opacity-100 bg-amber-100 hover:bg-amber-600 dark:bg-amber-900 text-amber-700 hover:text-white dark:text-amber-300 ring-1 ring-amber-300 dark:ring-amber-700 hover:scale-110"
                                       }`}
                                       title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
                                     >
@@ -4547,7 +4548,7 @@ export default function QualityDashboard({
                                     }`}
                                   />
 
-                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-10">
+                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
                                     {hasLink && (
                                       <a
                                         href={link}
@@ -4566,7 +4567,7 @@ export default function QualityDashboard({
                                       className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                                         hasNote
                                           ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
-                                          : "bg-gray-100 hover:bg-[#1C6B53] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100"
+                                          : "opacity-0 group-hover:opacity-100 bg-gray-100 hover:bg-[#1C6B53] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
                                       }`}
                                       title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
                                     >
@@ -4606,7 +4607,7 @@ export default function QualityDashboard({
                 {/* Bottom Team Average Row */}
                 {currentCsrs.length > 0 && (
                   <tr className={`border-t-2 font-black text-xs ${isTrainer ? "bg-teal-50/80 dark:bg-teal-950/60 border-[#0d9488]/30" : "bg-emerald-50/80 dark:bg-emerald-950/60 border-[#1C6B53]/30"}`}>
-                    <td className={`sticky left-0 z-10 px-5 py-3.5 font-black shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] ${isTrainer ? "bg-teal-50 dark:bg-teal-950 text-[#0d9488] dark:text-teal-300" : "bg-emerald-50 dark:bg-emerald-950 text-[#1C6B53] dark:text-emerald-300"}`}>
+                    <td className={`sticky left-0 z-20 px-5 py-3.5 font-black shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] ${isTrainer ? "bg-teal-50 dark:bg-teal-950 text-[#0d9488] dark:text-teal-300" : "bg-emerald-50 dark:bg-emerald-950 text-[#1C6B53] dark:text-emerald-300"}`}>
                       Team Average
                     </td>
 
@@ -4757,7 +4758,6 @@ export default function QualityDashboard({
                             </td>
                           );
                         })()}
-                        <td className="p-2" />
                       </>
                     ) : (
                       <>
