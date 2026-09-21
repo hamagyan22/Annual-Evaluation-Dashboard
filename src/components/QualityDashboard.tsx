@@ -79,6 +79,38 @@ const QUARTERS = [
 
 const YEARS = ["2026", "2027", "2028", "2029", "2030"];
 
+const CANONICAL_AGENT_NAMES: Record<string, string> = {
+  "shahab ahmed": "Shahab Ahmed Muhammed",
+  "shahab ahmed muhammed": "Shahab Ahmed Muhammed",
+  "zhala sherzad": "Zhalla Sherzad",
+  "zhalla sherzad": "Zhalla Sherzad",
+  "marwa khaleel": "Marwa Khalil",
+  "marwa khalil": "Marwa Khalil",
+  "mohammed saman": "Mohammed Salem",
+  "mohammed saleem": "Mohammed Salem",
+  "mohammed salem": "Mohammed Salem",
+  "hannen iskandar": "Haneen Abd-Al Kareem",
+  "haneen abdulkarim": "Haneen Abd-Al Kareem",
+  "haneen abd-al kareem": "Haneen Abd-Al Kareem",
+  "kazhvan wirya": "Kazhvan Wirya",
+  "kani sami": "Kani Sami",
+  "azad muhammad": "Azad Muhammad",
+  "dhuha khanjer": "Dhuha Khanjer"
+};
+
+function getCanonicalAgentName(name: string): string {
+  const trimmed = (name || "").trim();
+  const lower = trimmed.toLowerCase();
+  return CANONICAL_AGENT_NAMES[lower] || trimmed;
+}
+
+function isValidAgentName(name: string): boolean {
+  const lower = (name || "").toLowerCase().trim();
+  if (!lower) return false;
+  if (lower.includes("csr /") || lower.includes("csr/") || lower.startsWith("csr /") || lower.startsWith("csr/")) return false;
+  return true;
+}
+
 // Helper to determine current year, quarter, and week dynamically
 function getCurrentPeriod(): { year: string; quarter: string; week: number } {
   const now = new Date();
@@ -935,13 +967,13 @@ export default function QualityDashboard({
       if (sec.id === "mohammed_azad") {
         teamAgents = rosterMembers
           .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
-          .map(m => (m.agent_name || m.name || "").trim())
-          .filter(Boolean);
+          .map(m => getCanonicalAgentName((m.agent_name || m.name || "").trim()))
+          .filter(isValidAgentName);
       } else {
         teamAgents = rosterMembers
           .filter(m => m.team === sec.team)
-          .map(m => (m.agent_name || m.name || "").trim())
-          .filter(Boolean);
+          .map(m => getCanonicalAgentName((m.agent_name || m.name || "").trim()))
+          .filter(isValidAgentName);
       }
 
       // Also include any agents who have evalData for this section in current year/quarter
@@ -949,12 +981,19 @@ export default function QualityDashboard({
       const prefix = `${selectedYear}_${selectedQuarter}_${secSlug}_`;
       Object.entries(evalData).forEach(([docId, docData]: [string, any]) => {
         if (docId.startsWith(prefix) && docData?.csr_name) {
-          teamAgents.push(docData.csr_name.trim());
+          const cName = getCanonicalAgentName(docData.csr_name.trim());
+          if (isValidAgentName(cName)) {
+            teamAgents.push(cName);
+          }
         }
       });
 
-      const uniqueSorted = Array.from(new Set(teamAgents)).sort((a, b) => a.localeCompare(b));
-      result[sec.id] = uniqueSorted;
+      const nameMap = new Map<string, string>();
+      teamAgents.forEach(n => {
+        const k = n.toLowerCase();
+        if (!nameMap.has(k)) nameMap.set(k, n);
+      });
+      result[sec.id] = Array.from(nameMap.values()).sort((a, b) => a.localeCompare(b));
     });
 
     return result;
@@ -976,7 +1015,15 @@ export default function QualityDashboard({
   const currentCsrs = useMemo(() => {
     let list: string[] = [];
     if (isCallMon) {
-      list = callMonRoster;
+      const nameMap = new Map<string, string>();
+      callMonRoster.forEach(n => {
+        const cName = getCanonicalAgentName(n);
+        if (isValidAgentName(cName)) {
+          const k = cName.toLowerCase();
+          if (!nameMap.has(k)) nameMap.set(k, cName);
+        }
+      });
+      list = Array.from(nameMap.values()).sort((a, b) => a.localeCompare(b));
     } else if (isCShift) {
       // For C Shift: ONLY show agents who have evaluation data in the active week(s),
       // or who were explicitly added for this week!
@@ -995,13 +1042,18 @@ export default function QualityDashboard({
       // 1. Check agents explicitly added for the active weeks
       activeWeeks.forEach(w => {
         const wKey = `${selectedYear}_${selectedQuarter}_w${w}`;
-        (cShiftWeeklyAdded[wKey] || []).forEach(name => agentsSet.add(name));
+        (cShiftWeeklyAdded[wKey] || []).forEach(name => {
+          const cName = getCanonicalAgentName(name);
+          if (isValidAgentName(cName)) agentsSet.add(cName);
+        });
       });
 
       // 2. Scan all docs in evalData that belong to C shift for this year & quarter
       const prefix = `${selectedYear}_${selectedQuarter}_mohammed_dlshad_c_shift_`;
       Object.entries(evalData).forEach(([docId, docData]: [string, any]) => {
         if (docId.startsWith(prefix) && docData.csr_name) {
+          const cName = getCanonicalAgentName(docData.csr_name.trim());
+          if (!isValidAgentName(cName)) return;
           const scores = docData.scores || {};
           const hasScore = activeWeeks.some(w => {
             const s1 = scores[`w${w}_chat_1`];
@@ -1012,19 +1064,42 @@ export default function QualityDashboard({
                    (s3 !== undefined && s3 !== "" && s3 !== "-");
           });
           if (hasScore) {
-            agentsSet.add(docData.csr_name);
+            agentsSet.add(cName);
           }
         }
       });
 
-      list = Array.from(agentsSet).sort((a, b) => a.localeCompare(b));
+      const nameMap = new Map<string, string>();
+      Array.from(agentsSet).forEach(n => {
+        const k = n.toLowerCase();
+        if (!nameMap.has(k)) nameMap.set(k, n);
+      });
+      list = Array.from(nameMap.values()).sort((a, b) => a.localeCompare(b));
     } else if (isBonus) {
       // In Bonus shift: show all employees of both Younis Kamal Team AND Ankido Buya Team (like Mohammed Azad)
-      const combined = rosterMembers
+      const combined: string[] = rosterMembers
         .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
-        .map(m => (m.agent_name || m.name || "").trim())
-        .filter(Boolean);
-      list = Array.from(new Set(combined)).sort((a, b) => a.localeCompare(b));
+        .map(m => getCanonicalAgentName((m.agent_name || m.name || "").trim()))
+        .filter(isValidAgentName);
+
+      // Also include any bonus agents in evalData
+      const secSlug = getActiveSectionSlug(currentSection.evaluator);
+      const prefix = `${selectedYear}_${selectedQuarter}_${secSlug}_`;
+      Object.entries(evalData).forEach(([docId, docData]: [string, any]) => {
+        if (docId.startsWith(prefix) && docData?.csr_name) {
+          const cName = getCanonicalAgentName(docData.csr_name.trim());
+          if (isValidAgentName(cName)) {
+            combined.push(cName);
+          }
+        }
+      });
+
+      const nameMap = new Map<string, string>();
+      combined.forEach(n => {
+        const k = n.toLowerCase();
+        if (!nameMap.has(k)) nameMap.set(k, n);
+      });
+      list = Array.from(nameMap.values()).sort((a, b) => a.localeCompare(b));
     } else {
       list = sectionCSRs[currentSection.id] || [];
     }
@@ -1032,7 +1107,7 @@ export default function QualityDashboard({
     return list.filter(name => name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [
     sectionCSRs, currentSection, searchTerm, isCShift, isCallMon, isBonus, rosterMembers, callMonRoster,
-    selectedMonthFilter, selectedWeek, selectedYear, selectedQuarter, evalData, cShiftWeeklyAdded
+    selectedMonthFilter, selectedWeek, selectedYear, selectedQuarter, evalData, cShiftWeeklyAdded, getActiveSectionSlug
   ]);
 
   const weeksList = useMemo(() => {
@@ -3258,7 +3333,7 @@ export default function QualityDashboard({
         </div>
 
         {/* Toolbar: Quarter & Week Selection Bar for Data Entry (Single Row) */}
-        <div className="sticky top-2 z-30 flex items-center gap-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-2 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 w-full shadow-md flex-nowrap">
+        <div className="sticky top-2 z-30 flex items-center gap-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-2 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 w-full shadow-md flex-nowrap overflow-x-auto scrollbar-hide">
           
           {/* Static Left Controls: Year & Month */}
           <div className="flex items-center gap-2 shrink-0">
@@ -3573,14 +3648,14 @@ export default function QualityDashboard({
             </div>
           ) : (
             /* REGULAR QA VIEW: 12 Week Tabs */
-            <div className="flex items-center gap-1 shrink-0 overflow-x-auto scrollbar-hide py-0.5">
+            <div className="flex-1 min-w-0 flex items-center gap-1 overflow-x-auto scrollbar-thin py-0.5 px-2 pr-4">
               {weeksList.map(w => {
                 const isSel = selectedWeek === w;
                 return (
                   <button
                     key={w}
                     onClick={() => setSelectedWeek(w)}
-                    className={`px-2.5 sm:px-3 py-1.5 text-xs font-black rounded-xl transition-all cursor-pointer whitespace-nowrap ${
+                    className={`shrink-0 px-2.5 sm:px-3 py-1.5 text-xs font-black rounded-xl transition-all cursor-pointer whitespace-nowrap ${
                       isSel
                         ? "bg-[#1C6B53] text-white shadow-md shadow-[#1C6B53]/25 scale-[1.02]"
                         : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60"
@@ -3908,6 +3983,8 @@ export default function QualityDashboard({
                             const hasLink = Boolean(link.trim());
                             const isV = val.toUpperCase() === "V";
                             const isNA = val.toUpperCase().includes("N/A");
+                            const numVal = parseFloat(val);
+                            const isBelow90 = !isNaN(numVal) && numVal < 90;
                             const cellLabel = `${MONTH_NAMES[trainerMonth]} Eval ${cNum}`;
 
                             return (
@@ -3933,6 +4010,8 @@ export default function QualityDashboard({
                                         ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
                                         : isNA
                                         ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
+                                        : isBelow90
+                                        ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
                                         : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-teal-400 dark:hover:border-teal-500/70 focus:border-[#0f766e] dark:focus:border-teal-400 focus:ring-2 focus:ring-[#0f766e]/20 dark:focus:ring-teal-400/20"
                                     }`}
                                   />
@@ -3968,13 +4047,21 @@ export default function QualityDashboard({
                           })}
 
                           <td className="p-2 text-center font-black text-sm bg-teal-50/50 dark:bg-teal-950/30">
-                            <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-black shadow-2xs ${
-                              agentCallMonAvg !== "-"
-                                ? "bg-white dark:bg-gray-800 text-[#0f766e] dark:text-teal-300 border border-teal-500/20"
-                                : "text-gray-300 dark:text-gray-600 font-normal"
-                            }`}>
-                              {agentCallMonAvg !== "-" ? `${agentCallMonAvg}%` : "-"}
-                            </span>
+                            {(() => {
+                              const numCallMonAvg = parseFloat(agentCallMonAvg);
+                              const isLowCallMonAvg = !isNaN(numCallMonAvg) && numCallMonAvg < 90;
+                              return (
+                                <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-black shadow-2xs ${
+                                  agentCallMonAvg !== "-"
+                                    ? isLowCallMonAvg
+                                      ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
+                                      : "bg-white dark:bg-gray-800 text-[#0f766e] dark:text-teal-300 border border-teal-500/20"
+                                    : "text-gray-300 dark:text-gray-600 font-normal"
+                                }`}>
+                                  {agentCallMonAvg !== "-" ? `${agentCallMonAvg}%` : "-"}
+                                </span>
+                              );
+                            })()}
                           </td>
 
                           <td className="p-2 text-center w-12">
@@ -4033,6 +4120,8 @@ export default function QualityDashboard({
                             const hasLink = Boolean(link.trim());
                             const isV = val.toUpperCase() === "V";
                             const isNA = val.toUpperCase().includes("N/A");
+                            const numVal = parseFloat(val);
+                            const isBelow90 = !isNaN(numVal) && numVal < 90;
                             const cellLabel = `${MONTH_NAMES[trainerMonth]} Eval ${cNum}`;
 
                             return (
@@ -4059,6 +4148,8 @@ export default function QualityDashboard({
                                         ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
                                         : isNA
                                         ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
+                                        : isBelow90
+                                        ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
                                         : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-teal-400 dark:hover:border-teal-500/70 focus:border-[#0d9488] dark:focus:border-teal-400 focus:ring-2 focus:ring-[#0d9488]/20 dark:focus:ring-teal-400/20"
                                     }`}
                                   />
@@ -4095,13 +4186,21 @@ export default function QualityDashboard({
                           })}
 
                           <td className="p-2 text-center font-black text-sm bg-teal-50/50 dark:bg-teal-950/30">
-                            <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-black shadow-2xs ${
-                              agentTrainerAvg !== "-"
-                                ? "bg-white dark:bg-gray-800 text-[#0d9488] dark:text-teal-300 border border-teal-500/20"
-                                : "text-gray-300 dark:text-gray-600 font-normal"
-                            }`}>
-                              {agentTrainerAvg !== "-" ? `${agentTrainerAvg}%` : "-"}
-                            </span>
+                            {(() => {
+                              const numTrainerAvg = parseFloat(agentTrainerAvg);
+                              const isLowTrainerAvg = !isNaN(numTrainerAvg) && numTrainerAvg < 90;
+                              return (
+                                <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-black shadow-2xs ${
+                                  agentTrainerAvg !== "-"
+                                    ? isLowTrainerAvg
+                                      ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
+                                      : "bg-white dark:bg-gray-800 text-[#0d9488] dark:text-teal-300 border border-teal-500/20"
+                                    : "text-gray-300 dark:text-gray-600 font-normal"
+                                }`}>
+                                  {agentTrainerAvg !== "-" ? `${agentTrainerAvg}%` : "-"}
+                                </span>
+                              );
+                            })()}
                           </td>
                         </tr>
                       );
@@ -4137,6 +4236,8 @@ export default function QualityDashboard({
                             const hasLink = Boolean(link.trim());
                             const isV = val.toUpperCase() === "V";
                             const isNA = val.toUpperCase().includes("N/A");
+                            const numVal = parseFloat(val);
+                            const isBelow90 = !isNaN(numVal) && numVal < 90;
                             const cellLabel = `Chat ${cNum}`;
 
                             return (
@@ -4163,6 +4264,8 @@ export default function QualityDashboard({
                                         ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
                                         : isNA
                                         ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
+                                        : isBelow90
+                                        ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
                                         : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-teal-400 dark:hover:border-teal-500/70 focus:border-[#00A991] dark:focus:border-teal-400 focus:ring-2 focus:ring-[#00A991]/20 dark:focus:ring-teal-400/20"
                                     }`}
                                   />
@@ -4203,10 +4306,14 @@ export default function QualityDashboard({
                               const displayVal = selectedMonthFilter !== null
                                 ? (tableMonthAgentAvgs[csrName] ?? "-")
                                 : weekAvg;
+                              const numCShiftAvg = parseFloat(displayVal);
+                              const isLowCShiftAvg = !isNaN(numCShiftAvg) && numCShiftAvg < 90;
                               return (
                                 <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-black shadow-2xs ${
                                   displayVal === "V"
                                     ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300"
+                                    : isLowCShiftAvg
+                                    ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
                                     : displayVal !== "-"
                                     ? "bg-white dark:bg-gray-800 text-[#00A991] dark:text-teal-300 border border-teal-500/20"
                                     : "text-gray-300 dark:text-gray-600 font-normal"
@@ -4266,6 +4373,8 @@ export default function QualityDashboard({
                             const hasLink = Boolean(link.trim());
                             const isV = val.toUpperCase() === "V";
                             const isNA = val.toUpperCase().includes("N/A");
+                            const numVal = parseFloat(val);
+                            const isBelow90 = !isNaN(numVal) && numVal < 90;
                             const cellLabel = `Call ${cNum}`;
 
                             return (
@@ -4291,6 +4400,8 @@ export default function QualityDashboard({
                                         ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
                                         : isNA
                                         ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
+                                        : isBelow90
+                                        ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
                                         : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-teal-400 dark:hover:border-teal-500/70 focus:border-[#00A991] dark:focus:border-teal-400 focus:ring-2 focus:ring-[#00A991]/20 dark:focus:ring-teal-400/20"
                                     }`}
                                   />
@@ -4327,13 +4438,21 @@ export default function QualityDashboard({
 
                           {/* Bonus Score (Average of all calls) */}
                           <td className="p-2 text-center font-black text-sm bg-teal-50/50 dark:bg-teal-950/30">
-                            <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-black shadow-2xs ${
-                              agentBonusAvg !== "-" && agentBonusAvg !== "V"
-                                ? "bg-white dark:bg-gray-800 text-[#00A991] dark:text-teal-300 border border-teal-500/20"
-                                : "text-gray-300 dark:text-gray-600 font-normal"
-                            }`}>
-                              {agentBonusAvg !== "-" && agentBonusAvg !== "V" ? `${agentBonusAvg}%` : agentBonusAvg}
-                            </span>
+                            {(() => {
+                              const numBonusAvg = parseFloat(agentBonusAvg);
+                              const isLowBonusAvg = !isNaN(numBonusAvg) && numBonusAvg < 90;
+                              return (
+                                <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-black shadow-2xs ${
+                                  agentBonusAvg !== "-" && agentBonusAvg !== "V"
+                                    ? isLowBonusAvg
+                                      ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
+                                      : "bg-white dark:bg-gray-800 text-[#00A991] dark:text-teal-300 border border-teal-500/20"
+                                    : "text-gray-300 dark:text-gray-600 font-normal"
+                                }`}>
+                                  {agentBonusAvg !== "-" && agentBonusAvg !== "V" ? `${agentBonusAvg}%` : agentBonusAvg}
+                                </span>
+                              );
+                            })()}
                           </td>
                         </tr>
                       );
@@ -4371,6 +4490,8 @@ export default function QualityDashboard({
                           const hasLink = Boolean(link.trim());
                           const isV = val.toUpperCase() === "V";
                           const isNA = val.toUpperCase().includes("N/A");
+                          const numVal = parseFloat(val);
+                          const isBelow90 = !isNaN(numVal) && numVal < 90;
                           const cellLabel = isChatTeam ? `Chat ${cNum}` : `Call ${callIndex}`;
 
                           return (
@@ -4398,6 +4519,8 @@ export default function QualityDashboard({
                                       ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
                                       : isNA
                                       ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
+                                      : isBelow90
+                                      ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
                                       : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-emerald-400 dark:hover:border-emerald-500/70 focus:border-[#1C6B53] dark:focus:border-emerald-400 focus:ring-2 focus:ring-[#1C6B53]/20 dark:focus:ring-emerald-400/20"
                                   }`}
                                 />
@@ -4447,6 +4570,8 @@ export default function QualityDashboard({
                               const hasLink = Boolean(link.trim());
                               const isV = val.toUpperCase() === "V";
                               const isNA = val.toUpperCase().includes("N/A");
+                              const numVal = parseFloat(val);
+                              const isBelow90 = !isNaN(numVal) && numVal < 90;
 
                               return (
                                 <div className="relative inline-block group">
@@ -4471,6 +4596,8 @@ export default function QualityDashboard({
                                         ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
                                         : isNA
                                         ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
+                                        : isBelow90
+                                        ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
                                         : "bg-white dark:bg-gray-800/90 border border-amber-300 dark:border-amber-700 text-gray-900 dark:text-gray-100 hover:border-amber-400 dark:hover:border-amber-500 focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20"
                                     }`}
                                   />
@@ -4520,6 +4647,8 @@ export default function QualityDashboard({
                               const hasLink = Boolean(link.trim());
                               const isV = val.toUpperCase() === "V";
                               const isNA = val.toUpperCase().includes("N/A");
+                              const numVal = parseFloat(val);
+                              const isBelow90 = !isNaN(numVal) && numVal < 90;
 
                               return (
                                 <div className="relative inline-block group">
@@ -4544,6 +4673,8 @@ export default function QualityDashboard({
                                         ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
                                         : isNA
                                         ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
+                                        : isBelow90
+                                        ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
                                         : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-emerald-400 dark:hover:border-emerald-500/70 focus:border-[#1C6B53] dark:focus:border-emerald-400 focus:ring-2 focus:ring-[#1C6B53]/20 dark:focus:ring-emerald-400/20"
                                     }`}
                                   />
@@ -4586,10 +4717,14 @@ export default function QualityDashboard({
                             const displayVal = selectedMonthFilter !== null
                               ? (tableMonthAgentAvgs[csrName] ?? "-")
                               : weekAvg;
+                            const numAvg = parseFloat(displayVal);
+                            const isLowAvg = !isNaN(numAvg) && numAvg < 90;
                             return (
                               <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-black shadow-2xs ${
                                 displayVal === "V"
                                   ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300"
+                                  : isLowAvg
+                                  ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
                                   : displayVal !== "-"
                                   ? "bg-white dark:bg-gray-800 text-[#1C6B53] dark:text-emerald-300 border border-emerald-500/20"
                                   : "text-gray-300 dark:text-gray-600 font-normal"
