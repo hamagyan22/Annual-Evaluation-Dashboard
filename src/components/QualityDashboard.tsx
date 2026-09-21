@@ -267,35 +267,34 @@ export default function QualityDashboard({
   });
   const [isMonthMenuOpen, setIsMonthMenuOpen] = useState(false);
   const monthButtonRef = useRef<HTMLButtonElement>(null);
-  const [monthMenuPos, setMonthMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
-
-  const updateMonthMenuPos = useCallback(() => {
-    if (monthButtonRef.current) {
-      const rect = monthButtonRef.current.getBoundingClientRect();
-      setMonthMenuPos({
-        top: rect.bottom + 6,
-        left: Math.max(8, Math.min(rect.left, typeof window !== "undefined" ? window.innerWidth - 210 : rect.left)),
-      });
-    }
-  }, []);
+  const monthDropdownRef = useRef<HTMLDivElement>(null);
 
   const toggleMonthMenu = () => {
-    if (!isMonthMenuOpen) {
-      updateMonthMenuPos();
-    }
     setIsMonthMenuOpen(prev => !prev);
   };
 
   useEffect(() => {
     if (!isMonthMenuOpen) return;
-    const handleReposition = () => updateMonthMenuPos();
-    window.addEventListener("scroll", handleReposition, true);
-    window.addEventListener("resize", handleReposition);
-    return () => {
-      window.removeEventListener("scroll", handleReposition, true);
-      window.removeEventListener("resize", handleReposition);
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        monthDropdownRef.current &&
+        !monthDropdownRef.current.contains(e.target as Node) &&
+        monthButtonRef.current &&
+        !monthButtonRef.current.contains(e.target as Node)
+      ) {
+        setIsMonthMenuOpen(false);
+      }
     };
-  }, [isMonthMenuOpen, updateMonthMenuPos]);
+    const handleScroll = () => {
+      setIsMonthMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [isMonthMenuOpen]);
 
   // Force Password Change for first login or after password reset
   const [forcePasswordChange, setForcePasswordChange] = useState<boolean>(
@@ -370,6 +369,16 @@ export default function QualityDashboard({
       }
     }
     return 5;
+  });
+  const [bonusColCount, setBonusColCount] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("qa_bonus_col_count");
+      if (saved && !isNaN(Number(saved))) {
+        const num = Number(saved);
+        if (num >= 1) return num;
+      }
+    }
+    return 6;
   });
 
   // Profile Modal State
@@ -719,6 +728,12 @@ export default function QualityDashboard({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      localStorage.setItem("qa_bonus_col_count", String(bonusColCount));
+    }
+  }, [bonusColCount]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
       localStorage.setItem("qa_dlshad_shift", dlshadShift);
     }
   }, [dlshadShift]);
@@ -837,6 +852,15 @@ export default function QualityDashboard({
     if (val.toUpperCase() === "V") val = "V";
     if (val.toUpperCase() === "N/A" || val.toUpperCase() === "NA") val = "N/A";
 
+    const isBonusActive = (section.evaluator.toLowerCase().includes("lara") || section.evaluator.toLowerCase().includes("jihad")) && callShift === "bonus";
+    let altKey: string | null = null;
+    if (isBonusActive && key.match(/call_(\d+)/)) {
+      const cNum = parseInt(key.match(/call_(\d+)/)![1], 10);
+      altKey = key.startsWith("call_")
+        ? `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`
+        : `call_${cNum}`;
+    }
+
     setEvalData(prev => {
       const currentDoc = prev[docId] || {
         year: selectedYear,
@@ -849,7 +873,8 @@ export default function QualityDashboard({
       };
       const updatedScores = {
         ...(currentDoc.scores || {}),
-        [key]: val
+        [key]: val,
+        ...(altKey ? { [altKey]: val } : {})
       };
       return {
         ...prev,
@@ -876,7 +901,8 @@ export default function QualityDashboard({
           csr_name: csrName,
           scores: {
             ...((evalData[docId]?.scores) || {}),
-            [key]: val
+            [key]: val,
+            ...(altKey ? { [altKey]: val } : {})
           },
           updated_at: new Date().toISOString()
         }, { merge: true });
@@ -1057,6 +1083,67 @@ export default function QualityDashboard({
         totalWeeksInPeriod: currentCsrs.length,
         outboundAvg: "-",
         inboundCount: trainerCount,
+        passRate,
+        topAgent,
+        totalAgents: currentCsrs.length
+      };
+    }
+
+    if (isBonus) {
+      let sumScores = 0;
+      let totalCallsAudited = 0;
+      let passCount = 0;
+      const csrTotals: Record<string, { sum: number; count: number }> = {};
+
+      currentCsrs.forEach(csrName => {
+        const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+        const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
+        const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
+        const scores = evalData[docId]?.scores || {};
+
+        for (let c = 1; c <= bonusColCount; c++) {
+          const val = scores[`call_${c}`] ?? scores[`w${Math.floor((c - 1) / 6) + 1}_call_${c}`];
+          const valStr = String(val || "").trim().toUpperCase();
+          if (valStr && valStr !== "V" && valStr !== "N/A") {
+            const num = parseFloat(valStr);
+            if (!isNaN(num)) {
+              totalCallsAudited++;
+              sumScores += num;
+              if (num >= 90) passCount++;
+              if (!csrTotals[csrName]) csrTotals[csrName] = { sum: 0, count: 0 };
+              csrTotals[csrName].sum += num;
+              csrTotals[csrName].count += 1;
+            }
+          }
+        }
+      });
+
+      const totalTargetCalls = currentCsrs.length * bonusColCount;
+      const annualAvg = totalCallsAudited > 0 ? (sumScores / totalCallsAudited).toFixed(1) : "-";
+      const passRate = totalCallsAudited > 0 ? Math.round((passCount / totalCallsAudited) * 100) : 0;
+      const auditProgressPercent = totalTargetCalls > 0 ? Math.min(100, Math.round((totalCallsAudited / Math.max(1, totalTargetCalls)) * 100)) : 0;
+
+      let topAgent = "—";
+      let topScore = -1;
+      Object.entries(csrTotals).forEach(([name, stat]) => {
+        if (stat.count > 0) {
+          const avg = stat.sum / stat.count;
+          if (avg > topScore) {
+            topScore = avg;
+            topAgent = `${name} (${avg.toFixed(1)}%)`;
+          }
+        }
+      });
+
+      return {
+        annualAvg,
+        totalCallsAudited,
+        totalTargetCalls,
+        auditProgressPercent,
+        weeksCount: bonusColCount,
+        totalWeeksInPeriod: bonusColCount,
+        outboundAvg: "-",
+        inboundCount: totalCallsAudited,
         passRate,
         topAgent,
         totalAgents: currentCsrs.length
@@ -1244,7 +1331,7 @@ export default function QualityDashboard({
       topAgent,
       totalAgents: currentCsrs.length
     };
-  }, [currentCsrs, currentSection, selectedYear, selectedQuarter, cardPeriodMode, selectedMonthFilter, evalData, isChatTeam, isTrainer, trainerMonth, trainerColCount, isCShift, isCallMon, isBonus, getActiveSectionSlug]);
+  }, [currentCsrs, currentSection, selectedYear, selectedQuarter, cardPeriodMode, selectedMonthFilter, evalData, isChatTeam, isTrainer, trainerMonth, trainerColCount, bonusColCount, isCShift, isCallMon, isBonus, getActiveSectionSlug]);
 
   const callBase = (selectedWeek - 1) * 6;
 
@@ -1406,6 +1493,161 @@ export default function QualityDashboard({
     setTrainerColCount(newCount);
   };
 
+  // Compute agent average for Bonus mode (all calls combined)
+  const computeBonusAgentAvg = useCallback((scores: Record<string, string>, colCount: number): string => {
+    const nums: number[] = [];
+    let hasV = false;
+    for (let c = 1; c <= colCount; c++) {
+      const val = scores[`call_${c}`] ?? scores[`w${Math.floor((c - 1) / 6) + 1}_call_${c}`];
+      if (val && val.toUpperCase() !== "N/A") {
+        if (val.toUpperCase() === "V") {
+          hasV = true;
+        } else {
+          const n = parseFloat(val);
+          if (!isNaN(n)) nums.push(n);
+        }
+      }
+    }
+    if (nums.length === 0) return hasV ? "V" : "-";
+    return (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1);
+  }, []);
+
+  // Auto-expand bonus column count if higher evaluation indexes exist in data
+  useEffect(() => {
+    if (!isBonus) return;
+    const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
+    let maxFoundWithData = 6;
+    currentCsrs.forEach(csrName => {
+      const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
+      const scores = evalData[docId]?.scores || {};
+      Object.keys(scores).forEach(k => {
+        const match = k.match(/call_(\d+)/);
+        if (match && scores[k] && scores[k] !== "-") {
+          const idx = parseInt(match[1], 10);
+          if (idx > maxFoundWithData) maxFoundWithData = idx;
+        }
+      });
+    });
+    if (maxFoundWithData > bonusColCount) {
+      setBonusColCount(maxFoundWithData);
+    }
+  }, [isBonus, currentSection.evaluator, selectedYear, selectedQuarter, evalData, currentCsrs, getActiveSectionSlug, bonusColCount]);
+
+  // Add bonus evaluation column
+  const handleAddBonusColumn = () => {
+    setBonusColCount(prev => prev + 1);
+  };
+
+  // Remove bonus evaluation column (shifts remaining columns or clears column data)
+  const handleRemoveBonusColumn = async (colIndex: number) => {
+    if (bonusColCount <= 1) return;
+    const newCount = bonusColCount - 1;
+    const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
+
+    for (const csrName of currentCsrs) {
+      const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
+      const docData = evalData[docId];
+      if (!docData) continue;
+
+      const scores = { ...(docData.scores || {}) };
+      const notes = { ...(docData.notes || {}) };
+      const links = { ...(docData.links || {}) };
+      let changed = false;
+
+      const deleteCallKeys = (c: number) => {
+        const k1 = `call_${c}`;
+        const w = Math.floor((c - 1) / 6) + 1;
+        const k2 = `w${w}_call_${c}`;
+        if (scores[k1] !== undefined || scores[k2] !== undefined) {
+          delete scores[k1];
+          delete scores[k2];
+          changed = true;
+        }
+        if (notes[k1] !== undefined || notes[k2] !== undefined) {
+          delete notes[k1];
+          delete notes[k2];
+          changed = true;
+        }
+        if (links[k1] !== undefined || links[k2] !== undefined) {
+          delete links[k1];
+          delete links[k2];
+          changed = true;
+        }
+      };
+
+      if (colIndex === bonusColCount) {
+        deleteCallKeys(colIndex);
+      } else {
+        for (let c = colIndex; c < bonusColCount; c++) {
+          const next = c + 1;
+          const currK1 = `call_${c}`;
+          const currW = Math.floor((c - 1) / 6) + 1;
+          const currK2 = `w${currW}_call_${c}`;
+
+          const nextK1 = `call_${next}`;
+          const nextW = Math.floor((next - 1) / 6) + 1;
+          const nextK2 = `w${nextW}_call_${next}`;
+
+          const val = scores[nextK1] ?? scores[nextK2];
+          if (val !== undefined) {
+            scores[currK1] = val;
+            scores[currK2] = val;
+          } else {
+            delete scores[currK1];
+            delete scores[currK2];
+          }
+
+          const nVal = notes[nextK1] ?? notes[nextK2];
+          if (nVal !== undefined) {
+            notes[currK1] = nVal;
+            notes[currK2] = nVal;
+          } else {
+            delete notes[currK1];
+            delete notes[currK2];
+          }
+
+          const lVal = links[nextK1] ?? links[nextK2];
+          if (lVal !== undefined) {
+            links[currK1] = lVal;
+            links[currK2] = lVal;
+          } else {
+            delete links[currK1];
+            delete links[currK2];
+          }
+          changed = true;
+        }
+        deleteCallKeys(bonusColCount);
+      }
+
+      if (changed) {
+        setEvalData(prev => ({
+          ...prev,
+          [docId]: {
+            ...docData,
+            scores,
+            notes,
+            links,
+            updated_at: new Date().toISOString()
+          }
+        }));
+        try {
+          await setDoc(doc(db, "quality_evaluations", docId), {
+            scores,
+            notes,
+            links,
+            updated_at: new Date().toISOString()
+          }, { merge: true });
+        } catch (err) {
+          console.error("Error updating doc on remove bonus column:", err);
+        }
+      }
+    }
+
+    setBonusColCount(newCount);
+  };
+
   // Profile modal opening
   const handleOpenProfile = () => {
     if (onOpenProfile) {
@@ -1549,9 +1791,22 @@ export default function QualityDashboard({
     const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
     const docId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
-    const existingNote = (evalData[docId]?.notes || {})[key] || "";
+    let existingNote = (evalData[docId]?.notes || {})[key] || "";
     let existingLink = (evalData[docId]?.links || {})[key] || "";
-    const scoreVal = (evalData[docId]?.scores || {})[key] || "";
+    let scoreVal = (evalData[docId]?.scores || {})[key] || "";
+
+    if (isBonus && (!existingNote || !existingLink || !scoreVal)) {
+      const m = key.match(/call_(\d+)/);
+      if (m) {
+        const cNum = parseInt(m[1], 10);
+        const altKey = key.startsWith("call_")
+          ? `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`
+          : `call_${cNum}`;
+        if (!existingNote) existingNote = (evalData[docId]?.notes || {})[altKey] || "";
+        if (!existingLink) existingLink = (evalData[docId]?.links || {})[altKey] || "";
+        if (!scoreVal) scoreVal = (evalData[docId]?.scores || {})[altKey] || "";
+      }
+    }
 
     // If no explicit link is stored, check if the note text contains an HTTP link
     if (!existingLink && existingNote) {
@@ -1598,6 +1853,20 @@ export default function QualityDashboard({
         updatedLinks[key] = linkUrl.trim();
       } else {
         delete updatedLinks[key];
+      }
+
+      let altKey: string | null = null;
+      if (isBonus && key.match(/call_(\d+)/)) {
+        const cNum = parseInt(key.match(/call_(\d+)/)![1], 10);
+        altKey = key.startsWith("call_")
+          ? `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`
+          : `call_${cNum}`;
+      }
+      if (altKey) {
+        if (noteText.trim()) updatedNotes[altKey] = noteText.trim();
+        else delete updatedNotes[altKey];
+        if (linkUrl.trim()) updatedLinks[altKey] = linkUrl.trim();
+        else delete updatedLinks[altKey];
       }
 
       setEvalData(prev => {
@@ -1658,6 +1927,18 @@ export default function QualityDashboard({
       const updatedLinks = { ...((evalData[docId]?.links) || {}) };
       delete updatedLinks[key];
 
+      let altKey: string | null = null;
+      if (isBonus && key.match(/call_(\d+)/)) {
+        const cNum = parseInt(key.match(/call_(\d+)/)![1], 10);
+        altKey = key.startsWith("call_")
+          ? `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`
+          : `call_${cNum}`;
+      }
+      if (altKey) {
+        delete updatedNotes[altKey];
+        delete updatedLinks[altKey];
+      }
+
       setEvalData(prev => {
         const currentDoc = prev[docId];
         if (!currentDoc) return prev;
@@ -1690,7 +1971,7 @@ export default function QualityDashboard({
   const handleCellKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, rowIdx: number, colIdx: number) => {
     let targetRow = rowIdx;
     let targetCol = colIdx;
-    const maxCol = isCallMon ? 2 : isTrainer ? trainerColCount - 1 : isCShift ? 2 : 6;
+    const maxCol = isCallMon ? 2 : isTrainer ? trainerColCount - 1 : isCShift ? 2 : isBonus ? bonusColCount - 1 : 6;
 
     if (e.key === "ArrowDown" || e.key === "Enter") {
       e.preventDefault();
@@ -2087,6 +2368,127 @@ export default function QualityDashboard({
     }
 
     const exportSectionSlug = getActiveSectionSlug(currentSection.evaluator);
+
+    if (isBonus) {
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) return;
+
+      const rowsData = currentCsrs.map((csrName, idx) => {
+        const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+        const docId = `${selectedYear}_${selectedQuarter}_${exportSectionSlug}_${slug}`;
+        const scores = evalData[docId]?.scores || {};
+        const notes = evalData[docId]?.notes || {};
+        const bonusAvg = computeBonusAgentAvg(scores, bonusColCount);
+
+        const callVals = Array.from({ length: bonusColCount }, (_, i) => i + 1).map(cNum => {
+          const key = `call_${cNum}`;
+          const wKey = `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`;
+          const val = scores[key] ?? scores[wKey] ?? "-";
+          const note = notes[key] ?? notes[wKey] ?? "";
+          return { val, note };
+        });
+
+        return {
+          idx: idx + 1,
+          csrName,
+          callVals,
+          bonusAvg: bonusAvg !== "-" && bonusAvg !== "V" ? `${bonusAvg}%` : bonusAvg
+        };
+      });
+
+      const colAverages = Array.from({ length: bonusColCount }, (_, i) => i + 1).map(cNum => {
+        const key = `call_${cNum}`;
+        const wKey = `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`;
+        const nums: number[] = [];
+        currentCsrs.forEach(csrName => {
+          const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+          const docId = `${selectedYear}_${selectedQuarter}_${exportSectionSlug}_${slug}`;
+          const val = (evalData[docId]?.scores || {})[key] ?? (evalData[docId]?.scores || {})[wKey];
+          if (val && val.toUpperCase() !== "V" && val.toUpperCase() !== "N/A") {
+            const n = parseFloat(val);
+            if (!isNaN(n)) nums.push(n);
+          }
+        });
+        return nums.length > 0 ? (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1) + "%" : "-";
+      });
+
+      const bonusAverages: number[] = [];
+      currentCsrs.forEach(csrName => {
+        const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+        const docId = `${selectedYear}_${selectedQuarter}_${exportSectionSlug}_${slug}`;
+        const scores = evalData[docId]?.scores || {};
+        const avgStr = computeBonusAgentAvg(scores, bonusColCount);
+        if (avgStr !== "-" && avgStr !== "V") {
+          const n = parseFloat(avgStr);
+          if (!isNaN(n)) bonusAverages.push(n);
+        }
+      });
+      const totalBonusTeamAvg = bonusAverages.length > 0
+        ? (bonusAverages.reduce((a, b) => a + b, 0) / bonusAverages.length).toFixed(1) + "%"
+        : "-";
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <title>${currentSection.evaluator} - Bonus Quality Report</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px; color: #1e293b; }
+              .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 2px solid #00A991; padding-bottom: 16px; }
+              .title { font-size: 20px; font-weight: 800; color: #00A991; margin: 0; }
+              .sub { font-size: 12px; color: #64748b; margin-top: 4px; }
+              table { width: 100%; border-collapse: collapse; font-size: 11px; }
+              th { background: #f0fdfa; color: #00A991; font-weight: 700; padding: 6px; border: 1px solid #ccfbf1; text-align: center; }
+              td { padding: 6px; border: 1px solid #e2e8f0; text-align: center; }
+              .agent-cell { text-align: left; font-weight: 700; }
+              .badge-score { background: #00A991; color: white; padding: 2px 6px; border-radius: 6px; font-weight: 800; }
+              .total-row { background: #f0fdfa; font-weight: 800; color: #00A991; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div>
+                <h1 class="title">${currentSection.evaluator} — Bonus Evaluations</h1>
+                <div class="sub">${selectedQuarter} ${selectedYear} • Calls 1 to ${bonusColCount} • Younis + Ankido Teams (${currentCsrs.length} Agents)</div>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 30px;">#</th>
+                  <th style="text-align: left;">Agent</th>
+                  ${Array.from({ length: bonusColCount }, (_, i) => `<th>Call ${i + 1}</th>`).join('')}
+                  <th style="background: #00A991; color: white;">Bonus Avg</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsData.map(r => `
+                  <tr>
+                    <td style="color: #94a3b8; font-size: 10px; font-weight: 600;">${r.idx}</td>
+                    <td class="agent-cell">${r.csrName}</td>
+                    ${r.callVals.map(c => `<td><span style="font-weight: 800;">${c.val}</span></td>`).join('')}
+                    <td><span class="badge-score">${r.bonusAvg}</span></td>
+                  </tr>
+                `).join('')}
+                <tr class="total-row">
+                  <td colspan="2" style="text-align: left; padding-left: 12px; text-transform: uppercase;">Team Average</td>
+                  ${colAverages.map(avg => `<td>${avg}</td>`).join('')}
+                  <td class="total-avg-cell">${totalBonusTeamAvg}</td>
+                </tr>
+              </tbody>
+            </table>
+            <script>
+              window.onload = function() { window.print(); }
+            </script>
+          </body>
+        </html>
+      `;
+      printWindow.document.open();
+      printWindow.document.write(html);
+      printWindow.document.close();
+      return;
+    }
 
     const rowsData = currentCsrs.map((csrName, idx) => {
       const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
@@ -2825,7 +3227,7 @@ export default function QualityDashboard({
         </div>
 
         {/* Toolbar: Quarter & Week Selection Bar for Data Entry (Single Row) */}
-        <div className="relative z-30 flex items-center gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-2 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 w-full shadow-xs flex-nowrap overflow-x-auto scrollbar-hide">
+        <div className="sticky top-2 z-30 flex items-center gap-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-2 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 w-full shadow-md flex-nowrap">
           
           {/* Static Left Controls: Year & Month */}
           <div className="flex items-center gap-2 shrink-0">
@@ -2845,7 +3247,7 @@ export default function QualityDashboard({
 
             {/* Modern Month Dropdown (For Regular QA: filters month) */}
             {!isTrainer && (
-              <div className="relative shrink-0">
+              <div ref={monthDropdownRef} className="relative shrink-0">
                 <button
                   ref={monthButtonRef}
                   type="button"
@@ -2862,57 +3264,52 @@ export default function QualityDashboard({
                   <ChevronDown size={12} className={`transition-transform duration-200 ${isMonthMenuOpen ? "rotate-180" : ""}`} />
                 </button>
 
-                {isMonthMenuOpen && typeof document !== "undefined" && createPortal(
-                  <div className="fixed inset-0 z-[100]">
-                    <div className="fixed inset-0" onClick={() => setIsMonthMenuOpen(false)} />
-                    <div 
-                      className="fixed bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-2 z-[101] w-48 animate-in fade-in zoom-in-95 duration-150"
-                      style={{ top: `${monthMenuPos.top}px`, left: `${monthMenuPos.left}px` }}
+                {isMonthMenuOpen && (
+                  <div 
+                    className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-2 z-[60] w-48 animate-in fade-in zoom-in-95 duration-150"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleMonthSelect(null);
+                        setIsMonthMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer mb-1.5 ${
+                        selectedMonthFilter === null
+                          ? "bg-[#1C6B53] text-white font-black shadow-xs"
+                          : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
                     >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleMonthSelect(null);
-                          setIsMonthMenuOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer mb-1.5 ${
-                          selectedMonthFilter === null
-                            ? "bg-[#1C6B53] text-white font-black shadow-xs"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        }`}
-                      >
-                        <span>{isChatTeam ? "Months" : "All Months"}</span>
-                        {selectedMonthFilter === null && <Check size={13} />}
-                      </button>
-                      
-                      <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
-                      
-                      <div className="grid grid-cols-2 gap-1 max-h-56 overflow-y-auto p-0.5">
-                        {MONTH_NAMES.map((name, idx) => {
-                          const isSel = selectedMonthFilter === idx;
-                          return (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() => {
-                                handleMonthSelect(idx);
-                                setIsMonthMenuOpen(false);
-                              }}
-                              className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                                isSel
-                                  ? "bg-[#00A991] text-white font-black shadow-xs"
-                                  : "text-gray-600 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-[#1C6B53]"
-                              }`}
-                            >
-                              <span>{name}</span>
-                              {isSel && <Check size={11} />}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <span>{isChatTeam ? "Months" : "All Months"}</span>
+                      {selectedMonthFilter === null && <Check size={13} />}
+                    </button>
+                    
+                    <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
+                    
+                    <div className="grid grid-cols-2 gap-1 max-h-56 overflow-y-auto p-0.5">
+                      {MONTH_NAMES.map((name, idx) => {
+                        const isSel = selectedMonthFilter === idx;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              handleMonthSelect(idx);
+                              setIsMonthMenuOpen(false);
+                            }}
+                            className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                              isSel
+                                ? "bg-[#00A991] text-white font-black shadow-xs"
+                                : "text-gray-600 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-[#1C6B53]"
+                            }`}
+                          >
+                            <span>{name}</span>
+                            {isSel && <Check size={11} />}
+                          </button>
+                        );
+                      })}
                     </div>
-                  </div>,
-                  document.body
+                  </div>
                 )}
               </div>
             )}
@@ -3091,7 +3488,7 @@ export default function QualityDashboard({
                   type="button"
                   onClick={() => handleRemoveTrainerColumn(trainerColCount)}
                   disabled={trainerColCount <= 1}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-black transition cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-black transition cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
                   title="Remove Last Evaluation Column"
                 >
                   <Trash2 size={13} />
@@ -3099,9 +3496,40 @@ export default function QualityDashboard({
                 </button>
               )}
             </div>
+          ) : isBonus ? (
+            /* BONUS VIEW: Add & Delete Call Columns */
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold shrink-0">
+                <PhoneIncoming size={12} className="text-[#00A991]" />
+                <span>Bonus Calls (1 to {bonusColCount})</span>
+              </div>
+
+              {/* Add Call Column Button */}
+              <button
+                type="button"
+                onClick={handleAddBonusColumn}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#00A991] hover:bg-[#008f7a] text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
+                title="Add Bonus Call Column"
+              >
+                <Plus size={13} className="stroke-[2.5]" />
+                <span>Add</span>
+              </button>
+
+              {/* Delete Call Column Button */}
+              <button
+                type="button"
+                onClick={() => handleRemoveBonusColumn(bonusColCount)}
+                disabled={bonusColCount <= 1}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-black transition cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+                title="Remove Last Bonus Call Column"
+              >
+                <Trash2 size={13} />
+                <span>Delete</span>
+              </button>
+            </div>
           ) : (
             /* REGULAR QA VIEW: 12 Week Tabs */
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1 shrink-0 overflow-x-auto scrollbar-hide py-0.5">
               {weeksList.map(w => {
                 const isSel = selectedWeek === w;
                 return (
@@ -3129,7 +3557,7 @@ export default function QualityDashboard({
           <div className="px-5 py-3.5 bg-gray-50/90 dark:bg-gray-800/90 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-wrap gap-2">
             <div className="flex items-center gap-2.5 flex-wrap">
               <div className={`px-2.5 py-1 rounded-xl text-white text-xs font-black ${isCallMon ? "bg-[#0f766e]" : isTrainer ? "bg-[#0d9488]" : isCShift || isBonus ? "bg-[#00A991]" : "bg-[#1C6B53]"}`}>
-                {isCallMon ? `${MONTH_NAMES[trainerMonth]} Call Mon` : isTrainer ? `${MONTH_NAMES[trainerMonth]} Evaluations` : isBonus ? `Week ${selectedWeek} • Bonus` : `Week ${selectedWeek}`}
+                {isCallMon ? `${MONTH_NAMES[trainerMonth]} Call Mon` : isTrainer ? `${MONTH_NAMES[trainerMonth]} Evaluations` : isBonus ? `Bonus Evaluations` : `Week ${selectedWeek}`}
               </div>
               <span className="text-xs font-bold text-gray-700 dark:text-gray-200">
                 {isCallMon
@@ -3139,7 +3567,7 @@ export default function QualityDashboard({
                   : isCShift
                   ? "Chats 1 to 3"
                   : isBonus
-                  ? `${currentSection.evaluator} — Bonus (Calls ${(selectedWeek - 1) * 6 + 1} to ${(selectedWeek - 1) * 6 + 6} + Outbound • Younis + Ankido Teams)`
+                  ? `${currentSection.evaluator} — Bonus (${bonusColCount} Calls • Younis + Ankido Teams)`
                   : (isChatTeam 
                       ? (hasChat7 
                           ? `Chats 1 to 7` 
@@ -3264,6 +3692,36 @@ export default function QualityDashboard({
                         Action
                       </th>
                     </>
+                  ) : isBonus ? (
+                    <>
+                      {Array.from({ length: bonusColCount }, (_, i) => i + 1).map(cNum => (
+                        <th key={cNum} className="px-2.5 py-3 text-center min-w-[100px] relative group/col">
+                          <div className="flex items-center justify-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-bold">
+                            <PhoneIncoming size={12} />
+                            <span>Call {cNum}</span>
+                            {bonusColCount > 1 && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveBonusColumn(cNum);
+                                }}
+                                className="opacity-0 group-hover/col:opacity-100 hover:opacity-100 p-0.5 rounded text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/60 transition cursor-pointer"
+                                title={`Remove Call ${cNum}`}
+                              >
+                                <Trash2 size={11} />
+                              </button>
+                            )}
+                          </div>
+                        </th>
+                      ))}
+                      <th className="px-4 py-3 text-center min-w-[120px] bg-[#00A991] text-white font-black">
+                        Bonus Score
+                      </th>
+                      <th className="px-3 py-3 text-center w-12 text-gray-400 font-bold">
+                        Action
+                      </th>
+                    </>
                   ) : (
                     <>
                       {[1, 2, 3, 4, 5, 6].map(cNum => (
@@ -3301,7 +3759,7 @@ export default function QualityDashboard({
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800 bg-[#FDFCFB] dark:bg-gray-900">
                 {currentCsrs.length === 0 ? (
                   <tr>
-                    <td colSpan={isCallMon ? 5 : isTrainer ? trainerColCount + 2 : isCShift ? 5 : 9} className="p-8 text-center text-sm text-gray-400">
+                    <td colSpan={isCallMon ? 5 : isTrainer ? trainerColCount + 2 : isCShift ? 5 : isBonus ? bonusColCount + 2 : 9} className="p-8 text-center text-sm text-gray-400">
                       {isCallMon ? (
                         <div className="flex flex-col items-center justify-center gap-2">
                           <p>No agents in Call Mon roster yet.</p>
@@ -3709,6 +4167,119 @@ export default function QualityDashboard({
                       );
                     }
 
+                    if (isBonus) {
+                      const agentBonusAvg = computeBonusAgentAvg(currentScores, bonusColCount);
+
+                      return (
+                        <tr key={csrName} className="hover:bg-emerald-50/30 dark:hover:bg-gray-800/40 transition">
+                          {/* Sticky CSR Name with Real Profile Photo if uploaded */}
+                          <td className="sticky left-0 bg-white dark:bg-gray-900 z-10 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
+                            <div className="flex items-center gap-2.5">
+                              {agentPhoto ? (
+                                <img
+                                  src={agentPhoto}
+                                  alt={csrName}
+                                  className="w-7 h-7 rounded-full object-cover shadow-xs border border-emerald-500/20 ring-1 ring-emerald-500/20 shrink-0"
+                                />
+                              ) : (
+                                <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-[#00A991] dark:text-emerald-300 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                                  {csrName.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <span className="truncate max-w-[150px]" title={csrName}>{csrName}</span>
+                            </div>
+                          </td>
+
+                          {/* Dynamic Bonus Call Columns */}
+                          {Array.from({ length: bonusColCount }, (_, i) => i + 1).map((cNum, cIdx) => {
+                            const key = `call_${cNum}`;
+                            const wKey = `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`;
+                            const rawVal = currentScores[key] ?? currentScores[wKey] ?? "";
+                            const val = String(rawVal);
+                            const note = currentNotes[key] ?? currentNotes[wKey] ?? "";
+                            const link = currentLinks[key] ?? currentLinks[wKey] ?? "";
+                            const hasNote = Boolean(note.trim());
+                            const hasLink = Boolean(link.trim());
+                            const isV = val.toUpperCase() === "V";
+                            const isNA = val.toUpperCase().includes("N/A");
+                            const cellLabel = `Call ${cNum}`;
+
+                            return (
+                              <td key={cNum} className="p-2 text-center">
+                                <div className="relative inline-block group">
+                                  {hasNote && (
+                                    <div
+                                      onClick={() => handleOpenNote(csrName, key, cellLabel)}
+                                      className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10"
+                                      title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
+                                    />
+                                  )}
+                                  <input
+                                    id={`qa_cell_${agentIdx}_${cIdx}`}
+                                    type="text"
+                                    value={val}
+                                    onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
+                                    onKeyDown={(e) => handleCellKeyDown(e, agentIdx, cIdx)}
+                                    onFocus={(e) => e.target.select()}
+                                    placeholder="-"
+                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                      isV
+                                        ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
+                                        : isNA
+                                        ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
+                                        : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-teal-400 dark:hover:border-teal-500/70 focus:border-[#00A991] dark:focus:border-teal-400 focus:ring-2 focus:ring-[#00A991]/20 dark:focus:ring-teal-400/20"
+                                    }`}
+                                  />
+                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-10">
+                                    {hasLink && (
+                                      <a
+                                        href={link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-4 h-4 rounded-full bg-[#00A991] hover:bg-[#008f7a] text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
+                                        title={`Open Conversation Link: ${link}`}
+                                      >
+                                        <ExternalLink size={7} />
+                                      </a>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenNote(csrName, key, cellLabel)}
+                                      className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                                        hasNote
+                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
+                                          : "bg-gray-100 hover:bg-[#00A991] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110 opacity-70 group-hover:opacity-100"
+                                      }`}
+                                      title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
+                                    >
+                                      <FileText size={8} />
+                                    </button>
+                                  </div>
+                                </div>
+                              </td>
+                            );
+                          })}
+
+                          {/* Bonus Score (Average of all calls) */}
+                          <td className="p-2 text-center font-black text-sm bg-teal-50/50 dark:bg-teal-950/30">
+                            <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-black shadow-2xs ${
+                              agentBonusAvg !== "-" && agentBonusAvg !== "V"
+                                ? "bg-white dark:bg-gray-800 text-[#00A991] dark:text-teal-300 border border-teal-500/20"
+                                : "text-gray-300 dark:text-gray-600 font-normal"
+                            }`}>
+                              {agentBonusAvg !== "-" && agentBonusAvg !== "V" ? `${agentBonusAvg}%` : agentBonusAvg}
+                            </span>
+                          </td>
+
+                          {/* Empty action column for consistent grid */}
+                          <td className="p-2 text-center w-12 text-gray-300 dark:text-gray-700">
+                            —
+                          </td>
+                        </tr>
+                      );
+                    }
+
                     return (
                       <tr key={csrName} className="hover:bg-emerald-50/30 dark:hover:bg-gray-800/40 transition">
                         {/* Sticky CSR Name with Real Profile Photo if uploaded */}
@@ -4075,6 +4646,53 @@ export default function QualityDashboard({
                               ? (weekAverages.reduce((a, b) => a + b, 0) / weekAverages.length).toFixed(1)
                               : "-";
                           }
+                          return (
+                            <td className="p-2 text-center font-black text-sm bg-teal-200/60 dark:bg-teal-900/60 text-[#00A991] dark:text-teal-300">
+                              {totalAvg !== "-" ? `${totalAvg}%` : "-"}
+                            </td>
+                          );
+                        })()}
+                        <td className="p-2" />
+                      </>
+                    ) : isBonus ? (
+                      <>
+                        {Array.from({ length: bonusColCount }, (_, i) => i + 1).map(cNum => {
+                          const key = `call_${cNum}`;
+                          const wKey = `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`;
+                          const nums: number[] = [];
+                          const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
+                          currentCsrs.forEach(csrName => {
+                            const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+                            const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
+                            const val = (evalData[docId]?.scores || {})[key] ?? (evalData[docId]?.scores || {})[wKey];
+                            if (val && val.toUpperCase() !== "V" && val.toUpperCase() !== "N/A") {
+                              const n = parseFloat(val);
+                              if (!isNaN(n)) nums.push(n);
+                            }
+                          });
+                          const colAvg = nums.length > 0 ? (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1) : "-";
+                          return (
+                            <td key={cNum} className="p-2 text-center font-black text-[#00A991] dark:text-teal-300">
+                              {colAvg !== "-" ? `${colAvg}%` : "-"}
+                            </td>
+                          );
+                        })}
+
+                        {/* Overall Bonus Team Average */}
+                        {(() => {
+                          const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
+                          const agentAvgs: number[] = [];
+                          currentCsrs.forEach(csrName => {
+                            const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+                            const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
+                            const scores = evalData[docId]?.scores || {};
+                            const avgStr = computeBonusAgentAvg(scores, bonusColCount);
+                            if (avgStr !== "-" && avgStr !== "V") {
+                              const n = parseFloat(avgStr);
+                              if (!isNaN(n)) agentAvgs.push(n);
+                            }
+                          });
+                          const totalAvg = agentAvgs.length > 0 ? (agentAvgs.reduce((a, b) => a + b, 0) / agentAvgs.length).toFixed(1) : "-";
                           return (
                             <td className="p-2 text-center font-black text-sm bg-teal-200/60 dark:bg-teal-900/60 text-[#00A991] dark:text-teal-300">
                               {totalAvg !== "-" ? `${totalAvg}%` : "-"}
