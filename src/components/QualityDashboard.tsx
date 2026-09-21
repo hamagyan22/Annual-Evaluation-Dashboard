@@ -468,11 +468,11 @@ export default function QualityDashboard({
       currentSection.evaluator.toLowerCase().includes("dlshad");
   }, [currentSection]);
 
-  // Mohammed Dlshad Shift State: "main" (Chat Shift) or "c_shift" (Evening Call Team, 3 Chats)
-  const [dlshadShift, setDlshadShift] = useState<"main" | "c_shift">(() => {
+  // Mohammed Dlshad Shift State: "main" (Chat Shift), "c_shift" (Evening Call Team, 3 Chats), or "bonus" (Bonus Chats)
+  const [dlshadShift, setDlshadShift] = useState<"main" | "c_shift" | "bonus">(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("qa_dlshad_shift");
-      if (saved === "c_shift" || saved === "main") return saved;
+      if (saved === "c_shift" || saved === "main" || saved === "bonus") return saved;
     }
     return "main";
   });
@@ -510,8 +510,8 @@ export default function QualityDashboard({
   });
 
   const isBonus = useMemo(() => {
-    return isCallEvaluator && callShift === "bonus";
-  }, [isCallEvaluator, callShift]);
+    return (isCallEvaluator && callShift === "bonus") || (isChatTeam && dlshadShift === "bonus");
+  }, [isCallEvaluator, callShift, isChatTeam, dlshadShift]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -895,13 +895,16 @@ export default function QualityDashboard({
     if (val.toUpperCase() === "V") val = "V";
     if (val.toUpperCase() === "N/A" || val.toUpperCase() === "NA") val = "N/A";
 
-    const isBonusActive = (section.evaluator.toLowerCase().includes("lara") || section.evaluator.toLowerCase().includes("jihad")) && callShift === "bonus";
+    const isBonusActive = ((section.evaluator.toLowerCase().includes("lara") || section.evaluator.toLowerCase().includes("jihad")) && callShift === "bonus") ||
+      (section.evaluator.toLowerCase().includes("dlshad") && dlshadShift === "bonus");
     let altKey: string | null = null;
-    if (isBonusActive && key.match(/call_(\d+)/)) {
-      const cNum = parseInt(key.match(/call_(\d+)/)![1], 10);
-      altKey = key.startsWith("call_")
-        ? `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`
-        : `call_${cNum}`;
+    if (isBonusActive && key.match(/(?:call|chat)_(\d+)/)) {
+      const cNum = parseInt(key.match(/(?:call|chat)_(\d+)/)![1], 10);
+      const isChatBonus = section.evaluator.toLowerCase().includes("dlshad");
+      const prefixKey = isChatBonus ? "chat" : "call";
+      altKey = key.startsWith(`${prefixKey}_`)
+        ? `w${Math.floor((cNum - 1) / 6) + 1}_${prefixKey}_${cNum}`
+        : `${prefixKey}_${cNum}`;
     }
 
     setEvalData(prev => {
@@ -1087,11 +1090,16 @@ export default function QualityDashboard({
       });
       list = Array.from(nameMap.values()).sort((a, b) => a.localeCompare(b));
     } else if (isBonus) {
-      // In Bonus shift: show all employees of both Younis Kamal Team AND Ankido Buya Team (like Mohammed Azad)
-      const combined: string[] = rosterMembers
-        .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
-        .map(m => getCanonicalAgentName((m.agent_name || m.name || "").trim()))
-        .filter(isValidAgentName);
+      // In Bonus shift: show Mohammed Dlshad Team for chat team, or combined call teams for call evaluators
+      const combined: string[] = isChatTeam
+        ? rosterMembers
+            .filter(m => m.team === "Mohammed Dlshad Team")
+            .map(m => getCanonicalAgentName((m.agent_name || m.name || "").trim()))
+            .filter(isValidAgentName)
+        : rosterMembers
+            .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
+            .map(m => getCanonicalAgentName((m.agent_name || m.name || "").trim()))
+            .filter(isValidAgentName);
 
       // Also include any bonus agents in evalData
       const secSlug = getActiveSectionSlug(currentSection.evaluator);
@@ -1208,7 +1216,7 @@ export default function QualityDashboard({
         const scores = evalData[docId]?.scores || {};
 
         for (let c = 1; c <= bonusColCount; c++) {
-          const val = scores[`call_${c}`] ?? scores[`w${Math.floor((c - 1) / 6) + 1}_call_${c}`];
+          const val = scores[`call_${c}`] ?? scores[`chat_${c}`] ?? scores[`w${Math.floor((c - 1) / 6) + 1}_call_${c}`] ?? scores[`w${Math.floor((c - 1) / 6) + 1}_chat_${c}`];
           const valStr = String(val || "").trim().toUpperCase();
           if (valStr && valStr !== "V" && valStr !== "N/A") {
             const num = parseFloat(valStr);
@@ -1599,12 +1607,12 @@ export default function QualityDashboard({
     setTrainerColCount(newCount);
   };
 
-  // Compute agent average for Bonus mode (all calls combined)
+  // Compute agent average for Bonus mode (all calls or chats combined)
   const computeBonusAgentAvg = useCallback((scores: Record<string, string>, colCount: number): string => {
     const nums: number[] = [];
     let hasV = false;
     for (let c = 1; c <= colCount; c++) {
-      const val = scores[`call_${c}`] ?? scores[`w${Math.floor((c - 1) / 6) + 1}_call_${c}`];
+      const val = scores[`call_${c}`] ?? scores[`chat_${c}`] ?? scores[`w${Math.floor((c - 1) / 6) + 1}_call_${c}`] ?? scores[`w${Math.floor((c - 1) / 6) + 1}_chat_${c}`];
       if (val && val.toUpperCase() !== "N/A") {
         if (val.toUpperCase() === "V") {
           hasV = true;
@@ -1628,7 +1636,7 @@ export default function QualityDashboard({
       const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
       const scores = evalData[docId]?.scores || {};
       Object.keys(scores).forEach(k => {
-        const match = k.match(/call_(\d+)/);
+        const match = k.match(/(?:call|chat)_(\d+)/);
         if (match && scores[k] && scores[k] !== "-") {
           const idx = parseInt(match[1], 10);
           if (idx > maxFoundWithData) maxFoundWithData = idx;
@@ -1673,10 +1681,13 @@ export default function QualityDashboard({
       const links = { ...(docData.links || {}) };
       let changed = false;
 
+      const isChatBonus = currentSection.evaluator.toLowerCase().includes("dlshad");
+      const pKey = isChatBonus ? "chat" : "call";
+
       const deleteCallKeys = (c: number) => {
-        const k1 = `call_${c}`;
+        const k1 = `${pKey}_${c}`;
         const w = Math.floor((c - 1) / 6) + 1;
-        const k2 = `w${w}_call_${c}`;
+        const k2 = `w${w}_${pKey}_${c}`;
         if (scores[k1] !== undefined || scores[k2] !== undefined) {
           delete scores[k1];
           delete scores[k2];
@@ -1699,13 +1710,13 @@ export default function QualityDashboard({
       } else {
         for (let c = colIndex; c < bonusColCount; c++) {
           const next = c + 1;
-          const currK1 = `call_${c}`;
+          const currK1 = `${pKey}_${c}`;
           const currW = Math.floor((c - 1) / 6) + 1;
-          const currK2 = `w${currW}_call_${c}`;
+          const currK2 = `w${currW}_${pKey}_${c}`;
 
-          const nextK1 = `call_${next}`;
+          const nextK1 = `${pKey}_${next}`;
           const nextW = Math.floor((next - 1) / 6) + 1;
-          const nextK2 = `w${nextW}_call_${next}`;
+          const nextK2 = `w${nextW}_${pKey}_${next}`;
 
           const val = scores[nextK1] ?? scores[nextK2];
           if (val !== undefined) {
@@ -1913,15 +1924,16 @@ export default function QualityDashboard({
     let scoreVal = (evalData[docId]?.scores || {})[key] || "";
 
     if (isBonus && (!existingNote || !existingLink || !scoreVal)) {
-      const m = key.match(/call_(\d+)/);
+      const m = key.match(/(?:call|chat)_(\d+)/);
       if (m) {
         const cNum = parseInt(m[1], 10);
-        const altKey = key.startsWith("call_")
-          ? `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`
-          : `call_${cNum}`;
-        if (!existingNote) existingNote = (evalData[docId]?.notes || {})[altKey] || "";
-        if (!existingLink) existingLink = (evalData[docId]?.links || {})[altKey] || "";
-        if (!scoreVal) scoreVal = (evalData[docId]?.scores || {})[altKey] || "";
+        const prefixKey = isChatTeam ? "chat" : "call";
+        const altKey = key.startsWith(`${prefixKey}_`)
+          ? `w${Math.floor((cNum - 1) / 6) + 1}_${prefixKey}_${cNum}`
+          : `${prefixKey}_${cNum}`;
+        if (!existingNote) existingNote = (evalData[docId]?.notes || {})[altKey] || (evalData[docId]?.notes || {})[`call_${cNum}`] || (evalData[docId]?.notes || {})[`chat_${cNum}`] || "";
+        if (!existingLink) existingLink = (evalData[docId]?.links || {})[altKey] || (evalData[docId]?.links || {})[`call_${cNum}`] || (evalData[docId]?.links || {})[`chat_${cNum}`] || "";
+        if (!scoreVal) scoreVal = (evalData[docId]?.scores || {})[altKey] || (evalData[docId]?.scores || {})[`call_${cNum}`] || (evalData[docId]?.scores || {})[`chat_${cNum}`] || "";
       }
     }
 
@@ -2498,10 +2510,10 @@ export default function QualityDashboard({
         const bonusAvg = computeBonusAgentAvg(scores, bonusColCount);
 
         const callVals = Array.from({ length: bonusColCount }, (_, i) => i + 1).map(cNum => {
-          const key = `call_${cNum}`;
-          const wKey = `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`;
-          const val = scores[key] ?? scores[wKey] ?? "-";
-          const note = notes[key] ?? notes[wKey] ?? "";
+          const key = isChatTeam ? `chat_${cNum}` : `call_${cNum}`;
+          const wKey = `w${Math.floor((cNum - 1) / 6) + 1}_${isChatTeam ? "chat" : "call"}_${cNum}`;
+          const val = scores[key] ?? scores[`call_${cNum}`] ?? scores[`chat_${cNum}`] ?? scores[wKey] ?? "-";
+          const note = notes[key] ?? notes[`call_${cNum}`] ?? notes[`chat_${cNum}`] ?? notes[wKey] ?? "";
           return { val, note };
         });
 
@@ -2514,13 +2526,13 @@ export default function QualityDashboard({
       });
 
       const colAverages = Array.from({ length: bonusColCount }, (_, i) => i + 1).map(cNum => {
-        const key = `call_${cNum}`;
-        const wKey = `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`;
+        const key = isChatTeam ? `chat_${cNum}` : `call_${cNum}`;
+        const wKey = `w${Math.floor((cNum - 1) / 6) + 1}_${isChatTeam ? "chat" : "call"}_${cNum}`;
         const nums: number[] = [];
         currentCsrs.forEach(csrName => {
           const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
           const docId = `${selectedYear}_${selectedQuarter}_${exportSectionSlug}_${slug}`;
-          const val = (evalData[docId]?.scores || {})[key] ?? (evalData[docId]?.scores || {})[wKey];
+          const val = (evalData[docId]?.scores || {})[key] ?? (evalData[docId]?.scores || {})[`call_${cNum}`] ?? (evalData[docId]?.scores || {})[`chat_${cNum}`] ?? (evalData[docId]?.scores || {})[wKey];
           if (val && val.toUpperCase() !== "V" && val.toUpperCase() !== "N/A") {
             const n = parseFloat(val);
             if (!isNaN(n)) nums.push(n);
@@ -2543,6 +2555,8 @@ export default function QualityDashboard({
       const totalBonusTeamAvg = bonusAverages.length > 0
         ? (bonusAverages.reduce((a, b) => a + b, 0) / bonusAverages.length).toFixed(1) + "%"
         : "-";
+
+      const colLabel = isChatTeam ? "Chat" : "Call";
 
       const html = `
         <!DOCTYPE html>
@@ -2567,7 +2581,7 @@ export default function QualityDashboard({
             <div class="header">
               <div>
                 <h1 class="title">${currentSection.evaluator} — Bonus Evaluations</h1>
-                <div class="sub">${selectedQuarter} ${selectedYear} • Calls 1 to ${bonusColCount} • Younis + Ankido Teams (${currentCsrs.length} Agents)</div>
+                <div class="sub">${selectedQuarter} ${selectedYear} • ${colLabel}s 1 to ${bonusColCount}${isChatTeam ? "" : " • Younis + Ankido Teams"} (${currentCsrs.length} Agents)</div>
               </div>
             </div>
             <table>
@@ -2575,7 +2589,7 @@ export default function QualityDashboard({
                 <tr>
                   <th style="width: 30px;">#</th>
                   <th style="text-align: left;">Agent</th>
-                  ${Array.from({ length: bonusColCount }, (_, i) => `<th>Call ${i + 1}</th>`).join('')}
+                  ${Array.from({ length: bonusColCount }, (_, i) => `<th>${colLabel} ${i + 1}</th>`).join('')}
                   <th style="background: #00A991; color: white;">Bonus Avg</th>
                 </tr>
               </thead>
@@ -3377,7 +3391,7 @@ export default function QualityDashboard({
                   title="Filter by Month"
                 >
                   <Calendar size={13} className={selectedMonthFilter !== null ? "text-white" : "text-[#1C6B53] dark:text-emerald-400"} />
-                  <span>{selectedMonthFilter !== null ? MONTH_NAMES[selectedMonthFilter] : (isChatTeam ? "Months" : "All Months")}</span>
+                  <span>{selectedMonthFilter !== null ? MONTH_NAMES[selectedMonthFilter] : "All Months"}</span>
                   <ChevronDown size={12} className={`transition-transform duration-200 ${isMonthMenuOpen ? "rotate-180" : ""}`} />
                 </button>
 
@@ -3397,7 +3411,7 @@ export default function QualityDashboard({
                           : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                       }`}
                     >
-                      <span>{isChatTeam ? "Months" : "All Months"}</span>
+                      <span>All Months</span>
                       {selectedMonthFilter === null && <Check size={13} />}
                     </button>
                     
@@ -3434,7 +3448,7 @@ export default function QualityDashboard({
 
           <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
 
-          {/* Mohammed Dlshad: Shift Switcher (Main Shift vs C shift) */}
+          {/* Mohammed Dlshad: Shift Switcher (Main Shift vs C shift vs Bonus) */}
           {isChatTeam && (
             <>
               <div className="flex items-center p-0.5 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 shrink-0">
@@ -3459,6 +3473,17 @@ export default function QualityDashboard({
                   }`}
                 >
                   C shift
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDlshadShift("bonus")}
+                  className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                    dlshadShift === "bonus"
+                      ? "bg-[#00A991] text-white shadow-xs scale-[1.02]"
+                      : "text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40"
+                  }`}
+                >
+                  Bonus
                 </button>
               </div>
 
@@ -3627,31 +3652,31 @@ export default function QualityDashboard({
               )}
             </div>
           ) : isBonus ? (
-            /* BONUS VIEW: Add & Delete Call Columns */
+            /* BONUS VIEW: Add & Delete Call/Chat Columns */
             <div className="flex items-center gap-2 shrink-0">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold shrink-0">
-                <PhoneIncoming size={12} className="text-[#00A991]" />
-                <span>Bonus Calls (1 to {bonusColCount})</span>
+                {isChatTeam ? <MessageSquare size={12} className="text-[#00A991]" /> : <PhoneIncoming size={12} className="text-[#00A991]" />}
+                <span>{isChatTeam ? "Bonus Chats" : "Bonus Calls"} (1 to {bonusColCount})</span>
               </div>
 
-              {/* Add Call Column Button */}
+              {/* Add Call/Chat Column Button */}
               <button
                 type="button"
                 onClick={handleAddBonusColumn}
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#00A991] hover:bg-[#008f7a] text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
-                title="Add Bonus Call Column"
+                title={isChatTeam ? "Add Bonus Chat Column" : "Add Bonus Call Column"}
               >
                 <Plus size={13} className="stroke-[2.5]" />
                 <span>Add</span>
               </button>
 
-              {/* Delete Call Column Button */}
+              {/* Delete Call/Chat Column Button */}
               <button
                 type="button"
                 onClick={() => handleRemoveBonusColumn(bonusColCount)}
                 disabled={bonusColCount <= 1}
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-black transition cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
-                title="Remove Last Bonus Call Column"
+                title={isChatTeam ? "Remove Last Bonus Chat Column" : "Remove Last Bonus Call Column"}
               >
                 <Trash2 size={13} />
                 <span>Delete</span>
@@ -3697,7 +3722,7 @@ export default function QualityDashboard({
                   : isCShift
                   ? "Chats 1 to 3"
                   : isBonus
-                  ? `${currentSection.evaluator} — Bonus (${bonusColCount} Calls • Younis + Ankido Teams)`
+                  ? `${currentSection.evaluator} — Bonus (${bonusColCount} ${isChatTeam ? "Chats" : "Calls"}${isChatTeam ? "" : " • Younis + Ankido Teams"})`
                   : (isChatTeam 
                       ? (hasChat7 
                           ? `Chats 1 to 7` 
@@ -3850,8 +3875,8 @@ export default function QualityDashboard({
                       {Array.from({ length: bonusColCount }, (_, i) => i + 1).map(cNum => (
                         <th key={cNum} className="px-2.5 py-3 text-center min-w-[100px] relative group/col">
                           <div className="flex items-center justify-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-bold">
-                            <PhoneIncoming size={12} />
-                            <span>Call {cNum}</span>
+                            {isChatTeam ? <MessageSquare size={12} /> : <PhoneIncoming size={12} />}
+                            <span>{isChatTeam ? `Chat ${cNum}` : `Call ${cNum}`}</span>
                             {bonusColCount > 1 && (
                               <button
                                 type="button"
@@ -3860,7 +3885,7 @@ export default function QualityDashboard({
                                   handleRemoveBonusColumn(cNum);
                                 }}
                                 className="opacity-0 group-hover/col:opacity-100 hover:opacity-100 p-0.5 rounded text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/60 transition cursor-pointer"
-                                title={`Remove Call ${cNum}`}
+                                title={`Remove ${isChatTeam ? "Chat" : "Call"} ${cNum}`}
                               >
                                 <Trash2 size={11} />
                               </button>
@@ -4372,21 +4397,21 @@ export default function QualityDashboard({
                             </div>
                           </td>
 
-                          {/* Dynamic Bonus Call Columns */}
+                          {/* Dynamic Bonus Call/Chat Columns */}
                           {Array.from({ length: bonusColCount }, (_, i) => i + 1).map((cNum, cIdx) => {
-                            const key = `call_${cNum}`;
-                            const wKey = `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`;
-                            const rawVal = currentScores[key] ?? currentScores[wKey] ?? "";
+                            const key = isChatTeam ? `chat_${cNum}` : `call_${cNum}`;
+                            const wKey = `w${Math.floor((cNum - 1) / 6) + 1}_${isChatTeam ? "chat" : "call"}_${cNum}`;
+                            const rawVal = currentScores[key] ?? currentScores[`call_${cNum}`] ?? currentScores[`chat_${cNum}`] ?? currentScores[wKey] ?? "";
                             const val = String(rawVal);
-                            const note = currentNotes[key] ?? currentNotes[wKey] ?? "";
-                            const link = currentLinks[key] ?? currentLinks[wKey] ?? "";
+                            const note = currentNotes[key] ?? currentNotes[`call_${cNum}`] ?? currentNotes[`chat_${cNum}`] ?? currentNotes[wKey] ?? "";
+                            const link = currentLinks[key] ?? currentLinks[`call_${cNum}`] ?? currentLinks[`chat_${cNum}`] ?? currentLinks[wKey] ?? "";
                             const hasNote = Boolean(note.trim());
                             const hasLink = Boolean(link.trim());
                             const isV = val.toUpperCase() === "V";
                             const isNA = val.toUpperCase().includes("N/A");
                             const numVal = parseFloat(val);
                             const isBelow90 = !isNaN(numVal) && numVal < 90;
-                            const cellLabel = `Call ${cNum}`;
+                            const cellLabel = `${isChatTeam ? "Chat" : "Call"} ${cNum}`;
 
                             return (
                               <td key={cNum} className="p-2 text-center">
@@ -4862,14 +4887,14 @@ export default function QualityDashboard({
                     ) : isBonus ? (
                       <>
                         {Array.from({ length: bonusColCount }, (_, i) => i + 1).map(cNum => {
-                          const key = `call_${cNum}`;
-                          const wKey = `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`;
+                          const key = isChatTeam ? `chat_${cNum}` : `call_${cNum}`;
+                          const wKey = `w${Math.floor((cNum - 1) / 6) + 1}_${isChatTeam ? "chat" : "call"}_${cNum}`;
                           const nums: number[] = [];
                           const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
                           currentCsrs.forEach(csrName => {
                             const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
                             const docId = `${selectedYear}_${selectedQuarter}_${sectionSlug}_${slug}`;
-                            const val = (evalData[docId]?.scores || {})[key] ?? (evalData[docId]?.scores || {})[wKey];
+                            const val = (evalData[docId]?.scores || {})[key] ?? (evalData[docId]?.scores || {})[`call_${cNum}`] ?? (evalData[docId]?.scores || {})[`chat_${cNum}`] ?? (evalData[docId]?.scores || {})[wKey];
                             if (val && val.toUpperCase() !== "V" && val.toUpperCase() !== "N/A") {
                               const n = parseFloat(val);
                               if (!isNaN(n)) nums.push(n);
