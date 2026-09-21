@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { auth, db } from "@/lib/firebaseClient";
 import { collection, query, where, doc, setDoc, onSnapshot } from "firebase/firestore";
 import { updatePassword } from "firebase/auth";
@@ -265,6 +266,36 @@ export default function QualityDashboard({
     return null;
   });
   const [isMonthMenuOpen, setIsMonthMenuOpen] = useState(false);
+  const monthButtonRef = useRef<HTMLButtonElement>(null);
+  const [monthMenuPos, setMonthMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  const updateMonthMenuPos = useCallback(() => {
+    if (monthButtonRef.current) {
+      const rect = monthButtonRef.current.getBoundingClientRect();
+      setMonthMenuPos({
+        top: rect.bottom + 6,
+        left: Math.max(8, Math.min(rect.left, typeof window !== "undefined" ? window.innerWidth - 210 : rect.left)),
+      });
+    }
+  }, []);
+
+  const toggleMonthMenu = () => {
+    if (!isMonthMenuOpen) {
+      updateMonthMenuPos();
+    }
+    setIsMonthMenuOpen(prev => !prev);
+  };
+
+  useEffect(() => {
+    if (!isMonthMenuOpen) return;
+    const handleReposition = () => updateMonthMenuPos();
+    window.addEventListener("scroll", handleReposition, true);
+    window.addEventListener("resize", handleReposition);
+    return () => {
+      window.removeEventListener("scroll", handleReposition, true);
+      window.removeEventListener("resize", handleReposition);
+    };
+  }, [isMonthMenuOpen, updateMonthMenuPos]);
 
   // Force Password Change for first login or after password reset
   const [forcePasswordChange, setForcePasswordChange] = useState<boolean>(
@@ -2779,8 +2810,9 @@ export default function QualityDashboard({
             {!isTrainer && (
               <div className="relative shrink-0">
                 <button
+                  ref={monthButtonRef}
                   type="button"
-                  onClick={() => setIsMonthMenuOpen(prev => !prev)}
+                  onClick={toggleMonthMenu}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition-all cursor-pointer shadow-xs border ${
                     selectedMonthFilter !== null
                       ? "bg-[#00A991] text-white border-[#00A991] shadow-md shadow-[#00A991]/25 scale-[1.02]"
@@ -2793,10 +2825,13 @@ export default function QualityDashboard({
                   <ChevronDown size={12} className={`transition-transform duration-200 ${isMonthMenuOpen ? "rotate-180" : ""}`} />
                 </button>
 
-                {isMonthMenuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsMonthMenuOpen(false)} />
-                    <div className="absolute left-0 top-full mt-2 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                {isMonthMenuOpen && typeof document !== "undefined" && createPortal(
+                  <div className="fixed inset-0 z-[100]">
+                    <div className="fixed inset-0" onClick={() => setIsMonthMenuOpen(false)} />
+                    <div 
+                      className="fixed bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-2 z-[101] w-48 animate-in fade-in zoom-in-95 duration-150"
+                      style={{ top: `${monthMenuPos.top}px`, left: `${monthMenuPos.left}px` }}
+                    >
                       <button
                         type="button"
                         onClick={() => {
@@ -2839,7 +2874,8 @@ export default function QualityDashboard({
                         })}
                       </div>
                     </div>
-                  </>
+                  </div>,
+                  document.body
                 )}
               </div>
             )}
