@@ -446,6 +446,16 @@ export default function QualityDashboard({
     }
     return 6;
   });
+  const [callMonColCount, setCallMonColCount] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("qa_call_mon_col_count");
+      if (saved && !isNaN(Number(saved))) {
+        const num = Number(saved);
+        if (num >= 1) return num;
+      }
+    }
+    return 12;
+  });
 
   // Table horizontal scroll container ref & scroll helper
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -823,6 +833,12 @@ export default function QualityDashboard({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      localStorage.setItem("qa_call_mon_col_count", String(callMonColCount));
+    }
+  }, [callMonColCount]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
       localStorage.setItem("qa_card_period_mode", cardPeriodMode);
     }
   }, [cardPeriodMode]);
@@ -1024,8 +1040,8 @@ export default function QualityDashboard({
         if (docId.startsWith(prefix) && docData?.csr_name) {
           const cName = getCanonicalAgentName(docData.csr_name.trim());
           if (isValidAgentName(cName)) {
-            // Strictly exclude any agent belonging to another team in rosterMembers
-            const isFromOtherTeam = rosterMembers.some(m => {
+            // Strictly exclude any agent belonging to another team in rosterMembers (unless sec is mohammed_azad)
+            const isFromOtherTeam = sec.id !== "mohammed_azad" && rosterMembers.some(m => {
               const mName = getCanonicalAgentName((m.agent_name || m.name || "").trim()).toLowerCase();
               return mName === cName.toLowerCase() && m.team && m.team !== sec.team;
             });
@@ -1069,6 +1085,18 @@ export default function QualityDashboard({
         if (isValidAgentName(cName)) {
           const k = cName.toLowerCase();
           if (!nameMap.has(k)) nameMap.set(k, cName);
+        }
+      });
+      // Also include any agents who have call_mon evalData for the current year/quarter
+      const effectiveQuarter = `Q${Math.floor(trainerMonth / 3) + 1}`;
+      const prefix = `${selectedYear}_${effectiveQuarter}_mohammed_azad_call_mon_`;
+      Object.entries(evalData).forEach(([docId, docData]: [string, any]) => {
+        if (docId.startsWith(prefix) && docData?.csr_name) {
+          const cName = getCanonicalAgentName(docData.csr_name.trim());
+          if (isValidAgentName(cName)) {
+            const k = cName.toLowerCase();
+            if (!nameMap.has(k)) nameMap.set(k, cName);
+          }
         }
       });
       list = Array.from(nameMap.values()).sort((a, b) => a.localeCompare(b));
@@ -1186,7 +1214,7 @@ export default function QualityDashboard({
       const csrTrainerAvgs: { name: string; avg: number }[] = [];
       const trainerQ = `Q${Math.floor(trainerMonth / 3) + 1}`;
 
-      const targetColCount = isCallMon ? 3 : trainerColCount;
+      const targetColCount = isCallMon ? callMonColCount : trainerColCount;
       const trainerSectionSlug = isCallMon ? "mohammed_azad_call_mon" : "mohammed_azad";
 
       currentCsrs.forEach(csrName => {
@@ -1433,7 +1461,7 @@ export default function QualityDashboard({
       topAgent,
       totalAgents: currentCsrs.length
     };
-  }, [currentCsrs, currentSection, selectedYear, selectedQuarter, cardPeriodMode, selectedMonthFilter, evalData, isChatTeam, isTrainer, trainerMonth, trainerColCount, bonusColCount, isCShift, isCallMon, isBonus, getActiveSectionSlug]);
+  }, [currentCsrs, currentSection, selectedYear, selectedQuarter, cardPeriodMode, selectedMonthFilter, evalData, isChatTeam, isTrainer, trainerMonth, trainerColCount, callMonColCount, bonusColCount, isCShift, isCallMon, isBonus, getActiveSectionSlug]);
 
   const currentWeekConfig = useMemo(() => {
     return getWeekColumnsConfig(isChatTeam, selectedYear, selectedQuarter, selectedWeek);
@@ -1499,9 +1527,10 @@ export default function QualityDashboard({
     if (!isTrainer) return;
     let maxFoundWithData = 0;
     const trainerQ = `Q${Math.floor(trainerMonth / 3) + 1}`;
+    const targetSlug = isCallMon ? "mohammed_azad_call_mon" : "mohammed_azad";
     currentCsrs.forEach(csrName => {
       const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-      const docId = `${selectedYear}_${trainerQ}_mohammed_azad_${slug}`;
+      const docId = `${selectedYear}_${trainerQ}_${targetSlug}_${slug}`;
       const scores = evalData[docId]?.scores || {};
       Object.keys(scores).forEach(k => {
         const match = k.match(new RegExp(`^m${trainerMonth}_eval_(\\d+)$`));
@@ -1511,20 +1540,28 @@ export default function QualityDashboard({
         }
       });
     });
-    if (maxFoundWithData > trainerColCount) {
-      setTrainerColCount(maxFoundWithData);
+    if (isCallMon) {
+      if (maxFoundWithData > callMonColCount) {
+        setCallMonColCount(maxFoundWithData);
+      }
+    } else {
+      if (maxFoundWithData > trainerColCount) {
+        setTrainerColCount(maxFoundWithData);
+      }
     }
-  }, [isTrainer, trainerMonth, selectedYear, evalData, currentCsrs, trainerColCount]);
+  }, [isTrainer, isCallMon, trainerMonth, selectedYear, evalData, currentCsrs, trainerColCount, callMonColCount]);
 
   // Remove trainer evaluation column (shifts remaining columns or clears column data)
   const handleRemoveTrainerColumn = async (colIndex: number) => {
-    if (trainerColCount <= 1) return;
-    const newCount = trainerColCount - 1;
+    const colCount = isCallMon ? callMonColCount : trainerColCount;
+    if (colCount <= 1) return;
+    const newCount = colCount - 1;
     const trainerQ = `Q${Math.floor(trainerMonth / 3) + 1}`;
+    const targetSlug = isCallMon ? "mohammed_azad_call_mon" : "mohammed_azad";
 
     for (const csrName of currentCsrs) {
       const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-      const docId = `${selectedYear}_${trainerQ}_mohammed_azad_${slug}`;
+      const docId = `${selectedYear}_${trainerQ}_${targetSlug}_${slug}`;
       const docData = evalData[docId];
       if (!docData) continue;
 
@@ -1532,7 +1569,7 @@ export default function QualityDashboard({
       const notes = { ...(docData.notes || {}) };
       let changed = false;
 
-      if (colIndex === trainerColCount) {
+      if (colIndex === colCount) {
         // Removing the last column
         const key = `m${trainerMonth}_eval_${colIndex}`;
         if (scores[key] !== undefined) {
@@ -1545,7 +1582,7 @@ export default function QualityDashboard({
         }
       } else {
         // Shift columns above colIndex down
-        for (let c = colIndex; c < trainerColCount; c++) {
+        for (let c = colIndex; c < colCount; c++) {
           const currKey = `m${trainerMonth}_eval_${c}`;
           const nextKey = `m${trainerMonth}_eval_${c + 1}`;
           if (scores[nextKey] !== undefined) {
@@ -1560,8 +1597,8 @@ export default function QualityDashboard({
           }
           changed = true;
         }
-        delete scores[`m${trainerMonth}_eval_${trainerColCount}`];
-        delete notes[`m${trainerMonth}_eval_${trainerColCount}`];
+        delete scores[`m${trainerMonth}_eval_${colCount}`];
+        delete notes[`m${trainerMonth}_eval_${colCount}`];
       }
 
       if (changed) {
@@ -1586,7 +1623,11 @@ export default function QualityDashboard({
       }
     }
 
-    setTrainerColCount(newCount);
+    if (isCallMon) {
+      setCallMonColCount(newCount);
+    } else {
+      setTrainerColCount(newCount);
+    }
   };
 
   // Compute agent average for Bonus mode (all calls or chats combined)
@@ -2082,7 +2123,7 @@ export default function QualityDashboard({
   const handleCellKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, rowIdx: number, colIdx: number) => {
     let targetRow = rowIdx;
     let targetCol = colIdx;
-    const maxCol = isCallMon ? 2 : isTrainer ? trainerColCount - 1 : isCShift ? 2 : isBonus ? bonusColCount - 1 : (standardColCount - 1 + (showOutbound ? 1 : 0));
+    const maxCol = isCallMon ? callMonColCount - 1 : isTrainer ? trainerColCount - 1 : isCShift ? 2 : isBonus ? bonusColCount - 1 : (standardColCount - 1 + (showOutbound ? 1 : 0));
 
     if (e.key === "ArrowDown" || e.key === "Enter") {
       e.preventDefault();
@@ -2120,14 +2161,14 @@ export default function QualityDashboard({
           targetCol = maxCol;
         }
       }
+    } else {
+      return;
     }
 
-    if (targetRow !== rowIdx || targetCol !== colIdx) {
-      const nextInput = document.getElementById(`qa_cell_${targetRow}_${targetCol}`) as HTMLInputElement | null;
-      if (nextInput) {
-        nextInput.focus();
-        nextInput.select();
-      }
+    const nextInput = document.getElementById(`qa_cell_${targetRow}_${targetCol}`) as HTMLInputElement | null;
+    if (nextInput) {
+      nextInput.focus();
+      nextInput.select();
     }
   };
 
@@ -2135,7 +2176,7 @@ export default function QualityDashboard({
   const handleExportPDF = () => {
     if (isTrainer) {
       const trainerQ = `Q${Math.floor(trainerMonth / 3) + 1}`;
-      const effectiveColCount = isCallMon ? 3 : trainerColCount;
+      const effectiveColCount = isCallMon ? callMonColCount : trainerColCount;
       const trainerSectionSlug = isCallMon ? "mohammed_azad_call_mon" : "mohammed_azad";
 
       const rowsData = currentCsrs.map((csrName, idx) => {
@@ -3570,11 +3611,24 @@ export default function QualityDashboard({
                 })}
               </div>
 
-              {/* Add Evaluation Column Button - only in Training mode */}
-              {!isCallMon && (
-                <button
-                  type="button"
-                  onClick={() => {
+              {/* Add Evaluation Column Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (isCallMon) {
+                    setCallMonColCount(prev => {
+                      const next = prev + 1;
+                      setTimeout(() => {
+                        if (tableContainerRef.current) {
+                          tableContainerRef.current.scrollTo({
+                            left: tableContainerRef.current.scrollWidth,
+                            behavior: "smooth"
+                          });
+                        }
+                      }, 100);
+                      return next;
+                    });
+                  } else {
                     setTrainerColCount(prev => {
                       const next = prev + 1;
                       setTimeout(() => {
@@ -3587,28 +3641,26 @@ export default function QualityDashboard({
                       }, 100);
                       return next;
                     });
-                  }}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0d9488] hover:bg-[#0b7f74] text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
-                  title="Add Evaluation Column"
-                >
-                  <Plus size={13} className="stroke-[2.5]" />
-                  <span>Add</span>
-                </button>
-              )}
+                  }
+                }}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl ${isCallMon ? "bg-[#0f766e] hover:bg-[#0d6962]" : "bg-[#0d9488] hover:bg-[#0b7f74]"} text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95`}
+                title="Add Evaluation Column"
+              >
+                <Plus size={13} className="stroke-[2.5]" />
+                <span>Add</span>
+              </button>
 
-              {/* Remove Evaluation Column Button - only in Training mode */}
-              {!isCallMon && (
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTrainerColumn(trainerColCount)}
-                  disabled={trainerColCount <= 1}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-black transition cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
-                  title="Remove Last Evaluation Column"
-                >
-                  <Trash2 size={13} />
-                  <span>Remove</span>
-                </button>
-              )}
+              {/* Remove Evaluation Column Button */}
+              <button
+                type="button"
+                onClick={() => handleRemoveTrainerColumn(isCallMon ? callMonColCount : trainerColCount)}
+                disabled={(isCallMon ? callMonColCount : trainerColCount) <= 1}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-black transition cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+                title="Remove Last Evaluation Column"
+              >
+                <Trash2 size={13} />
+                <span>Remove</span>
+              </button>
             </div>
           ) : isBonus ? (
             /* BONUS VIEW: Add & Delete Call/Chat Columns */
@@ -3772,14 +3824,34 @@ export default function QualityDashboard({
                   </th>
                   {isCallMon ? (
                     <>
-                      {[1, 2, 3].map(cNum => (
-                        <th key={cNum} className="px-2.5 py-3 text-center min-w-[100px]">
-                          <div className="flex items-center justify-center gap-1 text-teal-800 dark:text-teal-300 font-bold">
-                            <PhoneIncoming size={12} />
-                            <span>Eval {cNum}</span>
-                          </div>
-                        </th>
-                      ))}
+                      {Array.from({ length: callMonColCount }, (_, i) => i + 1).map(cNum => {
+                        const wNum = Math.floor((cNum - 1) / 3) + 1;
+                        const cInW = ((cNum - 1) % 3) + 1;
+                        return (
+                          <th key={cNum} className="px-2.5 py-2 text-center min-w-[100px] relative group/col">
+                            <div className="flex flex-col items-center justify-center gap-0.5 text-teal-800 dark:text-teal-300 font-bold">
+                              <div className="flex items-center gap-1">
+                                <PhoneIncoming size={12} />
+                                <span>Eval {cNum}</span>
+                                {callMonColCount > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRemoveTrainerColumn(cNum);
+                                    }}
+                                    className="opacity-0 group-hover/col:opacity-100 hover:opacity-100 p-0.5 rounded text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/60 transition cursor-pointer"
+                                    title={`Remove Eval ${cNum}`}
+                                  >
+                                    <Trash2 size={11} />
+                                  </button>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-teal-600/80 dark:text-teal-400/80 font-semibold">W{wNum} C{cInW}</span>
+                            </div>
+                          </th>
+                        );
+                      })}
                       <th className="px-4 py-3 text-center min-w-[120px] bg-[#0f766e] text-white font-black">
                         {MONTH_NAMES[trainerMonth]} Avg
                       </th>
@@ -3887,7 +3959,7 @@ export default function QualityDashboard({
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800 bg-[#FDFCFB] dark:bg-gray-900">
                 {currentCsrs.length === 0 ? (
                   <tr>
-                    <td colSpan={isCallMon ? 5 : isTrainer ? trainerColCount + 2 : isCShift ? 5 : isBonus ? bonusColCount + 1 : (standardColCount + (showOutbound ? 1 : 0) + 2)} className="p-8 text-center text-sm text-gray-400">
+                    <td colSpan={isCallMon ? callMonColCount + 2 : isTrainer ? trainerColCount + 2 : isCShift ? 5 : isBonus ? bonusColCount + 1 : (standardColCount + (showOutbound ? 1 : 0) + 2)} className="p-8 text-center text-sm text-gray-400">
                       {isCallMon ? (
                         <div className="flex flex-col items-center justify-center gap-2">
                           <p>No agents in Call Mon roster yet.</p>
@@ -3931,9 +4003,9 @@ export default function QualityDashboard({
                     const agentPhoto = memberPhotos[csrName.trim().toLowerCase()] || "";
 
                     if (isCallMon) {
-                      // Call Monitoring: 3 Eval cols + Avg + Remove button
+                      // Call Monitoring: dynamic callMonColCount Eval cols + Avg + Remove button
                       let sum = 0; let count = 0;
-                      for (let c = 1; c <= 3; c++) {
+                      for (let c = 1; c <= callMonColCount; c++) {
                         const key = `m${trainerMonth}_eval_${c}`;
                         const raw = currentScores[key];
                         if (raw && raw.toUpperCase() !== "V" && !raw.toUpperCase().includes("N/A")) {
@@ -3962,7 +4034,7 @@ export default function QualityDashboard({
                             </div>
                           </td>
 
-                          {[1, 2, 3].map((cNum, cIdx) => {
+                          {Array.from({ length: callMonColCount }, (_, i) => i + 1).map((cNum, cIdx) => {
                             const key = `m${trainerMonth}_eval_${cNum}`;
                             const rawVal = currentScores[key] ?? "";
                             const val = String(rawVal);
@@ -3974,7 +4046,9 @@ export default function QualityDashboard({
                             const isNA = val.toUpperCase().includes("N/A");
                             const numVal = parseFloat(val);
                             const isBelow90 = !isNaN(numVal) && numVal < 90;
-                            const cellLabel = `${MONTH_NAMES[trainerMonth]} Eval ${cNum}`;
+                            const wNum = Math.floor((cNum - 1) / 3) + 1;
+                            const cInW = ((cNum - 1) % 3) + 1;
+                            const cellLabel = `${MONTH_NAMES[trainerMonth]} Eval ${cNum} (W${wNum} C${cInW})`;
 
                             return (
                               <td key={cNum} className="p-2 text-center">
@@ -4660,13 +4734,14 @@ export default function QualityDashboard({
 
                     {isTrainer ? (
                       <>
-                        {Array.from({ length: trainerColCount }, (_, i) => i + 1).map(cNum => {
+                        {Array.from({ length: isCallMon ? callMonColCount : trainerColCount }, (_, i) => i + 1).map(cNum => {
                           const key = `m${trainerMonth}_eval_${cNum}`;
                           const nums: number[] = [];
                           const trainerQ = `Q${Math.floor(trainerMonth / 3) + 1}`;
+                          const trainerSectionSlug = isCallMon ? "mohammed_azad_call_mon" : "mohammed_azad";
                           currentCsrs.forEach(csrName => {
                             const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-                            const docId = `${selectedYear}_${trainerQ}_mohammed_azad_${slug}`;
+                            const docId = `${selectedYear}_${trainerQ}_${trainerSectionSlug}_${slug}`;
                             const val = (evalData[docId]?.scores || {})[key];
                             if (val && val.toUpperCase() !== "V" && !val.toUpperCase().includes("N/A")) {
                               const n = parseFloat(val);
@@ -4684,11 +4759,13 @@ export default function QualityDashboard({
                         {(() => {
                           let allSum = 0; let allCnt = 0;
                           const trainerQ = `Q${Math.floor(trainerMonth / 3) + 1}`;
+                          const trainerSectionSlug = isCallMon ? "mohammed_azad_call_mon" : "mohammed_azad";
+                          const colCount = isCallMon ? callMonColCount : trainerColCount;
                           currentCsrs.forEach(csrName => {
                             const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-                            const docId = `${selectedYear}_${trainerQ}_mohammed_azad_${slug}`;
+                            const docId = `${selectedYear}_${trainerQ}_${trainerSectionSlug}_${slug}`;
                             const scores = evalData[docId]?.scores || {};
-                            for (let c = 1; c <= trainerColCount; c++) {
+                            for (let c = 1; c <= colCount; c++) {
                               const val = scores[`m${trainerMonth}_eval_${c}`];
                               if (val && val.toUpperCase() !== "V" && !val.toUpperCase().includes("N/A")) {
                                 const n = parseFloat(val);
@@ -4698,7 +4775,7 @@ export default function QualityDashboard({
                           });
                           const totalTrainerAvg = allCnt > 0 ? (allSum / allCnt).toFixed(1) : "-";
                           return (
-                            <td className="p-2 text-center font-black text-sm bg-teal-200/60 dark:bg-teal-900/60 text-[#0d9488] dark:text-teal-300">
+                            <td className={`p-2 text-center font-black text-sm ${isCallMon ? "bg-teal-300/60 dark:bg-teal-800/60 text-[#0f766e]" : "bg-teal-200/60 dark:bg-teal-900/60 text-[#0d9488]"} dark:text-teal-300`}>
                               {totalTrainerAvg !== "-" ? `${totalTrainerAvg}%` : "-"}
                             </td>
                           );
