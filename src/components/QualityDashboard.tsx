@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { auth, db } from "@/lib/firebaseClient";
-import { collection, query, where, doc, setDoc, onSnapshot } from "firebase/firestore";
+import { collection, query, where, doc, setDoc, onSnapshot, getDocs, updateDoc, addDoc } from "firebase/firestore";
 import { updatePassword } from "firebase/auth";
 import { 
   Award, ArrowLeft, Search, Users, Check, Save, Download, 
   Sun, Moon, ChevronDown, ChevronLeft, ChevronRight, CheckCheck, RefreshCw, Calendar, Plus,
-  LogOut, PhoneIncoming, PhoneOutgoing, Camera, X, Trash2, FileText, MessageSquare, ShieldCheck, UserPlus, ExternalLink, Link2
+  LogOut, PhoneIncoming, PhoneOutgoing, Camera, X, Trash2, FileText, MessageSquare, ShieldCheck, UserPlus, ExternalLink, Link2,
+  CheckCircle2, AlertCircle
 } from "lucide-react";
 import { compressImageFile } from "@/lib/imageUtils";
 
@@ -480,6 +481,10 @@ export default function QualityDashboard({
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+
+  // Metric Sync State
+  const [syncingMetrics, setSyncingMetrics] = useState(false);
+  const [syncToast, setSyncToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // Cell Note Modal State (Matching exact visual in user image 1)
   const [activeNoteModal, setActiveNoteModal] = useState<{
@@ -3055,6 +3060,146 @@ export default function QualityDashboard({
     printWindow.document.close();
   };
 
+  // Synchronize completed quality evaluations to Team Leader and Agent dashboards
+  const handleSyncToMetrics = async () => {
+    setSyncingMetrics(true);
+    try {
+      let syncedCount = 0;
+      const quarterMonthsMap: Record<string, string[]> = {
+        Q1: ["JAN", "FEB", "MAR"],
+        Q2: ["APR", "MAY", "JUN"],
+        Q3: ["JUL", "AUG", "SEP"],
+        Q4: ["OCT", "NOV", "DEC"]
+      };
+
+      const monthsToCheck = selectedMonthFilter !== null 
+        ? [MONTH_NAMES[selectedMonthFilter]]
+        : (quarterMonthsMap[selectedQuarter] || ["JUL", "AUG", "SEP"]);
+
+      const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
+
+      for (const csrName of currentCsrs) {
+        const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+
+        // Determine target metrics table and team
+        let targetTable = "mohammed_metrics";
+        let targetTeam = "Mohammed Dlshad Team";
+
+        if (currentSection.id === "mohammed_jihad") {
+          targetTable = "younis_metrics";
+          targetTeam = "Younis Kamal Team";
+        } else if (currentSection.id === "lara_kamil") {
+          targetTable = "ankido_metrics";
+          targetTeam = "Ankido Buya Team";
+        } else if (currentSection.id === "mohammed_dlshad") {
+          targetTable = "mohammed_metrics";
+          targetTeam = "Mohammed Dlshad Team";
+        } else {
+          // Mohammed Azad section - find agent's assigned team from rosterMembers
+          const foundMember = rosterMembers.find(m => {
+            const mName = getCanonicalAgentName((m.agent_name || m.name || "").trim()).toLowerCase();
+            return mName === csrName.toLowerCase();
+          });
+          if (foundMember && foundMember.team) {
+            targetTeam = foundMember.team;
+            targetTable = targetTeam === "Younis Kamal Team" ? "younis_metrics" : targetTeam === "Ankido Buya Team" ? "ankido_metrics" : "mohammed_metrics";
+          } else {
+            targetTable = "younis_metrics";
+            targetTeam = "Younis Kamal Team";
+          }
+        }
+
+        for (const mName of monthsToCheck) {
+          const mIdx = MONTH_NAMES.indexOf(mName);
+          if (mIdx === -1) continue;
+          const { quarter, weekStart, weekEnd } = getMonthWeekRange(mIdx);
+          const docId = `${selectedYear}_${quarter}_${sectionSlug}_${slug}`;
+          const docData = evalData[docId];
+          if (!docData) continue;
+
+          const scores = docData.scores || {};
+          let allWeeksFilled = true;
+          let sumQ = 0;
+          let cntQ = 0;
+          let hasV = false;
+
+          for (let w = weekStart; w <= weekEnd; w++) {
+            let weekHasEntry = false;
+            const weekPrefix = `w${w}_`;
+            for (const [k, v] of Object.entries(scores)) {
+              if (k.startsWith(weekPrefix) && v !== undefined && v !== null) {
+                const s = String(v).trim();
+                if (s !== "" && s !== "-") {
+                  weekHasEntry = true;
+                  const upper = s.toUpperCase();
+                  if (upper === "V") {
+                    hasV = true;
+                  } else if (upper !== "S" && !upper.includes("N/A") && upper !== "NA") {
+                    const n = parseFloat(s);
+                    if (!isNaN(n)) {
+                      sumQ += n;
+                      cntQ++;
+                    }
+                  }
+                }
+              }
+            }
+            if (!weekHasEntry) {
+              allWeeksFilled = false;
+              break;
+            }
+          }
+
+          if (allWeeksFilled) {
+            const verifiedAvg = cntQ > 0 ? (sumQ / cntQ).toFixed(1) : (hasV ? "V" : "");
+            if (verifiedAvg) {
+              const q = query(
+                collection(db, targetTable),
+                where("agent_name", "==", csrName),
+                where("month", "==", mName),
+                where("year", "==", selectedYear)
+              );
+              const mSnap = await getDocs(q);
+              if (!mSnap.empty) {
+                await updateDoc(doc(db, targetTable, mSnap.docs[0].id), { quality: verifiedAvg });
+              } else {
+                await addDoc(collection(db, targetTable), {
+                  agent_name: csrName,
+                  team: targetTeam,
+                  month: mName,
+                  year: selectedYear,
+                  quality: verifiedAvg,
+                  display_name: csrName
+                });
+              }
+              syncedCount++;
+            }
+          }
+        }
+      }
+
+      if (syncedCount > 0) {
+        setSyncToast({
+          message: `تم بنجاح عكس نتائج الكوالتي المكتملة (${syncedCount} سجل) على داشبورد التيم ليدر والايجنت!`,
+          type: "success"
+        });
+      } else {
+        setSyncToast({
+          message: "لم يكتمل إدخال جميع أسابيع الشهر بعد لأي موظف ليتم عكسها.",
+          type: "error"
+        });
+      }
+    } catch (err: any) {
+      setSyncToast({
+        message: `حدث خطأ أثناء عكس النتائج: ${err.message}`,
+        type: "error"
+      });
+    } finally {
+      setSyncingMetrics(false);
+      setTimeout(() => setSyncToast(null), 5000);
+    }
+  };
+
   return (
     <div className="min-h-screen p-3.5 sm:p-6 md:p-10 font-sans transition-colors bg-[#F9F8F4] dark:bg-gray-950 text-gray-900 dark:text-gray-100">
       <div className="max-w-[1700px] mx-auto space-y-6">
@@ -3810,6 +3955,18 @@ export default function QualityDashboard({
               >
                 <Download size={13} />
                 <span>Export PDF</span>
+              </button>
+
+              {/* Sync Completed Quality to TL & Agent Dashboards */}
+              <button
+                type="button"
+                onClick={handleSyncToMetrics}
+                disabled={syncingMetrics}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-xs transition cursor-pointer active:scale-95 disabled:opacity-50"
+                title="عكس درجات الكوالتي المكتملة على داشبورد التيم ليدر والايجنت"
+              >
+                <RefreshCw size={13} className={syncingMetrics ? "animate-spin" : ""} />
+                <span>{syncingMetrics ? "جاري التزامن..." : "عكس على الداشبورد"}</span>
               </button>
             </div>
           </div>
@@ -5495,6 +5652,18 @@ export default function QualityDashboard({
               )}
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Floating Sync Toast Notification */}
+      {syncToast && (
+        <div className={`fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-2xl border flex items-center gap-3 text-xs font-bold transition-all animate-in fade-in slide-in-from-bottom-5 ${
+          syncToast.type === "success" 
+            ? "bg-[#0C3227] text-white border-emerald-500/40 shadow-emerald-950/40" 
+            : "bg-amber-950 text-white border-amber-500/40 shadow-amber-950/40"
+        }`}>
+          {syncToast.type === "success" ? <CheckCircle2 size={18} className="text-emerald-400 shrink-0" /> : <AlertCircle size={18} className="text-amber-400 shrink-0" />}
+          <span>{syncToast.message}</span>
         </div>
       )}
     </div>

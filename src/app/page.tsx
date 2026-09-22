@@ -124,6 +124,65 @@ function getQaSectionSlug(team: string): string {
   return 'mohammed_jihad';
 }
 
+// Checks if all weeks for a given month have been evaluated, and computes the verified quality average
+function computeVerifiedMonthlyQuality(
+  scores: Record<string, string>,
+  wr: { quarter: string; weekStart: number; weekEnd: number },
+  isChatT: boolean,
+  selectedYear: string
+): { isComplete: boolean; qualityAvg: string } {
+  if (!scores || Object.keys(scores).length === 0) {
+    return { isComplete: false, qualityAvg: "" };
+  }
+
+  let allWeeksFilled = true;
+  let sumQ = 0;
+  let cntQ = 0;
+  let hasAnyV = false;
+
+  for (let w = wr.weekStart; w <= wr.weekEnd; w++) {
+    let weekHasEntry = false;
+    const weekPrefix = `w${w}_`;
+
+    for (const [k, v] of Object.entries(scores)) {
+      if (k.startsWith(weekPrefix) && v !== undefined && v !== null) {
+        const s = String(v).trim();
+        if (s !== "" && s !== "-") {
+          weekHasEntry = true;
+          const upper = s.toUpperCase();
+          if (upper === "V") {
+            hasAnyV = true;
+          } else if (upper !== "S" && !upper.includes("N/A") && upper !== "NA") {
+            const num = parseFloat(s);
+            if (!isNaN(num)) {
+              sumQ += num;
+              cntQ++;
+            }
+          }
+        }
+      }
+    }
+
+    if (!weekHasEntry) {
+      allWeeksFilled = false;
+      break;
+    }
+  }
+
+  if (!allWeeksFilled) {
+    return { isComplete: false, qualityAvg: "" };
+  }
+
+  let qualityAvg = "";
+  if (cntQ > 0) {
+    qualityAvg = (sumQ / cntQ).toFixed(1);
+  } else if (hasAnyV) {
+    qualityAvg = "V";
+  }
+
+  return { isComplete: true, qualityAvg };
+}
+
 const getPreviousMonthAndYear = () => {
   const now = new Date();
   const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -1844,7 +1903,7 @@ export default function Dashboard() {
           return avgRow;
         });
 
-        // Auto-populate quality from quality_evaluations for aggregate periods
+        // Auto-populate quality from quality_evaluations for aggregate periods (only completed months)
         const hasQualityCol = teamCols.some((c: any) => c.id === 'quality');
         if (hasQualityCol) {
           const sectionSlug = getQaSectionSlug(selectedTeam);
@@ -1863,22 +1922,22 @@ export default function Dashboard() {
                 const qaDoc = await getDoc(doc(db, 'quality_evaluations', docId));
                 if (qaDoc.exists()) {
                   const scores = qaDoc.data().scores || {};
-                  for (let w = wr.weekStart; w <= wr.weekEnd; w++) {
-                    for (let c = 1; c <= 6; c++) {
-                      const keys = isChatT
-                        ? [`w${w}_chat_${c}`, `w${w}_call_${c}`]
-                        : [`w${w}_call_${(w-1)*6+c}`, `w${w}_call_${c}`];
-                      const val = keys.reduce((acc: any, k: string) => acc !== undefined ? acc : scores[k], undefined);
-                      const v = parseFloat(val || '');
-                      if (!isNaN(v)) { sumQ += v; cntQ++; }
+                  const { isComplete, qualityAvg } = computeVerifiedMonthlyQuality(scores, wr, isChatT, selectedYear);
+                  if (isComplete && qualityAvg && qualityAvg !== 'V') {
+                    const num = parseFloat(qualityAvg);
+                    if (!isNaN(num)) {
+                      sumQ += num;
+                      cntQ++;
                     }
-                    const outV = parseFloat(scores[`w${w}_outbound`] || '');
-                    if (!isNaN(outV)) { sumQ += outV; cntQ++; }
                   }
                 }
               } catch(e) { /* ignore individual fetch errors */ }
             }
-            if (cntQ > 0) row['quality'] = (sumQ / cntQ).toFixed(1);
+            if (cntQ > 0) {
+              row['quality'] = (sumQ / cntQ).toFixed(1);
+            } else {
+              row['quality'] = "";
+            }
           }
         }
 
@@ -1907,7 +1966,7 @@ export default function Dashboard() {
           return empty;
         });
 
-        // Auto-populate quality from quality_evaluations for the selected month
+        // Auto-populate quality from quality_evaluations for the selected month ONLY if all weeks are complete
         const hasQualityCol = teamCols.some((c: any) => c.id === 'quality');
         if (hasQualityCol) {
           const wr = getQualityWeekRange(selectedMonth);
@@ -1922,20 +1981,29 @@ export default function Dashboard() {
                 const qaDoc = await getDoc(doc(db, 'quality_evaluations', docId));
                 if (qaDoc.exists()) {
                   const scores = qaDoc.data().scores || {};
-                  let sumQ = 0; let cntQ = 0;
-                  for (let w = wr.weekStart; w <= wr.weekEnd; w++) {
-                    for (let c = 1; c <= 6; c++) {
-                      const keys = isChatT
-                        ? [`w${w}_chat_${c}`, `w${w}_call_${c}`]
-                        : [`w${w}_call_${(w-1)*6+c}`, `w${w}_call_${c}`];
-                      const val = keys.reduce((acc: any, k: string) => acc !== undefined ? acc : scores[k], undefined);
-                      const v = parseFloat(val || '');
-                      if (!isNaN(v)) { sumQ += v; cntQ++; }
+                  const { isComplete, qualityAvg } = computeVerifiedMonthlyQuality(scores, wr, isChatT, selectedYear);
+                  if (isComplete && qualityAvg) {
+                    row['quality'] = qualityAvg;
+                    // Persist to metrics collection so Agent Dashboard receives it automatically!
+                    if (row.id) {
+                      updateDoc(doc(db, tableName, row.id), { quality: qualityAvg }).catch(console.error);
+                    } else {
+                      const { _memberId, _readonly, ...cleanRow } = row;
+                      addDoc(collection(db, tableName), {
+                        ...cleanRow,
+                        team: selectedTeam,
+                        month: selectedMonth,
+                        year: selectedYear,
+                        quality: qualityAvg
+                      }).then(docRef => {
+                        row.id = docRef.id;
+                      }).catch(console.error);
                     }
-                    const outV = parseFloat(scores[`w${w}_outbound`] || '');
-                    if (!isNaN(outV)) { sumQ += outV; cntQ++; }
+                  } else {
+                    // Quality has NOT finished entering all weeks for this month yet.
+                    // Do not display premature partial scores.
+                    row['quality'] = "";
                   }
-                  if (cntQ > 0) row['quality'] = (sumQ / cntQ).toFixed(1);
                 }
               } catch(e) {
                 // Silently ignore individual agent QA fetch errors
