@@ -3180,18 +3180,18 @@ export default function QualityDashboard({
 
       if (syncedCount > 0) {
         setSyncToast({
-          message: `تم بنجاح عكس نتائج الكوالتي المكتملة (${syncedCount} سجل) على داشبورد التيم ليدر والايجنت!`,
+          message: `Successfully synced ${syncedCount} completed quality record(s) to dashboards!`,
           type: "success"
         });
       } else {
         setSyncToast({
-          message: "لم يكتمل إدخال جميع أسابيع الشهر بعد لأي موظف ليتم عكسها.",
+          message: "No fully completed months found to sync yet.",
           type: "error"
         });
       }
     } catch (err: any) {
       setSyncToast({
-        message: `حدث خطأ أثناء عكس النتائج: ${err.message}`,
+        message: `Error syncing quality scores: ${err.message}`,
         type: "error"
       });
     } finally {
@@ -3963,10 +3963,10 @@ export default function QualityDashboard({
                 onClick={handleSyncToMetrics}
                 disabled={syncingMetrics}
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-xs transition cursor-pointer active:scale-95 disabled:opacity-50"
-                title="عكس درجات الكوالتي المكتملة على داشبورد التيم ليدر والايجنت"
+                title="Sync Completed Quality Scores to Dashboards"
               >
                 <RefreshCw size={13} className={syncingMetrics ? "animate-spin" : ""} />
-                <span>{syncingMetrics ? "جاري التزامن..." : "عكس على الداشبورد"}</span>
+                <span>{syncingMetrics ? "Syncing..." : "Sync to Dashboards"}</span>
               </button>
             </div>
           </div>
