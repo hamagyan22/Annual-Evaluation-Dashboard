@@ -95,7 +95,10 @@ const CANONICAL_AGENT_NAMES: Record<string, string> = {
   "kazhvan wirya": "Kazhvan Wirya",
   "kani sami": "Kani Sami",
   "azad muhammad": "Azad Muhammad",
-  "dhuha khanjer": "Dhuha Khanjer"
+  "dhuha khanjer": "Dhuha Khanjer",
+  "sawen": "Sawen",
+  "sawin sartib": "Sawen",
+  "sawen sartib": "Sawen"
 };
 
 function getCanonicalAgentName(name: string): string {
