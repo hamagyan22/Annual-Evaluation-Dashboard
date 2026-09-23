@@ -1338,6 +1338,17 @@ export default function Dashboard() {
     setSelectionEnd(end);
   };
 
+  // In-memory cache for instant switching between months and teams (<5ms)
+  const teamDataCacheRef = useRef<Record<string, { roster: any[]; allYearData: any[] }>>({});
+  const qaCacheRef = useRef<Record<string, any>>({});
+  const selectedMonthRef = useRef(selectedMonth);
+  const selectedTeamRef = useRef(selectedTeam);
+  const selectedYearRef = useRef(selectedYear);
+
+  useEffect(() => { selectedMonthRef.current = selectedMonth; }, [selectedMonth]);
+  useEffect(() => { selectedTeamRef.current = selectedTeam; }, [selectedTeam]);
+  useEffect(() => { selectedYearRef.current = selectedYear; }, [selectedYear]);
+
   const [columnsMap, setColumnsMap] = useState<Record<string, ColumnConfig[]>>({});
 
   // TL & Manager Profile Modal State
@@ -1845,180 +1856,335 @@ export default function Dashboard() {
     return `${m}:${s}`;
   };
 
-  const fetchData = async () => {
+  // Helper to keep in-memory cache synchronized when editing cells
+  const updateCachedMetric = (payload: any, docId?: string) => {
+    const cacheKey = `${selectedTeam}_${selectedYear}`;
+    const cached = teamDataCacheRef.current[cacheKey];
+    if (!cached) return;
+    const idx = cached.allYearData.findIndex((m: any) =>
+      (docId && m.id === docId) ||
+      (m.agent_name === payload.agent_name && m.month === payload.month)
+    );
+    if (idx >= 0) {
+      cached.allYearData[idx] = { ...cached.allYearData[idx], ...payload, ...(docId ? { id: docId } : {}) };
+    } else {
+      cached.allYearData.push({ ...payload, ...(docId ? { id: docId } : {}) });
+    }
+    setYearMetrics([...cached.allYearData]);
+  };
+
+  // Pure in-memory row computer (runs in <1ms)
+  const buildComputedRows = (
+    roster: any[],
+    allYearData: any[],
+    targetMonth: string,
+    teamCols: ColumnConfig[],
+    isAgg: boolean,
+    qaCache: Record<string, any>,
+    team: TeamName,
+    year: string
+  ) => {
+    if (isAgg) {
+      const monthsInPeriod = aggregateMap[targetMonth] || [];
+      const metrics = allYearData.filter(m => monthsInPeriod.includes(m.month));
+      const agentGroups: Record<string, any[]> = {};
+      metrics.forEach(row => {
+        if (!agentGroups[row.agent_name]) agentGroups[row.agent_name] = [];
+        agentGroups[row.agent_name].push(row);
+      });
+
+      const aggregatedRows = roster.map(member => {
+        const agentRows = agentGroups[member.agent_name] || [];
+        const avgRow: any = {
+          _memberId: member.id,
+          agent_name: member.agent_name,
+          photo_url: member.photo_url || "",
+          display_name: member.display_name || member.agent_name,
+          _readonly: true
+        };
+
+        teamCols.forEach(col => {
+          const vals = agentRows.filter(r => r[col.id] && r[col.id].toString().trim() !== "");
+          if (col.type === 'time') {
+            const sumSecs = vals.reduce((acc, r) => acc + timeToSec(r[col.id]), 0);
+            const resultSecs = col.aggregation === 'sum' ? sumSecs : (vals.length > 0 ? sumSecs / vals.length : 0);
+            avgRow[col.id] = vals.length > 0 ? secToTime(resultSecs) : "";
+          } else {
+            const sum = vals.reduce((acc, r) => acc + (parseFloat(r[col.id]) || 0), 0);
+            const result = col.aggregation === 'sum' ? sum : (vals.length > 0 ? sum / vals.length : 0);
+            avgRow[col.id] = vals.length > 0 ? (Number.isInteger(result) ? result.toString() : result.toFixed(1)) : "";
+          }
+        });
+        return avgRow;
+      });
+
+      const hasQualityCol = teamCols.some((c: any) => c.id === 'quality');
+      if (hasQualityCol) {
+        const sectionSlug = getQaSectionSlug(team);
+        const isChatT = team === 'Mohammed Dlshad Team';
+
+        for (const row of aggregatedRows) {
+          const agentName = row.agent_name;
+          const slug = agentName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+          let sumQ = 0;
+          let cntQ = 0;
+
+          for (const m of monthsInPeriod) {
+            const wr = getQualityWeekRange(m);
+            if (!wr) continue;
+            const docId = `${year}_${wr.quarter}_${sectionSlug}_${slug}`;
+            const cachedQa = qaCache[docId];
+            if (cachedQa && cachedQa.scores) {
+              const { isComplete, qualityAvg } = computeVerifiedMonthlyQuality(cachedQa.scores, wr, isChatT, year);
+              if (isComplete && qualityAvg && qualityAvg !== 'V') {
+                const num = parseFloat(qualityAvg);
+                if (!isNaN(num)) {
+                  sumQ += num;
+                  cntQ++;
+                }
+              }
+            } else {
+              // Fallback to month's existing metric quality if present
+              const mRow = agentGroups[agentName]?.find(r => r.month === m);
+              if (mRow && mRow.quality && mRow.quality !== 'V') {
+                const num = parseFloat(mRow.quality);
+                if (!isNaN(num)) {
+                  sumQ += num;
+                  cntQ++;
+                }
+              }
+            }
+          }
+
+          if (cntQ > 0) {
+            row['quality'] = (sumQ / cntQ).toFixed(1);
+          } else {
+            row['quality'] = "";
+          }
+        }
+      }
+
+      return aggregatedRows;
+    } else {
+      // Single month
+      const metrics = allYearData.filter(m => m.month === targetMonth);
+      const metricsByAgent: Record<string, any> = {};
+      metrics.forEach(row => { metricsByAgent[row.agent_name] = row; });
+
+      const mergedRows = roster.map(member => {
+        const existing = metricsByAgent[member.agent_name];
+        if (existing) {
+          return {
+            ...existing,
+            _memberId: member.id,
+            photo_url: member.photo_url || "",
+            display_name: member.display_name || member.agent_name
+          };
+        }
+        const empty: any = {
+          _memberId: member.id,
+          agent_name: member.agent_name,
+          photo_url: member.photo_url || "",
+          display_name: member.display_name || member.agent_name
+        };
+        teamCols.forEach(col => empty[col.id] = "");
+        return empty;
+      });
+
+      const hasQualityCol = teamCols.some((c: any) => c.id === 'quality');
+      if (hasQualityCol) {
+        const wr = getQualityWeekRange(targetMonth);
+        const sectionSlug = getQaSectionSlug(team);
+        const isChatT = team === 'Mohammed Dlshad Team';
+        if (wr) {
+          for (const row of mergedRows) {
+            const agentName = row.agent_name;
+            const slug = agentName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const docId = `${year}_${wr.quarter}_${sectionSlug}_${slug}`;
+            const cachedQa = qaCache[docId];
+            if (cachedQa && cachedQa.scores) {
+              const { isComplete, qualityAvg } = computeVerifiedMonthlyQuality(cachedQa.scores, wr, isChatT, year);
+              if (isComplete && qualityAvg) {
+                row['quality'] = qualityAvg;
+              } else {
+                row['quality'] = "";
+              }
+            }
+            // If cachedQa is not in cache yet, row['quality'] from allYearData is kept!
+          }
+        }
+      }
+
+      return mergedRows;
+    }
+  };
+
+  // Background fetch for missing QA docs in parallel without blocking UI
+  const fetchMissingQaDocs = async (
+    roster: any[],
+    monthsToCheck: string[],
+    team: TeamName,
+    year: string,
+    tName: string
+  ) => {
+    const teamCols = columnsMap[team] || [];
+    const hasQualityCol = teamCols.some((c: any) => c.id === 'quality');
+    if (!hasQualityCol) return;
+
+    const sectionSlug = getQaSectionSlug(team);
+    const isChatT = team === 'Mohammed Dlshad Team';
+    const toFetch: { docId: string; month: string; member: any }[] = [];
+
+    for (const m of monthsToCheck) {
+      const wr = getQualityWeekRange(m);
+      if (!wr) continue;
+      for (const member of roster) {
+        const slug = member.agent_name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const docId = `${year}_${wr.quarter}_${sectionSlug}_${slug}`;
+        if (qaCacheRef.current[docId] === undefined) {
+          toFetch.push({ docId, month: m, member });
+        }
+      }
+    }
+
+    if (toFetch.length === 0) return;
+
+    // Mark pending to avoid duplicate in-flight requests
+    toFetch.forEach(item => { qaCacheRef.current[item.docId] = null; });
+
+    try {
+      const snaps = await Promise.all(
+        toFetch.map(item => getDoc(doc(db, 'quality_evaluations', item.docId)).catch(() => null))
+      );
+
+      let hasNewData = false;
+      snaps.forEach((snap, idx) => {
+        const { docId, month, member } = toFetch[idx];
+        if (snap && snap.exists()) {
+          const data = snap.data();
+          qaCacheRef.current[docId] = data;
+          hasNewData = true;
+
+          // If this is for the current month and quality is complete, sync to metric table in background if needed
+          const wr = getQualityWeekRange(month);
+          if (wr && data.scores) {
+            const { isComplete, qualityAvg } = computeVerifiedMonthlyQuality(data.scores, wr, isChatT, year);
+            if (isComplete && qualityAvg) {
+              const cacheKey = `${team}_${year}`;
+              const cached = teamDataCacheRef.current[cacheKey];
+              const existingMetric = cached?.allYearData.find(
+                (r: any) => r.agent_name === member.agent_name && r.month === month
+              );
+              if (existingMetric && existingMetric.quality !== qualityAvg) {
+                existingMetric.quality = qualityAvg;
+                if (existingMetric.id) {
+                  updateDoc(doc(db, tName, existingMetric.id), { quality: qualityAvg }).catch(console.error);
+                }
+              }
+            }
+          }
+        } else {
+          qaCacheRef.current[docId] = {};
+        }
+      });
+
+      if (hasNewData) {
+        const cacheKey = `${team}_${year}`;
+        const cached = teamDataCacheRef.current[cacheKey];
+        if (cached && selectedTeamRef.current === team && selectedYearRef.current === year) {
+          const currentMonth = selectedMonthRef.current;
+          const isAgg = Object.keys(aggregateMap).includes(currentMonth);
+          const updated = buildComputedRows(
+            cached.roster,
+            cached.allYearData,
+            currentMonth,
+            teamCols,
+            isAgg,
+            qaCacheRef.current,
+            team,
+            year
+          );
+          setRows(updated);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching QA docs in background:", err);
+    }
+  };
+
+  const fetchData = async (forceRefresh = false) => {
     if (!session || Object.keys(columnsMap).length === 0) return;
+    const cacheKey = `${selectedTeam}_${selectedYear}`;
+    const teamCols = columnsMap[selectedTeam] || [];
+    const isAgg = Object.keys(aggregateMap).includes(selectedMonth);
+
+    // 1. FAST PATH: In-memory cache hit -> INSTANT rendering (<1ms, zero spinner delay)
+    if (!forceRefresh && teamDataCacheRef.current[cacheKey]) {
+      const { roster, allYearData } = teamDataCacheRef.current[cacheKey];
+      setYearMetrics(allYearData);
+      const computed = buildComputedRows(
+        roster,
+        allYearData,
+        selectedMonth,
+        teamCols,
+        isAgg,
+        qaCacheRef.current,
+        selectedTeam,
+        selectedYear
+      );
+      setRows(computed);
+      setLoading(false);
+
+      // Background check for missing QA docs without blocking UI
+      const monthsToCheck = isAgg ? (aggregateMap[selectedMonth] || []) : [selectedMonth];
+      fetchMissingQaDocs(roster, monthsToCheck, selectedTeam, selectedYear, tableName);
+      return;
+    }
+
+    // 2. SLOW PATH (only initial load or team/year switch): Concurrent network fetch
     setLoading(true);
     setErrorMsg(null);
 
     try {
-      const membersSnap = await getDocs(query(collection(db, 'team_members'), where('team', '==', selectedTeam)));
+      const [membersSnap, metricsSnap] = await Promise.all([
+        getDocs(query(collection(db, 'team_members'), where('team', '==', selectedTeam))),
+        getDocs(query(collection(db, tableName), where('team', '==', selectedTeam), where('year', '==', selectedYear)))
+      ]);
+
       const roster = membersSnap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
       roster.sort((a, b) => (a.agent_name > b.agent_name ? 1 : -1));
 
-      const metricsSnap = await getDocs(query(collection(db, tableName), where('team', '==', selectedTeam), where('year', '==', selectedYear)));
       const rosterNames = new Set(roster.map(d => d.agent_name));
       const allYearData = metricsSnap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .filter((d: any) => rosterNames.has(d.agent_name)) as any[];
+
+      // Store in memory cache
+      teamDataCacheRef.current[cacheKey] = { roster, allYearData };
       setYearMetrics(allYearData);
-      
-      let metrics = [...allYearData];
-      if (isAggregate) {
-        metrics = metrics.filter(m => aggregateMap[selectedMonth]?.includes(m.month));
-      } else {
-        metrics = metrics.filter(m => m.month === selectedMonth);
-      }
 
-      const teamCols = columnsMap[selectedTeam] || [];
+      const computed = buildComputedRows(
+        roster,
+        allYearData,
+        selectedMonth,
+        teamCols,
+        isAgg,
+        qaCacheRef.current,
+        selectedTeam,
+        selectedYear
+      );
+      setRows(computed);
 
-      if (isAggregate) {
-        const agentGroups: Record<string, any[]> = {};
-        metrics.forEach(row => {
-          if (!agentGroups[row.agent_name]) agentGroups[row.agent_name] = [];
-          agentGroups[row.agent_name].push(row);
-        });
-
-        const aggregatedRows = roster.map(member => {
-          const agentRows = agentGroups[member.agent_name] || [];
-          const avgRow: any = { 
-            _memberId: member.id, 
-            agent_name: member.agent_name, 
-            photo_url: member.photo_url || "", 
-            display_name: member.display_name || member.agent_name, 
-            _readonly: true 
-          };
-
-          teamCols.forEach(col => {
-            const vals = agentRows.filter(r => r[col.id] && r[col.id].toString().trim() !== "");
-            if (col.type === 'time') {
-              const sumSecs = vals.reduce((acc, r) => acc + timeToSec(r[col.id]), 0);
-              const resultSecs = col.aggregation === 'sum' ? sumSecs : (vals.length > 0 ? sumSecs / vals.length : 0);
-              avgRow[col.id] = vals.length > 0 ? secToTime(resultSecs) : "";
-            } else {
-              const sum = vals.reduce((acc, r) => acc + (parseFloat(r[col.id]) || 0), 0);
-              const result = col.aggregation === 'sum' ? sum : (vals.length > 0 ? sum / vals.length : 0);
-              avgRow[col.id] = vals.length > 0 ? (Number.isInteger(result) ? result.toString() : result.toFixed(1)) : "";
-            }
-          });
-          return avgRow;
-        });
-
-        // Auto-populate quality from quality_evaluations for aggregate periods (only completed months)
-        const hasQualityCol = teamCols.some((c: any) => c.id === 'quality');
-        if (hasQualityCol) {
-          const sectionSlug = getQaSectionSlug(selectedTeam);
-          const isChatT = selectedTeam === 'Mohammed Dlshad Team';
-          const monthsInPeriod = aggregateMap[selectedMonth] || [];
-
-          for (const row of aggregatedRows) {
-            const agentName = row.agent_name;
-            const slug = agentName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-            let sumQ = 0; let cntQ = 0;
-            for (const month of monthsInPeriod) {
-              const wr = getQualityWeekRange(month);
-              if (!wr) continue;
-              const docId = `${selectedYear}_${wr.quarter}_${sectionSlug}_${slug}`;
-              try {
-                const qaDoc = await getDoc(doc(db, 'quality_evaluations', docId));
-                if (qaDoc.exists()) {
-                  const scores = qaDoc.data().scores || {};
-                  const { isComplete, qualityAvg } = computeVerifiedMonthlyQuality(scores, wr, isChatT, selectedYear);
-                  if (isComplete && qualityAvg && qualityAvg !== 'V') {
-                    const num = parseFloat(qualityAvg);
-                    if (!isNaN(num)) {
-                      sumQ += num;
-                      cntQ++;
-                    }
-                  }
-                }
-              } catch(e) { /* ignore individual fetch errors */ }
-            }
-            if (cntQ > 0) {
-              row['quality'] = (sumQ / cntQ).toFixed(1);
-            } else {
-              row['quality'] = "";
-            }
-          }
-        }
-
-        setRows(aggregatedRows);
-      } else {
-        const metricsByAgent: Record<string, any> = {};
-        metrics.forEach(row => { metricsByAgent[row.agent_name] = row; });
-
-        const mergedRows = roster.map(member => {
-          const existing = metricsByAgent[member.agent_name];
-          if (existing) {
-            return { 
-              ...existing, 
-              _memberId: member.id, 
-              photo_url: member.photo_url || "", 
-              display_name: member.display_name || member.agent_name 
-            };
-          }
-          const empty: any = { 
-            _memberId: member.id, 
-            agent_name: member.agent_name, 
-            photo_url: member.photo_url || "", 
-            display_name: member.display_name || member.agent_name 
-          };
-          teamCols.forEach(col => empty[col.id] = "");
-          return empty;
-        });
-
-        // Auto-populate quality from quality_evaluations for the selected month ONLY if all weeks are complete
-        const hasQualityCol = teamCols.some((c: any) => c.id === 'quality');
-        if (hasQualityCol) {
-          const wr = getQualityWeekRange(selectedMonth);
-          const sectionSlug = getQaSectionSlug(selectedTeam);
-          const isChatT = selectedTeam === 'Mohammed Dlshad Team';
-          if (wr) {
-            for (const row of mergedRows) {
-              const agentName = row.agent_name;
-              const slug = agentName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-              const docId = `${selectedYear}_${wr.quarter}_${sectionSlug}_${slug}`;
-              try {
-                const qaDoc = await getDoc(doc(db, 'quality_evaluations', docId));
-                if (qaDoc.exists()) {
-                  const scores = qaDoc.data().scores || {};
-                  const { isComplete, qualityAvg } = computeVerifiedMonthlyQuality(scores, wr, isChatT, selectedYear);
-                  if (isComplete && qualityAvg) {
-                    row['quality'] = qualityAvg;
-                    // Persist to metrics collection so Agent Dashboard receives it automatically!
-                    if (row.id) {
-                      updateDoc(doc(db, tableName, row.id), { quality: qualityAvg }).catch(console.error);
-                    } else {
-                      const { _memberId, _readonly, ...cleanRow } = row;
-                      addDoc(collection(db, tableName), {
-                        ...cleanRow,
-                        team: selectedTeam,
-                        month: selectedMonth,
-                        year: selectedYear,
-                        quality: qualityAvg
-                      }).then(docRef => {
-                        row.id = docRef.id;
-                      }).catch(console.error);
-                    }
-                  } else {
-                    // Quality has NOT finished entering all weeks for this month yet.
-                    // Do not display premature partial scores.
-                    row['quality'] = "";
-                  }
-                }
-              } catch(e) {
-                // Silently ignore individual agent QA fetch errors
-              }
-            }
-          }
-        }
-
-        setRows(mergedRows);
-      }
+      // Background check for missing QA docs in parallel
+      const monthsToCheck = isAgg ? (aggregateMap[selectedMonth] || []) : [selectedMonth];
+      fetchMissingQaDocs(roster, monthsToCheck, selectedTeam, selectedYear, tableName);
     } catch (err: any) {
+      console.error("Error fetching data:", err);
       setErrorMsg(err.message);
       setRows([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => { fetchData(); }, [selectedMonth, selectedTeam, selectedYear, session, columnsMap]);
@@ -2040,11 +2206,13 @@ export default function Dashboard() {
 
       if (row.id) {
         await updateDoc(doc(db, tableName, row.id), payload);
+        updateCachedMetric(payload, row.id);
       } else {
         const docRef = await addDoc(collection(db, tableName), payload);
         const newRows = [...rows];
         newRows[index] = { ...payload, id: docRef.id, _memberId: row._memberId };
         setRows(newRows);
+        updateCachedMetric(payload, docRef.id);
       }
     } catch (err: any) {
       setErrorMsg(`Failed to save: ${err.message}`);
@@ -2065,8 +2233,9 @@ export default function Dashboard() {
     try {
       await addDoc(collection(db, 'team_members'), { agent_name: newMemberName.trim(), team: targetTeam });
       setNewMemberName("");
+      teamDataCacheRef.current = {};
       fetchAllMembers();
-      fetchData();
+      fetchData(true);
     } catch (err: any) {
       setErrorMsg(`Failed to add: ${err.message}`);
     }
@@ -2086,8 +2255,9 @@ export default function Dashboard() {
         team: targetTeam
       });
       setEditingMemberId(null);
+      teamDataCacheRef.current = {};
       fetchAllMembers();
-      fetchData();
+      fetchData(true);
     } catch (err: any) {
       setErrorMsg(`Failed to save: ${err.message}`);
     }
@@ -2105,8 +2275,9 @@ export default function Dashboard() {
       const snap = await getDocs(q);
       snap.forEach(d => deleteDoc(d.ref));
       
+      teamDataCacheRef.current = {};
       fetchAllMembers();
-      fetchData();
+      fetchData(true);
     } catch (err: any) {
       setErrorMsg(`Failed to remove: ${err.message}`);
     }
@@ -2355,9 +2526,11 @@ export default function Dashboard() {
         const payload = { ...cleanRow, team: selectedTeam, month: selectedMonth, year: selectedYear };
         if (item.row.id) {
           await updateDoc(doc(db, tableName, item.row.id), payload);
+          updateCachedMetric(payload, item.row.id);
         } else {
           const docRef = await addDoc(collection(db, tableName), payload);
           item.row.id = docRef.id;
+          updateCachedMetric(payload, docRef.id);
         }
       }
       setCopyToast(`Cleared ${rowsToSave.length} row${rowsToSave.length > 1 ? 's' : ''}`);
@@ -2466,9 +2639,11 @@ export default function Dashboard() {
         const payload = { ...cleanRow, team: selectedTeam, month: selectedMonth, year: selectedYear };
         if (item.row.id) {
           await updateDoc(doc(db, tableName, item.row.id), payload);
+          updateCachedMetric(payload, item.row.id);
         } else {
           const docRef = await addDoc(collection(db, tableName), payload);
           item.row.id = docRef.id;
+          updateCachedMetric(payload, docRef.id);
         }
       }
       setCopyToast(`Pasted ${parsedGrid.length * (parsedGrid[0]?.length || 1)} cells`);
