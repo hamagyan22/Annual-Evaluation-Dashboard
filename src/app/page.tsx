@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { auth, db } from "@/lib/firebaseClient";
+import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
 import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2 } from "lucide-react";
@@ -2202,7 +2202,7 @@ export default function Dashboard() {
 
     try {
       const { _memberId, _readonly, ...cleanRow } = row;
-      const payload = { ...cleanRow, team: selectedTeam, month: selectedMonth, year: selectedYear };
+      const payload = { ...cleanRow, team: selectedTeam, month: selectedMonth, year: selectedYear, _arch: getSystemAuthor() };
 
       if (row.id) {
         await updateDoc(doc(db, tableName, row.id), payload);
@@ -2912,9 +2912,14 @@ export default function Dashboard() {
               </button>
             </form>
 
-            <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800/80 flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-[11px] font-medium">
-              <ShieldCheck size={14} className="text-[#1C6B53] dark:text-emerald-400" />
-              <span>Protected By FIB Enterprise Security</span>
+            <div className="mt-8 pt-5 border-t border-gray-100 dark:border-gray-800/80 flex flex-col items-center justify-center gap-1.5 text-gray-400 dark:text-gray-500 text-[11px] font-medium">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={14} className="text-[#1C6B53] dark:text-emerald-400" />
+                <span>Protected By FIB Enterprise Security</span>
+              </div>
+              <div className="text-[10.5px] font-bold tracking-wide text-gray-400/90 dark:text-gray-500">
+                Designed &amp; Engineered by <span className="text-[#1C6B53] dark:text-emerald-400 font-black">{getSystemAuthor()}</span>
+              </div>
             </div>
           </div>
 

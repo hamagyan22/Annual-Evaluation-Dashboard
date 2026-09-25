@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import SystemSignatureGuard from "@/components/SystemSignatureGuard";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -15,8 +16,11 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "FIB Performance Scorecards",
-  description: "Performance & Quality Analytics Dashboard for Team Leaders, Managers, and Agents",
+  description: "Performance & Quality Analytics Dashboard for Team Leaders, Managers, and Agents — Engineered by Mohammed Dlshad",
   applicationName: "FIB Scorecard",
+  authors: [{ name: "Mohammed Dlshad" }],
+  creator: "Mohammed Dlshad",
+  publisher: "Mohammed Dlshad",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -51,9 +55,14 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="FIB Scorecard" />
+        <meta name="author" content="Mohammed Dlshad" />
+        <meta name="copyright" content="Mohammed Dlshad" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
-      <body className="antialiased text-[#1F2937]">{children}</body>
+      <body className="antialiased text-[#1F2937]">
+        {children}
+        <SystemSignatureGuard />
+      </body>
     </html>
   );
 }

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { auth, db } from "@/lib/firebaseClient";
+import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
 import { collection, query, where, doc, setDoc, onSnapshot, getDocs, updateDoc, addDoc } from "firebase/firestore";
 import { updatePassword } from "firebase/auth";
 import { 
@@ -1027,6 +1027,7 @@ export default function QualityDashboard({
           csr_name: csrName,
           scores: nextScores,
           cell_timestamps: nextTimestamps,
+          _arch: getSystemAuthor(),
           updated_at: nowIso
         }, { merge: true });
         setSaveStatus("saved");
@@ -2308,6 +2309,7 @@ export default function QualityDashboard({
         notes: updatedNotes,
         links: updatedLinks,
         cell_timestamps: updatedTimestamps,
+        _arch: getSystemAuthor(),
         updated_at: nowIso
       }, { merge: true });
 
@@ -2596,6 +2598,10 @@ export default function QualityDashboard({
               </tr>
             </tbody>
           </table>
+          <div style="margin-top: 14px; padding-top: 8px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 9px; color: #94a3b8; font-weight: 600;">
+            <div>Quality Assurance System • Official Confidential Report</div>
+            <div>System Engineered by <strong style="color: #0d9488;">${getSystemAuthor()}</strong></div>
+          </div>
           <script>
             window.onload = function() { window.print(); }
           </script>
@@ -2764,6 +2770,10 @@ export default function QualityDashboard({
                 </tr>
               </tbody>
             </table>
+            <div style="margin-top: 14px; padding-top: 8px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 9px; color: #94a3b8; font-weight: 600;">
+              <div>Quality Assurance System • Official Confidential Report</div>
+              <div>System Engineered by <strong style="color: #00A991;">${getSystemAuthor()}</strong></div>
+            </div>
             <script>
               window.onload = function() { window.print(); }
             </script>
@@ -2889,6 +2899,10 @@ export default function QualityDashboard({
                 </tr>
               </tbody>
             </table>
+            <div style="margin-top: 14px; padding-top: 8px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 9px; color: #94a3b8; font-weight: 600;">
+              <div>Quality Assurance System • Official Confidential Report</div>
+              <div>System Engineered by <strong style="color: #00A991;">${getSystemAuthor()}</strong></div>
+            </div>
             <script>
               window.onload = function() { window.print(); }
             </script>
@@ -3290,7 +3304,7 @@ export default function QualityDashboard({
 
           <div class="footer">
             <div>Quality Assurance System • Official Confidential Report</div>
-            <div>Week ${selectedWeek} Quality Performance Summary</div>
+            <div>Week ${selectedWeek} Quality Performance Summary • System Engineered by <strong style="color: #1C6B53;">${getSystemAuthor()}</strong></div>
           </div>
 
           <script>
