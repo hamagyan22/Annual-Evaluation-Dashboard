@@ -1127,6 +1127,8 @@ export default function QualityDashboard({
     return `${yyyy}-${mm}-${dd}`;
   });
 
+  const [highlightedCellTarget, setHighlightedCellTarget] = useState<{ agentLower: string; cellKey: string } | null>(null);
+
   const stepActivityDate = (deltaDays: number) => {
     const baseStr = activityFilterMode === "custom" ? activityCustomDate : activityFilterMode === "yesterday" ? yesterdayLocalStr : todayLocalStr;
     const parts = baseStr.split("-").map(Number);
@@ -1139,6 +1141,101 @@ export default function QualityDashboard({
     else if (nextStr === yesterdayLocalStr) setActivityFilterMode("yesterday");
     else setActivityFilterMode("custom");
   };
+
+  // Navigate directly from an Activity Log chip to the exact cell on the Quality Dashboard
+  const handleJumpToActivityItem = useCallback((item: {
+    agentName: string;
+    shiftBadge: string;
+    quarter: string;
+    canonicalKey: string;
+  }) => {
+    // 1. Ensure Quarter matches
+    if (item.quarter && item.quarter !== selectedQuarter) {
+      setSelectedQuarter(item.quarter);
+    }
+
+    // 2. Clear search filter so the agent row is visible
+    setSearchTerm("");
+
+    // 3. Switch Shift / Mode Tab to match item.shiftBadge
+    if (isTrainer) {
+      setAzadShift(item.shiftBadge === "Call Mon" ? "call_mon" : "training");
+    } else if (isChatTeam) {
+      if (item.shiftBadge === "C Shift") setDlshadShift("c_shift");
+      else if (item.shiftBadge === "Bonus") setDlshadShift("bonus");
+      else setDlshadShift("main");
+    } else if (isCallEvaluator) {
+      setCallShift(item.shiftBadge === "Bonus" ? "bonus" : "main");
+    }
+
+    // 4. Switch Week or Month and resolve exact cell key
+    let targetCellKey = item.canonicalKey;
+    const weekMatch = item.canonicalKey.match(/^w(\d+)_/);
+    const monthMatch = item.canonicalKey.match(/^m(\d+)_eval_(\d+)$/);
+    const bonusMatch = item.canonicalKey.match(/^bonus_(\d+)$/);
+
+    if (weekMatch) {
+      const targetWeek = parseInt(weekMatch[1], 10);
+      if (!isNaN(targetWeek) && targetWeek >= 1 && targetWeek <= 12) {
+        setSelectedWeek(targetWeek);
+        setSelectedMonthFilter(null);
+      }
+    } else if (monthMatch) {
+      const targetMonth = parseInt(monthMatch[1], 10);
+      const evalNum = parseInt(monthMatch[2], 10);
+      if (!isNaN(targetMonth) && targetMonth >= 0 && targetMonth <= 11) {
+        setTrainerMonth(targetMonth);
+      }
+      if (!isNaN(evalNum)) {
+        if (item.shiftBadge === "Call Mon" && evalNum > callMonColCount) {
+          setCallMonColCount(evalNum);
+        } else if (item.shiftBadge !== "Call Mon" && evalNum > trainerColCount) {
+          setTrainerColCount(evalNum);
+        }
+      }
+    } else if (bonusMatch) {
+      const cNum = parseInt(bonusMatch[1], 10);
+      targetCellKey = isChatTeam ? `chat_${cNum}` : `call_${cNum}`;
+      if (!isNaN(cNum) && cNum > bonusColCount) {
+        setBonusColCount(cNum);
+      }
+    }
+
+    // 5. Close Activity Log Modal & highlight + scroll to target cell
+    setShowActivityLogModal(false);
+    const agentLower = item.agentName.trim().toLowerCase();
+    setHighlightedCellTarget({ agentLower, cellKey: targetCellKey });
+
+    setTimeout(() => {
+      const cellEl = document.querySelector(
+        `[data-qa-target="${CSS.escape(`${agentLower}|${targetCellKey}`)}"]`
+      ) as HTMLInputElement | null;
+      const rowEl = document.querySelector(
+        `[data-qa-row="${CSS.escape(agentLower)}"]`
+      ) as HTMLElement | null;
+
+      if (cellEl) {
+        cellEl.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+        cellEl.focus();
+      } else if (rowEl) {
+        rowEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 140);
+
+    setTimeout(() => {
+      setHighlightedCellTarget((prev) =>
+        prev && prev.agentLower === agentLower && prev.cellKey === targetCellKey ? null : prev
+      );
+    }, 3500);
+  }, [
+    selectedQuarter,
+    isTrainer,
+    isChatTeam,
+    isCallEvaluator,
+    callMonColCount,
+    trainerColCount,
+    bonusColCount,
+  ]);
 
   // Gather all timestamped evaluation entries for the currently selected Quality Evaluator above
   const sectionActivityData = useMemo(() => {
@@ -4467,8 +4564,9 @@ export default function QualityDashboard({
                       }
                       const agentCallMonAvg = count > 0 ? (sum / count).toFixed(1) : "-";
 
+                      const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
                       return (
-                        <tr key={csrName} className="hover:bg-teal-50/30 dark:hover:bg-gray-800/40 transition">
+                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`hover:bg-teal-50/30 dark:hover:bg-gray-800/40 transition ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : ""}`}>
                           <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
@@ -4501,6 +4599,7 @@ export default function QualityDashboard({
                             const wNum = Math.floor((cNum - 1) / 3) + 1;
                             const cInW = ((cNum - 1) % 3) + 1;
                             const cellLabel = `${MONTH_NAMES[trainerMonth]} Eval ${cNum} (W${wNum} C${cInW})`;
+                            const isCellHighlighted = isRowHighlighted && highlightedCellTarget?.cellKey === key;
 
                             return (
                               <td key={cNum} className="p-2 text-center">
@@ -4514,6 +4613,7 @@ export default function QualityDashboard({
                                   )}
                                   <input
                                     id={`qa_cell_${agentIdx}_${cIdx}`}
+                                    data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
                                     type="text"
                                     value={val}
                                     onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
@@ -4521,6 +4621,8 @@ export default function QualityDashboard({
                                     onFocus={(e) => e.target.select()}
                                     placeholder="-"
                                     className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                      isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
+                                    }${
                                       isV
                                         ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
                                         : isNA
@@ -4605,9 +4707,10 @@ export default function QualityDashboard({
                         }
                       }
                       const agentTrainerAvg = count > 0 ? (sum / count).toFixed(1) : "-";
+                      const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
 
                       return (
-                        <tr key={csrName} className="hover:bg-teal-50/30 dark:hover:bg-gray-800/40 transition">
+                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`hover:bg-teal-50/30 dark:hover:bg-gray-800/40 transition ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : ""}`}>
                           <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
@@ -4638,6 +4741,7 @@ export default function QualityDashboard({
                             const numVal = parseFloat(val);
                             const isBelow90 = !isNaN(numVal) && numVal < 90;
                             const cellLabel = `${MONTH_NAMES[trainerMonth]} Eval ${cNum}`;
+                            const isCellHighlighted = isRowHighlighted && highlightedCellTarget?.cellKey === key;
 
                             return (
                               <td key={cNum} className="p-2 text-center">
@@ -4652,6 +4756,7 @@ export default function QualityDashboard({
 
                                   <input
                                     id={`qa_cell_${agentIdx}_${cIdx}`}
+                                    data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
                                     type="text"
                                     value={val}
                                     onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
@@ -4659,6 +4764,8 @@ export default function QualityDashboard({
                                     onFocus={(e) => e.target.select()}
                                     placeholder="-"
                                     className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                      isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
+                                    }${
                                       isV
                                         ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
                                         : isNA
@@ -4722,8 +4829,9 @@ export default function QualityDashboard({
                     }
 
                     if (isCShift) {
+                      const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
                       return (
-                        <tr key={csrName} className="hover:bg-teal-50/30 dark:hover:bg-gray-800/40 transition">
+                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`hover:bg-teal-50/30 dark:hover:bg-gray-800/40 transition ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : ""}`}>
                           <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
@@ -4754,6 +4862,7 @@ export default function QualityDashboard({
                             const numVal = parseFloat(val);
                             const isBelow90 = !isNaN(numVal) && numVal < 90;
                             const cellLabel = `Chat ${cNum}`;
+                            const isCellHighlighted = isRowHighlighted && highlightedCellTarget?.cellKey === key;
 
                             return (
                               <td key={cNum} className="p-2 text-center">
@@ -4768,6 +4877,7 @@ export default function QualityDashboard({
 
                                   <input
                                     id={`qa_cell_${agentIdx}_${cIdx}`}
+                                    data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
                                     type="text"
                                     value={val}
                                     onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
@@ -4775,6 +4885,8 @@ export default function QualityDashboard({
                                     onFocus={(e) => e.target.select()}
                                     placeholder="-"
                                     className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                      isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
+                                    }${
                                       isV
                                         ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
                                         : isNA
@@ -4855,9 +4967,10 @@ export default function QualityDashboard({
 
                     if (isBonus) {
                       const agentBonusAvg = computeBonusAgentAvg(currentScores, bonusColCount);
+                      const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
 
                       return (
-                        <tr key={csrName} className="hover:bg-emerald-50/30 dark:hover:bg-gray-800/40 transition">
+                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`hover:bg-emerald-50/30 dark:hover:bg-gray-800/40 transition ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : ""}`}>
                           {/* Sticky CSR Name with Real Profile Photo if uploaded */}
                           <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
                             <div className="flex items-center gap-2.5">
@@ -4891,6 +5004,7 @@ export default function QualityDashboard({
                             const numVal = parseFloat(val);
                             const isBelow90 = !isNaN(numVal) && numVal < 90;
                             const cellLabel = `${isChatTeam ? "Chat" : "Call"} ${cNum}`;
+                            const isCellHighlighted = isRowHighlighted && highlightedCellTarget?.cellKey === key;
 
                             return (
                               <td key={cNum} className="p-2 text-center">
@@ -4904,6 +5018,7 @@ export default function QualityDashboard({
                                   )}
                                   <input
                                     id={`qa_cell_${agentIdx}_${cIdx}`}
+                                    data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
                                     type="text"
                                     value={val}
                                     onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
@@ -4911,6 +5026,8 @@ export default function QualityDashboard({
                                     onFocus={(e) => e.target.select()}
                                     placeholder="-"
                                     className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                      isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
+                                    }${
                                       isV
                                         ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
                                         : isNA
@@ -4973,8 +5090,9 @@ export default function QualityDashboard({
                       );
                     }
 
+                    const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
                     return (
-                      <tr key={csrName} className="hover:bg-emerald-50/30 dark:hover:bg-gray-800/40 transition">
+                      <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`hover:bg-emerald-50/30 dark:hover:bg-gray-800/40 transition ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : ""}`}>
                         {/* Sticky CSR Name with Real Profile Photo if uploaded */}
                         <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
                           <div className="flex items-center gap-2.5">
@@ -5008,6 +5126,7 @@ export default function QualityDashboard({
                           const numVal = parseFloat(val);
                           const isBelow90 = !isNaN(numVal) && numVal < 90;
                           const cellLabel = isChatTeam ? `Chat ${cNum}` : `Call ${callIndex}`;
+                          const isCellHighlighted = isRowHighlighted && highlightedCellTarget?.cellKey === key;
 
                           return (
                             <td key={cNum} className="p-2 text-center">
@@ -5023,6 +5142,7 @@ export default function QualityDashboard({
 
                                 <input
                                   id={`qa_cell_${agentIdx}_${cIdx}`}
+                                  data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
                                   type="text"
                                   value={val}
                                   onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
@@ -5030,6 +5150,8 @@ export default function QualityDashboard({
                                   onFocus={(e) => e.target.select()}
                                   placeholder="-"
                                   className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                    isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
+                                  }${
                                     isV
                                       ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
                                       : isNA
@@ -5087,6 +5209,7 @@ export default function QualityDashboard({
                               const isNA = val.toUpperCase().includes("N/A");
                               const numVal = parseFloat(val);
                               const isBelow90 = !isNaN(numVal) && numVal < 90;
+                              const isCellHighlighted = isRowHighlighted && highlightedCellTarget?.cellKey === key;
 
                               return (
                                 <div className="relative inline-block group">
@@ -5100,6 +5223,7 @@ export default function QualityDashboard({
 
                                   <input
                                     id={`qa_cell_${agentIdx}_${standardColCount}`}
+                                    data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
                                     type="text"
                                     value={val}
                                     onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
@@ -5107,6 +5231,8 @@ export default function QualityDashboard({
                                     onFocus={(e) => e.target.select()}
                                     placeholder="-"
                                     className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                      isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
+                                    }${
                                       isV
                                         ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
                                         : isNA
@@ -6179,9 +6305,17 @@ export default function QualityDashboard({
                     >
                       <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-black text-gray-900 dark:text-white">
-                            {agentGroup.agentName}
-                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (agentGroup.items[0]) handleJumpToActivityItem(agentGroup.items[0]);
+                            }}
+                            className="text-sm font-black text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer flex items-center gap-1 group/agent"
+                            title={`Jump to ${agentGroup.agentName} on the dashboard`}
+                          >
+                            <span>{agentGroup.agentName}</span>
+                            <ExternalLink size={12} className="opacity-0 group-hover/agent:opacity-100 text-indigo-500 transition" />
+                          </button>
                           <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${
                             agentGroup.shiftBadge === "Morning"
                               ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/50"
@@ -6209,19 +6343,21 @@ export default function QualityDashboard({
                         </div>
                       </div>
 
-                      {/* Individual Evaluated Calls / Chats Chips */}
+                      {/* Individual Evaluated Calls / Chats Chips (Clickable to Jump to Dashboard Cell) */}
                       <div className="flex flex-wrap gap-2">
                         {agentGroup.items.map((item) => {
                           const numScore = Number(item.score);
                           const isHigh = !isNaN(numScore) && numScore >= 90;
                           const isMid = !isNaN(numScore) && numScore >= 80 && numScore < 90;
                           return (
-                            <div
+                            <button
                               key={item.id}
-                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200/80 dark:border-gray-700/80 text-xs"
-                              title={item.noteText ? `Coaching Note: ${item.noteText}` : undefined}
+                              type="button"
+                              onClick={() => handleJumpToActivityItem(item)}
+                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-indigo-50/80 dark:bg-gray-800/90 dark:hover:bg-indigo-950/60 border border-gray-200/80 hover:border-indigo-300 dark:border-gray-700/80 dark:hover:border-indigo-700 text-xs transition-all cursor-pointer active:scale-95 hover:shadow-xs group/chip"
+                              title={item.noteText ? `Click to go to ${item.label} • Coaching Note: ${item.noteText}` : `Click to go to ${item.label} on dashboard`}
                             >
-                              <span className="font-bold text-gray-600 dark:text-gray-300">
+                              <span className="font-bold text-gray-600 group-hover/chip:text-indigo-700 dark:text-gray-300 dark:group-hover/chip:text-indigo-300 transition">
                                 {item.label}
                               </span>
                               <span className={`px-1.5 py-0.5 rounded-md font-black text-[11px] ${
@@ -6239,7 +6375,7 @@ export default function QualityDashboard({
                                   <span>Note</span>
                                 </span>
                               )}
-                            </div>
+                            </button>
                           );
                         })}
                       </div>
