@@ -9,7 +9,7 @@ import {
   Award, ArrowLeft, Search, Users, Check, Save, Download, 
   Sun, Moon, ChevronDown, ChevronLeft, ChevronRight, CheckCheck, RefreshCw, Calendar, Plus,
   LogOut, PhoneIncoming, PhoneOutgoing, Camera, X, Trash2, FileText, MessageSquare, ShieldCheck, UserPlus, ExternalLink, Link2,
-  CheckCircle2, AlertCircle
+  CheckCircle2, AlertCircle, Activity, Clock
 } from "lucide-react";
 import { compressImageFile } from "@/lib/imageUtils";
 
@@ -965,27 +965,49 @@ export default function QualityDashboard({
         : `${prefixKey}_${cNum}`;
     }
 
+    const nowIso = new Date().toISOString();
+    const existingDoc = evalData[docId] || {
+      year: selectedYear,
+      quarter: effectiveQuarter,
+      evaluator: section.evaluator,
+      team: section.team,
+      csr_name: csrName,
+      scores: {},
+      notes: {},
+      cell_timestamps: {}
+    };
+    const nextScores = {
+      ...(existingDoc.scores || {}),
+      [key]: val,
+      ...(altKey ? { [altKey]: val } : {})
+    };
+    const nextTimestamps = {
+      ...(existingDoc.cell_timestamps || {})
+    };
+    if (val && val !== "-") {
+      nextTimestamps[key] = nowIso;
+      if (altKey) nextTimestamps[altKey] = nowIso;
+    } else {
+      delete nextTimestamps[key];
+      if (altKey) delete nextTimestamps[altKey];
+    }
+
     setEvalData(prev => {
-      const currentDoc = prev[docId] || {
-        year: selectedYear,
-        quarter: effectiveQuarter,
-        evaluator: section.evaluator,
-        team: section.team,
-        csr_name: csrName,
-        scores: {},
-        notes: {}
-      };
-      const updatedScores = {
-        ...(currentDoc.scores || {}),
-        [key]: val,
-        ...(altKey ? { [altKey]: val } : {})
-      };
+      const currentDoc = prev[docId] || existingDoc;
       return {
         ...prev,
         [docId]: {
           ...currentDoc,
-          scores: updatedScores,
-          updated_at: new Date().toISOString()
+          scores: {
+            ...(currentDoc.scores || {}),
+            [key]: val,
+            ...(altKey ? { [altKey]: val } : {})
+          },
+          cell_timestamps: {
+            ...(currentDoc.cell_timestamps || {}),
+            ...(val && val !== "-" ? { [key]: nowIso, ...(altKey ? { [altKey]: nowIso } : {}) } : {})
+          },
+          updated_at: nowIso
         }
       };
     });
@@ -1003,12 +1025,9 @@ export default function QualityDashboard({
           evaluator: section.evaluator,
           team: section.team,
           csr_name: csrName,
-          scores: {
-            ...((evalData[docId]?.scores) || {}),
-            [key]: val,
-            ...(altKey ? { [altKey]: val } : {})
-          },
-          updated_at: new Date().toISOString()
+          scores: nextScores,
+          cell_timestamps: nextTimestamps,
+          updated_at: nowIso
         }, { merge: true });
         setSaveStatus("saved");
         setTimeout(() => setSaveStatus("idle"), 1500);
@@ -1017,7 +1036,7 @@ export default function QualityDashboard({
         setSaveStatus("idle");
       }
     }, 450);
-  }, [selectedYear, selectedQuarter, trainerMonth, evalData, isCShift, isCallMon, isBonus, getActiveSectionSlug]);
+  }, [selectedYear, selectedQuarter, trainerMonth, evalData, isCShift, isCallMon, isBonus, getActiveSectionSlug, callShift, dlshadShift]);
 
   // Section CSRs strictly pulled and deduplicated from live team_members
   const sectionCSRs = useMemo(() => {
@@ -1073,6 +1092,224 @@ export default function QualityDashboard({
 
   // Month names for dropdown
   const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  // Activity Log Modal State & Computations (Admin & Manager only)
+  const toLocalDateStr = useCallback((isoStr: string): string => {
+    if (!isoStr) return "";
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr.slice(0, 10);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }, []);
+
+  const todayLocalStr = useMemo(() => toLocalDateStr(new Date().toISOString()), [toLocalDateStr]);
+  const yesterdayLocalStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return toLocalDateStr(d.toISOString());
+  }, [toLocalDateStr]);
+  const sevenDaysAgoLocalStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 6);
+    return toLocalDateStr(d.toISOString());
+  }, [toLocalDateStr]);
+
+  const [showActivityLogModal, setShowActivityLogModal] = useState(false);
+  const [activityFilterMode, setActivityFilterMode] = useState<"today" | "yesterday" | "7days" | "custom">("today");
+  const [activityCustomDate, setActivityCustomDate] = useState<string>(() => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  });
+
+  const stepActivityDate = (deltaDays: number) => {
+    const baseStr = activityFilterMode === "custom" ? activityCustomDate : activityFilterMode === "yesterday" ? yesterdayLocalStr : todayLocalStr;
+    const parts = baseStr.split("-").map(Number);
+    if (parts.length !== 3) return;
+    const d = new Date(parts[0], parts[1] - 1, parts[2]);
+    d.setDate(d.getDate() + deltaDays);
+    const nextStr = toLocalDateStr(d.toISOString());
+    setActivityCustomDate(nextStr);
+    if (nextStr === todayLocalStr) setActivityFilterMode("today");
+    else if (nextStr === yesterdayLocalStr) setActivityFilterMode("yesterday");
+    else setActivityFilterMode("custom");
+  };
+
+  // Gather all timestamped evaluation entries for the currently selected Quality Evaluator above
+  const sectionActivityData = useMemo(() => {
+    const seenMap = new Map<string, {
+      id: string;
+      agentName: string;
+      shiftBadge: string;
+      quarter: string;
+      canonicalKey: string;
+      label: string;
+      score: string;
+      hasNote: boolean;
+      noteText: string;
+      timestamp: string;
+      dateStr: string;
+      timeStr: string;
+    }>();
+
+    const evalLower = currentSection.evaluator.toLowerCase();
+    const isChatEval = currentSection.id === "mohammed_dlshad" || evalLower.includes("dlshad");
+
+    Object.entries(evalData).forEach(([docId, docData]: [string, any]) => {
+      if (!docData || docId.startsWith("config_")) return;
+      const docEv = (docData.evaluator || "").toLowerCase();
+      const matchesEvaluator = docEv === evalLower || docId.includes(`_${currentSection.id}_`);
+      if (!matchesEvaluator) return;
+
+      const agentName = getCanonicalAgentName((docData.csr_name || "").trim());
+      if (!isValidAgentName(agentName)) return;
+
+      let shiftBadge = "Main Shift";
+      if (docId.includes("_bonus_")) shiftBadge = "Bonus";
+      else if (docId.includes("_c_shift_")) shiftBadge = "C Shift";
+      else if (docId.includes("_call_mon_")) shiftBadge = "Call Mon";
+      else if (currentSection.id === "mohammed_azad") shiftBadge = "Training";
+
+      const scores = docData.scores || {};
+      const notes = docData.notes || {};
+      const links = docData.links || {};
+      const timestamps = docData.cell_timestamps || {};
+      const quarter = docData.quarter || selectedQuarter;
+
+      Object.entries(timestamps).forEach(([rawKey, tsVal]) => {
+        const tsIso = String(tsVal || "");
+        if (!tsIso) return;
+
+        const scoreVal = String(scores[rawKey] ?? "").trim();
+        const noteVal = String(notes[rawKey] ?? "").trim();
+        const linkVal = String(links[rawKey] ?? "").trim();
+        if ((!scoreVal || scoreVal === "-") && !noteVal && !linkVal) return;
+
+        let canonicalKey = rawKey;
+        let label = rawKey;
+
+        if (shiftBadge === "Bonus") {
+          const m = rawKey.match(/(?:call|chat)_(\d+)/);
+          if (m) {
+            canonicalKey = `bonus_${m[1]}`;
+            label = `Bonus ${isChatEval ? "Chat" : "Call"} #${m[1]}`;
+          }
+        } else if (rawKey.match(/^m(\d+)_eval_(\d+)$/)) {
+          const m = rawKey.match(/^m(\d+)_eval_(\d+)$/)!;
+          const mIdx = parseInt(m[1], 10);
+          const eNum = m[2];
+          label = `${MONTH_NAMES[mIdx] || `M${mIdx + 1}`} • Eval ${eNum}`;
+        } else if (rawKey.match(/^w(\d+)_outbound$/)) {
+          const m = rawKey.match(/^w(\d+)_outbound$/)!;
+          label = `W${m[1]} • Outbound`;
+        } else if (rawKey.match(/^w(\d+)_(call|chat)_(\d+)$/)) {
+          const m = rawKey.match(/^w(\d+)_(call|chat)_(\d+)$/)!;
+          label = `W${m[1]} • ${m[2] === "chat" ? "Chat" : "Call"} ${m[3]}`;
+        }
+
+        const dateStr = toLocalDateStr(tsIso);
+        const dObj = new Date(tsIso);
+        const timeStr = !isNaN(dObj.getTime())
+          ? dObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          : "";
+
+        const dedupId = `${shiftBadge}|${agentName.toLowerCase()}|${quarter}|${canonicalKey}`;
+        const existing = seenMap.get(dedupId);
+        if (!existing || tsIso > existing.timestamp) {
+          seenMap.set(dedupId, {
+            id: dedupId,
+            agentName,
+            shiftBadge,
+            quarter,
+            canonicalKey,
+            label,
+            score: scoreVal || "-",
+            hasNote: Boolean(noteVal || linkVal),
+            noteText: noteVal,
+            timestamp: tsIso,
+            dateStr,
+            timeStr
+          });
+        }
+      });
+    });
+
+    const allEntries = Array.from(seenMap.values()).sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    const todayCount = allEntries.filter(e => e.dateStr === todayLocalStr).length;
+    const yesterdayCount = allEntries.filter(e => e.dateStr === yesterdayLocalStr).length;
+    const last7DaysCount = allEntries.filter(e => e.dateStr >= sevenDaysAgoLocalStr && e.dateStr <= todayLocalStr).length;
+    const activeDateLabel =
+      activityFilterMode === "today"
+        ? "Today"
+        : activityFilterMode === "yesterday"
+        ? "Yesterday"
+        : activityFilterMode === "7days"
+        ? "Last 7 Days"
+        : activityCustomDate;
+
+    const filtered = allEntries.filter(e => {
+      if (activityFilterMode === "today") return e.dateStr === todayLocalStr;
+      if (activityFilterMode === "yesterday") return e.dateStr === yesterdayLocalStr;
+      if (activityFilterMode === "7days") return e.dateStr >= sevenDaysAgoLocalStr && e.dateStr <= todayLocalStr;
+      return e.dateStr === activityCustomDate;
+    });
+
+    // Group filtered entries by Agent + Shift + Quarter
+    const groupsMap = new Map<string, {
+      agentName: string;
+      shiftBadge: string;
+      quarter: string;
+      latestTimestamp: string;
+      latestTimeStr: string;
+      latestDateStr: string;
+      items: typeof filtered;
+    }>();
+
+    filtered.forEach(item => {
+      const gKey = `${item.agentName.toLowerCase()}|${item.shiftBadge}|${item.quarter}`;
+      const existing = groupsMap.get(gKey);
+      if (!existing) {
+        groupsMap.set(gKey, {
+          agentName: item.agentName,
+          shiftBadge: item.shiftBadge,
+          quarter: item.quarter,
+          latestTimestamp: item.timestamp,
+          latestTimeStr: item.timeStr,
+          latestDateStr: item.dateStr,
+          items: [item]
+        });
+      } else {
+        existing.items.push(item);
+        if (item.timestamp > existing.latestTimestamp) {
+          existing.latestTimestamp = item.timestamp;
+          existing.latestTimeStr = item.timeStr;
+          existing.latestDateStr = item.dateStr;
+        }
+      }
+    });
+
+    const groupedByAgent = Array.from(groupsMap.values()).sort((a, b) =>
+      b.latestTimestamp.localeCompare(a.latestTimestamp)
+    );
+
+    const uniqueAgentsCount = new Set(filtered.map(e => e.agentName.toLowerCase())).size;
+    const notesCount = filtered.filter(e => e.hasNote).length;
+
+    return {
+      todayCount,
+      yesterdayCount,
+      last7DaysCount,
+      activeDateLabel,
+      filteredCount: filtered.length,
+      uniqueAgentsCount,
+      notesCount,
+      groupedByAgent
+    };
+  }, [evalData, currentSection, selectedQuarter, todayLocalStr, yesterdayLocalStr, sevenDaysAgoLocalStr, activityFilterMode, activityCustomDate, toLocalDateStr]);
 
   // Map a calendar month (0-11) to { quarter, weekStart, weekEnd } within that quarter
   const getMonthWeekRange = (month: number): { quarter: string; weekStart: number; weekEnd: number } => {
@@ -2029,6 +2266,15 @@ export default function QualityDashboard({
         else delete updatedLinks[altKey];
       }
 
+      const nowIso = new Date().toISOString();
+      const updatedTimestamps = {
+        ...((evalData[docId]?.cell_timestamps) || {}),
+      };
+      if (noteText.trim() || linkUrl.trim() || evalData[docId]?.scores?.[key] !== undefined) {
+        updatedTimestamps[key] = nowIso;
+        if (altKey) updatedTimestamps[altKey] = nowIso;
+      }
+
       setEvalData(prev => {
         const currentDoc = prev[docId] || {
           year: selectedYear,
@@ -2038,7 +2284,8 @@ export default function QualityDashboard({
           csr_name: csrName,
           scores: {},
           notes: {},
-          links: {}
+          links: {},
+          cell_timestamps: {}
         };
         return {
           ...prev,
@@ -2046,7 +2293,8 @@ export default function QualityDashboard({
             ...currentDoc,
             notes: updatedNotes,
             links: updatedLinks,
-            updated_at: new Date().toISOString()
+            cell_timestamps: updatedTimestamps,
+            updated_at: nowIso
           }
         };
       });
@@ -2059,7 +2307,8 @@ export default function QualityDashboard({
         csr_name: csrName,
         notes: updatedNotes,
         links: updatedLinks,
-        updated_at: new Date().toISOString()
+        cell_timestamps: updatedTimestamps,
+        updated_at: nowIso
       }, { merge: true });
 
       setActiveNoteModal(null);
@@ -3868,12 +4117,17 @@ export default function QualityDashboard({
         {/* Quality Data Table: Focused Week / Trainer Month View */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-sm overflow-hidden">
           {/* Week Section Subheader */}
-          <div className="px-5 py-3.5 bg-gray-50/90 dark:bg-gray-800/90 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-wrap gap-2">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <div className={`px-2.5 py-1 rounded-xl text-white text-xs font-black ${isCallMon ? "bg-[#0f766e]" : isTrainer ? "bg-[#0d9488]" : isCShift || isBonus ? "bg-[#00A991]" : "bg-[#1C6B53]"}`}>
-                {isCallMon ? `${MONTH_NAMES[trainerMonth]} Call Mon` : isTrainer ? `${MONTH_NAMES[trainerMonth]} Evaluations` : isBonus ? `Bonus Evaluations` : `Week ${selectedWeek}`}
+          <div className="px-4 sm:px-5 py-3 bg-gradient-to-r from-gray-50 via-white to-gray-50/90 dark:from-gray-800/95 dark:via-gray-900 dark:to-gray-800/95 border-b border-gray-200 dark:border-gray-700/80 flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3">
+            {/* Left Info Cluster */}
+            <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-black shadow-xs ${isCallMon ? "bg-[#0f766e]" : isTrainer ? "bg-[#0d9488]" : isCShift || isBonus ? "bg-[#00A991]" : "bg-[#1C6B53]"}`}>
+                <Calendar size={12} className="opacity-85 shrink-0" />
+                <span>{isCallMon ? `${MONTH_NAMES[trainerMonth]} Call Mon` : isTrainer ? `${MONTH_NAMES[trainerMonth]} Evaluations` : isBonus ? `Bonus Evaluations` : `Week ${selectedWeek}`}</span>
               </div>
-              <span className="text-xs font-bold text-gray-700 dark:text-gray-200">
+
+              <div className="hidden sm:block h-4 w-px bg-gray-200 dark:bg-gray-700" />
+
+              <span className="inline-flex items-center px-3 py-1.5 rounded-xl bg-gray-100/90 dark:bg-gray-800 text-xs font-extrabold text-gray-700 dark:text-gray-200 border border-gray-200/70 dark:border-gray-700/70">
                 {isCallMon
                   ? "Mohammed Azad — Call Mon (Younis + Ankido Teams)"
                   : isTrainer 
@@ -3892,19 +4146,20 @@ export default function QualityDashboard({
                     )
                 }
               </span>
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black border shadow-2xs ${isCallMon ? "bg-teal-50 dark:bg-teal-950/60 text-[#0f766e] dark:text-teal-300 border-teal-200/80 dark:border-teal-800/50" : "bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/50"}`}>
+
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border shadow-2xs ${isCallMon ? "bg-teal-50 dark:bg-teal-950/60 text-[#0f766e] dark:text-teal-300 border-teal-200/80 dark:border-teal-800/50" : "bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/50"}`}>
                 <Users size={12} className={`shrink-0 ${isCallMon ? "text-[#0f766e]" : "text-[#00A991]"}`} />
                 <span>{currentCsrs.length} Agents</span>
               </span>
             </div>
 
-            {/* Action Buttons: Add Agent (C Shift / Call Mon) & Export PDF */}
-            <div className="flex items-center gap-2 shrink-0">
+            {/* Right Action Cluster: Add Agent, Scroll Navigation, Activity Log (Admin/Manager only), Export PDF, Sync */}
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
               {isCShift && (
                 <button
                   type="button"
                   onClick={() => setShowAddCShiftModal(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#00A991] hover:bg-[#008f7a] text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
+                  className="h-8 flex items-center gap-1.5 px-3 rounded-xl bg-[#00A991] hover:bg-[#008f7a] text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
                   title="Add Evening Call Team Agent to C Shift"
                 >
                   <Plus size={13} className="stroke-[2.5]" />
@@ -3916,7 +4171,7 @@ export default function QualityDashboard({
                 <button
                   type="button"
                   onClick={() => setShowAddCallMonModal(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0f766e] hover:bg-[#0d6360] text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
+                  className="h-8 flex items-center gap-1.5 px-3 rounded-xl bg-[#0f766e] hover:bg-[#0d6360] text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
                   title="Add Agent to Call Monitoring Roster"
                 >
                   <Plus size={13} className="stroke-[2.5]" />
@@ -3925,32 +4180,55 @@ export default function QualityDashboard({
               )}
 
               {/* Scroll Navigation Buttons for Columns */}
-              <div className="flex items-center gap-1 bg-white dark:bg-gray-800 p-0.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xs">
+              <div className="h-8 flex items-center gap-0.5 bg-white dark:bg-gray-800 px-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xs">
                 <button
                   type="button"
                   onClick={() => handleScrollTable("left")}
-                  className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer active:scale-90"
+                  className="p-1 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer active:scale-90"
                   title="Scroll Left"
                   aria-label="Scroll Left"
                 >
-                  <ChevronLeft size={13} className="stroke-[2.5]" />
+                  <ChevronLeft size={14} className="stroke-[2.5]" />
                 </button>
+                <div className="h-3.5 w-px bg-gray-200 dark:bg-gray-700" />
                 <button
                   type="button"
                   onClick={() => handleScrollTable("right")}
-                  className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer active:scale-90"
+                  className="p-1 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer active:scale-90"
                   title="Scroll Right"
                   aria-label="Scroll Right"
                 >
-                  <ChevronRight size={13} className="stroke-[2.5]" />
+                  <ChevronRight size={14} className="stroke-[2.5]" />
                 </button>
               </div>
+
+              <div className="hidden sm:block h-5 w-px bg-gray-200 dark:bg-gray-700 mx-0.5" />
+
+              {/* Activity Log Button — strictly restricted to Admin & Manager (canSwitchTeams) */}
+              {canSwitchTeams && (
+                <button
+                  type="button"
+                  onClick={() => setShowActivityLogModal(true)}
+                  className="h-8 flex items-center gap-1.5 px-3 rounded-xl text-xs font-black text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/90 dark:border-indigo-800/70 transition shadow-2xs cursor-pointer active:scale-95 shrink-0"
+                  title={`View Daily Activity Log for ${currentSection.evaluator}`}
+                >
+                  <Activity size={13} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <span>Activity Log</span>
+                  <span className={`ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none ${
+                    sectionActivityData.todayCount > 0
+                      ? "bg-indigo-600 text-white shadow-2xs"
+                      : "bg-indigo-200/70 dark:bg-indigo-800/70 text-indigo-700 dark:text-indigo-300"
+                  }`}>
+                    {sectionActivityData.todayCount} Today
+                  </span>
+                </button>
+              )}
 
               {/* Export PDF Button */}
               <button
                 type="button"
                 onClick={handleExportPDF}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800/60 transition shadow-2xs cursor-pointer active:scale-95"
+                className="h-8 flex items-center gap-1.5 px-3 rounded-xl text-xs font-black text-[#1C6B53] dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800/60 transition shadow-2xs cursor-pointer active:scale-95 shrink-0"
                 title="Export Report as PDF"
               >
                 <Download size={13} />
@@ -3962,7 +4240,7 @@ export default function QualityDashboard({
                 type="button"
                 onClick={handleSyncToMetrics}
                 disabled={syncingMetrics}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-xs transition cursor-pointer active:scale-95 disabled:opacity-50"
+                className="h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-xs transition cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
                 title="Sync Completed Quality Scores to Dashboards"
               >
                 <RefreshCw size={13} className={syncingMetrics ? "animate-spin" : ""} />
@@ -5651,6 +5929,311 @@ export default function QualityDashboard({
                 </button>
               )}
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Activity Log Modal — Strictly Restricted to Admin & Manager (canSwitchTeams) */}
+      {showActivityLogModal && canSwitchTeams && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150"
+          onClick={() => setShowActivityLogModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-4xl max-h-[88vh] flex flex-col shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-gradient-to-r from-[#0C3227] via-[#144d3c] to-[#1C6B53] text-white flex items-center justify-between gap-4 shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20 shrink-0">
+                  <Activity size={20} className="text-emerald-300" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-black tracking-tight truncate">
+                      Quality Evaluator Activity Log
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-400/20 text-emerald-200 border border-emerald-300/30">
+                      Admin & Manager Only
+                    </span>
+                  </div>
+                  <p className="text-xs text-emerald-100/85 font-semibold truncate mt-0.5">
+                    Selected Evaluator: <span className="font-black text-white">{currentSection.evaluator}</span> • {currentSection.team}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowActivityLogModal(false)}
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer shrink-0"
+                title="Close Activity Log"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Evaluator Switcher + Day Filter Bar */}
+            <div className="px-6 py-3.5 bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-800 space-y-3 shrink-0">
+              {/* Quick Evaluator Selector */}
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin pb-0.5">
+                <span className="text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500 mr-1 shrink-0">
+                  Evaluator:
+                </span>
+                {DEFAULT_SECTIONS.map((sec) => {
+                  const isActive = effectiveSectionId === sec.id;
+                  return (
+                    <button
+                      key={sec.id}
+                      type="button"
+                      onClick={() => setActiveSectionId(sec.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer shrink-0 ${
+                        isActive
+                          ? "bg-[#1C6B53] text-white shadow-xs"
+                          : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      {sec.evaluator}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Day Filter Controls */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setActivityFilterMode("today")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                      activityFilterMode === "today"
+                        ? "bg-indigo-600 text-white shadow-xs"
+                        : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    <span>Today</span>
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none ${
+                      activityFilterMode === "today"
+                        ? "bg-white/25 text-white"
+                        : "bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400"
+                    }`}>
+                      {sectionActivityData.todayCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActivityFilterMode("yesterday")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                      activityFilterMode === "yesterday"
+                        ? "bg-indigo-600 text-white shadow-xs"
+                        : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    <span>Yesterday</span>
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none ${
+                      activityFilterMode === "yesterday"
+                        ? "bg-white/25 text-white"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                    }`}>
+                      {sectionActivityData.yesterdayCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActivityFilterMode("7days")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                      activityFilterMode === "7days"
+                        ? "bg-indigo-600 text-white shadow-xs"
+                        : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    <span>Last 7 Days</span>
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none ${
+                      activityFilterMode === "7days"
+                        ? "bg-white/25 text-white"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                    }`}>
+                      {sectionActivityData.last7DaysCount}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Custom Day Picker with < > Navigation */}
+                <div className="flex items-center gap-1 bg-white dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => stepActivityDate(-1)}
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
+                    title="Previous Day"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <input
+                    type="date"
+                    value={activityCustomDate}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setActivityCustomDate(e.target.value);
+                        setActivityFilterMode("custom");
+                      }
+                    }}
+                    className={`px-2 py-1 rounded-lg text-xs font-black outline-none cursor-pointer ${
+                      activityFilterMode === "custom"
+                        ? "bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300"
+                        : "bg-transparent text-gray-700 dark:text-gray-200"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => stepActivityDate(1)}
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
+                    title="Next Day"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* KPI Summary Strip */}
+            <div className="px-6 py-3.5 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
+              <div className="p-3.5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-indigo-600/80 dark:text-indigo-300/80 uppercase tracking-wider">
+                    Evaluations Entered ({sectionActivityData.activeDateLabel})
+                  </p>
+                  <p className="text-2xl font-black text-indigo-950 dark:text-white mt-0.5">
+                    {sectionActivityData.filteredCount}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-indigo-600/10 dark:bg-indigo-400/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <CheckCircle2 size={20} />
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/60 flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-emerald-700/80 dark:text-emerald-300/80 uppercase tracking-wider">
+                    Agents Evaluated
+                  </p>
+                  <p className="text-2xl font-black text-emerald-950 dark:text-white mt-0.5">
+                    {sectionActivityData.uniqueAgentsCount}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-emerald-600/10 dark:bg-emerald-400/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                  <Users size={20} />
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900/60 flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-amber-700/80 dark:text-amber-300/80 uppercase tracking-wider">
+                    Coaching Notes Added
+                  </p>
+                  <p className="text-2xl font-black text-amber-950 dark:text-white mt-0.5">
+                    {sectionActivityData.notesCount}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-amber-600/10 dark:bg-amber-400/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                  <MessageSquare size={20} />
+                </div>
+              </div>
+            </div>
+
+            {/* Detailed Activity List by Agent */}
+            <div className="p-6 overflow-y-auto flex-1 space-y-3 bg-gray-50/50 dark:bg-gray-950/40">
+              {sectionActivityData.groupedByAgent.length === 0 ? (
+                <div className="py-12 text-center bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
+                  <Clock size={32} className="mx-auto text-gray-300 dark:text-gray-600 mb-2.5" />
+                  <p className="text-sm font-black text-gray-700 dark:text-gray-200">
+                    No evaluations recorded for {currentSection.evaluator} on {sectionActivityData.activeDateLabel}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Try switching the day filter above (Yesterday, Last 7 Days, or pick a specific date).
+                  </p>
+                </div>
+              ) : (
+                sectionActivityData.groupedByAgent.map((agentGroup) => {
+                  const latestTime = agentGroup.latestTimeStr;
+                  const latestDate = agentGroup.latestDateStr;
+                  return (
+                    <div
+                      key={`${agentGroup.quarter}_${agentGroup.shiftBadge}_${agentGroup.agentName}`}
+                      className="p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 shadow-2xs hover:border-indigo-200 dark:hover:border-indigo-800/60 transition"
+                    >
+                      <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-black text-gray-900 dark:text-white">
+                            {agentGroup.agentName}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${
+                            agentGroup.shiftBadge === "Morning"
+                              ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/50"
+                              : agentGroup.shiftBadge === "C Shift"
+                              ? "bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/50"
+                              : "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/50"
+                          }`}>
+                            {agentGroup.shiftBadge}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-lg text-[10px] font-black bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                            {agentGroup.quarter}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {latestTime && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-gray-400 dark:text-gray-500">
+                              <Clock size={11} />
+                              <span>{activityFilterMode === "7days" ? `${latestDate} • ${latestTime}` : latestTime}</span>
+                            </span>
+                          )}
+                          <span className="px-2.5 py-1 rounded-xl text-xs font-black bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
+                            {agentGroup.items.length} {agentGroup.items.length === 1 ? "Entry" : "Entries"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Individual Evaluated Calls / Chats Chips */}
+                      <div className="flex flex-wrap gap-2">
+                        {agentGroup.items.map((item) => {
+                          const numScore = Number(item.score);
+                          const isHigh = !isNaN(numScore) && numScore >= 90;
+                          const isMid = !isNaN(numScore) && numScore >= 80 && numScore < 90;
+                          return (
+                            <div
+                              key={item.id}
+                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200/80 dark:border-gray-700/80 text-xs"
+                              title={item.noteText ? `Coaching Note: ${item.noteText}` : undefined}
+                            >
+                              <span className="font-bold text-gray-600 dark:text-gray-300">
+                                {item.label}
+                              </span>
+                              <span className={`px-1.5 py-0.5 rounded-md font-black text-[11px] ${
+                                isHigh
+                                  ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300"
+                                  : isMid
+                                  ? "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300"
+                                  : "bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300"
+                              }`}>
+                                {item.score}%
+                              </span>
+                              {item.hasNote && (
+                                <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400 font-bold text-[10px]">
+                                  <MessageSquare size={11} />
+                                  <span>Note</span>
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
       )}
