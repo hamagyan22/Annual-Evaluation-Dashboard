@@ -994,6 +994,16 @@ export default function QualityDashboard({
 
     setEvalData(prev => {
       const currentDoc = prev[docId] || existingDoc;
+      const mergedTimestamps = {
+        ...(currentDoc.cell_timestamps || {})
+      };
+      if (val && val !== "-") {
+        mergedTimestamps[key] = nowIso;
+        if (altKey) mergedTimestamps[altKey] = nowIso;
+      } else {
+        delete mergedTimestamps[key];
+        if (altKey) delete mergedTimestamps[altKey];
+      }
       return {
         ...prev,
         [docId]: {
@@ -1003,10 +1013,7 @@ export default function QualityDashboard({
             [key]: val,
             ...(altKey ? { [altKey]: val } : {})
           },
-          cell_timestamps: {
-            ...(currentDoc.cell_timestamps || {}),
-            ...(val && val !== "-" ? { [key]: nowIso, ...(altKey ? { [altKey]: nowIso } : {}) } : {})
-          },
+          cell_timestamps: mergedTimestamps,
           updated_at: nowIso
         }
       };
@@ -1105,17 +1112,25 @@ export default function QualityDashboard({
     return `${yyyy}-${mm}-${dd}`;
   }, []);
 
-  const todayLocalStr = useMemo(() => toLocalDateStr(new Date().toISOString()), [toLocalDateStr]);
+  const [activityNowTick, setActivityNowTick] = useState<number>(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActivityNowTick(Date.now());
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const todayLocalStr = useMemo(() => toLocalDateStr(new Date(activityNowTick).toISOString()), [toLocalDateStr, activityNowTick]);
   const yesterdayLocalStr = useMemo(() => {
-    const d = new Date();
+    const d = new Date(activityNowTick);
     d.setDate(d.getDate() - 1);
     return toLocalDateStr(d.toISOString());
-  }, [toLocalDateStr]);
+  }, [toLocalDateStr, activityNowTick]);
   const sevenDaysAgoLocalStr = useMemo(() => {
-    const d = new Date();
+    const d = new Date(activityNowTick);
     d.setDate(d.getDate() - 6);
     return toLocalDateStr(d.toISOString());
-  }, [toLocalDateStr]);
+  }, [toLocalDateStr, activityNowTick]);
 
   const [showActivityLogModal, setShowActivityLogModal] = useState(false);
   const [activityFilterMode, setActivityFilterMode] = useState<"today" | "yesterday" | "7days" | "custom">("today");
@@ -1700,9 +1715,10 @@ export default function QualityDashboard({
       totalTargetCalls += currentCsrs.length * qCallsPerWeek * qWeeks;
     });
 
+    const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
+
     currentCsrs.forEach(csrName => {
       const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
-      const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
 
       targetQuarters.forEach(qId => {
         const docId = `${selectedYear}_${qId}_${sectionSlug}_${slug}`;
@@ -1726,7 +1742,6 @@ export default function QualityDashboard({
                   csrTotals[csrName].sum += num;
                   csrTotals[csrName].count += 1;
                   inboundCount++;
-                  weeksWithData.add(`${qId}_w${w}`);
                 }
               }
             }
@@ -1746,7 +1761,6 @@ export default function QualityDashboard({
                   csrTotals[csrName].sum += num;
                   csrTotals[csrName].count += 1;
                   inboundCount++;
-                  weeksWithData.add(`${qId}_w${w}`);
                 }
               }
             }
@@ -1765,13 +1779,166 @@ export default function QualityDashboard({
                   csrTotals[csrName].count += 1;
                   outboundSum += num;
                   outboundCount++;
-                  weeksWithData.add(`${qId}_w${w}`);
                 }
               }
             }
           }
         }
       });
+    });
+
+    // Strictly count a week as "Completed" ONLY when all required evaluations for that week are filled
+    const hasEntryInWeek = (csrName: string, qId: string, w: number): boolean => {
+      const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const docId = `${selectedYear}_${qId}_${sectionSlug}_${slug}`;
+      const scores = evalData[docId]?.scores || {};
+      const prefix = `w${w}_`;
+      return Object.entries(scores).some(([k, v]) => {
+        const s = String(v ?? "").trim();
+        return k.startsWith(prefix) && s !== "" && s !== "-";
+      });
+    };
+
+    const hasEntryBeforeInQuarter = (csrName: string, qId: string, w: number): boolean => {
+      for (let pw = 1; pw < w; pw++) {
+        if (hasEntryInWeek(csrName, qId, pw)) return true;
+      }
+      return false;
+    };
+
+    const hasEntryAfterInQuarter = (csrName: string, qId: string, w: number): boolean => {
+      for (let nw = w + 1; nw <= 12; nw++) {
+        if (hasEntryInWeek(csrName, qId, nw)) return true;
+      }
+      return false;
+    };
+
+    targetQuarters.forEach(qId => {
+      let latestActiveWeekInQ = 0;
+      if (!isCShift && currentCsrs.length > 0) {
+        for (let w = 1; w <= 12; w++) {
+          const activeCnt = currentCsrs.filter(c => hasEntryInWeek(c, qId, w)).length;
+          if (activeCnt >= Math.ceil(currentCsrs.length / 2)) {
+            latestActiveWeekInQ = w;
+          }
+        }
+      }
+
+      for (let w = 1; w <= 12; w++) {
+        if (weekFilter && !weekFilter(qId, w)) continue;
+
+        if (isCShift) {
+          // Determine C-shift agents active in (qId, w)
+          const wKey = `${selectedYear}_${qId}_w${w}`;
+          const weekCShiftSet = new Set<string>();
+          (cShiftWeeklyAdded[wKey] || []).forEach(n => {
+            const cName = getCanonicalAgentName(n);
+            if (isValidAgentName(cName)) weekCShiftSet.add(cName);
+          });
+          const prefix = `${selectedYear}_${qId}_mohammed_dlshad_c_shift_`;
+          Object.entries(evalData).forEach(([docId, docData]: [string, any]) => {
+            if (docId.startsWith(prefix) && docData?.csr_name) {
+              const cName = getCanonicalAgentName(docData.csr_name.trim());
+              if (!isValidAgentName(cName)) return;
+              const sc = docData.scores || {};
+              if (
+                [1, 2, 3].some(c => {
+                  const sv = String(sc[`w${w}_chat_${c}`] ?? "").trim();
+                  return sv !== "" && sv !== "-";
+                })
+              ) {
+                weekCShiftSet.add(cName);
+              }
+            }
+          });
+
+          const weekAgents = Array.from(weekCShiftSet);
+          if (weekAgents.length > 0) {
+            const allCShiftComplete = weekAgents.every(csrName => {
+              const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+              const docId = `${selectedYear}_${qId}_mohammed_dlshad_c_shift_${slug}`;
+              const sc = evalData[docId]?.scores || {};
+              let filled = 0;
+              let vCount = 0;
+              for (let c = 1; c <= 3; c++) {
+                const sv = String(sc[`w${w}_chat_${c}`] ?? "").trim();
+                if (sv !== "" && sv !== "-") {
+                  filled++;
+                  if (sv.toUpperCase() === "V") vCount++;
+                }
+              }
+              return filled === 3 || (vCount > 0 && vCount === filled);
+            });
+            if (allCShiftComplete) {
+              weeksWithData.add(`${qId}_w${w}`);
+            }
+          }
+        } else {
+          if (currentCsrs.length === 0) continue;
+          const wCfg = getWeekColumnsConfig(isChatTeam, selectedYear, qId, w);
+          const anyAgentHasOutboundInW = currentCsrs.some(csrName => {
+            const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+            const outVal = String(evalData[`${selectedYear}_${qId}_${sectionSlug}_${slug}`]?.scores?.[`w${w}_outbound`] ?? "").trim();
+            return outVal !== "" && outVal !== "-";
+          });
+          const isHistoricalEarlyQ = selectedYear === "2026" && (qId === "Q1" || qId === "Q2");
+          const requireOutbound = wCfg.hasOutbound && (!isHistoricalEarlyQ || anyAgentHasOutboundInW);
+
+          let expectedCsrs = currentCsrs.filter(csrName => {
+            if (hasEntryInWeek(csrName, qId, w)) return true;
+            if (latestActiveWeekInQ === 0) return true;
+            if (w >= latestActiveWeekInQ) {
+              const refW = Math.max(1, latestActiveWeekInQ - 1);
+              return hasEntryInWeek(csrName, qId, refW) || hasEntryInWeek(csrName, qId, latestActiveWeekInQ);
+            }
+            return hasEntryBeforeInQuarter(csrName, qId, w) && hasEntryAfterInQuarter(csrName, qId, w);
+          });
+          if (expectedCsrs.length === 0) expectedCsrs = currentCsrs;
+
+          let allExpectedComplete = expectedCsrs.length > 0;
+          let anyAgentComplete = false;
+
+          for (const csrName of expectedCsrs) {
+            const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+            const docId = `${selectedYear}_${qId}_${sectionSlug}_${slug}`;
+            const scores = evalData[docId]?.scores || {};
+
+            let inboundFilled = 0;
+            let inboundV = 0;
+            for (let c = 1; c <= wCfg.colCount; c++) {
+              const key = isChatTeam ? `w${w}_chat_${c}` : `w${w}_call_${wCfg.callBase + c}`;
+              const val = String(
+                scores[key] ??
+                  (isChatTeam ? (scores[`w${w}_call_${c}`] ?? scores[`w${w}_call_${wCfg.callBase + c}`]) : "") ??
+                  ""
+              ).trim();
+              if (val !== "" && val !== "-") {
+                inboundFilled++;
+                if (val.toUpperCase() === "V") inboundV++;
+              }
+            }
+
+            const outVal = String(scores[`w${w}_outbound`] ?? "").trim();
+            const outboundFilled = !requireOutbound || (outVal !== "" && outVal !== "-");
+            const isAllVacation =
+              inboundV > 0 &&
+              inboundV === inboundFilled &&
+              (!requireOutbound || outVal === "" || outVal.toUpperCase() === "V");
+
+            const agentComplete = (inboundFilled === wCfg.colCount && outboundFilled) || isAllVacation;
+            if (agentComplete) {
+              anyAgentComplete = true;
+            } else {
+              allExpectedComplete = false;
+              break;
+            }
+          }
+
+          if (allExpectedComplete && anyAgentComplete) {
+            weeksWithData.add(`${qId}_w${w}`);
+          }
+        }
+      }
     });
 
     const annualAvg = totalCallsAudited > 0 ? (sumScores / totalCallsAudited).toFixed(1) : "-";
@@ -1804,7 +1971,7 @@ export default function QualityDashboard({
       topAgent,
       totalAgents: currentCsrs.length
     };
-  }, [currentCsrs, currentSection, selectedYear, selectedQuarter, cardPeriodMode, selectedMonthFilter, evalData, isChatTeam, isTrainer, trainerMonth, trainerColCount, callMonColCount, bonusColCount, isCShift, isCallMon, isBonus, getActiveSectionSlug]);
+  }, [currentCsrs, currentSection, selectedYear, selectedQuarter, cardPeriodMode, selectedMonthFilter, evalData, isChatTeam, isTrainer, trainerMonth, trainerColCount, callMonColCount, bonusColCount, isCShift, isCallMon, isBonus, cShiftWeeklyAdded, getActiveSectionSlug]);
 
   const currentWeekConfig = useMemo(() => {
     return getWeekColumnsConfig(isChatTeam, selectedYear, selectedQuarter, selectedWeek);
@@ -3484,27 +3651,52 @@ export default function QualityDashboard({
           let hasV = false;
 
           for (let w = weekStart; w <= weekEnd; w++) {
-            let weekHasEntry = false;
-            const weekPrefix = `w${w}_`;
-            for (const [k, v] of Object.entries(scores)) {
-              if (k.startsWith(weekPrefix) && v !== undefined && v !== null) {
-                const s = String(v).trim();
-                if (s !== "" && s !== "-") {
-                  weekHasEntry = true;
-                  const upper = s.toUpperCase();
-                  if (upper === "V") {
-                    hasV = true;
-                  } else if (upper !== "S" && !upper.includes("N/A") && upper !== "NA") {
-                    const n = parseFloat(s);
-                    if (!isNaN(n)) {
-                      sumQ += n;
-                      cntQ++;
-                    }
+            const wCfg = getWeekColumnsConfig(isChatTeam, selectedYear, quarter, w);
+            const isHistoricalEarlyQ = selectedYear === "2026" && (quarter === "Q1" || quarter === "Q2");
+            let inboundFilled = 0;
+            let inboundV = 0;
+
+            for (let c = 1; c <= wCfg.colCount; c++) {
+              const key = isChatTeam ? `w${w}_chat_${c}` : `w${w}_call_${wCfg.callBase + c}`;
+              const rawVal = scores[key] ?? (isChatTeam ? (scores[`w${w}_call_${c}`] ?? scores[`w${w}_call_${wCfg.callBase + c}`]) : undefined);
+              const s = String(rawVal ?? "").trim();
+              if (s !== "" && s !== "-") {
+                inboundFilled++;
+                const upper = s.toUpperCase();
+                if (upper === "V") {
+                  inboundV++;
+                  hasV = true;
+                } else if (upper !== "S" && !upper.includes("N/A") && upper !== "NA") {
+                  const n = parseFloat(s);
+                  if (!isNaN(n)) {
+                    sumQ += n;
+                    cntQ++;
                   }
                 }
               }
             }
-            if (!weekHasEntry) {
+
+            const outRaw = scores[`w${w}_outbound`];
+            const outStr = String(outRaw ?? "").trim();
+            if (wCfg.hasOutbound && outStr !== "" && outStr !== "-") {
+              const upper = outStr.toUpperCase();
+              if (upper === "V") {
+                hasV = true;
+              } else if (upper !== "S" && !upper.includes("N/A") && upper !== "NA") {
+                const n = parseFloat(outStr);
+                if (!isNaN(n)) {
+                  sumQ += n;
+                  cntQ++;
+                }
+              }
+            }
+
+            const requireOutbound = wCfg.hasOutbound && !isHistoricalEarlyQ;
+            const outboundFilled = !requireOutbound || (outStr !== "" && outStr !== "-");
+            const isWeekVacation = inboundV > 0 && inboundV === inboundFilled && (!requireOutbound || outStr === "" || outStr.toUpperCase() === "V");
+            const isWeekComplete = (inboundFilled === wCfg.colCount && outboundFilled) || isWeekVacation;
+
+            if (!isWeekComplete) {
               allWeeksFilled = false;
               break;
             }
@@ -4319,7 +4511,14 @@ export default function QualityDashboard({
               {canSwitchTeams && (
                 <button
                   type="button"
-                  onClick={() => setShowActivityLogModal(true)}
+                  onClick={() => {
+                    const nowTs = Date.now();
+                    const freshToday = toLocalDateStr(new Date(nowTs).toISOString());
+                    setActivityNowTick(nowTs);
+                    setActivityFilterMode("today");
+                    setActivityCustomDate(freshToday);
+                    setShowActivityLogModal(true);
+                  }}
                   className="h-8 flex items-center gap-1.5 px-3 rounded-xl text-xs font-black text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/90 dark:border-indigo-800/70 transition shadow-2xs cursor-pointer active:scale-95 shrink-0"
                   title={`View Daily Activity Log for ${currentSection.evaluator}`}
                 >
@@ -6144,7 +6343,10 @@ export default function QualityDashboard({
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => setActivityFilterMode("today")}
+                    onClick={() => {
+                      setActivityFilterMode("today");
+                      setActivityCustomDate(todayLocalStr);
+                    }}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
                       activityFilterMode === "today"
                         ? "bg-indigo-600 text-white shadow-xs"
@@ -6163,7 +6365,10 @@ export default function QualityDashboard({
 
                   <button
                     type="button"
-                    onClick={() => setActivityFilterMode("yesterday")}
+                    onClick={() => {
+                      setActivityFilterMode("yesterday");
+                      setActivityCustomDate(yesterdayLocalStr);
+                    }}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
                       activityFilterMode === "yesterday"
                         ? "bg-indigo-600 text-white shadow-xs"
@@ -6212,11 +6417,20 @@ export default function QualityDashboard({
                   </button>
                   <input
                     type="date"
-                    value={activityCustomDate}
+                    value={
+                      activityFilterMode === "today"
+                        ? todayLocalStr
+                        : activityFilterMode === "yesterday"
+                        ? yesterdayLocalStr
+                        : activityCustomDate
+                    }
                     onChange={(e) => {
                       if (e.target.value) {
-                        setActivityCustomDate(e.target.value);
-                        setActivityFilterMode("custom");
+                        const val = e.target.value;
+                        setActivityCustomDate(val);
+                        if (val === todayLocalStr) setActivityFilterMode("today");
+                        else if (val === yesterdayLocalStr) setActivityFilterMode("yesterday");
+                        else setActivityFilterMode("custom");
                       }
                     }}
                     className={`px-2 py-1 rounded-lg text-xs font-black outline-none cursor-pointer ${
