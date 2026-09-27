@@ -124,7 +124,17 @@ function getQaSectionSlug(team: string): string {
   return 'mohammed_jihad';
 }
 
-// Checks if all weeks for a given month have been evaluated, and computes the verified quality average
+// Quality Dashboard auto-sync is enabled starting from September 2026 (Month 9) onwards.
+// Months prior to September 2026 (JAN–AUG 2026) retain manually entered quality scores.
+function isQualitySyncEnabled(year: string, month: string): boolean {
+  const y = parseInt(String(year), 10);
+  if (isNaN(y) || y < 2026) return false;
+  if (y > 2026) return true;
+  const idx = MONTHS.indexOf((month || "").toUpperCase());
+  return idx >= 8; // 8 = SEP (Month 9), 9 = OCT, 10 = NOV, 11 = DEC
+}
+
+// Checks if all weeks for a given month have been fully evaluated, and computes the verified quality average
 function computeVerifiedMonthlyQuality(
   scores: Record<string, string>,
   wr: { quarter: string; weekStart: number; weekEnd: number },
@@ -135,35 +145,79 @@ function computeVerifiedMonthlyQuality(
     return { isComplete: false, qualityAvg: "" };
   }
 
+  const yNum = parseInt(String(selectedYear), 10);
+  const isNewSchema = yNum > 2026 || (yNum === 2026 && wr.quarter === "Q4");
+
   let allWeeksFilled = true;
   let sumQ = 0;
   let cntQ = 0;
   let hasAnyV = false;
 
   for (let w = wr.weekStart; w <= wr.weekEnd; w++) {
-    let weekHasEntry = false;
-    const weekPrefix = `w${w}_`;
+    let colCount = 6;
+    let hasOutbound = true;
+    let callBase = 0;
 
-    for (const [k, v] of Object.entries(scores)) {
-      if (k.startsWith(weekPrefix) && v !== undefined && v !== null) {
-        const s = String(v).trim();
-        if (s !== "" && s !== "-") {
-          weekHasEntry = true;
-          const upper = s.toUpperCase();
-          if (upper === "V") {
-            hasAnyV = true;
-          } else if (upper !== "S" && !upper.includes("N/A") && upper !== "NA") {
-            const num = parseFloat(s);
-            if (!isNaN(num)) {
-              sumQ += num;
-              cntQ++;
-            }
+    if (isChatT) {
+      if (isNewSchema) {
+        colCount = 8;
+        hasOutbound = false;
+      } else if (yNum === 2026 && wr.quarter === "Q3" && w >= 10) {
+        colCount = 7;
+        hasOutbound = false;
+      } else {
+        colCount = 6;
+        hasOutbound = true;
+      }
+    } else {
+      colCount = isNewSchema ? 7 : 6;
+      hasOutbound = true;
+      callBase = (w - 1) * colCount;
+    }
+
+    let inboundFilled = 0;
+    let inboundV = 0;
+
+    for (let c = 1; c <= colCount; c++) {
+      const key = isChatT ? `w${w}_chat_${c}` : `w${w}_call_${callBase + c}`;
+      const rawVal = scores[key] ?? (isChatT ? (scores[`w${w}_call_${c}`] ?? scores[`w${w}_call_${callBase + c}`]) : scores[`w${w}_call_${c}`]);
+      const s = String(rawVal ?? "").trim();
+      if (s !== "" && s !== "-") {
+        inboundFilled++;
+        const upper = s.toUpperCase();
+        if (upper === "V") {
+          inboundV++;
+          hasAnyV = true;
+        } else if (upper !== "S" && !upper.includes("N/A") && upper !== "NA") {
+          const num = parseFloat(s);
+          if (!isNaN(num)) {
+            sumQ += num;
+            cntQ++;
           }
         }
       }
     }
 
-    if (!weekHasEntry) {
+    const outRaw = scores[`w${w}_outbound`];
+    const outStr = String(outRaw ?? "").trim();
+    if (hasOutbound && outStr !== "" && outStr !== "-") {
+      const upper = outStr.toUpperCase();
+      if (upper === "V") {
+        hasAnyV = true;
+      } else if (upper !== "S" && !upper.includes("N/A") && upper !== "NA") {
+        const num = parseFloat(outStr);
+        if (!isNaN(num)) {
+          sumQ += num;
+          cntQ++;
+        }
+      }
+    }
+
+    const outboundFilled = !hasOutbound || (outStr !== "" && outStr !== "-");
+    const isWeekVacation = inboundV > 0 && inboundV === inboundFilled && (!hasOutbound || outStr === "" || outStr.toUpperCase() === "V");
+    const isWeekComplete = (inboundFilled === colCount && outboundFilled) || isWeekVacation;
+
+    if (!isWeekComplete) {
       allWeeksFilled = false;
       break;
     }
@@ -1930,6 +1984,19 @@ export default function Dashboard() {
           let cntQ = 0;
 
           for (const m of monthsInPeriod) {
+            if (!isQualitySyncEnabled(year, m)) {
+              // Prior to SEP 2026: strictly use manually entered metric quality
+              const mRow = agentGroups[agentName]?.find(r => r.month === m);
+              if (mRow && mRow.quality && mRow.quality !== 'V') {
+                const num = parseFloat(String(mRow.quality).replace('%', ''));
+                if (!isNaN(num)) {
+                  sumQ += num;
+                  cntQ++;
+                }
+              }
+              continue;
+            }
+
             const wr = getQualityWeekRange(m);
             if (!wr) continue;
             const docId = `${year}_${wr.quarter}_${sectionSlug}_${slug}`;
@@ -1947,7 +2014,7 @@ export default function Dashboard() {
               // Fallback to month's existing metric quality if present
               const mRow = agentGroups[agentName]?.find(r => r.month === m);
               if (mRow && mRow.quality && mRow.quality !== 'V') {
-                const num = parseFloat(mRow.quality);
+                const num = parseFloat(String(mRow.quality).replace('%', ''));
                 if (!isNaN(num)) {
                   sumQ += num;
                   cntQ++;
@@ -1992,7 +2059,8 @@ export default function Dashboard() {
       });
 
       const hasQualityCol = teamCols.some((c: any) => c.id === 'quality');
-      if (hasQualityCol) {
+      // Only sync from quality_evaluations starting from SEP 2026 onwards; JAN–AUG 2026 keep manual values
+      if (hasQualityCol && isQualitySyncEnabled(year, targetMonth)) {
         const wr = getQualityWeekRange(targetMonth);
         const sectionSlug = getQaSectionSlug(team);
         const isChatT = team === 'Mohammed Dlshad Team';
@@ -2031,11 +2099,14 @@ export default function Dashboard() {
     const hasQualityCol = teamCols.some((c: any) => c.id === 'quality');
     if (!hasQualityCol) return;
 
+    const syncEnabledMonths = monthsToCheck.filter(m => isQualitySyncEnabled(year, m));
+    if (syncEnabledMonths.length === 0) return;
+
     const sectionSlug = getQaSectionSlug(team);
     const isChatT = team === 'Mohammed Dlshad Team';
     const toFetch: { docId: string; month: string; member: any }[] = [];
 
-    for (const m of monthsToCheck) {
+    for (const m of syncEnabledMonths) {
       const wr = getQualityWeekRange(m);
       if (!wr) continue;
       for (const member of roster) {
@@ -2065,9 +2136,9 @@ export default function Dashboard() {
           qaCacheRef.current[docId] = data;
           hasNewData = true;
 
-          // If this is for the current month and quality is complete, sync to metric table in background if needed
+          // If this is for a sync-enabled month (SEP 2026+) and quality is complete, sync to metric table in background if needed
           const wr = getQualityWeekRange(month);
-          if (wr && data.scores) {
+          if (wr && data.scores && isQualitySyncEnabled(year, month)) {
             const { isComplete, qualityAvg } = computeVerifiedMonthlyQuality(data.scores, wr, isChatT, year);
             if (isComplete && qualityAvg) {
               const cacheKey = `${team}_${year}`;

@@ -58,7 +58,8 @@ async function syncAll() {
     for (const agentName of sectionAgents) {
       const slug = agentName.toLowerCase().replace(/[^a-z0-9]/g, "_");
 
-      for (let mIdx = 0; mIdx < MONTHS.length; mIdx++) {
+      // Sync only from Month 9 (SEP, index 8) onwards for 2026; JAN-AUG retain manual data
+      for (let mIdx = 8; mIdx < MONTHS.length; mIdx++) {
         const mName = MONTHS[mIdx];
         const { quarter, weekStart, weekEnd } = getMonthWeekRange(mIdx);
         const docId = `${year}_${quarter}_${sec.id}_${slug}`;

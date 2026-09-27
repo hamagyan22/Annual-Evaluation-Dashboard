@@ -3587,11 +3587,12 @@ export default function QualityDashboard({
     printWindow.document.close();
   };
 
-  // Synchronize completed quality evaluations to Team Leader and Agent dashboards
+  // Synchronize completed quality evaluations to Team Leader and Agent dashboards (SEP 2026 onwards only)
   const handleSyncToMetrics = async () => {
     setSyncingMetrics(true);
     try {
       let syncedCount = 0;
+      const upperMonths = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
       const quarterMonthsMap: Record<string, string[]> = {
         Q1: ["JAN", "FEB", "MAR"],
         Q2: ["APR", "MAY", "JUN"],
@@ -3599,9 +3600,24 @@ export default function QualityDashboard({
         Q4: ["OCT", "NOV", "DEC"]
       };
 
-      const monthsToCheck = selectedMonthFilter !== null 
-        ? [MONTH_NAMES[selectedMonthFilter]]
+      const rawMonthsToCheck = selectedMonthFilter !== null 
+        ? [upperMonths[selectedMonthFilter]]
         : (quarterMonthsMap[selectedQuarter] || ["JUL", "AUG", "SEP"]);
+
+      const yNum = parseInt(String(selectedYear), 10);
+      const monthsToCheck = rawMonthsToCheck.filter(m => {
+        if (isNaN(yNum) || yNum < 2026) return false;
+        if (yNum > 2026) return true;
+        return upperMonths.indexOf(m.toUpperCase()) >= 8; // Month 9 (SEP) onwards
+      });
+
+      if (monthsToCheck.length === 0) {
+        setSyncToast({
+          message: "Quality sync starts from September 2026 onwards (Jan–Aug 2026 retain manual entries).",
+          type: "error"
+        });
+        return;
+      }
 
       const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
 
@@ -3637,7 +3653,8 @@ export default function QualityDashboard({
         }
 
         for (const mName of monthsToCheck) {
-          const mIdx = MONTH_NAMES.indexOf(mName);
+          const mUpper = mName.toUpperCase();
+          const mIdx = upperMonths.indexOf(mUpper);
           if (mIdx === -1) continue;
           const { quarter, weekStart, weekEnd } = getMonthWeekRange(mIdx);
           const docId = `${selectedYear}_${quarter}_${sectionSlug}_${slug}`;
@@ -3708,7 +3725,7 @@ export default function QualityDashboard({
               const q = query(
                 collection(db, targetTable),
                 where("agent_name", "==", csrName),
-                where("month", "==", mName),
+                where("month", "==", mUpper),
                 where("year", "==", selectedYear)
               );
               const mSnap = await getDocs(q);
@@ -3718,7 +3735,7 @@ export default function QualityDashboard({
                 await addDoc(collection(db, targetTable), {
                   agent_name: csrName,
                   team: targetTeam,
-                  month: mName,
+                  month: mUpper,
                   year: selectedYear,
                   quality: verifiedAvg,
                   display_name: csrName
@@ -3737,7 +3754,7 @@ export default function QualityDashboard({
         });
       } else {
         setSyncToast({
-          message: "No fully completed months found to sync yet.",
+          message: "No fully completed months (from Sep 2026 onwards) found to sync yet.",
           type: "error"
         });
       }
