@@ -77,3 +77,9 @@ body.dark .custom-scrollbar::-webkit-scrollbar-track {
   background: #1C6B53;
 }
 
+/* Hide browser native password eye icon so only the custom eye icon is shown */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+}
+

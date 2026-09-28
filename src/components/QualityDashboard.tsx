@@ -3776,16 +3776,6 @@ export default function QualityDashboard({
         {/* Top Header & Brand Bar */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 sm:pb-6 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-3.5">
-            {canSwitchTeams && (
-              <button
-                onClick={onBack}
-                className="p-2 sm:p-2.5 rounded-xl bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 shadow-xs transition text-gray-600 dark:text-gray-300 hover:text-[#1C6B53] dark:hover:text-emerald-400 active:scale-95 cursor-pointer"
-                title="Return to Main Dashboard"
-              >
-                <ArrowLeft size={18} />
-              </button>
-            )}
-
             <img src="/logo.webp" alt="FIB Logo" className="h-10 sm:h-12 w-auto object-contain" />
             <div className="h-8 sm:h-10 w-[1.5px] bg-gray-200 dark:bg-gray-700" />
             
@@ -3829,66 +3819,76 @@ export default function QualityDashboard({
               </div>
             )}
 
-            {/* Dark Mode Toggle */}
-            {toggleDarkMode && (
-              <button 
-                onClick={toggleDarkMode} 
-                className="w-9 h-9 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300 transition shadow-xs cursor-pointer"
-                title="Toggle Dark Mode"
-              >
-                {isDarkMode ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} />}
-              </button>
-            )}
-
-            <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-0.5" />
-
-            {/* Profile Button (Placed right next to Sign Out) */}
-            <button 
-              onClick={handleOpenProfile}
-              className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-gray-700/60 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition shadow-xs group cursor-pointer"
-              title="Profile Settings"
-            >
-              <div className="w-6 sm:w-7 h-6 sm:h-7 rounded-full bg-gradient-to-tr from-[#1C6B53] to-emerald-400 flex items-center justify-center overflow-hidden ring-2 ring-[#1C6B53]/20 dark:ring-emerald-400/20 text-white font-black text-xs shadow-xs shrink-0">
-                {userProfile?.photo_url ? (
-                  <img src={userProfile.photo_url} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : <Users size={12} />
+            {canSwitchTeams ? (
+              <div className="flex items-center gap-1.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-1.5 rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-xs">
+                <button
+                  onClick={onBack}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 transition cursor-pointer"
+                  title="Return to Main Dashboard"
+                >
+                  <ArrowLeft size={14} /> <span>Back</span>
+                </button>
+                {toggleDarkMode && (
+                  <>
+                    <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
+                    <button
+                      onClick={toggleDarkMode}
+                      className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300 transition shrink-0 cursor-pointer"
+                      title="Toggle Dark Mode"
+                    >
+                      {isDarkMode ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} />}
+                    </button>
+                  </>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="max-w-[70px] sm:max-w-[120px] truncate group-hover:text-[#1C6B53] dark:group-hover:text-emerald-400 transition-colors">
-                  {userProfile?.name || (isAdmin ? 'Mohammed Dlshad' : (isManager ? 'Jalal Burghol' : 'QA Evaluator'))}
-                </span>
-                <span className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-wider ${
-                  isAdmin 
-                    ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700/60' 
-                    : isManager 
-                    ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-700/60'
-                    : 'bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 border-emerald-300 dark:border-emerald-700/60'
-                }`}>
-                  {isAdmin ? 'Admin' : isManager ? 'Manager' : 'QA'}
-                </span>
-              </div>
-            </button>
+            ) : (
+              <>
+                {/* Dark Mode Toggle */}
+                {toggleDarkMode && (
+                  <button 
+                    onClick={toggleDarkMode} 
+                    className="w-9 h-9 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300 transition shadow-xs cursor-pointer"
+                    title="Toggle Dark Mode"
+                  >
+                    {isDarkMode ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} />}
+                  </button>
+                )}
 
-            {/* Sign Out (Logout) Button */}
-            <button
-              onClick={onLogout || onBack}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 bg-white hover:bg-red-50 dark:bg-gray-800 dark:hover:bg-red-950/40 border border-gray-200 dark:border-gray-700 transition shadow-xs cursor-pointer"
-              title="Sign Out"
-            >
-              <LogOut size={14} />
-              <span>Sign Out</span>
-            </button>
+                <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-0.5" />
 
-            {canSwitchTeams && (
-              <button
-                onClick={onBack}
-                className="px-3.5 py-1.5 bg-[#1C6B53] hover:bg-[#155a45] text-white text-xs font-bold rounded-xl shadow-md shadow-[#1C6B53]/20 transition flex items-center gap-1.5 active:scale-95 cursor-pointer ml-1"
-              >
-                <ArrowLeft size={14} />
-                <span>Back to TL Dashboard</span>
-              </button>
+                {/* Profile Button (Placed right next to Sign Out) */}
+                <button 
+                  onClick={handleOpenProfile}
+                  className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-gray-700/60 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition shadow-xs group cursor-pointer"
+                  title="Profile Settings"
+                >
+                  <div className="w-6 sm:w-7 h-6 sm:h-7 rounded-full bg-gradient-to-tr from-[#1C6B53] to-emerald-400 flex items-center justify-center overflow-hidden ring-2 ring-[#1C6B53]/20 dark:ring-emerald-400/20 text-white font-black text-xs shadow-xs shrink-0">
+                    {userProfile?.photo_url ? (
+                      <img src={userProfile.photo_url} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : <Users size={12} />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="max-w-[70px] sm:max-w-[120px] truncate group-hover:text-[#1C6B53] dark:group-hover:text-emerald-400 transition-colors">
+                      {userProfile?.name || 'QA Evaluator'}
+                    </span>
+                    <span className="text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 border-emerald-300 dark:border-emerald-700/60">
+                      QA
+                    </span>
+                  </div>
+                </button>
+
+                {/* Sign Out (Logout) Button */}
+                <button
+                  onClick={onLogout || onBack}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 bg-white hover:bg-red-50 dark:bg-gray-800 dark:hover:bg-red-950/40 border border-gray-200 dark:border-gray-700 transition shadow-xs cursor-pointer"
+                  title="Sign Out"
+                >
+                  <LogOut size={14} />
+                  <span>Sign Out</span>
+                </button>
+              </>
             )}
           </div>
         </div>

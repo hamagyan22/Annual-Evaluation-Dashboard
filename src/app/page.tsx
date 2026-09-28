@@ -2995,10 +2995,6 @@ export default function Dashboard() {
             </form>
 
             <div className="mt-8 pt-5 border-t border-gray-100 dark:border-gray-800/80 flex flex-col items-center justify-center gap-1.5 text-gray-400 dark:text-gray-500 text-[11px] font-medium">
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={14} className="text-[#1C6B53] dark:text-emerald-400" />
-                <span>Protected By FIB Enterprise Security</span>
-              </div>
               <div className="text-[10.5px] font-bold tracking-wide text-gray-400/90 dark:text-gray-500">
                 Designed &amp; Engineered by <span className="text-[#1C6B53] dark:text-emerald-400 font-black">{getSystemAuthor()}</span>
               </div>
