@@ -1855,15 +1855,18 @@ export default function Dashboard() {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
+      const primaryEmail =
+        cleanEmail === 'younis.kamal@agent.com'
+          ? 'younis.kamal.tl@agent.com'
+          : cleanEmail === 'mohammed.jihad@agent.com'
+          ? 'mohammed.jihad.qa@agent.com'
+          : cleanEmail;
+
       try {
-        await signInWithEmailAndPassword(auth, cleanEmail, password);
+        await signInWithEmailAndPassword(auth, primaryEmail, password);
       } catch (firstErr: any) {
-        if (cleanEmail === 'mohammed.jihad@agent.com') {
-          // Transparent fallback to provisioned credential
-          await signInWithEmailAndPassword(auth, 'mohammed.jihad.qa@agent.com', password);
-        } else if (cleanEmail === 'younis.kamal@agent.com') {
-          // Transparent fallback to provisioned reset credential
-          await signInWithEmailAndPassword(auth, 'younis.kamal.tl@agent.com', password);
+        if (primaryEmail !== cleanEmail) {
+          await signInWithEmailAndPassword(auth, cleanEmail, password);
         } else {
           throw firstErr;
         }
