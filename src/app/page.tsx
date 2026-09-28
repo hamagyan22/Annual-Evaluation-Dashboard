@@ -1699,7 +1699,7 @@ export default function Dashboard() {
         const emailLower = user.email?.toLowerCase().trim() || '';
         const isMohammed = emailLower === 'mohammed.dlshad0@gmail.com';
         const isJalal = emailLower === 'jalal.burghol@agent.com';
-        const isYounis = emailLower === 'younis.kamal@agent.com';
+        const isYounis = emailLower === 'younis.kamal@agent.com' || emailLower === 'younis.kamal.tl@agent.com' || emailLower.includes('younis.kamal');
         const isAnkido = emailLower === 'ankido.buya@agent.com';
         const isLara = emailLower === 'lara.kamil@agent.com';
         const isMohammedJihad = emailLower === 'mohammed.jihad@agent.com' || emailLower === 'mohammed.jihad.qa@agent.com' || emailLower.includes('mohammed.jihad');
@@ -1773,13 +1773,18 @@ export default function Dashboard() {
           // Mandatory password change for everyone except Mohammed:
           // User must have explicitly completed the password change process (passwordUpdated === true)
           const hasUpdatedPassword = existingData.passwordUpdated === true;
+          const canonicalEmail = isMohammedJihad
+            ? 'mohammed.jihad@agent.com'
+            : isYounis
+            ? 'younis.kamal@agent.com'
+            : user.email;
 
           const updatedProfile = {
             ...existingData,
             role,
             name: name || user.displayName || user.email?.split('@')[0],
             team: team || (isJalal ? 'All' : undefined),
-            email: isMohammedJihad ? 'mohammed.jihad@agent.com' : user.email,
+            email: canonicalEmail,
             isAdmin: false,
             passwordUpdated: hasUpdatedPassword,
             mustChangePassword: !hasUpdatedPassword,
@@ -1792,7 +1797,7 @@ export default function Dashboard() {
             role,
             name: updatedProfile.name,
             team: updatedProfile.team || null,
-            email: isMohammedJihad ? 'mohammed.jihad@agent.com' : user.email,
+            email: canonicalEmail,
             isAdmin: false,
             passwordUpdated: hasUpdatedPassword,
             mustChangePassword: !hasUpdatedPassword,
@@ -1805,7 +1810,7 @@ export default function Dashboard() {
             role: fallbackRole,
             name: isJalal ? 'Jalal Burghol' : (isYounis ? 'Younis Kamal' : (isAnkido ? 'Ankido Buya' : (isLara ? 'Lara Kamil' : (isMohammedJihad ? 'Mohammed Jihad' : (isMohammedAzad ? 'Mohammed Azad' : user.email?.split('@')[0]))))),
             team: isYounis ? 'Younis Kamal Team' : (isAnkido ? 'Ankido Buya Team' : (isLara ? 'Ankido Buya Team' : (isMohammedJihad ? 'Younis Kamal Team' : (isMohammedAzad ? 'All Call Teams' : (isJalal ? 'All' : undefined))))),
-            email: isMohammedJihad ? 'mohammed.jihad@agent.com' : user.email,
+            email: isMohammedJihad ? 'mohammed.jihad@agent.com' : (isYounis ? 'younis.kamal@agent.com' : user.email),
             isAdmin: false,
             passwordUpdated: false,
             mustChangePassword: true,
@@ -1856,6 +1861,9 @@ export default function Dashboard() {
         if (cleanEmail === 'mohammed.jihad@agent.com') {
           // Transparent fallback to provisioned credential
           await signInWithEmailAndPassword(auth, 'mohammed.jihad.qa@agent.com', password);
+        } else if (cleanEmail === 'younis.kamal@agent.com') {
+          // Transparent fallback to provisioned reset credential
+          await signInWithEmailAndPassword(auth, 'younis.kamal.tl@agent.com', password);
         } else {
           throw firstErr;
         }
