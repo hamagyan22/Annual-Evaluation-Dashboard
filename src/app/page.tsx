@@ -1986,9 +1986,11 @@ export default function Dashboard() {
     const cacheKey = `${selectedTeam}_${selectedYear}`;
     const cached = teamDataCacheRef.current[cacheKey];
     if (!cached) return;
+    const pAgentLower = (payload.agent_name || "").trim().toLowerCase();
+    const pMonthUpper = (payload.month || "").trim().toUpperCase();
     const idx = cached.allYearData.findIndex((m: any) =>
       (docId && m.id === docId) ||
-      (m.agent_name === payload.agent_name && m.month === payload.month)
+      ((m.agent_name || "").trim().toLowerCase() === pAgentLower && (m.month || "").trim().toUpperCase() === pMonthUpper)
     );
     if (idx >= 0) {
       cached.allYearData[idx] = { ...cached.allYearData[idx], ...payload, ...(docId ? { id: docId } : {}) };
@@ -2010,8 +2012,8 @@ export default function Dashboard() {
     year: string
   ) => {
     if (isAgg) {
-      const monthsInPeriod = aggregateMap[targetMonth] || [];
-      const metrics = allYearData.filter(m => monthsInPeriod.includes(m.month));
+      const monthsInPeriod = (aggregateMap[targetMonth] || []).map(m => m.toUpperCase());
+      const metrics = allYearData.filter(m => monthsInPeriod.includes((m.month || "").toUpperCase()));
       const agentGroups: Record<string, any[]> = {};
       metrics.forEach(row => {
         const key = (row.agent_name || "").trim().toLowerCase();
@@ -2061,7 +2063,7 @@ export default function Dashboard() {
           for (const m of monthsInPeriod) {
             if (!isQualitySyncEnabled(year, m)) {
               // Prior to SEP 2026: strictly use manually entered metric quality
-              const mRow = agentGroups[agentKey]?.find(r => r.month === m);
+              const mRow = agentGroups[agentKey]?.find(r => (r.month || "").toUpperCase() === m);
               if (mRow && mRow.quality && mRow.quality !== 'V') {
                 const num = parseFloat(String(mRow.quality).replace('%', ''));
                 if (!isNaN(num)) {
@@ -2092,7 +2094,7 @@ export default function Dashboard() {
               }
             } else {
               // Fallback to month's existing metric quality if present
-              const mRow = agentGroups[agentKey]?.find(r => r.month === m);
+              const mRow = agentGroups[agentKey]?.find(r => (r.month || "").toUpperCase() === m);
               if (mRow && mRow.quality && mRow.quality !== 'V') {
                 const num = parseFloat(String(mRow.quality).replace('%', ''));
                 if (!isNaN(num)) {
@@ -2114,11 +2116,22 @@ export default function Dashboard() {
       return aggregatedRows;
     } else {
       // Single month
-      const metrics = allYearData.filter(m => m.month === targetMonth);
+      const targetUpper = (targetMonth || "").toUpperCase();
+      const metrics = allYearData.filter(m => (m.month || "").toUpperCase() === targetUpper);
       const metricsByAgent: Record<string, any> = {};
       metrics.forEach(row => {
         const key = (row.agent_name || "").trim().toLowerCase();
-        metricsByAgent[key] = row;
+        if (!metricsByAgent[key]) {
+          metricsByAgent[key] = { ...row };
+        } else {
+          // Merge non-empty values so an empty duplicate document never overwrites saved metrics
+          const current = metricsByAgent[key];
+          Object.entries(row).forEach(([k, v]) => {
+            if (v !== undefined && v !== null && String(v).trim() !== "") {
+              current[k] = v;
+            }
+          });
+        }
       });
 
       const mergedRows = roster.map(member => {

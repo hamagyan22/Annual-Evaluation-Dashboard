@@ -102,6 +102,14 @@ const CANONICAL_AGENT_NAMES: Record<string, string> = {
   "sawen sartib": "Sawen"
 };
 
+const REMOVED_QA_AGENTS = new Set([
+  "sara khasrow",
+  "mohammed omarble",
+  "nariman abbas",
+  "hala ahmed",
+  "ali twana"
+]);
+
 function getCanonicalAgentName(name: string): string {
   const trimmed = (name || "").trim();
   const lower = trimmed.toLowerCase();
@@ -111,6 +119,7 @@ function getCanonicalAgentName(name: string): string {
 function isValidAgentName(name: string): boolean {
   const lower = (name || "").toLowerCase().trim();
   if (!lower) return false;
+  if (REMOVED_QA_AGENTS.has(lower)) return false;
   if (lower.includes("csr /") || lower.includes("csr/") || lower.startsWith("csr /") || lower.startsWith("csr/")) return false;
   return true;
 }
