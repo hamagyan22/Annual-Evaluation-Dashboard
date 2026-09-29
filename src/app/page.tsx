@@ -134,7 +134,7 @@ function isQualitySyncEnabled(year: string, month: string): boolean {
   return idx >= 8; // 8 = SEP (Month 9), 9 = OCT, 10 = NOV, 11 = DEC
 }
 
-// Checks if all weeks for a given month have been fully evaluated, and computes the verified quality average
+// Checks if all active weeks for a given month (from the agent's first active week through weekEnd) have been fully evaluated, and computes the verified quality average
 function computeVerifiedMonthlyQuality(
   scores: Record<string, string>,
   wr: { quarter: string; weekStart: number; weekEnd: number },
@@ -148,12 +148,7 @@ function computeVerifiedMonthlyQuality(
   const yNum = parseInt(String(selectedYear), 10);
   const isNewSchema = yNum > 2026 || (yNum === 2026 && wr.quarter === "Q4");
 
-  let allWeeksFilled = true;
-  let sumQ = 0;
-  let cntQ = 0;
-  let hasAnyV = false;
-
-  for (let w = wr.weekStart; w <= wr.weekEnd; w++) {
+  const evalWeek = (w: number) => {
     let colCount = 6;
     let hasOutbound = true;
     let callBase = 0;
@@ -177,6 +172,9 @@ function computeVerifiedMonthlyQuality(
 
     let inboundFilled = 0;
     let inboundV = 0;
+    let sumW = 0;
+    let cntW = 0;
+    let hasV = false;
 
     for (let c = 1; c <= colCount; c++) {
       const key = isChatT ? `w${w}_chat_${c}` : `w${w}_call_${callBase + c}`;
@@ -187,12 +185,12 @@ function computeVerifiedMonthlyQuality(
         const upper = s.toUpperCase();
         if (upper === "V") {
           inboundV++;
-          hasAnyV = true;
+          hasV = true;
         } else if (upper !== "S" && !upper.includes("N/A") && upper !== "NA") {
           const num = parseFloat(s);
           if (!isNaN(num)) {
-            sumQ += num;
-            cntQ++;
+            sumW += num;
+            cntW++;
           }
         }
       }
@@ -203,27 +201,53 @@ function computeVerifiedMonthlyQuality(
     if (hasOutbound && outStr !== "" && outStr !== "-") {
       const upper = outStr.toUpperCase();
       if (upper === "V") {
-        hasAnyV = true;
+        hasV = true;
       } else if (upper !== "S" && !upper.includes("N/A") && upper !== "NA") {
         const num = parseFloat(outStr);
         if (!isNaN(num)) {
-          sumQ += num;
-          cntQ++;
+          sumW += num;
+          cntW++;
         }
       }
     }
 
     const outboundFilled = !hasOutbound || (outStr !== "" && outStr !== "-");
+    const hasAnyEntry = inboundFilled > 0 || (hasOutbound && outStr !== "" && outStr !== "-");
     const isWeekVacation = inboundV > 0 && inboundV === inboundFilled && (!hasOutbound || outStr === "" || outStr.toUpperCase() === "V");
     const isWeekComplete = (inboundFilled === colCount && outboundFilled) || isWeekVacation;
 
-    if (!isWeekComplete) {
-      allWeeksFilled = false;
+    return { hasAnyEntry, isWeekComplete, sumW, cntW, hasV };
+  };
+
+  let firstActiveW = -1;
+  for (let w = wr.weekStart; w <= wr.weekEnd; w++) {
+    if (evalWeek(w).hasAnyEntry) {
+      firstActiveW = w;
       break;
     }
   }
 
-  if (!allWeeksFilled) {
+  if (firstActiveW === -1) {
+    return { isComplete: false, qualityAvg: "" };
+  }
+
+  let allActiveWeeksFilled = true;
+  let sumQ = 0;
+  let cntQ = 0;
+  let hasAnyV = false;
+
+  for (let w = firstActiveW; w <= wr.weekEnd; w++) {
+    const st = evalWeek(w);
+    if (!st.isWeekComplete) {
+      allActiveWeeksFilled = false;
+      break;
+    }
+    sumQ += st.sumW;
+    cntQ += st.cntW;
+    if (st.hasV) hasAnyV = true;
+  }
+
+  if (!allActiveWeeksFilled) {
     return { isComplete: false, qualityAvg: "" };
   }
 
@@ -583,29 +607,64 @@ function AgentDashboard({
   }, [showEditProfile, forcePasswordChange]);
 
   useEffect(() => {
-    if (!currentAgent?.agent_name) return;
+    const targetName = (currentAgent?.agent_name || currentAgent?.name || "").trim();
+    if (!targetName) return;
     setLoading(true);
+
+    let rawMetricsDocs: any[] = [];
+    let syncedRegistry: Record<string, any> | null = null;
+    const sectionSlug = getQaSectionSlug(currentAgent?.team || "");
+
+    const applyAgentMetrics = () => {
+      const targetLower = targetName.toLowerCase();
+      const filtered = rawMetricsDocs
+        .filter(d => (d.agent_name || "").trim().toLowerCase() === targetLower)
+        .map(d => {
+          const row = { ...d };
+          if (isQualitySyncEnabled(selectedYear, row.month) && syncedRegistry) {
+            const syncKey = `${selectedYear}_${(row.month || "").toUpperCase()}_${sectionSlug}`;
+            if (!syncedRegistry[syncKey]) {
+              row.quality = "";
+            }
+          }
+          return row;
+        });
+      setMetrics(filtered);
+      setLoading(false);
+    };
+
     const q = query(
       collection(db, tableName),
-      where('agent_name', '==', currentAgent.agent_name),
       where('year', '==', selectedYear)
     );
     const unsubMetrics = onSnapshot(q, (snap) => {
-      setMetrics(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      setLoading(false);
+      rawMetricsDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      applyAgentMetrics();
     }, (err) => {
       console.error(err);
       setLoading(false);
     });
 
+    const unsubSync = onSnapshot(doc(db, 'quality_evaluations', 'config_sync_status'), (snap) => {
+      if (snap.exists()) {
+        syncedRegistry = snap.data()?.synced_months || {};
+      } else {
+        syncedRegistry = null;
+      }
+      applyAgentMetrics();
+    }, () => {});
+
     const mQ = query(
       collection(db, 'team_members'),
-      where('agent_name', '==', currentAgent.agent_name),
       where('team', '==', currentAgent.team)
     );
     const unsubMember = onSnapshot(mQ, (mSnap) => {
-      if (!mSnap.empty) {
-        const mData: any = { id: mSnap.docs[0].id, ...mSnap.docs[0].data() };
+      const targetLower = targetName.toLowerCase();
+      const matchedDoc = mSnap.docs.find(
+        d => (d.data().agent_name || "").trim().toLowerCase() === targetLower
+      );
+      if (matchedDoc) {
+        const mData: any = { id: matchedDoc.id, ...matchedDoc.data() };
         setMemberDoc(mData);
         setEditDisplayName(mData.display_name || mData.agent_name);
         setEditPhotoUrl(mData.photo_url || "");
@@ -620,6 +679,7 @@ function AgentDashboard({
 
     return () => {
       unsubMetrics();
+      unsubSync();
       unsubMember();
     };
   }, [selectedYear, currentAgent, tableName]);
@@ -1954,12 +2014,14 @@ export default function Dashboard() {
       const metrics = allYearData.filter(m => monthsInPeriod.includes(m.month));
       const agentGroups: Record<string, any[]> = {};
       metrics.forEach(row => {
-        if (!agentGroups[row.agent_name]) agentGroups[row.agent_name] = [];
-        agentGroups[row.agent_name].push(row);
+        const key = (row.agent_name || "").trim().toLowerCase();
+        if (!agentGroups[key]) agentGroups[key] = [];
+        agentGroups[key].push(row);
       });
 
       const aggregatedRows = roster.map(member => {
-        const agentRows = agentGroups[member.agent_name] || [];
+        const memberKey = (member.agent_name || "").trim().toLowerCase();
+        const agentRows = agentGroups[memberKey] || [];
         const avgRow: any = {
           _memberId: member.id,
           agent_name: member.agent_name,
@@ -1987,9 +2049,11 @@ export default function Dashboard() {
       if (hasQualityCol) {
         const sectionSlug = getQaSectionSlug(team);
         const isChatT = team === 'Mohammed Dlshad Team';
+        const syncedMonthsMap = qaCache['config_sync_status']?.synced_months || null;
 
         for (const row of aggregatedRows) {
           const agentName = row.agent_name;
+          const agentKey = (agentName || "").trim().toLowerCase();
           const slug = agentName.toLowerCase().replace(/[^a-z0-9]/g, '_');
           let sumQ = 0;
           let cntQ = 0;
@@ -1997,7 +2061,7 @@ export default function Dashboard() {
           for (const m of monthsInPeriod) {
             if (!isQualitySyncEnabled(year, m)) {
               // Prior to SEP 2026: strictly use manually entered metric quality
-              const mRow = agentGroups[agentName]?.find(r => r.month === m);
+              const mRow = agentGroups[agentKey]?.find(r => r.month === m);
               if (mRow && mRow.quality && mRow.quality !== 'V') {
                 const num = parseFloat(String(mRow.quality).replace('%', ''));
                 if (!isNaN(num)) {
@@ -2005,6 +2069,11 @@ export default function Dashboard() {
                   cntQ++;
                 }
               }
+              continue;
+            }
+
+            const syncKey = `${year}_${m.toUpperCase()}_${sectionSlug}`;
+            if (syncedMonthsMap && !syncedMonthsMap[syncKey]) {
               continue;
             }
 
@@ -2023,7 +2092,7 @@ export default function Dashboard() {
               }
             } else {
               // Fallback to month's existing metric quality if present
-              const mRow = agentGroups[agentName]?.find(r => r.month === m);
+              const mRow = agentGroups[agentKey]?.find(r => r.month === m);
               if (mRow && mRow.quality && mRow.quality !== 'V') {
                 const num = parseFloat(String(mRow.quality).replace('%', ''));
                 if (!isNaN(num)) {
@@ -2047,13 +2116,18 @@ export default function Dashboard() {
       // Single month
       const metrics = allYearData.filter(m => m.month === targetMonth);
       const metricsByAgent: Record<string, any> = {};
-      metrics.forEach(row => { metricsByAgent[row.agent_name] = row; });
+      metrics.forEach(row => {
+        const key = (row.agent_name || "").trim().toLowerCase();
+        metricsByAgent[key] = row;
+      });
 
       const mergedRows = roster.map(member => {
-        const existing = metricsByAgent[member.agent_name];
+        const memberKey = (member.agent_name || "").trim().toLowerCase();
+        const existing = metricsByAgent[memberKey];
         if (existing) {
           return {
             ...existing,
+            agent_name: member.agent_name,
             _memberId: member.id,
             photo_url: member.photo_url || "",
             display_name: member.display_name || member.agent_name
@@ -2075,8 +2149,16 @@ export default function Dashboard() {
         const wr = getQualityWeekRange(targetMonth);
         const sectionSlug = getQaSectionSlug(team);
         const isChatT = team === 'Mohammed Dlshad Team';
+        const syncedMonthsMap = qaCache['config_sync_status']?.synced_months || null;
+        const syncKey = `${year}_${targetMonth.toUpperCase()}_${sectionSlug}`;
+        const isMonthSynced = !syncedMonthsMap || Boolean(syncedMonthsMap[syncKey]);
+
         if (wr) {
           for (const row of mergedRows) {
+            if (!isMonthSynced) {
+              row['quality'] = "";
+              continue;
+            }
             const agentName = row.agent_name;
             const slug = agentName.toLowerCase().replace(/[^a-z0-9]/g, '_');
             const docId = `${year}_${wr.quarter}_${sectionSlug}_${slug}`;
@@ -2117,6 +2199,16 @@ export default function Dashboard() {
     const isChatT = team === 'Mohammed Dlshad Team';
     const toFetch: { docId: string; month: string; member: any }[] = [];
 
+    if (qaCacheRef.current['config_sync_status'] === undefined) {
+      qaCacheRef.current['config_sync_status'] = null;
+      try {
+        const syncSnap = await getDoc(doc(db, 'quality_evaluations', 'config_sync_status'));
+        qaCacheRef.current['config_sync_status'] = syncSnap.exists() ? syncSnap.data() : {};
+      } catch {
+        qaCacheRef.current['config_sync_status'] = {};
+      }
+    }
+
     for (const m of syncEnabledMonths) {
       const wr = getQualityWeekRange(m);
       if (!wr) continue;
@@ -2140,6 +2232,8 @@ export default function Dashboard() {
       );
 
       let hasNewData = false;
+      const syncedMonthsMap = qaCacheRef.current['config_sync_status']?.synced_months || null;
+
       snaps.forEach((snap, idx) => {
         const { docId, month, member } = toFetch[idx];
         if (snap && snap.exists()) {
@@ -2147,15 +2241,18 @@ export default function Dashboard() {
           qaCacheRef.current[docId] = data;
           hasNewData = true;
 
-          // If this is for a sync-enabled month (SEP 2026+) and quality is complete, sync to metric table in background if needed
+          // If this is for a sync-enabled month (SEP 2026+) that has been synced and quality is complete, keep metric table in sync
           const wr = getQualityWeekRange(month);
-          if (wr && data.scores && isQualitySyncEnabled(year, month)) {
+          const syncKey = `${year}_${month.toUpperCase()}_${sectionSlug}`;
+          const isMonthSynced = !syncedMonthsMap || Boolean(syncedMonthsMap[syncKey]);
+          if (wr && data.scores && isQualitySyncEnabled(year, month) && isMonthSynced) {
             const { isComplete, qualityAvg } = computeVerifiedMonthlyQuality(data.scores, wr, isChatT, year);
             if (isComplete && qualityAvg) {
               const cacheKey = `${team}_${year}`;
               const cached = teamDataCacheRef.current[cacheKey];
+              const memberLower = (member.agent_name || "").trim().toLowerCase();
               const existingMetric = cached?.allYearData.find(
-                (r: any) => r.agent_name === member.agent_name && r.month === month
+                (r: any) => (r.agent_name || "").trim().toLowerCase() === memberLower && r.month === month
               );
               if (existingMetric && existingMetric.quality !== qualityAvg) {
                 existingMetric.quality = qualityAvg;
@@ -2236,10 +2333,10 @@ export default function Dashboard() {
       const roster = membersSnap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
       roster.sort((a, b) => (a.agent_name > b.agent_name ? 1 : -1));
 
-      const rosterNames = new Set(roster.map(d => d.agent_name));
+      const rosterNames = new Set(roster.map(d => (d.agent_name || "").trim().toLowerCase()));
       const allYearData = metricsSnap.docs
         .map(d => ({ id: d.id, ...d.data() }))
-        .filter((d: any) => rosterNames.has(d.agent_name)) as any[];
+        .filter((d: any) => rosterNames.has((d.agent_name || "").trim().toLowerCase())) as any[];
 
       // Store in memory cache
       teamDataCacheRef.current[cacheKey] = { roster, allYearData };
@@ -3112,7 +3209,12 @@ export default function Dashboard() {
       return (
         <QualityDashboard 
           userProfile={userProfile} 
-          onBack={() => setShowQualityView(false)} 
+          onBack={() => {
+            teamDataCacheRef.current = {};
+            qaCacheRef.current = {};
+            setShowQualityView(false);
+            fetchData(true);
+          }} 
           onLogout={handleLogout}
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}

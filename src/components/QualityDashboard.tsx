@@ -9,7 +9,7 @@ import {
   Award, ArrowLeft, Search, Users, Check, Save, Download, 
   Sun, Moon, ChevronDown, ChevronLeft, ChevronRight, CheckCheck, RefreshCw, Calendar, Plus,
   LogOut, PhoneIncoming, PhoneOutgoing, Camera, X, Trash2, FileText, MessageSquare, ShieldCheck, UserPlus, ExternalLink, Link2,
-  CheckCircle2, AlertCircle, Activity, Clock
+  CheckCircle2, AlertCircle, Activity, Clock, Lock
 } from "lucide-react";
 import { compressImageFile } from "@/lib/imageUtils";
 
@@ -926,6 +926,47 @@ export default function QualityDashboard({
     return () => unsubscribe();
   }, [selectedYear]);
 
+  // 3. Real-time listener for monthly sync status registry (config_sync_status)
+  const [syncedMonthsRegistry, setSyncedMonthsRegistry] = useState<
+    Record<string, { synced_at: string; latest_score_ts?: string; synced_by?: string; count?: number }>
+  >({});
+  const [syncReminderModal, setSyncReminderModal] = useState<{
+    monthIdx: number;
+    monthName: string;
+    upperMonth: string;
+    quarter: string;
+    syncKey: string;
+    agentScores: Record<string, string>;
+    latestScoreTs: string;
+  } | null>(null);
+  const unsyncedPreviousMonthRef = useRef<{
+    monthIdx: number;
+    monthName: string;
+    upperMonth: string;
+    quarter: string;
+    syncKey: string;
+    agentScores: Record<string, string>;
+    latestScoreTs: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const unsubSyncStatus = onSnapshot(
+      doc(db, "quality_evaluations", "config_sync_status"),
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data?.synced_months && typeof data.synced_months === "object") {
+            setSyncedMonthsRegistry(data.synced_months);
+          }
+        }
+      },
+      (err) => {
+        console.error("Error listening to config_sync_status:", err);
+      }
+    );
+    return () => unsubSyncStatus();
+  }, []);
+
   // Helper to determine the exact active section slug in Firestore
   const getActiveSectionSlug = useCallback((evaluatorName?: string) => {
     if (isCallMon) return "mohammed_azad_call_mon";
@@ -943,6 +984,12 @@ export default function QualityDashboard({
     key: string,
     rawVal: string
   ) => {
+    // Block data entry in a new month if a completed previous month (from SEP 2026 onwards) has not been synced yet
+    if (!isTrainer && !isCallMon && !isBonus && !isCShift && unsyncedPreviousMonthRef.current) {
+      setSyncReminderModal(unsyncedPreviousMonthRef.current);
+      return;
+    }
+
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
     const sectionSlug = getActiveSectionSlug(section.evaluator);
     const isTrainerSection = section.id === "mohammed_azad" || section.evaluator.toLowerCase().includes("azad");
@@ -1548,6 +1595,305 @@ export default function QualityDashboard({
     sectionCSRs, currentSection, searchTerm, isCShift, isCallMon, isBonus, rosterMembers, callMonRoster,
     selectedMonthFilter, selectedWeek, selectedYear, selectedQuarter, evalData, cShiftWeeklyAdded, getActiveSectionSlug
   ]);
+
+  // Compute full completion & sync status for any calendar month index (0..11) in selectedYear
+  const computeMonthSyncStatus = useCallback((mIdx: number) => {
+    const upperMonths = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    const upperMonth = upperMonths[mIdx] || "SEP";
+    const monthName = MONTH_NAMES[mIdx] || upperMonth;
+    const { quarter, weekStart, weekEnd } = getMonthWeekRange(mIdx);
+    const mainSectionSlug = currentSection.id;
+    const syncKey = `${selectedYear}_${upperMonth}_${mainSectionSlug}`;
+
+    const yNum = parseInt(String(selectedYear), 10);
+    const isSyncEligible =
+      !isTrainer &&
+      !isCallMon &&
+      !isBonus &&
+      !isCShift &&
+      currentSection.id !== "mohammed_azad" &&
+      !isNaN(yNum) &&
+      (yNum > 2026 || (yNum === 2026 && mIdx >= 8));
+
+    if (!isSyncEligible) {
+      return {
+        monthIdx: mIdx,
+        monthName,
+        upperMonth,
+        quarter,
+        syncKey,
+        isSyncEligible: false,
+        isMonthComplete: false,
+        isSynced: true,
+        agentScores: {} as Record<string, string>,
+        latestScoreTs: "",
+        completedWeeksCount: 0
+      };
+    }
+
+    // Build canonical list of agents for this section & quarter
+    const teamAgents: string[] = rosterMembers
+      .filter(m => m.team === currentSection.team)
+      .map(m => getCanonicalAgentName((m.agent_name || m.name || "").trim()))
+      .filter(isValidAgentName);
+
+    const prefix = `${selectedYear}_${quarter}_${mainSectionSlug}_`;
+    Object.entries(evalData).forEach(([docId, docData]: [string, any]) => {
+      if (docId.includes("_c_shift_") || docId.includes("_bonus_") || docId.includes("_call_mon_")) return;
+      if (docId.startsWith(prefix) && docData?.csr_name) {
+        const cName = getCanonicalAgentName(docData.csr_name.trim());
+        if (isValidAgentName(cName)) {
+          const isFromOtherTeam = rosterMembers.some(m => {
+            const mName = getCanonicalAgentName((m.agent_name || m.name || "").trim()).toLowerCase();
+            return mName === cName.toLowerCase() && m.team && m.team !== currentSection.team;
+          });
+          if (!isFromOtherTeam) teamAgents.push(cName);
+        }
+      }
+    });
+
+    const nameMap = new Map<string, string>();
+    teamAgents.forEach(n => {
+      const k = n.toLowerCase();
+      if (!nameMap.has(k)) nameMap.set(k, n);
+    });
+    const monthAgents = Array.from(nameMap.values()).sort((a, b) => a.localeCompare(b));
+
+    if (monthAgents.length === 0) {
+      return {
+        monthIdx: mIdx,
+        monthName,
+        upperMonth,
+        quarter,
+        syncKey,
+        isSyncEligible: true,
+        isMonthComplete: false,
+        isSynced: false,
+        agentScores: {} as Record<string, string>,
+        latestScoreTs: "",
+        completedWeeksCount: 0
+      };
+    }
+
+    const getAgentWeekStat = (csrName: string, w: number) => {
+      const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const docId = `${selectedYear}_${quarter}_${mainSectionSlug}_${slug}`;
+      const docData = evalData[docId];
+      const scores = docData?.scores || {};
+      const timestamps = docData?.cell_timestamps || {};
+      const wCfg = getWeekColumnsConfig(isChatTeam, selectedYear, quarter, w);
+      const isHistoricalEarlyQ = selectedYear === "2026" && (quarter === "Q1" || quarter === "Q2");
+
+      let inboundFilled = 0;
+      let inboundV = 0;
+      let sumQ = 0;
+      let cntQ = 0;
+      let hasV = false;
+      let latestTs = "";
+
+      for (let c = 1; c <= wCfg.colCount; c++) {
+        const key = isChatTeam ? `w${w}_chat_${c}` : `w${w}_call_${wCfg.callBase + c}`;
+        const altKey1 = `w${w}_call_${c}`;
+        const altKey2 = `w${w}_call_${wCfg.callBase + c}`;
+        const rawVal = scores[key] ?? (isChatTeam ? (scores[altKey1] ?? scores[altKey2]) : scores[altKey1]);
+        const s = String(rawVal ?? "").trim();
+        const ts = String(timestamps[key] || timestamps[altKey1] || timestamps[altKey2] || "");
+        if (ts && ts > latestTs) latestTs = ts;
+
+        if (s !== "" && s !== "-") {
+          inboundFilled++;
+          const upper = s.toUpperCase();
+          if (upper === "V") {
+            inboundV++;
+            hasV = true;
+          } else if (upper !== "S" && !upper.includes("N/A") && upper !== "NA") {
+            const n = parseFloat(s);
+            if (!isNaN(n)) {
+              sumQ += n;
+              cntQ++;
+            }
+          }
+        }
+      }
+
+      const outKey = `w${w}_outbound`;
+      const outStr = String(scores[outKey] ?? "").trim();
+      const outTs = String(timestamps[outKey] || "");
+      if (outTs && outTs > latestTs) latestTs = outTs;
+
+      if (wCfg.hasOutbound && outStr !== "" && outStr !== "-") {
+        const upper = outStr.toUpperCase();
+        if (upper === "V") {
+          hasV = true;
+        } else if (upper !== "S" && !upper.includes("N/A") && upper !== "NA") {
+          const n = parseFloat(outStr);
+          if (!isNaN(n)) {
+            sumQ += n;
+            cntQ++;
+          }
+        }
+      }
+
+      const requireOutbound = wCfg.hasOutbound && !isHistoricalEarlyQ;
+      const outboundFilled = !requireOutbound || (outStr !== "" && outStr !== "-");
+      const hasAnyEntry = inboundFilled > 0 || (wCfg.hasOutbound && outStr !== "" && outStr !== "-");
+      const isWeekVacation =
+        inboundV > 0 &&
+        inboundV === inboundFilled &&
+        (!requireOutbound || outStr === "" || outStr.toUpperCase() === "V");
+      const isWeekComplete = (inboundFilled === wCfg.colCount && outboundFilled) || isWeekVacation;
+
+      return { hasAnyEntry, isWeekComplete, sumQ, cntQ, hasV, latestTs };
+    };
+
+    let completedWeeksCount = 0;
+    let allFourWeeksTeamComplete = true;
+
+    for (let w = weekStart; w <= weekEnd; w++) {
+      const activeInW = monthAgents.filter(c => getAgentWeekStat(c, w).hasAnyEntry);
+      if (activeInW.length === 0) {
+        allFourWeeksTeamComplete = false;
+        continue;
+      }
+
+      // Every agent who has started in or before week w of this month must complete week w
+      const expectedInW = monthAgents.filter(c => {
+        for (let pw = weekStart; pw <= w; pw++) {
+          if (getAgentWeekStat(c, pw).hasAnyEntry) return true;
+        }
+        return false;
+      });
+
+      const weekCompleteForTeam =
+        expectedInW.length > 0 && expectedInW.every(c => getAgentWeekStat(c, w).isWeekComplete);
+
+      if (weekCompleteForTeam) {
+        completedWeeksCount++;
+      } else {
+        allFourWeeksTeamComplete = false;
+      }
+    }
+
+    const agentScores: Record<string, string> = {};
+    let latestScoreTs = "";
+
+    for (const csrName of monthAgents) {
+      let firstActiveW = -1;
+      for (let w = weekStart; w <= weekEnd; w++) {
+        if (getAgentWeekStat(csrName, w).hasAnyEntry) {
+          firstActiveW = w;
+          break;
+        }
+      }
+      if (firstActiveW === -1) continue;
+
+      let agentAllActiveWeeksComplete = true;
+      let sumQ = 0;
+      let cntQ = 0;
+      let hasV = false;
+
+      for (let w = firstActiveW; w <= weekEnd; w++) {
+        const st = getAgentWeekStat(csrName, w);
+        if (st.latestTs && st.latestTs > latestScoreTs) {
+          latestScoreTs = st.latestTs;
+        }
+        if (!st.isWeekComplete) {
+          agentAllActiveWeeksComplete = false;
+          break;
+        }
+        sumQ += st.sumQ;
+        cntQ += st.cntQ;
+        if (st.hasV) hasV = true;
+      }
+
+      if (agentAllActiveWeeksComplete) {
+        const verifiedAvg = cntQ > 0 ? (sumQ / cntQ).toFixed(1) : hasV ? "V" : "";
+        if (verifiedAvg) {
+          agentScores[csrName] = verifiedAvg;
+        }
+      }
+    }
+
+    const isMonthComplete = allFourWeeksTeamComplete && completedWeeksCount === (weekEnd - weekStart + 1) && Object.keys(agentScores).length > 0;
+    const syncEntry = syncedMonthsRegistry[syncKey];
+    const isSynced =
+      Boolean(syncEntry?.synced_at) &&
+      (!latestScoreTs || latestScoreTs <= (syncEntry.latest_score_ts || syncEntry.synced_at));
+
+    return {
+      monthIdx: mIdx,
+      monthName,
+      upperMonth,
+      quarter,
+      syncKey,
+      isSyncEligible: true,
+      isMonthComplete,
+      isSynced,
+      agentScores,
+      latestScoreTs,
+      completedWeeksCount
+    };
+  }, [
+    selectedYear,
+    currentSection,
+    isTrainer,
+    isCallMon,
+    isBonus,
+    isCShift,
+    isChatTeam,
+    rosterMembers,
+    evalData,
+    syncedMonthsRegistry
+  ]);
+
+  // Determine the active calendar month index (0..11) currently displayed in the main table
+  const activeTableMonthIdx = useMemo(() => {
+    if (selectedMonthFilter !== null) return selectedMonthFilter;
+    const qIdx = ["Q1", "Q2", "Q3", "Q4"].indexOf(selectedQuarter);
+    const baseMonth = (qIdx >= 0 ? qIdx : 0) * 3;
+    const monthInQuarter = Math.min(2, Math.floor((selectedWeek - 1) / 4));
+    return baseMonth + monthInQuarter;
+  }, [selectedMonthFilter, selectedQuarter, selectedWeek]);
+
+  const currentMonthSyncStatus = useMemo(() => {
+    return computeMonthSyncStatus(activeTableMonthIdx);
+  }, [computeMonthSyncStatus, activeTableMonthIdx]);
+
+  // Check if any completed previous month (from SEP 2026 onwards) prior to activeTableMonthIdx has NOT been synced yet
+  const unsyncedPreviousMonth = useMemo(() => {
+    if (isTrainer || isCallMon || isBonus || isCShift || currentSection.id === "mohammed_azad") {
+      return null;
+    }
+    const yNum = parseInt(String(selectedYear), 10);
+    if (isNaN(yNum) || yNum < 2026) return null;
+    const startM = yNum === 2026 ? 8 : 0; // 8 = SEP
+
+    for (let m = startM; m < activeTableMonthIdx; m++) {
+      const st = computeMonthSyncStatus(m);
+      if (st.isSyncEligible && st.isMonthComplete && !st.isSynced) {
+        return st;
+      }
+    }
+    return null;
+  }, [
+    isTrainer,
+    isCallMon,
+    isBonus,
+    isCShift,
+    currentSection.id,
+    selectedYear,
+    activeTableMonthIdx,
+    computeMonthSyncStatus
+  ]);
+
+  useEffect(() => {
+    unsyncedPreviousMonthRef.current = unsyncedPreviousMonth;
+    if (unsyncedPreviousMonth) {
+      setSyncReminderModal(unsyncedPreviousMonth);
+    } else {
+      setSyncReminderModal(null);
+    }
+  }, [unsyncedPreviousMonth]);
 
   const weeksList = useMemo(() => {
     return Array.from({ length: 12 }, (_, i) => i + 1);
@@ -2448,6 +2794,10 @@ export default function QualityDashboard({
 
   // Open note modal for a specific cell
   const handleOpenNote = (csrName: string, key: string, callLabel: string) => {
+    if (!isTrainer && !isCallMon && !isBonus && !isCShift && unsyncedPreviousMonthRef.current) {
+      setSyncReminderModal(unsyncedPreviousMonthRef.current);
+      return;
+    }
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
     const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
@@ -3588,30 +3938,11 @@ export default function QualityDashboard({
   };
 
   // Synchronize completed quality evaluations to Team Leader and Agent dashboards (SEP 2026 onwards only)
-  const handleSyncToMetrics = async () => {
+  const handleSyncToMetrics = async (targetMonthIdxOverride?: number) => {
     setSyncingMetrics(true);
     try {
-      let syncedCount = 0;
-      const upperMonths = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-      const quarterMonthsMap: Record<string, string[]> = {
-        Q1: ["JAN", "FEB", "MAR"],
-        Q2: ["APR", "MAY", "JUN"],
-        Q3: ["JUL", "AUG", "SEP"],
-        Q4: ["OCT", "NOV", "DEC"]
-      };
-
-      const rawMonthsToCheck = selectedMonthFilter !== null 
-        ? [upperMonths[selectedMonthFilter]]
-        : (quarterMonthsMap[selectedQuarter] || ["JUL", "AUG", "SEP"]);
-
       const yNum = parseInt(String(selectedYear), 10);
-      const monthsToCheck = rawMonthsToCheck.filter(m => {
-        if (isNaN(yNum) || yNum < 2026) return false;
-        if (yNum > 2026) return true;
-        return upperMonths.indexOf(m.toUpperCase()) >= 8; // Month 9 (SEP) onwards
-      });
-
-      if (monthsToCheck.length === 0) {
+      if (isNaN(yNum) || yNum < 2026) {
         setSyncToast({
           message: "Quality sync starts from September 2026 onwards (Jan–Aug 2026 retain manual entries).",
           type: "error"
@@ -3619,142 +3950,116 @@ export default function QualityDashboard({
         return;
       }
 
-      const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
+      const candidateMonthIndices = new Set<number>();
+      if (typeof targetMonthIdxOverride === "number") {
+        candidateMonthIndices.add(targetMonthIdxOverride);
+      } else {
+        if (unsyncedPreviousMonth) {
+          candidateMonthIndices.add(unsyncedPreviousMonth.monthIdx);
+        }
+        candidateMonthIndices.add(activeTableMonthIdx);
+        quarterMonthIndices.forEach(mIdx => candidateMonthIndices.add(mIdx));
+      }
 
-      for (const csrName of currentCsrs) {
-        const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const eligibleMonths = Array.from(candidateMonthIndices)
+        .filter(mIdx => yNum > 2026 || (yNum === 2026 && mIdx >= 8))
+        .sort((a, b) => a - b);
 
-        // Determine target metrics table and team
-        let targetTable = "mohammed_metrics";
-        let targetTeam = "Mohammed Dlshad Team";
+      if (eligibleMonths.length === 0) {
+        setSyncToast({
+          message: "Quality sync starts from September 2026 onwards (Jan–Aug 2026 retain manual entries).",
+          type: "error"
+        });
+        return;
+      }
 
-        if (currentSection.id === "mohammed_jihad") {
-          targetTable = "younis_metrics";
-          targetTeam = "Younis Kamal Team";
-        } else if (currentSection.id === "lara_kamil") {
-          targetTable = "ankido_metrics";
-          targetTeam = "Ankido Buya Team";
-        } else if (currentSection.id === "mohammed_dlshad") {
-          targetTable = "mohammed_metrics";
-          targetTeam = "Mohammed Dlshad Team";
-        } else {
-          // Mohammed Azad section - find agent's assigned team from rosterMembers
-          const foundMember = rosterMembers.find(m => {
-            const mName = getCanonicalAgentName((m.agent_name || m.name || "").trim()).toLowerCase();
-            return mName === csrName.toLowerCase();
-          });
-          if (foundMember && foundMember.team) {
-            targetTeam = foundMember.team;
-            targetTable = targetTeam === "Younis Kamal Team" ? "younis_metrics" : targetTeam === "Ankido Buya Team" ? "ankido_metrics" : "mohammed_metrics";
+      // Determine target metrics table and team for current section
+      let defaultTargetTable = "mohammed_metrics";
+      let defaultTargetTeam = "Mohammed Dlshad Team";
+      if (currentSection.id === "mohammed_jihad") {
+        defaultTargetTable = "younis_metrics";
+        defaultTargetTeam = "Younis Kamal Team";
+      } else if (currentSection.id === "lara_kamil") {
+        defaultTargetTable = "ankido_metrics";
+        defaultTargetTeam = "Ankido Buya Team";
+      } else if (currentSection.id === "mohammed_dlshad") {
+        defaultTargetTable = "mohammed_metrics";
+        defaultTargetTeam = "Mohammed Dlshad Team";
+      }
+
+      let syncedCount = 0;
+      const syncedMonthNames: string[] = [];
+      const nowIso = new Date().toISOString();
+      const nextSyncedRegistry = { ...syncedMonthsRegistry };
+
+      for (const mIdx of eligibleMonths) {
+        const st = computeMonthSyncStatus(mIdx);
+        if (!st.isSyncEligible || !st.isMonthComplete) continue;
+
+        const mUpper = st.upperMonth;
+        const mSnap = await getDocs(
+          query(
+            collection(db, defaultTargetTable),
+            where("month", "==", mUpper),
+            where("year", "==", selectedYear)
+          )
+        );
+
+        for (const [csrName, verifiedAvg] of Object.entries(st.agentScores)) {
+          if (!verifiedAvg) continue;
+
+          const matchingDocs = mSnap.docs.filter(
+            d => (d.data().agent_name || "").trim().toLowerCase() === csrName.trim().toLowerCase()
+          );
+
+          if (matchingDocs.length > 0) {
+            for (const mDoc of matchingDocs) {
+              await updateDoc(doc(db, defaultTargetTable, mDoc.id), {
+                quality: verifiedAvg,
+                agent_name: csrName
+              });
+            }
           } else {
-            targetTable = "younis_metrics";
-            targetTeam = "Younis Kamal Team";
+            await addDoc(collection(db, defaultTargetTable), {
+              agent_name: csrName,
+              team: defaultTargetTeam,
+              month: mUpper,
+              year: selectedYear,
+              quality: verifiedAvg,
+              display_name: csrName
+            });
           }
+          syncedCount++;
         }
 
-        for (const mName of monthsToCheck) {
-          const mUpper = mName.toUpperCase();
-          const mIdx = upperMonths.indexOf(mUpper);
-          if (mIdx === -1) continue;
-          const { quarter, weekStart, weekEnd } = getMonthWeekRange(mIdx);
-          const docId = `${selectedYear}_${quarter}_${sectionSlug}_${slug}`;
-          const docData = evalData[docId];
-          if (!docData) continue;
-
-          const scores = docData.scores || {};
-          let allWeeksFilled = true;
-          let sumQ = 0;
-          let cntQ = 0;
-          let hasV = false;
-
-          for (let w = weekStart; w <= weekEnd; w++) {
-            const wCfg = getWeekColumnsConfig(isChatTeam, selectedYear, quarter, w);
-            const isHistoricalEarlyQ = selectedYear === "2026" && (quarter === "Q1" || quarter === "Q2");
-            let inboundFilled = 0;
-            let inboundV = 0;
-
-            for (let c = 1; c <= wCfg.colCount; c++) {
-              const key = isChatTeam ? `w${w}_chat_${c}` : `w${w}_call_${wCfg.callBase + c}`;
-              const rawVal = scores[key] ?? (isChatTeam ? (scores[`w${w}_call_${c}`] ?? scores[`w${w}_call_${wCfg.callBase + c}`]) : undefined);
-              const s = String(rawVal ?? "").trim();
-              if (s !== "" && s !== "-") {
-                inboundFilled++;
-                const upper = s.toUpperCase();
-                if (upper === "V") {
-                  inboundV++;
-                  hasV = true;
-                } else if (upper !== "S" && !upper.includes("N/A") && upper !== "NA") {
-                  const n = parseFloat(s);
-                  if (!isNaN(n)) {
-                    sumQ += n;
-                    cntQ++;
-                  }
-                }
-              }
-            }
-
-            const outRaw = scores[`w${w}_outbound`];
-            const outStr = String(outRaw ?? "").trim();
-            if (wCfg.hasOutbound && outStr !== "" && outStr !== "-") {
-              const upper = outStr.toUpperCase();
-              if (upper === "V") {
-                hasV = true;
-              } else if (upper !== "S" && !upper.includes("N/A") && upper !== "NA") {
-                const n = parseFloat(outStr);
-                if (!isNaN(n)) {
-                  sumQ += n;
-                  cntQ++;
-                }
-              }
-            }
-
-            const requireOutbound = wCfg.hasOutbound && !isHistoricalEarlyQ;
-            const outboundFilled = !requireOutbound || (outStr !== "" && outStr !== "-");
-            const isWeekVacation = inboundV > 0 && inboundV === inboundFilled && (!requireOutbound || outStr === "" || outStr.toUpperCase() === "V");
-            const isWeekComplete = (inboundFilled === wCfg.colCount && outboundFilled) || isWeekVacation;
-
-            if (!isWeekComplete) {
-              allWeeksFilled = false;
-              break;
-            }
-          }
-
-          if (allWeeksFilled) {
-            const verifiedAvg = cntQ > 0 ? (sumQ / cntQ).toFixed(1) : (hasV ? "V" : "");
-            if (verifiedAvg) {
-              const q = query(
-                collection(db, targetTable),
-                where("agent_name", "==", csrName),
-                where("month", "==", mUpper),
-                where("year", "==", selectedYear)
-              );
-              const mSnap = await getDocs(q);
-              if (!mSnap.empty) {
-                await updateDoc(doc(db, targetTable, mSnap.docs[0].id), { quality: verifiedAvg });
-              } else {
-                await addDoc(collection(db, targetTable), {
-                  agent_name: csrName,
-                  team: targetTeam,
-                  month: mUpper,
-                  year: selectedYear,
-                  quality: verifiedAvg,
-                  display_name: csrName
-                });
-              }
-              syncedCount++;
-            }
-          }
-        }
+        nextSyncedRegistry[st.syncKey] = {
+          synced_at: nowIso,
+          latest_score_ts: st.latestScoreTs || nowIso,
+          synced_by: userProfile?.name || userProfile?.email || currentSection.evaluator,
+          count: Object.keys(st.agentScores).length
+        };
+        syncedMonthNames.push(`${st.monthName} ${selectedYear}`);
       }
 
       if (syncedCount > 0) {
+        await setDoc(
+          doc(db, "quality_evaluations", "config_sync_status"),
+          {
+            synced_months: nextSyncedRegistry,
+            updated_at: nowIso
+          },
+          { merge: true }
+        );
+        setSyncedMonthsRegistry(nextSyncedRegistry);
+        setSyncReminderModal(null);
         setSyncToast({
-          message: `Successfully synced ${syncedCount} completed quality record(s) to dashboards!`,
+          message: `Synced ${syncedMonthNames.join(", ")} (${syncedCount} agent records) to Team Leader & Agent Dashboards!`,
           type: "success"
         });
       } else {
+        const activeSt = computeMonthSyncStatus(activeTableMonthIdx);
         setSyncToast({
-          message: "No fully completed months (from Sep 2026 onwards) found to sync yet.",
+          message: `Cannot sync ${activeSt.monthName} ${selectedYear} yet (${activeSt.completedWeeksCount}/4 weeks completed). Complete all 4 weeks of the month first.`,
           type: "error"
         });
       }
@@ -3765,7 +4070,7 @@ export default function QualityDashboard({
       });
     } finally {
       setSyncingMetrics(false);
-      setTimeout(() => setSyncToast(null), 5000);
+      setTimeout(() => setSyncToast(null), 5500);
     }
   };
 
@@ -4565,16 +4870,92 @@ export default function QualityDashboard({
               {/* Sync Completed Quality to TL & Agent Dashboards */}
               <button
                 type="button"
-                onClick={handleSyncToMetrics}
+                onClick={() => handleSyncToMetrics()}
                 disabled={syncingMetrics}
-                className="h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-xs transition cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
+                className={`h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-black text-white shadow-xs transition cursor-pointer active:scale-95 disabled:opacity-50 shrink-0 ${
+                  unsyncedPreviousMonth || (currentMonthSyncStatus.isMonthComplete && !currentMonthSyncStatus.isSynced)
+                    ? "bg-amber-600 hover:bg-amber-700 ring-2 ring-amber-400/50 animate-pulse"
+                    : "bg-[#1C6B53] hover:bg-[#155a45]"
+                }`}
                 title="Sync Completed Quality Scores to Dashboards"
               >
                 <RefreshCw size={13} className={syncingMetrics ? "animate-spin" : ""} />
-                <span>{syncingMetrics ? "Syncing..." : "Sync to Dashboards"}</span>
+                <span>
+                  {syncingMetrics
+                    ? "Syncing..."
+                    : unsyncedPreviousMonth
+                    ? `Sync ${unsyncedPreviousMonth.monthName} First!`
+                    : "Sync to Dashboards"}
+                </span>
               </button>
             </div>
           </div>
+
+          {/* Lock Banner when moving to a new month without syncing the completed previous month */}
+          {unsyncedPreviousMonth && (
+            <div className="mx-4 mt-3 mb-1 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/70 border-2 border-amber-400 dark:border-amber-700 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Lock size={20} />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-black text-amber-950 dark:text-amber-200 flex items-center gap-2 flex-wrap">
+                    <span>Data Entry Locked for {MONTH_NAMES[activeTableMonthIdx]} {selectedYear}</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200">
+                      Sync Required • يرجى عمل Sync أولاً
+                    </span>
+                  </h4>
+                  <p className="text-xs text-amber-800 dark:text-amber-300/90 mt-0.5 font-medium leading-relaxed">
+                    You have completed all 4 weeks of <strong>{unsyncedPreviousMonth.monthName} {selectedYear}</strong> ({Object.keys(unsyncedPreviousMonth.agentScores).length} agents), but haven&apos;t synced it yet. Please sync <strong>{unsyncedPreviousMonth.monthName}</strong> to the Team Leader &amp; Agent Dashboards to unlock data entry for <strong>{MONTH_NAMES[activeTableMonthIdx]}</strong>.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const { quarter, weekStart } = getMonthWeekRange(unsyncedPreviousMonth.monthIdx);
+                    setSelectedQuarter(quarter);
+                    setSelectedWeek(weekStart);
+                    setSelectedMonthFilter(null);
+                  }}
+                  className="px-3 py-2 rounded-xl text-xs font-bold text-amber-900 dark:text-amber-200 bg-amber-200/70 hover:bg-amber-200 dark:bg-amber-900/60 dark:hover:bg-amber-900 transition cursor-pointer"
+                >
+                  Review {unsyncedPreviousMonth.monthName}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSyncToMetrics(unsyncedPreviousMonth.monthIdx)}
+                  disabled={syncingMetrics}
+                  className="px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-sm flex items-center gap-1.5 transition cursor-pointer active:scale-95 disabled:opacity-50"
+                >
+                  <RefreshCw size={13} className={syncingMetrics ? "animate-spin" : ""} />
+                  <span>{syncingMetrics ? "Syncing..." : `Sync ${unsyncedPreviousMonth.monthName} Now`}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Ready-to-Sync Banner when current viewed month has all 4 weeks completed but is not synced yet */}
+          {!unsyncedPreviousMonth && currentMonthSyncStatus.isSyncEligible && currentMonthSyncStatus.isMonthComplete && !currentMonthSyncStatus.isSynced && (
+            <div className="mx-4 mt-3 mb-1 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 size={18} className="text-[#1C6B53] dark:text-emerald-400 shrink-0" />
+                <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
+                  All 4 weeks of <strong>{currentMonthSyncStatus.monthName} {selectedYear}</strong> are 100% completed! Click <strong>Sync to Dashboards</strong> before moving to the next month.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleSyncToMetrics(currentMonthSyncStatus.monthIdx)}
+                disabled={syncingMetrics}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-xs flex items-center gap-1.5 transition cursor-pointer shrink-0"
+              >
+                <RefreshCw size={12} className={syncingMetrics ? "animate-spin" : ""} />
+                <span>{syncingMetrics ? "Syncing..." : `Sync ${currentMonthSyncStatus.monthName} Now`}</span>
+              </button>
+            </div>
+          )}
 
           <div 
             ref={tableContainerRef}
@@ -5361,11 +5742,26 @@ export default function QualityDashboard({
                                   data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
                                   type="text"
                                   value={val}
+                                  readOnly={Boolean(unsyncedPreviousMonth)}
+                                  onClick={() => {
+                                    if (unsyncedPreviousMonth) {
+                                      setSyncReminderModal(unsyncedPreviousMonth);
+                                    }
+                                  }}
                                   onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
                                   onKeyDown={(e) => handleCellKeyDown(e, agentIdx, cIdx)}
-                                  onFocus={(e) => e.target.select()}
+                                  onFocus={(e) => {
+                                    if (unsyncedPreviousMonth) {
+                                      e.target.blur();
+                                      setSyncReminderModal(unsyncedPreviousMonth);
+                                      return;
+                                    }
+                                    e.target.select();
+                                  }}
                                   placeholder="-"
                                   className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                    unsyncedPreviousMonth ? "cursor-not-allowed opacity-75 " : ""
+                                  }${
                                     isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
                                   }${
                                     isV
@@ -5442,11 +5838,26 @@ export default function QualityDashboard({
                                     data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
                                     type="text"
                                     value={val}
+                                    readOnly={Boolean(unsyncedPreviousMonth)}
+                                    onClick={() => {
+                                      if (unsyncedPreviousMonth) {
+                                        setSyncReminderModal(unsyncedPreviousMonth);
+                                      }
+                                    }}
                                     onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
                                     onKeyDown={(e) => handleCellKeyDown(e, agentIdx, standardColCount)}
-                                    onFocus={(e) => e.target.select()}
+                                    onFocus={(e) => {
+                                      if (unsyncedPreviousMonth) {
+                                        e.target.blur();
+                                        setSyncReminderModal(unsyncedPreviousMonth);
+                                        return;
+                                      }
+                                      e.target.select();
+                                    }}
                                     placeholder="-"
                                     className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                      unsyncedPreviousMonth ? "cursor-not-allowed opacity-75 " : ""
+                                    }${
                                       isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
                                     }${
                                       isV
@@ -6614,6 +7025,76 @@ export default function QualityDashboard({
                   );
                 })
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mandatory Sync Reminder Modal when trying to enter a new month before syncing a completed previous month */}
+      {syncReminderModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800/80 overflow-hidden">
+            <div className="p-6 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border-b border-amber-100 dark:border-amber-900/50 flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shrink-0">
+                  <Lock size={22} />
+                </div>
+                <div>
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300/60 dark:border-amber-700/60 mb-1">
+                    Sync Required First • تنبيه المزامنة
+                  </span>
+                  <h3 className="text-base font-black text-gray-900 dark:text-white">
+                    Sync {syncReminderModal.monthName} {selectedYear} Before Continuing
+                  </h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSyncReminderModal(null)}
+                className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
+                You have completed all 4 weeks of evaluations for{" "}
+                <strong className="text-gray-900 dark:text-white">{syncReminderModal.monthName} {selectedYear}</strong>{" "}
+                ({Object.keys(syncReminderModal.agentScores).length} employees), but you have not synced the month to the Team Leader &amp; Agent Dashboards yet.
+              </p>
+              <div className="p-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 text-xs text-amber-900 dark:text-amber-200 font-bold leading-relaxed" dir="rtl">
+                لقد أكملت إدخال جميع أسابيع شهر <strong>{syncReminderModal.monthName} {selectedYear}</strong> بالكامل. يرجى الضغط على زر المزامنة (Sync) لعكس درجات الموظفين في داشبورد التيم ليدر والأيجنت أولاً قبل البدء بإدخال بيانات الشهر الجديد (<strong>{MONTH_NAMES[activeTableMonthIdx]}</strong>).
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const { quarter, weekStart } = getMonthWeekRange(syncReminderModal.monthIdx);
+                    setSelectedQuarter(quarter);
+                    setSelectedWeek(weekStart);
+                    setSelectedMonthFilter(null);
+                    setSyncReminderModal(null);
+                  }}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition cursor-pointer"
+                >
+                  Go Back to {syncReminderModal.monthName}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSyncToMetrics(syncReminderModal.monthIdx)}
+                  disabled={syncingMetrics}
+                  className="w-full sm:flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-md flex items-center justify-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={syncingMetrics ? "animate-spin" : ""} />
+                  <span>
+                    {syncingMetrics
+                      ? `Syncing ${syncReminderModal.monthName}...`
+                      : `Sync ${syncReminderModal.monthName} Now & Unlock ${MONTH_NAMES[activeTableMonthIdx]}`}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
