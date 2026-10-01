@@ -22,6 +22,15 @@ const DEFAULT_CHAT_COLUMNS: ColumnConfig[] = [
   { id: 'aht', label: 'AHT', type: 'time', aggregation: 'average' },
   { id: 'art', label: 'ART', type: 'time', aggregation: 'average' },
   { id: 'productivity', label: 'Productivity', type: 'number', aggregation: 'average' },
+  { id: 'call_handled', label: 'Call Handled', type: 'number', aggregation: 'sum' },
+];
+
+const DEFAULT_CHAT_COLUMNS_HISTORICAL: ColumnConfig[] = [
+  { id: 'exam', label: 'EXAM', type: 'number', aggregation: 'average' },
+  { id: 'quality', label: 'QUALITY', type: 'number', aggregation: 'average' },
+  { id: 'aht', label: 'AHT', type: 'time', aggregation: 'average' },
+  { id: 'art', label: 'ART', type: 'time', aggregation: 'average' },
+  { id: 'productivity', label: 'Productivity', type: 'number', aggregation: 'average' },
   { id: 'inbound', label: 'INBOUND', type: 'number', aggregation: 'sum' },
   { id: 'outbound', label: 'OUTBOUND', type: 'number', aggregation: 'sum' },
 ];
@@ -37,7 +46,7 @@ const DEFAULT_OTHER_COLUMNS: ColumnConfig[] = [
   { id: 'abandoned', label: 'Abandoned', type: 'number', aggregation: 'sum' },
 ];
 
-const DESIRED_COLUMN_ORDER = ['quality', 'exam', 'productivity', 'aht', 'hold', 'wrapup', 'handled', 'abandoned'];
+const DESIRED_COLUMN_ORDER = ['quality', 'exam', 'productivity', 'aht', 'art', 'hold', 'wrapup', 'handled', 'call_handled', 'inbound', 'outbound', 'abandoned'];
 
 function sortColumnsByOrder(cols: ColumnConfig[]) {
   if (!cols) return [];
@@ -49,6 +58,75 @@ function sortColumnsByOrder(cols: ColumnConfig[]) {
     if (idxB !== -1) return 1;
     return 0;
   });
+}
+
+function isFromMayOnwards(year: string | number, month: string): boolean {
+  const y = parseInt(String(year)) || 2026;
+  if (y > 2026) return true;
+  if (y < 2026) return false;
+  const m = (month || "").toUpperCase().trim();
+  const AFTER_OR_IN_MAY = [
+    'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+    'Q2', 'Q3', 'Q4', 'H1', 'H2', 'YEAR - AVG',
+    'Q2 - AVG', 'Q3 - AVG', 'Q4 - AVG', 'H1 - AVG', 'H2 - AVG'
+  ];
+  return AFTER_OR_IN_MAY.includes(m);
+}
+
+function getEffectiveColumns(
+  team: string,
+  month: string,
+  year: string,
+  baseCols?: ColumnConfig[]
+): ColumnConfig[] {
+  if (team !== 'Mohammed Dlshad Team') {
+    return baseCols && baseCols.length > 0 ? baseCols : DEFAULT_OTHER_COLUMNS;
+  }
+  const isMayPlus = isFromMayOnwards(year, month);
+  const srcCols = baseCols && baseCols.length > 0 ? baseCols : (isMayPlus ? DEFAULT_CHAT_COLUMNS : DEFAULT_CHAT_COLUMNS_HISTORICAL);
+
+  if (isMayPlus) {
+    const filtered = srcCols.filter(c => c.id !== 'inbound' && c.id !== 'outbound' && c.id !== 'call_handled');
+    const existingCallHandled = srcCols.find(c => c.id === 'call_handled');
+    const callHandledCol: ColumnConfig = existingCallHandled || {
+      id: 'call_handled',
+      label: 'Call Handled',
+      type: 'number',
+      aggregation: 'sum'
+    };
+    return [...filtered, callHandledCol];
+  } else {
+    const filtered = srcCols.filter(c => c.id !== 'call_handled' && c.id !== 'inbound' && c.id !== 'outbound');
+    const existingInbound = srcCols.find(c => c.id === 'inbound') || {
+      id: 'inbound',
+      label: 'INBOUND',
+      type: 'number',
+      aggregation: 'sum'
+    };
+    const existingOutbound = srcCols.find(c => c.id === 'outbound') || {
+      id: 'outbound',
+      label: 'OUTBOUND',
+      type: 'number',
+      aggregation: 'sum'
+    };
+    return [...filtered, existingInbound, existingOutbound];
+  }
+}
+
+function getRowValForCol(r: any, colId: string): string {
+  if (!r) return "";
+  if (r[colId] !== undefined && r[colId] !== null && String(r[colId]).trim() !== "") {
+    return String(r[colId]).trim();
+  }
+  if (colId === 'call_handled' || colId === 'handled') {
+    const hasIn = r.inbound !== undefined && r.inbound !== null && String(r.inbound).trim() !== "";
+    const hasOut = r.outbound !== undefined && r.outbound !== null && String(r.outbound).trim() !== "";
+    if (hasIn || hasOut) {
+      const sum = (parseFloat(r.inbound) || 0) + (parseFloat(r.outbound) || 0);
+      return sum.toString();
+    }
+  }
+  return "";
 }
 
 
@@ -359,6 +437,22 @@ const KPI_META: Record<string, { icon: any; color: string; bgLight: string; bgDa
     border: 'bg-sky-500',
     label: 'Outbound Interactions'
   },
+  call_handled: { 
+    icon: PhoneCall, 
+    color: 'text-emerald-600 dark:text-emerald-400', 
+    bgLight: 'bg-emerald-500/10', 
+    bgDark: 'dark:bg-emerald-500/15',
+    border: 'bg-emerald-500',
+    label: 'Call Handled'
+  },
+  'call handled': { 
+    icon: PhoneCall, 
+    color: 'text-emerald-600 dark:text-emerald-400', 
+    bgLight: 'bg-emerald-500/10', 
+    bgDark: 'dark:bg-emerald-500/15',
+    border: 'bg-emerald-500',
+    label: 'Call Handled'
+  },
 };
 
 function PwaInstallBanner() {
@@ -589,7 +683,7 @@ function AgentDashboard({
     }
   };
 
-  const teamCols = columnsMap[currentAgent?.team] || [];
+  const teamCols = getEffectiveColumns(currentAgent?.team || '', selectedMonth, selectedYear, columnsMap[currentAgent?.team] || []);
   const tableName =
     currentAgent?.team === 'Younis Kamal Team' ? 'younis_metrics' :
     currentAgent?.team === 'Ankido Buya Team' ? 'ankido_metrics' :
@@ -717,8 +811,9 @@ function AgentDashboard({
 
   // Helper to parse a stored value to a numeric (seconds if mm:ss, else as-is)
   const parseVal = (col: any, row: any) => {
-    if (!row || !row[col.id]) return 0;
-    const rawVal = row[col.id].toString();
+    if (!row) return 0;
+    const rawVal = getRowValForCol(row, col.id);
+    if (!rawVal) return 0;
     if (col.type === 'time' && rawVal.includes(':')) {
       const parts = rawVal.split(':');
       return (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0); // → seconds
@@ -735,17 +830,21 @@ function AgentDashboard({
 
   // Smart aggregation — respects format (mm:ss vs plain) and aggregation type (sum vs average)
   const avgCols = (monthList: string[], col: any) => {
-    const rows = monthList
-      .map(m => metrics.find(r => r.month === m))
-      .filter((r): r is any => !!r && r[col.id] != null && r[col.id] !== '');
+    const rowsWithVals = monthList
+      .map(m => {
+        const r = metrics.find(row => row.month === m);
+        const val = getRowValForCol(r, col.id);
+        return { r, val };
+      })
+      .filter(({ val }) => val != null && val !== '');
 
-    if (!rows.length) return '-';
+    if (!rowsWithVals.length) return '-';
 
     // Detect if values are stored as mm:ss
-    const isTimeFormatted = col.type === 'time' && rows.some(r => r[col.id]?.toString().includes(':'));
+    const isTimeFormatted = col.type === 'time' && rowsWithVals.some(({ val }) => val.includes(':'));
 
-    const nums = rows.map(r => {
-      const v = r[col.id]?.toString() || '0';
+    const nums = rowsWithVals.map(({ val }) => {
+      const v = val || '0';
       if (isTimeFormatted && v.includes(':')) {
         const parts = v.split(':');
         return (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
@@ -781,7 +880,8 @@ function AgentDashboard({
 
   const getDisplayVal = (col: any) => {
     if (isMonthSelected) {
-      return selectedMonthData[col.id] || '-';
+      const v = getRowValForCol(selectedMonthData, col.id);
+      return v !== "" ? v : (selectedMonthData[col.id] || '-');
     }
     const period = PERIODS.find(p => p.label === selectedMonth);
     if (!period) return '-';
@@ -795,6 +895,7 @@ function AgentDashboard({
     if (id === 'art' || lbl === 'art') return 'ART';
     if (id === 'productivity' || lbl === 'productivity' || id.includes('prod') || lbl.includes('prod')) return 'Productivity';
     if (id === 'wrapup' || lbl === 'wrapup' || id.includes('wrapup') || lbl.includes('wrapup')) return 'Wrapup Not Selected';
+    if (id === 'call_handled' || lbl === 'call handled') return 'Call Handled';
     return toTitleCase(col.label);
   };
 
@@ -1026,7 +1127,7 @@ function AgentDashboard({
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4 mt-4 sm:mt-6 relative z-10">
-                {teamCols.map((col: any) => {
+                {getEffectiveColumns(currentAgent?.team || '', 'YEAR - AVG', selectedYear, columnsMap[currentAgent?.team] || []).map((col: any) => {
                   const yearAvg = avgCols(months, col);
                   return (
                     <div 
@@ -1722,20 +1823,24 @@ export default function Dashboard() {
     'mohammed_metrics';
 
   const calcYearTeamStat = (col: ColumnConfig) => {
-    const validMetrics = yearMetrics.filter(r => r[col.id] && r[col.id].toString().trim() !== "");
+    const validMetrics = yearMetrics.filter(r => {
+      const val = getRowValForCol(r, col.id);
+      return val !== "";
+    });
     if (validMetrics.length === 0) return "-";
 
     if (col.type === 'time') {
       let totalSeconds = 0;
       validMetrics.forEach(r => {
-        const parts = r[col.id].toString().split(':');
+        const val = getRowValForCol(r, col.id);
+        const parts = val.split(':');
         if (parts.length === 2) totalSeconds += (parseInt(parts[0]) * 60) + parseInt(parts[1]);
         else totalSeconds += parseInt(parts[0]) || 0;
       });
       const resultSecs = col.aggregation === 'sum' ? totalSeconds : Math.round(totalSeconds / validMetrics.length);
       return `${Math.floor(resultSecs / 60)}:${(resultSecs % 60).toString().padStart(2, '0')}`;
     } else {
-      const sum = validMetrics.reduce((acc, r) => acc + parseFloat(r[col.id] || 0), 0);
+      const sum = validMetrics.reduce((acc, r) => acc + (parseFloat(getRowValForCol(r, col.id)) || 0), 0);
       const result = col.aggregation === 'sum' ? sum : sum / validMetrics.length;
       return Number.isInteger(result) ? result.toString() : result.toFixed(1);
     }
@@ -2033,13 +2138,13 @@ export default function Dashboard() {
         };
 
         teamCols.forEach(col => {
-          const vals = agentRows.filter(r => r[col.id] && r[col.id].toString().trim() !== "");
+          const vals = agentRows.map(r => getRowValForCol(r, col.id)).filter(v => v !== "");
           if (col.type === 'time') {
-            const sumSecs = vals.reduce((acc, r) => acc + timeToSec(r[col.id]), 0);
+            const sumSecs = vals.reduce((acc, v) => acc + timeToSec(v), 0);
             const resultSecs = col.aggregation === 'sum' ? sumSecs : (vals.length > 0 ? sumSecs / vals.length : 0);
             avgRow[col.id] = vals.length > 0 ? secToTime(resultSecs) : "";
           } else {
-            const sum = vals.reduce((acc, r) => acc + (parseFloat(r[col.id]) || 0), 0);
+            const sum = vals.reduce((acc, v) => acc + (parseFloat(v) || 0), 0);
             const result = col.aggregation === 'sum' ? sum : (vals.length > 0 ? sum / vals.length : 0);
             avgRow[col.id] = vals.length > 0 ? (Number.isInteger(result) ? result.toString() : result.toFixed(1)) : "";
           }
@@ -2138,13 +2243,20 @@ export default function Dashboard() {
         const memberKey = (member.agent_name || "").trim().toLowerCase();
         const existing = metricsByAgent[memberKey];
         if (existing) {
-          return {
+          const rowData = {
             ...existing,
             agent_name: member.agent_name,
             _memberId: member.id,
             photo_url: member.photo_url || "",
             display_name: member.display_name || member.agent_name
           };
+          if (teamCols.some(c => c.id === 'call_handled') && (rowData.call_handled === undefined || rowData.call_handled === '')) {
+            const computedVal = getRowValForCol(rowData, 'call_handled');
+            if (computedVal !== "") {
+              rowData.call_handled = computedVal;
+            }
+          }
+          return rowData;
         }
         const empty: any = {
           _memberId: member.id,
@@ -2307,7 +2419,7 @@ export default function Dashboard() {
   const fetchData = async (forceRefresh = false) => {
     if (!session || Object.keys(columnsMap).length === 0) return;
     const cacheKey = `${selectedTeam}_${selectedYear}`;
-    const teamCols = columnsMap[selectedTeam] || [];
+    const teamCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
     const isAgg = Object.keys(aggregateMap).includes(selectedMonth);
 
     // 1. FAST PATH: In-memory cache hit -> INSTANT rendering (<1ms, zero spinner delay)
@@ -2394,7 +2506,10 @@ export default function Dashboard() {
 
     try {
       const { _memberId, _readonly, ...cleanRow } = row;
-      const payload = { ...cleanRow, team: selectedTeam, month: selectedMonth, year: selectedYear, _arch: getSystemAuthor() };
+      const payload: any = { ...cleanRow, team: selectedTeam, month: selectedMonth, year: selectedYear, _arch: getSystemAuthor() };
+      if (cleanRow.call_handled !== undefined) {
+        payload.handled = cleanRow.call_handled;
+      }
 
       if (row.id) {
         await updateDoc(doc(db, tableName, row.id), payload);
@@ -2683,7 +2798,7 @@ export default function Dashboard() {
     const bounds = getSelectionBounds();
     if (!bounds) return;
 
-    const teamCols = columnsMap[selectedTeam] || [];
+    const teamCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
     const newRows = [...rows];
     const rowsToSave: any[] = [];
 
@@ -2715,7 +2830,10 @@ export default function Dashboard() {
     try {
       for (const item of rowsToSave) {
         const { _memberId, _readonly, ...cleanRow } = item.row;
-        const payload = { ...cleanRow, team: selectedTeam, month: selectedMonth, year: selectedYear };
+        const payload: any = { ...cleanRow, team: selectedTeam, month: selectedMonth, year: selectedYear };
+        if (cleanRow.call_handled !== undefined) {
+          payload.handled = cleanRow.call_handled;
+        }
         if (item.row.id) {
           await updateDoc(doc(db, tableName, item.row.id), payload);
           updateCachedMetric(payload, item.row.id);
@@ -2737,7 +2855,7 @@ export default function Dashboard() {
     const bounds = getSelectionBounds();
     if (!bounds) return;
 
-    const teamCols = columnsMap[selectedTeam] || [];
+    const teamCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
     const lines: string[] = [];
     for (let r = bounds.minRow; r <= bounds.maxRow; r++) {
       const row = filteredRows[r];
@@ -2788,7 +2906,7 @@ export default function Dashboard() {
     const bounds = getSelectionBounds();
     const startRow = bounds ? bounds.minRow : 0;
     const startCol = bounds ? bounds.minCol : 0;
-    const teamCols = columnsMap[selectedTeam] || [];
+    const teamCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
 
     const newRows = [...rows];
     const rowsToSave: any[] = [];
@@ -2828,7 +2946,10 @@ export default function Dashboard() {
     try {
       for (const item of rowsToSave) {
         const { _memberId, _readonly, ...cleanRow } = item.row;
-        const payload = { ...cleanRow, team: selectedTeam, month: selectedMonth, year: selectedYear };
+        const payload: any = { ...cleanRow, team: selectedTeam, month: selectedMonth, year: selectedYear };
+        if (cleanRow.call_handled !== undefined) {
+          payload.handled = cleanRow.call_handled;
+        }
         if (item.row.id) {
           await updateDoc(doc(db, tableName, item.row.id), payload);
           updateCachedMetric(payload, item.row.id);
@@ -3243,7 +3364,7 @@ export default function Dashboard() {
       ? allMembers.filter(m => m.team === userProfile.team)
       : allMembers;
 
-    const activeCols = columnsMap[selectedTeam] || [];
+    const activeCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
     const manageCols = manageColsTeam === 'ALL'
       ? (columnsMap['Ankido Buya Team'] || columnsMap['Younis Kamal Team'] || columnsMap[selectedTeam] || [])
       : (columnsMap[manageColsTeam] || []);
@@ -3463,7 +3584,7 @@ export default function Dashboard() {
 
             {/* Metrics Grid (Permanent Full Year Data) */}
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3">
-              {(columnsMap[activeTeams[0]] || []).map((col) => {
+              {(getEffectiveColumns(activeTeams[0], 'YEAR - AVG', selectedYear, columnsMap[activeTeams[0]] || [])).map((col) => {
                 const annualVal = calcYearTeamStat(col);
                 return (
                   <div key={col.id} className="bg-white/10 dark:bg-black/25 backdrop-blur-md rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 border border-white/10 flex flex-col justify-between hover:bg-white/15 transition shadow-sm">
@@ -3485,7 +3606,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-6 mb-6 sm:mb-8">
             {activeTeams.map((teamName) => {
               const isActive = selectedTeam === teamName;
-              const teamCols = columnsMap[teamName] || [];
+              const teamCols = getEffectiveColumns(teamName, 'YEAR - AVG', selectedYear, columnsMap[teamName] || []);
               return (
                 <button
                   key={teamName}
