@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { db, getSystemAuthor } from "@/lib/firebaseClient";
 import { collection, query, where, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
 import { 
   Star, Trophy, Medal, ArrowLeft, Search, Users, Check, Save, Download, 
   Sun, Moon, ChevronDown, RefreshCw, Calendar, Sparkles, Shield,
   ShieldCheck, AlertCircle, TrendingUp, Clock, Activity, MessageSquare, PhoneCall,
-  CheckCircle2, Flame, Award, Filter, Edit3, X, Eye, BarChart3, HelpCircle
+  CheckCircle2, Flame, Award, Filter, Edit3, X, Eye, BarChart3, HelpCircle,
+  Layers, ArrowUpDown
 } from "lucide-react";
 
 interface TopStarDashboardProps {
@@ -21,7 +22,7 @@ interface TopStarDashboardProps {
   toggleDarkMode?: () => void;
 }
 
-// Canonical name normalization to unify DB representations
+// Canonical agent name mapping for clean matching across collections
 const CANONICAL_NAMES: Record<string, string> = {
   "dhuha khanjer noori": "Dhuha Khanjer",
   "dhuha khanjer": "Dhuha Khanjer",
@@ -135,18 +136,18 @@ const CALL_COLS: KpiColDef[] = [
 ];
 
 const MONTHS_LIST = [
-  { id: "JAN", name: "January", ar: "كانون الثاني" },
-  { id: "FEB", name: "February", ar: "شباط" },
-  { id: "MAR", name: "March", ar: "آذار" },
-  { id: "APR", name: "April", ar: "نيسان" },
-  { id: "MAY", name: "May", ar: "أيار" },
-  { id: "JUN", name: "June", ar: "حزيران" },
-  { id: "JUL", name: "July", ar: "تموز" },
-  { id: "AUG", name: "August", ar: "آب" },
-  { id: "SEP", name: "September", ar: "أيلول" },
-  { id: "OCT", name: "October", ar: "تشرين الأول" },
-  { id: "NOV", name: "November", ar: "تشرين الثاني" },
-  { id: "DEC", name: "December", ar: "كانون الأول" },
+  { id: "JAN", name: "January" },
+  { id: "FEB", name: "February" },
+  { id: "MAR", name: "March" },
+  { id: "APR", name: "April" },
+  { id: "MAY", name: "May" },
+  { id: "JUN", name: "June" },
+  { id: "JUL", name: "July" },
+  { id: "AUG", name: "August" },
+  { id: "SEP", name: "September" },
+  { id: "OCT", name: "October" },
+  { id: "NOV", name: "November" },
+  { id: "DEC", name: "December" },
 ];
 
 const PERIODS_LIST = [
@@ -177,7 +178,7 @@ const num = (v: any): number | null => {
   return isFinite(n) && n > 0 ? n : null;
 };
 
-// Seconds parser (supports mm:ss or numeric seconds)
+// Seconds parser
 const parseSec = (v: any): number | null => {
   if (v === null || v === undefined) return null;
   const str = String(v).trim();
@@ -203,13 +204,10 @@ export default function TopStarDashboard({
   isDarkMode = false,
   toggleDarkMode
 }: TopStarDashboardProps) {
-  // Permissions:
-  // Admin & Manager have full edit capabilities.
-  // Team Leader has strictly READ-ONLY capability.
   const isAdmin = userProfile?.email?.toLowerCase() === "mohammed.dlshad0@gmail.com" || userProfile?.role === "admin";
   const isManager = isAdmin || userProfile?.email?.toLowerCase() === "jalal.burghol@agent.com" || userProfile?.role === "manager";
   const isTeamLeader = userProfile?.role === "tl";
-  const canEdit = isAdmin || isManager; // Team Leader is NOT allowed to edit!
+  const canEdit = isAdmin || isManager; // Team Leader is strictly read-only
 
   const [team, setTeam] = useState<"chat" | "call">("chat");
   const [selectedYear, setSelectedYear] = useState<string>(initialYear || "2026");
@@ -218,20 +216,18 @@ export default function TopStarDashboard({
   const [sortBy, setSortBy] = useState<"rank" | "name">("rank");
   const [sortAsc, setSortAsc] = useState<boolean>(false);
   
-  // Loading & metrics storage
   const [loading, setLoading] = useState<boolean>(true);
   const [metricsData, setMetricsData] = useState<{
     chat: Record<string, Record<string, any>>;
     call: Record<string, Record<string, any>>;
   }>({ chat: {}, call: {} });
 
-  // Direct editing state for Admin/Manager
   const [editMode, setEditMode] = useState<boolean>(false);
   const [editedCells, setEditedCells] = useState<Record<string, Record<string, string>>>({});
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveToast, setSaveToast] = useState<string | null>(null);
 
-  // Active roster resolution
+  // Active rosters
   const chatRoster = useMemo(() => {
     const fromProps = allMembers
       .filter(m => m.team === "Mohammed Dlshad Team")
@@ -248,7 +244,7 @@ export default function TopStarDashboard({
     return combined.sort((a, b) => a.localeCompare(b));
   }, [allMembers]);
 
-  // Fetch metrics data from Firestore for the selected period
+  // Fetch metrics data from Firestore
   const fetchDashboardMetrics = async () => {
     setLoading(true);
     try {
@@ -285,12 +281,10 @@ export default function TopStarDashboard({
         }
       });
 
-      // Average or take direct value
       const averageRow = (records: any[], isChat: boolean) => {
         if (!records || records.length === 0) return {};
         if (records.length === 1) return records[0];
 
-        // Multi-month aggregation (averaging each key)
         const keys = isChat 
           ? ["quality", "productivity", "aht", "art", "exam"]
           : ["quality", "productivity", "aht", "exam", "wrapup", "hold"];
@@ -355,7 +349,7 @@ export default function TopStarDashboard({
     fetchDashboardMetrics();
   }, [selectedYear, selectedMonth]);
 
-  // Scoring function conforming strictly to Top Star criteria
+  // Scoring algorithm strictly adhering to Top Star KPI definitions
   const scoreAgent = (t: "chat" | "call", vals: Record<string, any>, wrapupRange?: { min: number; max: number }) => {
     const v = vals || {};
     const qa = num(v.qa);
@@ -401,7 +395,6 @@ export default function TopStarDashboard({
     return { parts, total };
   };
 
-  // Compute ranks and scored items
   const computeRanks = (t: "chat" | "call") => {
     const roster = t === "chat" ? chatRoster : callRoster;
     const teamData = metricsData[t] || {};
@@ -435,7 +428,6 @@ export default function TopStarDashboard({
       };
     });
 
-    // Sort descending by total score
     scoredList.sort((a, b) => {
       if (a.total == null && b.total == null) return a.name.localeCompare(b.name);
       if (a.total == null) return 1;
@@ -452,7 +444,6 @@ export default function TopStarDashboard({
   const activeRanked = team === "chat" ? rankedChat : rankedCall;
   const activeCols = team === "chat" ? CHAT_COLS : CALL_COLS;
 
-  // Rank map (1-indexed for scored agents)
   const rankMap = useMemo(() => {
     const map: Record<string, number | null> = {};
     activeRanked.forEach((r, idx) => {
@@ -461,7 +452,6 @@ export default function TopStarDashboard({
     return map;
   }, [activeRanked]);
 
-  // Display rows with search and sort
   const displayRows = useMemo(() => {
     let list = [...activeRanked];
 
@@ -484,7 +474,6 @@ export default function TopStarDashboard({
     return list;
   }, [activeRanked, searchQuery, sortBy, sortAsc]);
 
-  // Summary statistics
   const scoredCount = useMemo(() => activeRanked.filter(r => r.total != null).length, [activeRanked]);
   const avgScore = useMemo(() => {
     const scored = activeRanked.filter(r => r.total != null);
@@ -509,17 +498,15 @@ export default function TopStarDashboard({
     }));
   }, [rankedCall]);
 
-  // Band and colors conforming to Top Star KPI
   const getBand = (score: number | null) => {
     if (score == null) return { color: "#9ca3af", label: "Pending", bg: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" };
-    if (score >= 85) return { color: "#10b981", label: "Top Star (85+)", bg: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700" };
-    if (score >= 70) return { color: "#f59e0b", label: "Good (70–84)", bg: "bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border-amber-300 dark:border-amber-700" };
-    return { color: "#ef4444", label: "Needs Improvement (<70)", bg: "bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300 border-rose-300 dark:border-rose-700" };
+    if (score >= 85) return { color: "#10b981", label: "85+ Elite", bg: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800" };
+    if (score >= 70) return { color: "#f59e0b", label: "70–84 Good", bg: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800" };
+    return { color: "#ef4444", label: "<70 Needs Imp.", bg: "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800" };
   };
 
-  // Handle cell edit by Admin/Manager
   const handleCellChange = (agentName: string, colKey: string, value: string) => {
-    if (!canEdit) return; // Team Leader is read-only
+    if (!canEdit) return;
     setEditedCells(prev => ({
       ...prev,
       [agentName]: {
@@ -529,7 +516,6 @@ export default function TopStarDashboard({
     }));
   };
 
-  // Save changes to Firestore (Admin/Manager only)
   const handleSaveChanges = async () => {
     if (!canEdit) return;
     const changedAgents = Object.keys(editedCells);
@@ -540,13 +526,12 @@ export default function TopStarDashboard({
 
     setIsSaving(true);
     try {
-      const collectionName = team === "chat" ? "mohammed_metrics" : "ankido_metrics"; // or appropriate team collection
+      const collectionName = team === "chat" ? "mohammed_metrics" : "ankido_metrics";
       
       for (const agentName of changedAgents) {
         const edits = editedCells[agentName];
         if (!edits || Object.keys(edits).length === 0) continue;
 
-        // Map Top Star keys back to Firestore fields
         const updatePayload: Record<string, any> = {
           _arch: getSystemAuthor(),
           updated_at: new Date().toISOString()
@@ -560,7 +545,6 @@ export default function TopStarDashboard({
         if (edits.wrapup !== undefined) updatePayload.wrapup = edits.wrapup;
         if (edits.hold !== undefined) updatePayload.hold = edits.hold;
 
-        // Find existing doc or create new
         const q = query(
           collection(db, collectionName),
           where("year", "==", selectedYear),
@@ -582,13 +566,13 @@ export default function TopStarDashboard({
         }
       }
 
-      setSaveToast("تم حفظ التعديلات وتحديث لوحة التيم ليدر بنجاح!");
+      setSaveToast("Metrics successfully saved and synced with Team Leader dashboard!");
       setTimeout(() => setSaveToast(null), 4000);
       setEditMode(false);
       await fetchDashboardMetrics();
     } catch (err: any) {
       console.error("Save error:", err);
-      alert("حدث خطأ أثناء الحفظ: " + err.message);
+      alert("Error saving changes: " + err.message);
     } finally {
       setIsSaving(false);
     }
@@ -596,69 +580,62 @@ export default function TopStarDashboard({
 
   return (
     <div className={`min-h-screen transition-colors duration-200 ${
-      isDarkMode ? "bg-[#0b0f17] text-gray-100" : "bg-[#f8fafc] text-gray-900"
-    } font-sans pb-16`}>
+      isDarkMode ? "bg-gray-900 text-gray-100" : "bg-[#FDFCFB] text-gray-900"
+    } font-sans p-3.5 sm:p-6 md:p-8`}>
       
-      {/* Top Floating Toast Notification */}
+      {/* Toast Alert */}
       {saveToast && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-emerald-600 text-white font-bold text-sm shadow-xl shadow-emerald-600/30 animate-in fade-in slide-in-from-top-4 duration-200">
-          <CheckCircle2 size={18} />
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-xl shadow-emerald-600/30 animate-in fade-in slide-in-from-top-3 duration-200">
+          <CheckCircle2 size={16} />
           <span>{saveToast}</span>
         </div>
       )}
 
-      {/* Modern App Header */}
-      <header className={`sticky top-0 z-30 border-b backdrop-blur-xl ${
-        isDarkMode 
-          ? "bg-[#0f172a]/85 border-gray-800/80" 
-          : "bg-white/85 border-gray-200/80"
-      }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+      <div className="max-w-[1400px] mx-auto">
+        
+        {/* Top Header Matching FIB & Quality Dashboard Pattern */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-6 sm:mb-8 gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-gray-200/70 dark:border-gray-800">
           
           {/* Logo & Title */}
-          <div className="flex items-center gap-3.5">
-            <button
-              onClick={onBack}
-              className={`p-2 rounded-xl border transition cursor-pointer flex items-center justify-center ${
-                isDarkMode 
-                  ? "bg-gray-800/80 hover:bg-gray-700 border-gray-700 text-gray-300 hover:text-white" 
-                  : "bg-gray-100/80 hover:bg-gray-200 border-gray-200 text-gray-700 hover:text-gray-900"
-              }`}
-              title="العودة إلى لوحة التحكم الرئيسية"
-            >
-              <ArrowLeft size={18} />
-            </button>
-
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 flex items-center justify-center shadow-lg shadow-amber-500/25 ring-2 ring-amber-400/30">
-                <Star size={22} className="text-white fill-white drop-shadow-sm" />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <img src="/logo.webp" alt="FIB Logo" className="h-9 sm:h-12 w-auto object-contain" />
+            <div className="h-8 sm:h-10 w-[1.5px] bg-gray-200 dark:bg-gray-700" />
+            
+            <div>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white leading-none flex items-center gap-2">
+                  <span>Top Star KPI Leaderboard</span>
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shadow-xs">
+                    <Star size={14} className="fill-white text-white" />
+                  </div>
+                </h1>
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg sm:text-xl font-black tracking-tight flex items-center gap-1.5">
-                    <span className="bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500 bg-clip-text text-transparent">Top Star</span>
-                    <span>KPI Leaderboard</span>
-                  </h1>
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                    توب ستار
-                  </span>
-                </div>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 hidden sm:block">
-                  Agent Performance Evaluation & Ranking Dashboard
-                </p>
-              </div>
+              <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
+                Comprehensive Agent Performance Evaluation & Ranking System
+              </p>
             </div>
           </div>
 
-          {/* Right Header Controls */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Right Action Controls Container */}
+          <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-xs self-stretch sm:self-auto justify-between sm:justify-end">
             
-            {/* Read-Only Badge for TL / Role Indicator */}
+            {/* Back Button */}
+            <button
+              onClick={onBack}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 transition cursor-pointer"
+              title="Return to Main Dashboard"
+            >
+              <ArrowLeft size={14} />
+              <span>Back</span>
+            </button>
+
+            <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
+
+            {/* Read-Only Badge or Edit Mode Toggle */}
             {isTeamLeader && !isAdmin && !isManager ? (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 dark:bg-sky-950/50 border border-sky-200 dark:border-sky-800/60 text-sky-700 dark:text-sky-300 text-xs font-bold shadow-xs">
-                <Eye size={14} className="text-sky-500" />
-                <span className="hidden sm:inline">صلاحية العرض (تيم ليدر)</span>
-                <span className="sm:hidden">عرض فقط</span>
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-750 text-gray-600 dark:text-gray-300 text-xs font-bold">
+                <Eye size={13} className="text-sky-500" />
+                <span>Read-Only</span>
               </div>
             ) : (
               canEdit && (
@@ -671,122 +648,88 @@ export default function TopStarDashboard({
                     }
                   }}
                   disabled={isSaving}
-                  className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer ${
                     editMode
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25"
+                      ? "bg-[#1C6B53] hover:bg-[#155340] text-white shadow-emerald-700/20"
                       : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-750"
                   }`}
                 >
                   {isSaving ? (
-                    <RefreshCw size={14} className="animate-spin" />
+                    <RefreshCw size={13} className="animate-spin" />
                   ) : editMode ? (
-                    <Save size={14} />
+                    <Save size={13} />
                   ) : (
-                    <Edit3 size={14} />
+                    <Edit3 size={13} />
                   )}
-                  <span>{editMode ? (Object.keys(editedCells).length > 0 ? "حفظ التعديلات" : "إنهاء التعديل") : "تعديل البيانات"}</span>
+                  <span>{editMode ? (Object.keys(editedCells).length > 0 ? "Save Changes" : "Exit Edit") : "Edit Metrics"}</span>
                 </button>
               )
             )}
 
-            {/* Refresh Live Data */}
+            {/* Refresh Button */}
             <button
               onClick={fetchDashboardMetrics}
               disabled={loading}
-              className={`p-2 rounded-xl border transition cursor-pointer flex items-center justify-center ${
-                isDarkMode 
-                  ? "bg-gray-800/80 hover:bg-gray-700 border-gray-700 text-gray-300" 
-                  : "bg-white hover:bg-gray-100 border-gray-200 text-gray-700"
-              }`}
-              title="تحديث البيانات مباشرة من الداتابيس"
+              className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors cursor-pointer"
+              title="Refresh Live Data"
             >
-              <RefreshCw size={16} className={loading ? "animate-spin text-emerald-500" : ""} />
+              <RefreshCw size={14} className={loading ? "animate-spin text-emerald-500" : ""} />
             </button>
 
             {/* Dark Mode Toggle */}
             {toggleDarkMode && (
               <button
                 onClick={toggleDarkMode}
-                className={`p-2 rounded-xl border transition cursor-pointer flex items-center justify-center ${
-                  isDarkMode 
-                    ? "bg-gray-800/80 hover:bg-gray-700 border-gray-700 text-amber-400" 
-                    : "bg-white hover:bg-gray-100 border-gray-200 text-gray-700"
-                }`}
-                title="تبديل الوضع الليلي"
+                className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors cursor-pointer"
+                title="Toggle Dark Mode"
               >
-                {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+                {isDarkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
               </button>
             )}
           </div>
         </div>
-      </header>
 
-      {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-
-        {/* Top Notice for Team Leaders */}
-        {isTeamLeader && !canEdit && (
-          <div className="mb-6 p-3.5 rounded-2xl bg-gradient-to-r from-sky-500/10 via-blue-500/5 to-transparent border border-sky-200 dark:border-sky-800/40 flex items-center justify-between gap-3 text-xs text-sky-800 dark:text-sky-300">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-xl bg-sky-500/20 flex items-center justify-center text-sky-600 dark:text-sky-400 shrink-0">
-                <Shield size={15} />
-              </div>
-              <div>
-                <span className="font-bold">وضع القراءة فقط للتيم ليدر:</span> يمكنك الاطلاع على تقييم وتصنيف التوب ستار لجميع الموظفين مباشرة من بيانات داشبورد التيم ليدر دون إمكانية التعديل المباشر.
-              </div>
-            </div>
-            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-sky-100 dark:bg-sky-900/50 uppercase tracking-wider shrink-0">
-              Read-Only
-            </span>
-          </div>
-        )}
-
-        {/* Modern Top 3 Podium Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
+        {/* Top 3 Podium Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-7">
           
-          {/* Top 3 Chat Card */}
-          <div className={`p-5 rounded-3xl border transition shadow-sm relative overflow-hidden ${
-            isDarkMode 
-              ? "bg-[#111827] border-gray-800 text-white" 
-              : "bg-gradient-to-br from-gray-900 via-gray-850 to-gray-900 border-gray-800 text-white shadow-lg"
-          }`}>
-            <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          {/* Top 3 Chat Agents Card */}
+          <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-gray-900 to-slate-950 border border-slate-800 text-white shadow-md relative overflow-hidden">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center font-bold text-sm">
                   <MessageSquare size={16} />
                 </div>
                 <div>
-                  <h3 className="font-black text-sm tracking-wide text-amber-300 uppercase">Top 3 Chat Agents</h3>
+                  <h3 className="font-extrabold text-xs tracking-wider text-amber-300 uppercase">Top 3 Chat Agents</h3>
                   <p className="text-[10px] text-gray-400">Mohammed Dlshad Team</p>
                 </div>
               </div>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/20">
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/10 text-gray-300 border border-white/10">
                 {selectedMonth} {selectedYear}
               </span>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {top3Chat.length === 0 ? (
-                <div className="py-6 text-center text-xs text-gray-400">لا توجد درجات محسوبة لهذا الشهر بعد</div>
+                <div className="py-5 text-center text-xs text-gray-400 font-medium">No calculated scores for this period yet</div>
               ) : (
                 top3Chat.map((agent) => (
                   <div 
                     key={agent.name}
-                    className="flex items-center justify-between p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 transition"
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/5 transition"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
-                        agent.rank === 1 ? "bg-amber-400 text-gray-950 shadow-md shadow-amber-400/30" :
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${
+                        agent.rank === 1 ? "bg-amber-400 text-gray-950" :
                         agent.rank === 2 ? "bg-slate-300 text-gray-900" :
-                        "bg-amber-700/60 text-amber-200"
+                        "bg-amber-700 text-white"
                       }`}>
-                        {agent.rank === 1 ? "🥇" : agent.rank === 2 ? "🥈" : "🥉"}
+                        {agent.rank === 1 ? "1" : agent.rank === 2 ? "2" : "3"}
                       </div>
-                      <span className="font-bold text-sm truncate">{agent.name}</span>
+                      <span className="font-bold text-xs truncate text-gray-100">{agent.name}</span>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0 pl-2">
-                      <span className="font-mono font-black text-base text-amber-300">{agent.score}</span>
+                      <span className="font-mono font-black text-sm text-amber-300">{agent.score}</span>
                       <span className="text-[10px] text-gray-400">pts</span>
                     </div>
                   </div>
@@ -795,50 +738,45 @@ export default function TopStarDashboard({
             </div>
           </div>
 
-          {/* Top 3 Call Card */}
-          <div className={`p-5 rounded-3xl border transition shadow-sm relative overflow-hidden ${
-            isDarkMode 
-              ? "bg-[#064e3b]/30 border-emerald-900/60 text-white" 
-              : "bg-gradient-to-br from-[#1C6B53] to-[#0e4434] border-[#1C6B53] text-white shadow-lg shadow-[#1C6B53]/15"
-          }`}>
-            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-400/15 rounded-full blur-3xl pointer-events-none" />
+          {/* Top 3 Call Center Card */}
+          <div className="p-5 rounded-2xl bg-gradient-to-br from-[#1C6B53] via-[#155542] to-[#0e3d2f] border border-[#1C6B53]/80 text-white shadow-md shadow-[#1C6B53]/15 relative overflow-hidden">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-emerald-400/20 text-emerald-200 flex items-center justify-center font-bold text-sm">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-white/15 text-emerald-200 flex items-center justify-center font-bold text-sm">
                   <PhoneCall size={16} />
                 </div>
                 <div>
-                  <h3 className="font-black text-sm tracking-wide text-emerald-200 uppercase">Top 3 Call Center</h3>
-                  <p className="text-[10px] text-emerald-300/80">Call Inbound & Outbound</p>
+                  <h3 className="font-extrabold text-xs tracking-wider text-emerald-200 uppercase">Top 3 Call Center</h3>
+                  <p className="text-[10px] text-emerald-200/80">Call Inbound & Outbound</p>
                 </div>
               </div>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-400/30">
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/15 text-emerald-100 border border-white/20">
                 {selectedMonth} {selectedYear}
               </span>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {top3Call.length === 0 ? (
-                <div className="py-6 text-center text-xs text-emerald-200/60">لا توجد درجات محسوبة لهذا الشهر بعد</div>
+                <div className="py-5 text-center text-xs text-emerald-200/70 font-medium">No calculated scores for this period yet</div>
               ) : (
                 top3Call.map((agent) => (
                   <div 
                     key={agent.name}
-                    className="flex items-center justify-between p-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 transition"
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.12] hover:bg-white/[0.18] border border-white/10 transition"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
-                        agent.rank === 1 ? "bg-amber-400 text-gray-950 shadow-md shadow-amber-400/30" :
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${
+                        agent.rank === 1 ? "bg-amber-400 text-gray-950" :
                         agent.rank === 2 ? "bg-slate-200 text-gray-900" :
-                        "bg-amber-600/80 text-white"
+                        "bg-amber-600 text-white"
                       }`}>
-                        {agent.rank === 1 ? "🥇" : agent.rank === 2 ? "🥈" : "🥉"}
+                        {agent.rank === 1 ? "1" : agent.rank === 2 ? "2" : "3"}
                       </div>
-                      <span className="font-bold text-sm truncate">{agent.name}</span>
+                      <span className="font-bold text-xs truncate text-white">{agent.name}</span>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0 pl-2">
-                      <span className="font-mono font-black text-base text-emerald-200">{agent.score}</span>
-                      <span className="text-[10px] text-emerald-300/80">pts</span>
+                      <span className="font-mono font-black text-sm text-emerald-100">{agent.score}</span>
+                      <span className="text-[10px] text-emerald-200/80">pts</span>
                     </div>
                   </div>
                 ))
@@ -847,49 +785,49 @@ export default function TopStarDashboard({
           </div>
         </div>
 
-        {/* Interactive Controls & Filters Bar */}
-        <div className={`p-4 sm:p-5 rounded-3xl border mb-6 transition shadow-xs ${
-          isDarkMode ? "bg-gray-900/70 border-gray-800" : "bg-white border-gray-200/90"
+        {/* Filter, Period & Team Controls Bar */}
+        <div className={`p-4 sm:p-5 rounded-2xl border mb-6 transition shadow-xs ${
+          isDarkMode ? "bg-gray-850/90 border-gray-800" : "bg-white border-gray-200/90"
         }`}>
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
             
             {/* Team Switcher Tabs */}
-            <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-gray-100 dark:bg-gray-800 shrink-0">
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 shrink-0">
               <button
                 onClick={() => setTeam("chat")}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                   team === "chat"
-                    ? "bg-[#1C6B53] text-white shadow-md shadow-[#1C6B53]/25"
+                    ? "bg-[#1C6B53] text-white shadow-xs"
                     : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 }`}
               >
-                <MessageSquare size={15} />
+                <MessageSquare size={14} />
                 <span>Chat Team ({chatRoster.length})</span>
               </button>
 
               <button
                 onClick={() => setTeam("call")}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                   team === "call"
-                    ? "bg-[#1C6B53] text-white shadow-md shadow-[#1C6B53]/25"
+                    ? "bg-[#1C6B53] text-white shadow-xs"
                     : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 }`}
               >
-                <PhoneCall size={15} />
+                <PhoneCall size={14} />
                 <span>Call Center ({callRoster.length})</span>
               </button>
             </div>
 
-            {/* Period Selector (Month & Year) */}
+            {/* Period, Search & Sorting Controls */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               
-              {/* Year Dropdown */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400">Year:</span>
+              {/* Year Select */}
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-gray-500 dark:text-gray-400 font-bold text-[11px]">Year:</span>
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(e.target.value)}
-                  className={`text-xs font-bold px-3 py-2 rounded-xl border outline-none cursor-pointer ${
+                  className={`text-xs font-bold px-3 py-1.5 rounded-xl border outline-none cursor-pointer ${
                     isDarkMode 
                       ? "bg-gray-800 border-gray-700 text-white" 
                       : "bg-gray-50 border-gray-300 text-gray-800"
@@ -901,26 +839,26 @@ export default function TopStarDashboard({
                 </select>
               </div>
 
-              {/* Month / Period Dropdown */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400">Period:</span>
+              {/* Period Select */}
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-gray-500 dark:text-gray-400 font-bold text-[11px]">Period:</span>
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
-                  className={`text-xs font-bold px-3 py-2 rounded-xl border outline-none cursor-pointer ${
+                  className={`text-xs font-bold px-3 py-1.5 rounded-xl border outline-none cursor-pointer ${
                     isDarkMode 
                       ? "bg-gray-800 border-gray-700 text-white" 
                       : "bg-gray-50 border-gray-300 text-gray-800"
                   }`}
                 >
-                  <optgroup label="Months (أشهر)">
+                  <optgroup label="Months">
                     {MONTHS_LIST.map(m => (
                       <option key={m.id} value={m.id}>
                         {m.name} ({m.id})
                       </option>
                     ))}
                   </optgroup>
-                  <optgroup label="Periods & Averages (فترات)">
+                  <optgroup label="Quarters & Averages">
                     {PERIODS_LIST.map(p => (
                       <option key={p.id} value={p.id}>
                         {p.name}
@@ -930,15 +868,15 @@ export default function TopStarDashboard({
                 </select>
               </div>
 
-              {/* Quick Search */}
-              <div className="relative flex-1 sm:w-48 min-w-[140px]">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              {/* Agent Search Input */}
+              <div className="relative flex-1 sm:w-44 min-w-[130px]">
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="بحث عن موظف..."
+                  placeholder="Search agent..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full text-xs pl-8 pr-3 py-2 rounded-xl border outline-none ${
+                  className={`w-full text-xs pl-8 pr-3 py-1.5 rounded-xl border outline-none ${
                     isDarkMode 
                       ? "bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:border-emerald-500" 
                       : "bg-gray-50 border-gray-300 text-gray-800 placeholder-gray-400 focus:border-emerald-600"
@@ -946,7 +884,7 @@ export default function TopStarDashboard({
                 />
               </div>
 
-              {/* Sort by Rank / A-Z */}
+              {/* Sort by Rank Button */}
               <button
                 onClick={() => {
                   if (sortBy === "rank") {
@@ -956,17 +894,18 @@ export default function TopStarDashboard({
                     setSortAsc(false);
                   }
                 }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
                   sortBy === "rank"
                     ? "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400"
                     : isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-300 text-gray-700"
                 }`}
-                title="ترتيب حسب النقاط"
+                title="Sort by Score Rank"
               >
                 <Trophy size={13} />
-                <span>النقاط</span>
+                <span>Rank</span>
               </button>
 
+              {/* Sort A-Z Button */}
               <button
                 onClick={() => {
                   if (sortBy === "name") {
@@ -976,22 +915,22 @@ export default function TopStarDashboard({
                     setSortAsc(false);
                   }
                 }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
                   sortBy === "name"
                     ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                     : isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-300 text-gray-700"
                 }`}
-                title="ترتيب أبجدي"
+                title="Sort Alphabetically"
               >
                 <span>A–Z</span>
               </button>
             </div>
           </div>
 
-          {/* Stats Bar */}
-          <div className="mt-4 pt-3.5 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-4 text-gray-500 dark:text-gray-400 font-mono">
-              <span className="flex items-center gap-1.5">
+          {/* Sub-bar Statistics */}
+          <div className="mt-3.5 pt-3 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-3 text-gray-500 dark:text-gray-400 font-mono">
+              <span className="flex items-center gap-1.5 font-bold">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                 <span>{scoredCount} of {activeRanked.length} Scored</span>
               </span>
@@ -1011,42 +950,42 @@ export default function TopStarDashboard({
               </span>
               <span className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shadow-xs"></span>
-                <span>&lt;70 Need Imp.</span>
+                <span>&lt;70 Needs Imp.</span>
               </span>
             </div>
           </div>
         </div>
 
-        {/* Leaderboard Table Card */}
-        <div className={`rounded-3xl border overflow-hidden transition shadow-sm ${
-          isDarkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"
+        {/* Clean Modern Leaderboard Table */}
+        <div className={`rounded-2xl border overflow-hidden transition shadow-xs ${
+          isDarkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200/90"
         }`}>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left text-xs">
               
-              {/* Table Header */}
+              {/* Table Head */}
               <thead>
-                <tr className={isDarkMode ? "bg-gray-950/70 border-b border-gray-800 text-gray-400" : "bg-gray-50/90 border-b border-gray-200 text-gray-600"}>
-                  <th className="py-4 px-3 sm:px-4 text-center font-mono font-bold uppercase text-[10px] tracking-wider w-12">#</th>
-                  <th className="py-4 px-3 sm:px-4 font-bold uppercase text-[10px] tracking-wider min-w-[170px]">الموظف (Agent)</th>
+                <tr className={isDarkMode ? "bg-gray-950/80 border-b border-gray-800 text-gray-400" : "bg-gray-50/90 border-b border-gray-200 text-gray-600"}>
+                  <th className="py-3.5 px-3 sm:px-4 text-center font-mono font-bold uppercase text-[10px] tracking-wider w-12">#</th>
+                  <th className="py-3.5 px-3 sm:px-4 font-bold uppercase text-[10px] tracking-wider min-w-[170px]">Agent Name</th>
                   
-                  {/* Raw Input KPI Columns */}
+                  {/* Raw Input Metric Headers */}
                   {activeCols.map(col => (
-                    <th key={col.key} className="py-4 px-3 text-right font-mono font-bold uppercase text-[10px] tracking-wider border-l border-gray-100 dark:border-gray-800/80 min-w-[70px]">
+                    <th key={col.key} className="py-3.5 px-3 text-right font-mono font-bold uppercase text-[10px] tracking-wider border-l border-gray-100 dark:border-gray-800/80 min-w-[68px]">
                       <div>{col.label}</div>
                       <div className="text-[9px] text-gray-400 font-normal lowercase">{col.target}</div>
                     </th>
                   ))}
 
-                  {/* Calculated Points Columns */}
+                  {/* Calculated Points Headers */}
                   {activeCols.map(col => (
-                    <th key={`pts_${col.key}`} className="py-4 px-3 text-right font-mono font-bold uppercase text-[10px] tracking-wider text-amber-600 dark:text-amber-400/90 min-w-[55px]">
+                    <th key={`pts_${col.key}`} className="py-3.5 px-3 text-right font-mono font-bold uppercase text-[10px] tracking-wider text-amber-600 dark:text-amber-400/90 min-w-[55px] bg-amber-500/[0.02]">
                       {col.ptsLabel} ({col.max})
                     </th>
                   ))}
 
-                  {/* Final Total Column */}
-                  <th className="py-4 px-4 text-right font-mono font-black uppercase text-[11px] tracking-wider text-gray-900 dark:text-white border-l border-gray-100 dark:border-gray-800 min-w-[160px]">
+                  {/* Final Total Score Header */}
+                  <th className="py-3.5 px-4 text-right font-mono font-black uppercase text-[11px] tracking-wider text-gray-900 dark:text-white border-l border-gray-100 dark:border-gray-800 min-w-[160px]">
                     Final Score (100)
                   </th>
                 </tr>
@@ -1058,15 +997,15 @@ export default function TopStarDashboard({
                   <tr>
                     <td colSpan={2 + activeCols.length * 2 + 1} className="py-16 text-center">
                       <div className="flex flex-col items-center justify-center gap-2">
-                        <RefreshCw size={24} className="animate-spin text-emerald-500" />
-                        <span className="text-xs text-gray-500 font-bold">جاري تحميل بيانات التوب ستار...</span>
+                        <RefreshCw size={22} className="animate-spin text-emerald-500" />
+                        <span className="text-xs text-gray-500 font-bold">Loading Top Star Leaderboard...</span>
                       </div>
                     </td>
                   </tr>
                 ) : displayRows.length === 0 ? (
                   <tr>
-                    <td colSpan={2 + activeCols.length * 2 + 1} className="py-12 text-center text-gray-500">
-                      لا يوجد موظفون مطابقون لبحثك
+                    <td colSpan={2 + activeCols.length * 2 + 1} className="py-12 text-center text-gray-500 font-medium">
+                      No matching agents found
                     </td>
                   </tr>
                 ) : (
@@ -1081,19 +1020,17 @@ export default function TopStarDashboard({
                       <tr 
                         key={row.name}
                         className={`transition hover:bg-gray-50/80 dark:hover:bg-gray-800/40 ${
-                          isTop1 
-                            ? "bg-amber-500/[0.04] dark:bg-amber-500/[0.05]" 
-                            : ""
+                          isTop1 ? "bg-amber-500/[0.03] dark:bg-amber-500/[0.04]" : ""
                         }`}
                       >
-                        {/* Rank Badge */}
+                        {/* Rank */}
                         <td className="py-3 px-3 sm:px-4 text-center font-mono">
                           {isTop1 ? (
-                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-gray-950 font-black text-xs shadow-sm">1</span>
+                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-gray-950 font-black text-xs shadow-xs">1</span>
                           ) : isTop2 ? (
-                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-600 text-gray-900 dark:text-white font-black text-xs">2</span>
+                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 text-gray-900 dark:text-white font-black text-xs">2</span>
                           ) : isTop3 ? (
-                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-700/60 text-white font-black text-xs">3</span>
+                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-700 text-white font-black text-xs">3</span>
                           ) : rankNum ? (
                             <span className="text-gray-500 dark:text-gray-400 font-bold text-xs">{String(rankNum).padStart(2, "0")}</span>
                           ) : (
@@ -1101,19 +1038,17 @@ export default function TopStarDashboard({
                           )}
                         </td>
 
-                        {/* Agent Info */}
+                        {/* Agent Name */}
                         <td className="py-3 px-3 sm:px-4">
                           <div className="flex items-center gap-2.5">
-                            <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
                               isTop1 ? "bg-amber-400 text-gray-950" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
                             }`}>
                               {row.name.charAt(0)}
                             </div>
-                            <div className="min-w-0">
-                              <span className="font-bold text-gray-800 dark:text-gray-100 truncate block">
-                                {row.name}
-                              </span>
-                            </div>
+                            <span className="font-bold text-gray-800 dark:text-gray-100 truncate">
+                              {row.name}
+                            </span>
                           </div>
                         </td>
 
@@ -1153,11 +1088,11 @@ export default function TopStarDashboard({
                           );
                         })}
 
-                        {/* Points Breakdown Badges */}
+                        {/* Calculated Points */}
                         {row.parts.map(p => {
                           const isHigh = p.pts !== null && p.pts >= p.max * 0.95;
                           return (
-                            <td key={`pts_${p.key}`} className="py-2.5 px-3 text-right font-mono">
+                            <td key={`pts_${p.key}`} className="py-2.5 px-3 text-right font-mono bg-amber-500/[0.015]">
                               <span className={`text-xs font-bold ${
                                 p.pts === null ? "text-gray-300 dark:text-gray-600" :
                                 isHigh ? "text-emerald-600 dark:text-emerald-400 font-black" :
@@ -1198,78 +1133,79 @@ export default function TopStarDashboard({
           </div>
         </div>
 
-        {/* Criteria & Points Calculation Legend Cards */}
+        {/* Scoring Breakdown & Weight Cards (100% English) */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
           
-          {/* Chat Criteria Card */}
-          <div className={`p-5 rounded-3xl border ${
-            isDarkMode ? "bg-gray-900/60 border-gray-800 text-gray-300" : "bg-white border-gray-200 text-gray-700"
+          {/* Chat Scoring Breakdown Card */}
+          <div className={`p-5 rounded-2xl border ${
+            isDarkMode ? "bg-gray-850/80 border-gray-800 text-gray-300" : "bg-white border-gray-200/90 text-gray-700"
           }`}>
-            <div className="flex items-center gap-2 mb-3 font-bold text-xs uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <div className="flex items-center gap-2 mb-3.5 font-bold text-xs uppercase tracking-wider text-[#1C6B53] dark:text-emerald-400">
               <MessageSquare size={16} />
-              <span>معايير احتساب تقييم الشات (Chat KPI Breakdown - 100 Pts)</span>
+              <span>Chat KPI Breakdown & Targets (100 Pts Total)</span>
             </div>
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between py-1 border-b border-gray-100 dark:border-gray-800">
-                <span>1. نسبة الجودة (Quality Assurance - QA %)</span>
+              <div className="flex justify-between py-1.5 border-b border-gray-100 dark:border-gray-800/80">
+                <span className="font-medium">1. Quality Assurance (QA %)</span>
                 <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">30 pts (Target: 100%)</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-gray-100 dark:border-gray-800">
-                <span>2. الإنتاجية (Productivity - Chats/Hour)</span>
+              <div className="flex justify-between py-1.5 border-b border-gray-100 dark:border-gray-800/80">
+                <span className="font-medium">2. Productivity (Chats / Hour)</span>
                 <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">15 pts (Target: 13/hr)</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-gray-100 dark:border-gray-800">
-                <span>3. معدل وقت المحادثة (AHT - Seconds)</span>
+              <div className="flex justify-between py-1.5 border-b border-gray-100 dark:border-gray-800/80">
+                <span className="font-medium">3. Average Handle Time (AHT)</span>
                 <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">15 pts (Target: 210s)</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-gray-100 dark:border-gray-800">
-                <span>4. معدل وقت الرد الأول (ART - Seconds)</span>
+              <div className="flex justify-between py-1.5 border-b border-gray-100 dark:border-gray-800/80">
+                <span className="font-medium">4. Average Response Time (ART)</span>
                 <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">20 pts (Target: 89s)</span>
               </div>
-              <div className="flex justify-between py-1">
-                <span>5. درجة الامتحان (Exam %)</span>
+              <div className="flex justify-between py-1.5">
+                <span className="font-medium">5. Knowledge Exam (Exam %)</span>
                 <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">20 pts (Target: 100%)</span>
               </div>
             </div>
           </div>
 
-          {/* Call Criteria Card */}
-          <div className={`p-5 rounded-3xl border ${
-            isDarkMode ? "bg-gray-900/60 border-gray-800 text-gray-300" : "bg-white border-gray-200 text-gray-700"
+          {/* Call Scoring Breakdown Card */}
+          <div className={`p-5 rounded-2xl border ${
+            isDarkMode ? "bg-gray-850/80 border-gray-800 text-gray-300" : "bg-white border-gray-200/90 text-gray-700"
           }`}>
-            <div className="flex items-center gap-2 mb-3 font-bold text-xs uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            <div className="flex items-center gap-2 mb-3.5 font-bold text-xs uppercase tracking-wider text-amber-600 dark:text-amber-400">
               <PhoneCall size={16} />
-              <span>معايير احتساب تقييم الكول سنتر (Call KPI Breakdown - 100 Pts)</span>
+              <span>Call Center KPI Breakdown & Targets (100 Pts Total)</span>
             </div>
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between py-1 border-b border-gray-100 dark:border-gray-800">
-                <span>1. نسبة الجودة (Quality Assurance - QA %)</span>
+              <div className="flex justify-between py-1.5 border-b border-gray-100 dark:border-gray-800/80">
+                <span className="font-medium">1. Quality Assurance (QA %)</span>
                 <span className="font-mono font-bold text-amber-600 dark:text-amber-400">30 pts (Target: 100%)</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-gray-100 dark:border-gray-800">
-                <span>2. نسبة الإنتاجية (Productivity %)</span>
+              <div className="flex justify-between py-1.5 border-b border-gray-100 dark:border-gray-800/80">
+                <span className="font-medium">2. Productivity (Prod %)</span>
                 <span className="font-mono font-bold text-amber-600 dark:text-amber-400">20 pts (Target: 100%)</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-gray-100 dark:border-gray-800">
-                <span>3. معدل وقت المكالمة (AHT - Seconds)</span>
+              <div className="flex justify-between py-1.5 border-b border-gray-100 dark:border-gray-800/80">
+                <span className="font-medium">3. Average Handle Time (AHT)</span>
                 <span className="font-mono font-bold text-amber-600 dark:text-amber-400">20 pts (Target: 169s)</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-gray-100 dark:border-gray-800">
-                <span>4. درجة الامتحان (Exam %)</span>
+              <div className="flex justify-between py-1.5 border-b border-gray-100 dark:border-gray-800/80">
+                <span className="font-medium">4. Knowledge Exam (Exam %)</span>
                 <span className="font-mono font-bold text-amber-600 dark:text-amber-400">20 pts (Target: 100%)</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-gray-100 dark:border-gray-800">
-                <span>5. وقت إنهاء الإجراء (Wrapup - نسبي للأقل)</span>
+              <div className="flex justify-between py-1.5 border-b border-gray-100 dark:border-gray-800/80">
+                <span className="font-medium">5. Wrapup Time (Relative Best)</span>
                 <span className="font-mono font-bold text-amber-600 dark:text-amber-400">5 pts (Relative Best)</span>
               </div>
-              <div className="flex justify-between py-1">
-                <span>6. وقت الانتظار (Hold - Seconds)</span>
+              <div className="flex justify-between py-1.5">
+                <span className="font-medium">6. Hold Time (Hold)</span>
                 <span className="font-mono font-bold text-amber-600 dark:text-amber-400">5 pts (Target: 45s)</span>
               </div>
             </div>
           </div>
         </div>
-      </main>
+
+      </div>
     </div>
   );
 }

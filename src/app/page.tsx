@@ -3576,7 +3576,7 @@ export default function Dashboard() {
                   <button
                     onClick={() => setShowTopStarView(true)}
                     className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-300 hover:bg-amber-50/80 dark:hover:bg-amber-950/40 transition-all group cursor-pointer border border-transparent hover:border-amber-200 dark:hover:border-amber-800/40"
-                    title="Top Star KPI Leaderboard (توب ستار)"
+                    title="Top Star KPI Leaderboard"
                   >
                     <div className="w-5 h-5 rounded-lg bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
                       <Star size={13} className="fill-white" />
