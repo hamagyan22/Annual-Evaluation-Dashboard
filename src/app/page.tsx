@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
-import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2 } from "lucide-react";
+import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare } from "lucide-react";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
 const TEAMS: TeamName[] = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team'];
@@ -17,6 +17,7 @@ type ColumnConfig = {
 };
 
 const DEFAULT_CHAT_COLUMNS: ColumnConfig[] = [
+  { id: 'chat_handled', label: 'Chat Handled', type: 'number', aggregation: 'sum' },
   { id: 'exam', label: 'EXAM', type: 'number', aggregation: 'average' },
   { id: 'quality', label: 'QUALITY', type: 'number', aggregation: 'average' },
   { id: 'aht', label: 'AHT', type: 'time', aggregation: 'average' },
@@ -26,6 +27,7 @@ const DEFAULT_CHAT_COLUMNS: ColumnConfig[] = [
 ];
 
 const DEFAULT_CHAT_COLUMNS_HISTORICAL: ColumnConfig[] = [
+  { id: 'chat_handled', label: 'Chat Handled', type: 'number', aggregation: 'sum' },
   { id: 'exam', label: 'EXAM', type: 'number', aggregation: 'average' },
   { id: 'quality', label: 'QUALITY', type: 'number', aggregation: 'average' },
   { id: 'aht', label: 'AHT', type: 'time', aggregation: 'average' },
@@ -46,7 +48,7 @@ const DEFAULT_OTHER_COLUMNS: ColumnConfig[] = [
   { id: 'abandoned', label: 'Abandoned', type: 'number', aggregation: 'sum' },
 ];
 
-const DESIRED_COLUMN_ORDER = ['quality', 'exam', 'productivity', 'aht', 'art', 'hold', 'wrapup', 'handled', 'call_handled', 'inbound', 'outbound', 'abandoned'];
+const DESIRED_COLUMN_ORDER = ['chat_handled', 'exam', 'quality', 'productivity', 'aht', 'art', 'hold', 'wrapup', 'handled', 'call_handled', 'inbound', 'outbound', 'abandoned'];
 
 function sortColumnsByOrder(cols: ColumnConfig[]) {
   if (!cols) return [];
@@ -85,8 +87,17 @@ function getEffectiveColumns(
   const isMayPlus = isFromMayOnwards(year, month);
   const srcCols = baseCols && baseCols.length > 0 ? baseCols : (isMayPlus ? DEFAULT_CHAT_COLUMNS : DEFAULT_CHAT_COLUMNS_HISTORICAL);
 
+  // Chat Handled goes right before Exam for all months
+  const existingChatHandled = srcCols.find(c => c.id === 'chat_handled');
+  const chatHandledCol: ColumnConfig = existingChatHandled || {
+    id: 'chat_handled',
+    label: 'Chat Handled',
+    type: 'number',
+    aggregation: 'sum'
+  };
+
   if (isMayPlus) {
-    const filtered = srcCols.filter(c => c.id !== 'inbound' && c.id !== 'outbound' && c.id !== 'call_handled');
+    const filtered = srcCols.filter(c => c.id !== 'inbound' && c.id !== 'outbound' && c.id !== 'call_handled' && c.id !== 'chat_handled');
     const existingCallHandled = srcCols.find(c => c.id === 'call_handled');
     const callHandledCol: ColumnConfig = existingCallHandled || {
       id: 'call_handled',
@@ -94,9 +105,9 @@ function getEffectiveColumns(
       type: 'number',
       aggregation: 'sum'
     };
-    return [...filtered, callHandledCol];
+    return [chatHandledCol, ...filtered, callHandledCol];
   } else {
-    const filtered = srcCols.filter(c => c.id !== 'call_handled' && c.id !== 'inbound' && c.id !== 'outbound');
+    const filtered = srcCols.filter(c => c.id !== 'call_handled' && c.id !== 'inbound' && c.id !== 'outbound' && c.id !== 'chat_handled');
     const existingInbound = srcCols.find(c => c.id === 'inbound') || {
       id: 'inbound',
       label: 'INBOUND',
@@ -109,7 +120,7 @@ function getEffectiveColumns(
       type: 'number',
       aggregation: 'sum'
     };
-    return [...filtered, existingInbound, existingOutbound];
+    return [chatHandledCol, ...filtered, existingInbound, existingOutbound];
   }
 }
 
@@ -452,6 +463,22 @@ const KPI_META: Record<string, { icon: any; color: string; bgLight: string; bgDa
     bgDark: 'dark:bg-emerald-500/15',
     border: 'bg-emerald-500',
     label: 'Call Handled'
+  },
+  chat_handled: { 
+    icon: MessageSquare, 
+    color: 'text-teal-600 dark:text-teal-400', 
+    bgLight: 'bg-teal-500/10', 
+    bgDark: 'dark:bg-teal-500/15',
+    border: 'bg-teal-500',
+    label: 'Chat Handled'
+  },
+  'chat handled': { 
+    icon: MessageSquare, 
+    color: 'text-teal-600 dark:text-teal-400', 
+    bgLight: 'bg-teal-500/10', 
+    bgDark: 'dark:bg-teal-500/15',
+    border: 'bg-teal-500',
+    label: 'Chat Handled'
   },
 };
 
@@ -896,6 +923,7 @@ function AgentDashboard({
     if (id === 'productivity' || lbl === 'productivity' || id.includes('prod') || lbl.includes('prod')) return 'Productivity';
     if (id === 'wrapup' || lbl === 'wrapup' || id.includes('wrapup') || lbl.includes('wrapup')) return 'Wrapup Not Selected';
     if (id === 'call_handled' || lbl === 'call handled') return 'Call Handled';
+    if (id === 'chat_handled' || lbl === 'chat handled') return 'Chat Handled';
     return toTitleCase(col.label);
   };
 
