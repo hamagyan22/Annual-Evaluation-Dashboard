@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
-import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star } from "lucide-react";
+import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal } from "lucide-react";
+import { fetchTopStarData, fetchTopStarCriteria, normalizeName } from "@/lib/topStarUtils";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
 const TEAMS: TeamName[] = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team'];
@@ -846,6 +847,61 @@ function AgentDashboard({
 
   const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
+  // Top Star Leaderboard & Personal Rank state
+  const [topStarData, setTopStarData] = useState<{
+    rankedChat: any[];
+    rankedCall: any[];
+    top3Chat: any[];
+    top3Call: any[];
+  } | null>(null);
+  const [topStarLoading, setTopStarLoading] = useState(false);
+  const [activePodiumTeam, setActivePodiumTeam] = useState<"chat" | "call">(
+    currentAgent?.team === 'Mohammed Dlshad Team' ? "chat" : "call"
+  );
+
+  useEffect(() => {
+    setActivePodiumTeam(currentAgent?.team === 'Mohammed Dlshad Team' ? 'chat' : 'call');
+  }, [currentAgent?.team]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadTopStar = async () => {
+      const m = months.includes(selectedMonth) ? selectedMonth : "SEP";
+      try {
+        setTopStarLoading(true);
+        const crit = await fetchTopStarCriteria();
+        const res = await fetchTopStarData(selectedYear, m, crit);
+        if (isMounted) {
+          setTopStarData(res);
+        }
+      } catch (e) {
+        console.error("Failed to load Top Star for agent dashboard:", e);
+      } finally {
+        if (isMounted) setTopStarLoading(false);
+      }
+    };
+    loadTopStar();
+    return () => { isMounted = false; };
+  }, [selectedYear, selectedMonth]);
+
+  const isChatTeam = currentAgent?.team === 'Mohammed Dlshad Team';
+  const currentAgentCanonicalName = normalizeName(currentAgent?.agent_name || currentAgent?.name || "");
+
+  const agentRankInfo = useMemo(() => {
+    if (!topStarData) return null;
+    const teamList = isChatTeam ? topStarData.rankedChat : topStarData.rankedCall;
+    return teamList.find((r: any) => normalizeName(r.name) === currentAgentCanonicalName) || null;
+  }, [topStarData, isChatTeam, currentAgentCanonicalName]);
+
+  const myRank = agentRankInfo?.rank ?? null;
+  const myScore = agentRankInfo?.scoreStr ?? null;
+  const isTop3 = myRank !== null && myRank <= 3;
+
+  const currentTop3 = useMemo(() => {
+    if (!topStarData) return [];
+    return activePodiumTeam === "chat" ? topStarData.top3Chat : topStarData.top3Call;
+  }, [topStarData, activePodiumTeam]);
+
   // Helper to parse a stored value to a numeric (seconds if mm:ss, else as-is)
   const parseVal = (col: any, row: any) => {
     if (!row) return 0;
@@ -1117,6 +1173,32 @@ function AgentDashboard({
               <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white truncate">
                 {memberDoc?.display_name || currentAgent?.agent_name || currentAgent?.name}
               </h1>
+
+              {/* Personal Top Star Rank & Score Badge */}
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                {myRank != null ? (
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black shadow-xs ${
+                    myRank === 1 ? "bg-gradient-to-r from-amber-400 to-yellow-300 text-gray-950 ring-1 ring-amber-400/50 shadow-amber-500/20" :
+                    myRank === 2 ? "bg-gradient-to-r from-slate-200 to-gray-300 text-gray-900 ring-1 ring-slate-300 shadow-slate-500/20" :
+                    myRank === 3 ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white ring-1 ring-amber-600 shadow-amber-700/20" :
+                    "bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300/60 dark:border-emerald-700/60 text-[#1C6B53] dark:text-emerald-300"
+                  }`}>
+                    {myRank === 1 ? "🥇 Top Star Winner #1" :
+                     myRank === 2 ? "🥈 Top Star Runner-Up #2" :
+                     myRank === 3 ? "🥉 Top Star 3rd Place" :
+                     `⭐ Top Star Rank #${myRank}`}
+                    <span className="opacity-80 font-bold text-[11px]">({myScore} pts)</span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                    <Star size={11} />
+                    <span>Top Star: Awaiting month metrics</span>
+                  </div>
+                )}
+                <span className="text-[11px] text-gray-400 dark:text-gray-500 font-medium hidden xs:inline">
+                  • {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1132,6 +1214,48 @@ function AgentDashboard({
             )}
           </div>
         </div>
+
+        {/* Top Star Winner Celebratory Badge Banner (When Agent is in Top 3 for Selected Month) */}
+        {isTop3 && (
+          <div className="mb-6 p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-emerald-500/20 border-2 border-amber-400/50 dark:border-amber-400/40 shadow-lg relative overflow-hidden">
+            <div className="absolute -top-10 -right-10 w-36 h-36 bg-amber-400/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+              <div className="flex items-center gap-3.5 sm:gap-4">
+                <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl shrink-0 shadow-md ${
+                  myRank === 1 ? "bg-gradient-to-tr from-amber-400 to-yellow-300 text-gray-950 ring-2 ring-amber-300" :
+                  myRank === 2 ? "bg-gradient-to-tr from-slate-200 to-gray-300 text-gray-900 ring-2 ring-slate-200" :
+                  "bg-gradient-to-tr from-amber-600 to-amber-700 text-white ring-2 ring-amber-500"
+                }`}>
+                  {myRank === 1 ? "🥇" : myRank === 2 ? "🥈" : "🥉"}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-400/25 text-amber-900 dark:text-amber-200 border border-amber-400/40">
+                      Official Top Star Recognition Badge
+                    </span>
+                    <span className="text-xs text-gray-600 dark:text-gray-300 font-bold">
+                      {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}
+                    </span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white leading-tight">
+                    {myRank === 1 ? "Congratulations! You are the #1 Top Star Champion!" :
+                     myRank === 2 ? "Great Job! You are the #2 Top Star Runner-Up!" :
+                     "Well Done! You achieved Top Star 3rd Place!"}
+                  </h3>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 font-medium mt-0.5">
+                    Ranked <strong>#{myRank}</strong> in {isChatTeam ? "Chat Team" : "Call Center"} with an exceptional score of <strong>{myScore} pts</strong>!
+                  </p>
+                </div>
+              </div>
+              <div className="shrink-0 self-end sm:self-center">
+                <div className="px-4 py-2 rounded-xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-amber-400/40 shadow-xs text-center">
+                  <div className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Total Score</div>
+                  <div className="text-lg sm:text-xl font-black text-[#1C6B53] dark:text-emerald-400">{myScore} <span className="text-xs font-medium text-gray-400">pts</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="p-12 text-center text-gray-500 font-medium">Loading performance data...</div>
@@ -1245,6 +1369,113 @@ function AgentDashboard({
                     </button>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* Top 3 Performers Section (Visible to all employees) */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-gray-200/80 dark:border-gray-700 shadow-sm relative overflow-hidden">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 mb-3.5 pb-3 border-b border-gray-100 dark:border-gray-700/60">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#1C6B53]/10 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 flex items-center justify-center font-bold shadow-xs">
+                    <Trophy size={16} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-white">
+                        Top 3 Performers
+                      </h3>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                        {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+                      Top Star Podium for {activePodiumTeam === 'chat' ? 'Chat Team' : 'Call Center'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Team Switcher Tabs */}
+                <div className="flex items-center gap-1 p-1 rounded-xl bg-gray-100 dark:bg-gray-900 self-end sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => setActivePodiumTeam("chat")}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      activePodiumTeam === "chat"
+                        ? "bg-[#1C6B53] text-white shadow-xs"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <MessageSquare size={12} />
+                    <span>Chat Team</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActivePodiumTeam("call")}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      activePodiumTeam === "call"
+                        ? "bg-[#1C6B53] text-white shadow-xs"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <PhoneCall size={12} />
+                    <span>Call Center</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 3 Podium Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {currentTop3.length === 0 ? (
+                  <div className="col-span-3 py-4 text-center text-xs text-gray-400 dark:text-gray-500 font-medium">
+                    No Top Star scores available for {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}.
+                  </div>
+                ) : (
+                  currentTop3.map((agent: any) => {
+                    const isMe = normalizeName(agent.name) === currentAgentCanonicalName;
+                    return (
+                      <div
+                        key={agent.name}
+                        className={`relative p-3 sm:p-3.5 rounded-2xl border transition-all duration-200 flex items-center justify-between ${
+                          isMe 
+                            ? "bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-400/80 shadow-md ring-2 ring-emerald-500/20" 
+                            : "bg-gray-50/70 dark:bg-gray-900/40 border-gray-200/80 dark:border-gray-700/70 hover:border-gray-300 dark:hover:border-gray-600"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shrink-0 shadow-xs ${
+                            agent.rank === 1 ? "bg-gradient-to-tr from-amber-400 to-yellow-300 text-gray-950 ring-1 ring-amber-300" :
+                            agent.rank === 2 ? "bg-gradient-to-tr from-slate-200 to-gray-200 text-gray-900" :
+                            "bg-gradient-to-tr from-amber-600 to-amber-700 text-white"
+                          }`}>
+                            {agent.rank === 1 ? "🥇" : agent.rank === 2 ? "🥈" : "🥉"}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white truncate">
+                                {agent.name}
+                              </span>
+                              {isMe && (
+                                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[#1C6B53] text-white shrink-0">
+                                  You
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium block">
+                              {agent.rank === 1 ? "1st Place" : agent.rank === 2 ? "2nd Place" : "3rd Place"}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="text-right shrink-0 pl-2">
+                          <span className="font-mono font-black text-sm text-[#1C6B53] dark:text-emerald-400">
+                            {agent.scoreStr}
+                          </span>
+                          <span className="text-[10px] text-gray-400 font-semibold block leading-none">pts</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
 

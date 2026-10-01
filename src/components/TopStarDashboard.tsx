@@ -10,6 +10,7 @@ import {
   CheckCircle2, Flame, Award, Filter, Edit3, X, Eye, BarChart3, HelpCircle,
   SlidersHorizontal, CheckCircle
 } from "lucide-react";
+import { formatDuration } from "@/lib/topStarUtils";
 
 interface TopStarDashboardProps {
   userProfile: any;
@@ -422,8 +423,8 @@ export default function TopStarDashboard({
       return [
         { key: "qa",   label: "Qa",   ptsLabel: "Qa Pts", max: c.qaMax, target: `Target ${c.qaTarget}` },
         { key: "prod", label: "Prod", ptsLabel: "Prod Pts", max: c.prodMax, target: `Target ${c.prodTarget}/hr` },
-        { key: "aht",  label: "Aht",  ptsLabel: "Aht Pts", max: c.ahtMax, target: `Target ${c.ahtTarget}s` },
-        { key: "art",  label: "Art",  ptsLabel: "Art Pts", max: c.artMax, target: `Target ${c.artTarget}s` },
+        { key: "aht",  label: "Aht",  ptsLabel: "Aht Pts", max: c.ahtMax, target: `Target ${formatDuration(c.ahtTarget)}` },
+        { key: "art",  label: "Art",  ptsLabel: "Art Pts", max: c.artMax, target: `Target ${formatDuration(c.artTarget)}` },
         { key: "exam", label: "Exam", ptsLabel: "Exam Pts", max: c.examMax, target: `Target ${c.examTarget}` }
       ];
     }
@@ -431,10 +432,10 @@ export default function TopStarDashboard({
     return [
       { key: "qa",     label: "Qa",     ptsLabel: "Qa Pts", max: c.qaMax, target: `Target ${c.qaTarget}` },
       { key: "prod",   label: "Prod",   ptsLabel: "Prod Pts", max: c.prodMax, target: `Target ${c.prodTarget}` },
-      { key: "aht",    label: "Aht",    ptsLabel: "Aht Pts", max: c.ahtMax, target: `Target ${c.ahtTarget}s` },
+      { key: "aht",    label: "Aht",    ptsLabel: "Aht Pts", max: c.ahtMax, target: `Target ${formatDuration(c.ahtTarget)}` },
       { key: "exam",   label: "Exam",   ptsLabel: "Exam Pts", max: c.examMax, target: `Target ${c.examTarget}` },
       { key: "wrapup", label: "Wrapup", ptsLabel: "Wrapup Pts", max: c.wrapupMax, target: "Relative" },
-      { key: "hold",   label: "Hold",   ptsLabel: "Hold Pts", max: c.holdMax, target: `Target ${c.holdTarget}s` }
+      { key: "hold",   label: "Hold",   ptsLabel: "Hold Pts", max: c.holdMax, target: `Target ${formatDuration(c.holdTarget)}` }
     ];
   }, [team, criteria]);
 
@@ -825,12 +826,12 @@ export default function TopStarDashboard({
                   <MessageSquare size={16} />
                 </div>
                 <div>
-                  <h3 className="font-black text-xs tracking-wider text-emerald-100 uppercase">Top 3 Chat Agents</h3>
+                  <h3 className="font-black text-xs sm:text-sm tracking-wide text-emerald-100">Top 3 Chat Agents</h3>
                   <p className="text-[10px] text-emerald-200/80">Mohammed Dlshad Team</p>
                 </div>
               </div>
               <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-white/15 text-white border border-white/20 backdrop-blur-md">
-                {selectedMonth} {selectedYear}
+                {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}
               </span>
             </div>
 
@@ -878,12 +879,12 @@ export default function TopStarDashboard({
                   <PhoneCall size={16} />
                 </div>
                 <div>
-                  <h3 className="font-black text-xs tracking-wider text-emerald-100 uppercase">Top 3 Call Center</h3>
+                  <h3 className="font-black text-xs sm:text-sm tracking-wide text-emerald-100">Top 3 Call Center</h3>
                   <p className="text-[10px] text-emerald-200/80">Call Inbound & Outbound</p>
                 </div>
               </div>
               <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-white/15 text-white border border-white/20 backdrop-blur-md">
-                {selectedMonth} {selectedYear}
+                {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}
               </span>
             </div>
 
@@ -1139,7 +1140,7 @@ export default function TopStarDashboard({
                               }`}>
                                 {displayVal ? (
                                   col.key === "aht" || col.key === "art" || col.key === "hold"
-                                    ? `${displayVal}s`
+                                    ? formatDuration(displayVal)
                                     : displayVal
                                 ) : "–"}
                               </span>
