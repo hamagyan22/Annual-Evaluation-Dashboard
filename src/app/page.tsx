@@ -853,6 +853,9 @@ function AgentDashboard({
     rankedCall: any[];
     top3Chat: any[];
     top3Call: any[];
+    chatCompleteness?: any;
+    callCompleteness?: any;
+    syncStatus?: any;
   } | null>(null);
   const [topStarLoading, setTopStarLoading] = useState(false);
   const [activePodiumTeam, setActivePodiumTeam] = useState<"chat" | "call">(
@@ -887,20 +890,27 @@ function AgentDashboard({
   const isChatTeam = currentAgent?.team === 'Mohammed Dlshad Team';
   const currentAgentCanonicalName = normalizeName(currentAgent?.agent_name || currentAgent?.name || "");
 
+  // Completeness check: Has the team leader completed 100% of all data for the month?
+  const myTeamCompleteness = isChatTeam ? topStarData?.chatCompleteness : topStarData?.callCompleteness;
+  const isMonthComplete = myTeamCompleteness?.isComplete === true;
+
   const agentRankInfo = useMemo(() => {
-    if (!topStarData) return null;
+    if (!topStarData || !isMonthComplete) return null;
     const teamList = isChatTeam ? topStarData.rankedChat : topStarData.rankedCall;
     return teamList.find((r: any) => normalizeName(r.name) === currentAgentCanonicalName) || null;
-  }, [topStarData, isChatTeam, currentAgentCanonicalName]);
+  }, [topStarData, isChatTeam, currentAgentCanonicalName, isMonthComplete]);
 
-  const myRank = agentRankInfo?.rank ?? null;
-  const myScore = agentRankInfo?.scoreStr ?? null;
-  const isTop3 = myRank !== null && myRank <= 3;
+  const myRank = isMonthComplete ? (agentRankInfo?.rank ?? null) : null;
+  const myScore = isMonthComplete ? (agentRankInfo?.scoreStr ?? null) : null;
+  const isTop3 = isMonthComplete && myRank !== null && myRank <= 3;
+
+  const activePodiumCompleteness = activePodiumTeam === "chat" ? topStarData?.chatCompleteness : topStarData?.callCompleteness;
+  const isPodiumComplete = activePodiumCompleteness?.isComplete === true;
 
   const currentTop3 = useMemo(() => {
-    if (!topStarData) return [];
+    if (!topStarData || !isPodiumComplete) return [];
     return activePodiumTeam === "chat" ? topStarData.top3Chat : topStarData.top3Call;
-  }, [topStarData, activePodiumTeam]);
+  }, [topStarData, activePodiumTeam, isPodiumComplete]);
 
   // Helper to parse a stored value to a numeric (seconds if mm:ss, else as-is)
   const parseVal = (col: any, row: any) => {
@@ -1190,9 +1200,9 @@ function AgentDashboard({
                     <span className="opacity-80 font-bold text-[11px]">({myScore} pts)</span>
                   </div>
                 ) : (
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                    <Star size={11} />
-                    <span>Top Star: Awaiting month metrics</span>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+                    <Clock size={12} />
+                    <span>Top Star: Rankings pending full month data</span>
                   </div>
                 )}
                 <span className="text-[11px] text-gray-400 dark:text-gray-500 font-medium hidden xs:inline">
@@ -1425,7 +1435,17 @@ function AgentDashboard({
 
               {/* 3 Podium Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {currentTop3.length === 0 ? (
+                {!isPodiumComplete ? (
+                  <div className="col-span-3 py-6 px-4 text-center bg-gray-50/70 dark:bg-gray-900/40 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-2 shadow-inner">
+                      <Clock size={20} />
+                    </div>
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">Rankings In Progress</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-md mx-auto">
+                      Top Star rankings for {activePodiumTeam === 'chat' ? 'Chat Team' : 'Call Center'} ({selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}) will appear once all team members' metrics are finalized by Team Leaders.
+                    </p>
+                  </div>
+                ) : currentTop3.length === 0 ? (
                   <div className="col-span-3 py-4 text-center text-xs text-gray-400 dark:text-gray-500 font-medium">
                     No Top Star scores available for {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}.
                   </div>

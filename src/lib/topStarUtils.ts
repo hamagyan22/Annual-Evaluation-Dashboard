@@ -262,6 +262,81 @@ export function computeTeamRanks(
   }));
 }
 
+export interface AgentMissingInfo {
+  name: string;
+  missingFields: string[];
+}
+
+export interface TeamCompleteness {
+  isComplete: boolean;
+  hasAnyData: boolean;
+  totalAgents: number;
+  completedAgents: number;
+  missingAgents: AgentMissingInfo[];
+}
+
+export function checkTeamCompleteness(
+  team: "chat" | "call",
+  teamMap: Record<string, any>,
+  roster: string[]
+): TeamCompleteness {
+  const missingAgents: AgentMissingInfo[] = [];
+  let completedCount = 0;
+  let hasAnyData = false;
+
+  const isFieldFilled = (v: any) => {
+    if (v === null || v === undefined) return false;
+    const s = String(v).trim();
+    return s !== "" && s !== "-" && s !== "–";
+  };
+
+  roster.forEach(agentName => {
+    const raw = teamMap[agentName] || teamMap[normalizeName(agentName)];
+    if (!raw) {
+      missingAgents.push({
+        name: agentName,
+        missingFields: team === "chat" 
+          ? ["Qa", "Prod", "Aht", "Art", "Exam"] 
+          : ["Qa", "Prod", "Aht", "Exam", "Wrapup", "Hold"]
+      });
+      return;
+    }
+
+    const missing: string[] = [];
+    if (!isFieldFilled(raw.qa ?? raw.quality)) missing.push("Qa");
+    if (!isFieldFilled(raw.prod ?? raw.productivity)) missing.push("Prod");
+    if (!isFieldFilled(raw.aht)) missing.push("Aht");
+    if (!isFieldFilled(raw.exam)) missing.push("Exam");
+
+    if (team === "chat") {
+      if (!isFieldFilled(raw.art)) missing.push("Art");
+    } else {
+      if (!isFieldFilled(raw.wrapup)) missing.push("Wrapup");
+      if (!isFieldFilled(raw.hold)) missing.push("Hold");
+    }
+
+    const anyFilled = isFieldFilled(raw.qa ?? raw.quality) || 
+                      isFieldFilled(raw.prod ?? raw.productivity) || 
+                      isFieldFilled(raw.aht) || 
+                      isFieldFilled(raw.exam);
+    if (anyFilled) hasAnyData = true;
+
+    if (missing.length > 0) {
+      missingAgents.push({ name: agentName, missingFields: missing });
+    } else {
+      completedCount++;
+    }
+  });
+
+  return {
+    isComplete: roster.length > 0 && completedCount === roster.length,
+    hasAnyData,
+    totalAgents: roster.length,
+    completedAgents: completedCount,
+    missingAgents
+  };
+}
+
 export async function fetchTopStarCriteria(): Promise<TopStarCriteria> {
   try {
     const snap = await getDoc(doc(db, "settings", "top_star_criteria"));
@@ -277,15 +352,28 @@ export async function fetchTopStarCriteria(): Promise<TopStarCriteria> {
   return DEFAULT_CRITERIA;
 }
 
+export async function fetchTopStarSyncStatus(): Promise<Record<string, any>> {
+  try {
+    const snap = await getDoc(doc(db, "settings", "top_star_status"));
+    if (snap.exists()) {
+      return snap.data()?.synced_months || {};
+    }
+  } catch (e) {
+    console.error("Error loading top star sync status:", e);
+  }
+  return {};
+}
+
 export async function fetchTopStarData(
   year: string,
   month: string,
   criteria: TopStarCriteria = DEFAULT_CRITERIA
 ) {
-  const [mohammedSnap, younisSnap, ankidoSnap] = await Promise.all([
+  const [mohammedSnap, younisSnap, ankidoSnap, syncStatus] = await Promise.all([
     getDocs(query(collection(db, "mohammed_metrics"), where("year", "==", year), where("month", "==", month))),
     getDocs(query(collection(db, "younis_metrics"), where("year", "==", year), where("month", "==", month))),
-    getDocs(query(collection(db, "ankido_metrics"), where("year", "==", year), where("month", "==", month)))
+    getDocs(query(collection(db, "ankido_metrics"), where("year", "==", year), where("month", "==", month))),
+    fetchTopStarSyncStatus()
   ]);
 
   const chatMap: Record<string, any> = {};
@@ -327,6 +415,9 @@ export async function fetchTopStarData(
     };
   });
 
+  const chatCompleteness = checkTeamCompleteness("chat", finalChat, DEFAULT_CHAT_AGENTS);
+  const callCompleteness = checkTeamCompleteness("call", finalCall, DEFAULT_CALL_AGENTS);
+
   const rankedChat = computeTeamRanks("chat", finalChat, DEFAULT_CHAT_AGENTS, criteria);
   const rankedCall = computeTeamRanks("call", finalCall, DEFAULT_CALL_AGENTS, criteria);
 
@@ -339,6 +430,9 @@ export async function fetchTopStarData(
     rankedChat,
     rankedCall,
     top3Chat,
-    top3Call
+    top3Call,
+    chatCompleteness,
+    callCompleteness,
+    syncStatus
   };
 }

@@ -10,7 +10,7 @@ import {
   CheckCircle2, Flame, Award, Filter, Edit3, X, Eye, BarChart3, HelpCircle,
   SlidersHorizontal, CheckCircle
 } from "lucide-react";
-import { formatDuration } from "@/lib/topStarUtils";
+import { formatDuration, checkTeamCompleteness, fetchTopStarSyncStatus } from "@/lib/topStarUtils";
 
 interface TopStarDashboardProps {
   userProfile: any;
@@ -178,6 +178,7 @@ export default function TopStarDashboard({
   const [loading, setLoading] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [syncNotice, setSyncNotice] = useState<{ type: 'success' | 'warning' | 'error'; message: string } | null>(null);
+  const [syncStatusRegistry, setSyncStatusRegistry] = useState<Record<string, any>>({});
 
   const [metricsData, setMetricsData] = useState<{
     chat: Record<string, Record<string, any>>;
@@ -208,24 +209,41 @@ export default function TopStarDashboard({
     return combined.sort((a, b) => a.localeCompare(b));
   }, [allMembers]);
 
-  // Load Criteria from Firestore
+  // Load Criteria & Sync Status from Firestore
   useEffect(() => {
-    const loadCriteria = async () => {
+    const loadSettings = async () => {
       try {
-        const snap = await getDoc(doc(db, "settings", "top_star_criteria"));
-        if (snap.exists()) {
-          const data = snap.data();
+        const [critSnap, statusSnap] = await Promise.all([
+          getDoc(doc(db, "settings", "top_star_criteria")),
+          getDoc(doc(db, "settings", "top_star_status"))
+        ]);
+        if (critSnap.exists()) {
+          const data = critSnap.data();
           if (data && data.chat && data.call) {
             setCriteria(data as typeof DEFAULT_CRITERIA);
             setTempCriteria(data as typeof DEFAULT_CRITERIA);
           }
         }
+        if (statusSnap.exists()) {
+          setSyncStatusRegistry(statusSnap.data()?.synced_months || {});
+        }
       } catch (e) {
-        console.error("Error loading criteria:", e);
+        console.error("Error loading criteria / status:", e);
       }
     };
-    loadCriteria();
+    loadSettings();
   }, []);
+
+  // Completeness checks
+  const chatCompleteness = useMemo(() => {
+    return checkTeamCompleteness("chat", metricsData.chat, chatRoster);
+  }, [metricsData.chat, chatRoster]);
+
+  const callCompleteness = useMemo(() => {
+    return checkTeamCompleteness("call", metricsData.call, callRoster);
+  }, [metricsData.call, callRoster]);
+
+  const currentCompleteness = team === "chat" ? chatCompleteness : callCompleteness;
 
   // Fetch metrics data from Firestore
   const fetchDashboardMetrics = async (isManualSync = false) => {
@@ -233,11 +251,16 @@ export default function TopStarDashboard({
     else setLoading(true);
 
     try {
-      const [mohammedSnap, younisSnap, ankidoSnap] = await Promise.all([
+      const [mohammedSnap, younisSnap, ankidoSnap, statusSnap] = await Promise.all([
         getDocs(query(collection(db, "mohammed_metrics"), where("year", "==", selectedYear), where("month", "==", selectedMonth))),
         getDocs(query(collection(db, "younis_metrics"), where("year", "==", selectedYear), where("month", "==", selectedMonth))),
-        getDocs(query(collection(db, "ankido_metrics"), where("year", "==", selectedYear), where("month", "==", selectedMonth)))
+        getDocs(query(collection(db, "ankido_metrics"), where("year", "==", selectedYear), where("month", "==", selectedMonth))),
+        getDoc(doc(db, "settings", "top_star_status"))
       ]);
+
+      if (statusSnap.exists()) {
+        setSyncStatusRegistry(statusSnap.data()?.synced_months || {});
+      }
 
       const chatMap: Record<string, any> = {};
       mohammedSnap.docs.forEach(docSnap => {
@@ -252,36 +275,6 @@ export default function TopStarDashboard({
         const cName = normalizeName(d.agent_name || "");
         if (cName) callMap[cName] = d;
       });
-
-      // Verification: Check if team leader completed all metrics for the month
-      const currentRoster = team === "chat" ? chatRoster : callRoster;
-      const currentMap = team === "chat" ? chatMap : callMap;
-      
-      let filledCount = 0;
-      currentRoster.forEach(name => {
-        const data = currentMap[name];
-        if (data) {
-          const hasVals = team === "chat" 
-            ? (data.quality || data.productivity || data.aht || data.art || data.exam)
-            : (data.quality || data.productivity || data.aht || data.exam || data.wrapup || data.hold);
-          if (hasVals) filledCount++;
-        }
-      });
-
-      if (isManualSync) {
-        if (filledCount >= currentRoster.length && currentRoster.length > 0) {
-          setSyncNotice({
-            type: "success",
-            message: `All ${filledCount} of ${currentRoster.length} agents for ${selectedMonth} ${selectedYear} are fully filled and synced!`
-          });
-        } else {
-          setSyncNotice({
-            type: "warning",
-            message: `Notice: ${selectedMonth} data is incomplete in TL Dashboard (${filledCount} of ${currentRoster.length} agents filled). Team Leader must complete all data before final sync.`
-          });
-        }
-        setTimeout(() => setSyncNotice(null), 5500);
-      }
 
       const finalChat: Record<string, Record<string, any>> = {};
       chatRoster.forEach(name => {
@@ -307,6 +300,69 @@ export default function TopStarDashboard({
           hold: raw.hold ? parseSec(raw.hold) : null
         };
       });
+
+      // Strict Completeness Verification
+      const currentRoster = team === "chat" ? chatRoster : callRoster;
+      const currentData = team === "chat" ? finalChat : finalCall;
+      const completeness = checkTeamCompleteness(team, currentData, currentRoster);
+
+      if (isManualSync) {
+        if (!completeness.hasAnyData) {
+          setSyncNotice({
+            type: "error",
+            message: `Cannot Sync: No metrics entered for ${selectedMonth} ${selectedYear} in Team Leader dashboard.`
+          });
+          setTimeout(() => setSyncNotice(null), 6000);
+          setIsSyncing(false);
+          setLoading(false);
+          return;
+        }
+
+        if (!completeness.isComplete) {
+          const missingNames = completeness.missingAgents.map(a => a.name).slice(0, 3).join(", ");
+          const remaining = completeness.missingAgents.length > 3 ? ` +${completeness.missingAgents.length - 3} more` : "";
+          setSyncNotice({
+            type: "warning",
+            message: `Cannot Sync: Data is incomplete (${completeness.completedAgents}/${completeness.totalAgents} agents ready). Missing: ${missingNames}${remaining}. Team Leader must complete all data before syncing.`
+          });
+          setTimeout(() => setSyncNotice(null), 7000);
+          setIsSyncing(false);
+          setLoading(false);
+          return;
+        }
+
+        // All agents are 100% complete: proceed with official sync and publish
+        const syncKey = `${selectedYear}_${selectedMonth}_${team}`;
+        await setDoc(doc(db, "settings", "top_star_status"), {
+          synced_months: {
+            [syncKey]: {
+              isSynced: true,
+              isComplete: true,
+              syncedAt: new Date().toISOString(),
+              syncedBy: userProfile?.email || "admin",
+              agentCount: completeness.totalAgents
+            }
+          }
+        }, { merge: true });
+
+        setSyncStatusRegistry(prev => ({
+          ...prev,
+          [syncKey]: {
+            isSynced: true,
+            isComplete: true,
+            syncedAt: new Date().toISOString(),
+            syncedBy: userProfile?.email || "admin",
+            agentCount: completeness.totalAgents
+          }
+        }));
+
+        setSyncNotice({
+          type: "success",
+          message: `Sync successful! All ${completeness.totalAgents} agents for ${selectedMonth} ${selectedYear} are 100% complete and rankings are published.`
+        });
+        setTimeout(() => setSyncNotice(null), 5500);
+        setMetricsData({ chat: finalChat, call: finalCall });
+      }
 
       setMetricsData({ chat: finalChat, call: finalCall });
     } catch (err) {
@@ -997,11 +1053,19 @@ export default function TopStarDashboard({
               <button
                 onClick={() => fetchDashboardMetrics(true)}
                 disabled={isSyncing}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#1C6B53] hover:bg-[#155340] text-white shadow-xs transition cursor-pointer"
-                title={`Sync ${selectedMonth} Data from TL Dashboard`}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer ${
+                  !currentCompleteness.isComplete
+                    ? "bg-amber-600/90 hover:bg-amber-600 text-white"
+                    : "bg-[#1C6B53] hover:bg-[#155340] text-white"
+                }`}
+                title={
+                  !currentCompleteness.isComplete
+                    ? `Cannot sync: Data incomplete (${currentCompleteness.completedAgents}/${currentCompleteness.totalAgents})`
+                    : `Sync ${selectedMonth} Data from TL Dashboard`
+                }
               >
                 <RefreshCw size={13} className={isSyncing ? "animate-spin" : ""} />
-                <span>{isSyncing ? "Syncing..." : "Sync Data"}</span>
+                <span>{isSyncing ? "Checking..." : !currentCompleteness.isComplete ? "Sync (Incomplete)" : "Sync Data"}</span>
               </button>
             </div>
           </div>
@@ -1029,6 +1093,50 @@ export default function TopStarDashboard({
             </div>
           </div>
         </div>
+
+        {/* Month Completeness & Sync Notice Banner */}
+        {!currentCompleteness.hasAnyData ? (
+          <div className="mb-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-xs flex items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <AlertCircle size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
+              <div>
+                <span className="font-bold">No Metrics for {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}: </span>
+                <span className="opacity-90">Team Leader has not entered metrics for this month yet. Rankings are hidden from employees.</span>
+              </div>
+            </div>
+            <span className="px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-800 dark:text-amber-300 font-black text-[10px] shrink-0 uppercase tracking-wide">
+              No Data
+            </span>
+          </div>
+        ) : !currentCompleteness.isComplete ? (
+          <div className="mb-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <AlertCircle size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
+              <div>
+                <span className="font-bold">Incomplete Month ({currentCompleteness.completedAgents}/{currentCompleteness.totalAgents} agents ready): </span>
+                <span className="opacity-90">
+                  Missing metrics for <strong>{currentCompleteness.missingAgents.map(a => a.name).slice(0, 3).join(", ")}{currentCompleteness.missingAgents.length > 3 ? ` +${currentCompleteness.missingAgents.length - 3} more` : ""}</strong>. Sync is blocked and rankings are hidden from employees until all data is completed.
+                </span>
+              </div>
+            </div>
+            <span className="px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-800 dark:text-amber-300 font-black text-[10px] shrink-0 uppercase tracking-wide self-end sm:self-auto">
+              Incomplete ({currentCompleteness.completedAgents}/{currentCompleteness.totalAgents})
+            </span>
+          </div>
+        ) : (
+          <div className="mb-4 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-200 text-xs flex items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <div>
+                <span className="font-bold">Month 100% Complete: </span>
+                <span className="opacity-90">All {currentCompleteness.totalAgents} agents have full metrics entered. Rankings are ready and published for employees.</span>
+              </div>
+            </div>
+            <span className="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-black text-[10px] shrink-0 uppercase tracking-wide">
+              Complete
+            </span>
+          </div>
+        )}
 
         {/* Modern Clean Table Matching Main Dashboard Pattern */}
         <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-sm overflow-hidden transition">
