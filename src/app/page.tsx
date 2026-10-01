@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
-import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare } from "lucide-react";
+import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star } from "lucide-react";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
 const TEAMS: TeamName[] = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team'];
@@ -151,6 +151,16 @@ const QualityDashboard = dynamic(() => import("@/components/QualityDashboard"), 
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFCFB] dark:bg-gray-950 text-gray-800 dark:text-gray-200">
       <div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3"></div>
       <p className="text-xs font-bold text-gray-500 dark:text-gray-400">Loading Quality Dashboard...</p>
+    </div>
+  ),
+  ssr: false,
+});
+
+const TopStarDashboard = dynamic(() => import("@/components/TopStarDashboard"), {
+  loading: () => (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFCFB] dark:bg-gray-950 text-gray-800 dark:text-gray-200">
+      <div className="w-10 h-10 border-3 border-amber-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+      <p className="text-xs font-bold text-gray-500 dark:text-gray-400">Loading Top Star Leaderboard...</p>
     </div>
   ),
   ssr: false,
@@ -1533,12 +1543,24 @@ export default function Dashboard() {
     }
     return false;
   });
+  const [showTopStarView, setShowTopStarView] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("app_show_top_star_view") === "true";
+    }
+    return false;
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("app_show_quality_view", String(showQualityView));
     }
   }, [showQualityView]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("app_show_top_star_view", String(showTopStarView));
+    }
+  }, [showTopStarView]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -3384,6 +3406,24 @@ export default function Dashboard() {
       );
     }
 
+    if (showTopStarView && (isAdmin || isManager || userProfile?.role === 'tl')) {
+      return (
+        <TopStarDashboard
+          userProfile={userProfile}
+          allMembers={allMembers}
+          selectedYear={selectedYear}
+          selectedMonth={selectedMonth}
+          onBack={() => {
+            setShowTopStarView(false);
+            fetchData(true);
+          }}
+          onLogout={handleLogout}
+          isDarkMode={isDarkMode}
+          toggleDarkMode={toggleDarkMode}
+        />
+      );
+    }
+
     const activeTeams = userProfile?.role === 'tl' && userProfile?.team 
       ? TEAMS.filter(t => t === userProfile.team) 
       : TEAMS;
@@ -3529,6 +3569,19 @@ export default function Dashboard() {
                       <Award size={13} />
                     </div>
                     <span className="hidden xs:inline sm:inline">Quality</span>
+                  </button>
+                )}
+
+                {(isAdmin || isManager || userProfile?.role === 'tl') && (
+                  <button
+                    onClick={() => setShowTopStarView(true)}
+                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-300 hover:bg-amber-50/80 dark:hover:bg-amber-950/40 transition-all group cursor-pointer border border-transparent hover:border-amber-200 dark:hover:border-amber-800/40"
+                    title="Top Star KPI Leaderboard (توب ستار)"
+                  >
+                    <div className="w-5 h-5 rounded-lg bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
+                      <Star size={13} className="fill-white" />
+                    </div>
+                    <span className="hidden xs:inline sm:inline">Top Star</span>
                   </button>
                 )}
               </div>
