@@ -1183,40 +1183,74 @@ function AgentDashboard({
               <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white truncate">
                 {memberDoc?.display_name || currentAgent?.agent_name || currentAgent?.name}
               </h1>
-
-              {/* Personal Top Star Rank & Score Badge */}
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                {myRank != null ? (
-                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black shadow-xs ${
-                    myRank === 1 ? "bg-gradient-to-r from-amber-400 to-yellow-300 text-gray-950 ring-1 ring-amber-400/50 shadow-amber-500/20" :
-                    myRank === 2 ? "bg-gradient-to-r from-slate-200 to-gray-300 text-gray-900 ring-1 ring-slate-300 shadow-slate-500/20" :
-                    myRank === 3 ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white ring-1 ring-amber-600 shadow-amber-700/20" :
-                    "bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300/60 dark:border-emerald-700/60 text-[#1C6B53] dark:text-emerald-300"
-                  }`}>
-                    {myRank === 1 ? "🥇 Top Star Winner #1" :
-                     myRank === 2 ? "🥈 Top Star Runner-Up #2" :
-                     myRank === 3 ? "🥉 Top Star 3rd Place" :
-                     `⭐ Top Star Rank #${myRank}`}
-                    <span className="opacity-80 font-bold text-[11px]">({myScore} pts)</span>
-                  </div>
-                ) : (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
-                    <Clock size={12} />
-                    <span>Top Star: Rankings pending full month data</span>
-                  </div>
-                )}
-                <span className="text-[11px] text-gray-400 dark:text-gray-500 font-medium hidden xs:inline">
-                  • {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}
-                </span>
-              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 self-end sm:self-auto">
+          <div className="flex items-center gap-3 self-end sm:self-auto flex-wrap sm:flex-nowrap justify-end">
+            {/* Modern Top Star Standing Card on the Right */}
+            {isMonthComplete && myRank != null ? (
+              <div className={`flex items-center gap-3 px-3.5 py-2 rounded-2xl border transition-all ${
+                myRank === 1
+                  ? "bg-gradient-to-br from-amber-500/15 via-yellow-400/10 to-amber-500/5 border-amber-300/70 dark:border-amber-500/40 shadow-xs"
+                  : myRank === 2
+                  ? "bg-gradient-to-br from-slate-200/60 via-gray-100/50 to-slate-200/20 border-slate-300/80 dark:border-slate-600/50 dark:bg-slate-800/50 shadow-xs"
+                  : myRank === 3
+                  ? "bg-gradient-to-br from-amber-700/15 via-amber-600/10 to-amber-700/5 border-amber-600/60 dark:border-amber-600/40 shadow-xs"
+                  : "bg-gray-50/90 dark:bg-gray-800/70 border-gray-200/80 dark:border-gray-700/80 shadow-xs"
+              }`}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 font-black shadow-xs ${
+                  myRank === 1
+                    ? "bg-gradient-to-tr from-amber-400 to-yellow-300 text-gray-950 ring-1 ring-amber-300"
+                    : myRank === 2
+                    ? "bg-gradient-to-tr from-slate-200 to-gray-300 text-gray-900 ring-1 ring-slate-300"
+                    : myRank === 3
+                    ? "bg-gradient-to-tr from-amber-600 to-amber-700 text-white ring-1 ring-amber-500"
+                    : "bg-[#1C6B53]/10 dark:bg-emerald-400/15 text-[#1C6B53] dark:text-emerald-300 text-xs font-black"
+                }`}>
+                  {myRank === 1 ? "🥇" : myRank === 2 ? "🥈" : myRank === 3 ? "🥉" : `#${myRank}`}
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-400">
+                      Top Star Standing
+                    </span>
+                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-gray-200/60 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                      {selectedMonth.slice(0, 3)} {selectedYear}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xs sm:text-sm font-black text-gray-900 dark:text-white">
+                      {myRank === 1 ? "Rank #1 Winner" :
+                       myRank === 2 ? "Rank #2 Runner-Up" :
+                       myRank === 3 ? "Rank #3 Finalist" :
+                       `Rank #${myRank}`}
+                    </span>
+                    <span className="text-[11px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                      • {myScore} pts
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-gray-50/80 dark:bg-gray-800/60 border border-gray-200/70 dark:border-gray-700/60">
+                <div className="w-8 h-8 rounded-xl bg-gray-200/70 dark:bg-gray-700/80 flex items-center justify-center text-gray-400 shrink-0">
+                  <Clock size={14} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-400">
+                    Top Star Standing
+                  </span>
+                  <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                    Pending month data
+                  </span>
+                </div>
+              </div>
+            )}
+
             {!previewMode && (
               <button 
-                onClick={() => setShowEditProfile(true)}
-                className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/60 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600/80 rounded-2xl transition shadow-xs active:scale-95"
+                onClick={() => setShowEditProfile(true)} 
+                className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/60 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600/80 rounded-2xl transition shadow-xs active:scale-95 cursor-pointer shrink-0"
               >
                 <Edit2 size={13} className="text-[#1C6B53] dark:text-emerald-400" />
                 <span>Edit Profile</span>
@@ -3826,11 +3860,11 @@ export default function Dashboard() {
                 {(isAdmin || isManager || userProfile?.role === 'tl') && (
                   <button
                     onClick={() => setShowTopStarView(true)}
-                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-300 hover:bg-amber-50/80 dark:hover:bg-amber-950/40 transition-all group cursor-pointer border border-transparent hover:border-amber-200 dark:hover:border-amber-800/40"
+                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-amber-50/80 dark:hover:bg-amber-950/40 transition-all group cursor-pointer"
                     title="Top Star KPI Leaderboard"
                   >
-                    <div className="w-5 h-5 rounded-lg bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
-                      <Star size={13} className="fill-white" />
+                    <div className="w-5 h-5 rounded-lg bg-amber-500/15 dark:bg-amber-400/15 flex items-center justify-center text-amber-700 dark:text-amber-400 group-hover:scale-110 transition-transform">
+                      <Star size={13} />
                     </div>
                     <span className="hidden xs:inline sm:inline">Top Star</span>
                   </button>
