@@ -94,11 +94,51 @@ export const num = (v: any): number | null => {
   return isFinite(n) && n > 0 ? n : null;
 };
 
+export const formatToMinutesAndSeconds = (val: string | number | null | undefined): string => {
+  if (val == null) return "";
+  const str = String(val).trim();
+  if (!str) return "";
+
+  if (str.includes(":")) {
+    const rawParts = str.split(":").map(p => p.trim());
+    if (rawParts.length >= 3) {
+      // Discard hour representation (e.g. 00:01:54 -> 01:54, 01:05:20 -> 65:20)
+      const h = parseInt(rawParts[0], 10) || 0;
+      const m = parseInt(rawParts[1], 10) || 0;
+      const s = parseInt(rawParts[2], 10) || 0;
+      const totalMinutes = h * 60 + m;
+      const validSecs = Math.min(59, Math.max(0, s));
+      return `${String(totalMinutes).padStart(2, "0")}:${String(validSecs).padStart(2, "0")}`;
+    } else if (rawParts.length === 2) {
+      const m = parseInt(rawParts[0], 10) || 0;
+      const s = parseInt(rawParts[1], 10) || 0;
+      const validSecs = Math.min(59, Math.max(0, s));
+      return `${String(m).padStart(2, "0")}:${String(validSecs).padStart(2, "0")}`;
+    }
+  }
+
+  const numVal = parseFloat(str);
+  if (!isNaN(numVal) && isFinite(numVal) && numVal >= 0) {
+    const m = Math.floor(numVal / 60);
+    const s = Math.round(numVal % 60);
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+
+  return str;
+};
+
 export const parseSec = (v: any): number | null => {
   if (v === null || v === undefined) return null;
   const str = String(v).trim();
   if (str.includes(":")) {
     const parts = str.split(":");
+    if (parts.length >= 3) {
+      const h = parseInt(parts[0]) || 0;
+      const m = parseInt(parts[1]) || 0;
+      const s = parseInt(parts[2]) || 0;
+      const total = h * 3600 + m * 60 + s;
+      return total > 0 ? total : null;
+    }
     const mins = parseInt(parts[0]) || 0;
     const secs = parseInt(parts[1]) || 0;
     const total = mins * 60 + secs;

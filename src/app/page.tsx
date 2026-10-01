@@ -5,7 +5,7 @@ import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
 import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal } from "lucide-react";
-import { fetchTopStarData, fetchTopStarCriteria, normalizeName } from "@/lib/topStarUtils";
+import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesAndSeconds } from "@/lib/topStarUtils";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
 const TEAMS: TeamName[] = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team'];
@@ -919,6 +919,9 @@ function AgentDashboard({
     if (!rawVal) return 0;
     if (col.type === 'time' && rawVal.includes(':')) {
       const parts = rawVal.split(':');
+      if (parts.length === 3) {
+        return (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0);
+      }
       return (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0); // → seconds
     }
     return parseFloat(rawVal) || 0; // plain number
@@ -950,6 +953,9 @@ function AgentDashboard({
       const v = val || '0';
       if (isTimeFormatted && v.includes(':')) {
         const parts = v.split(':');
+        if (parts.length === 3) {
+          return (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0);
+        }
         return (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
       }
       return parseFloat(v) || 0;
@@ -959,7 +965,7 @@ function AgentDashboard({
     const result = col.aggregation === 'sum' ? total : total / nums.length;
 
     if (isTimeFormatted) {
-      return `${Math.floor(result / 60)}:${String(Math.round(result % 60)).padStart(2, '0')}`;
+      return `${Math.floor(result / 60).toString().padStart(2, '0')}:${String(Math.round(result % 60)).padStart(2, '0')}`;
     }
     return col.aggregation === 'sum'
       ? Math.round(result).toString()
@@ -2169,11 +2175,16 @@ export default function Dashboard() {
       validMetrics.forEach(r => {
         const val = getRowValForCol(r, col.id);
         const parts = val.split(':');
-        if (parts.length === 2) totalSeconds += (parseInt(parts[0]) * 60) + parseInt(parts[1]);
-        else totalSeconds += parseInt(parts[0]) || 0;
+        if (parts.length === 3) {
+          totalSeconds += (parseInt(parts[0]) * 3600) + (parseInt(parts[1]) * 60) + parseInt(parts[2]);
+        } else if (parts.length === 2) {
+          totalSeconds += (parseInt(parts[0]) * 60) + parseInt(parts[1]);
+        } else {
+          totalSeconds += parseInt(parts[0]) || 0;
+        }
       });
       const resultSecs = col.aggregation === 'sum' ? totalSeconds : Math.round(totalSeconds / validMetrics.length);
-      return `${Math.floor(resultSecs / 60)}:${(resultSecs % 60).toString().padStart(2, '0')}`;
+      return `${Math.floor(resultSecs / 60).toString().padStart(2, '0')}:${(resultSecs % 60).toString().padStart(2, '0')}`;
     } else {
       const sum = validMetrics.reduce((acc, r) => acc + (parseFloat(getRowValForCol(r, col.id)) || 0), 0);
       const result = col.aggregation === 'sum' ? sum : sum / validMetrics.length;
@@ -2410,6 +2421,9 @@ export default function Dashboard() {
   const timeToSec = (timeStr: string) => {
     if (!timeStr) return 0;
     const parts = timeStr.toString().split(':');
+    if (parts.length === 3) {
+      return (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0);
+    }
     if (parts.length === 2) return (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
     return parseInt(parts[0]) || 0;
   };
@@ -2418,7 +2432,7 @@ export default function Dashboard() {
     if (isNaN(secs) || secs === 0) return "";
     const m = Math.floor(secs / 60);
     const s = Math.round(secs % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
+    return `${m.toString().padStart(2, '0')}:${s}`;
   };
 
   // Helper to keep in-memory cache synchronized when editing cells
@@ -2829,6 +2843,27 @@ export default function Dashboard() {
   useEffect(() => { fetchData(); }, [selectedMonth, selectedTeam, selectedYear, session, columnsMap]);
 
   const handleChange = (index: number, field: string, value: string) => {
+    const teamCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
+    const col = teamCols.find(c => c.id === field);
+    if (col && col.type === 'time') {
+      const trimmed = value.trim();
+      // If user pasted/typed 2 or more colons (hours format e.g. 00:01:54)
+      if ((trimmed.match(/:/g) || []).length >= 2) {
+        value = formatToMinutesAndSeconds(trimmed);
+      } else {
+        // Strip any characters that are not digits or colon
+        value = value.replace(/[^0-9:]/g, '');
+        // Disallow hours: max 1 colon allowed!
+        const parts = value.split(':');
+        if (parts.length > 2) {
+          value = parts[0] + ':' + parts[1];
+        }
+        // Limit seconds to 2 digits max (SS)
+        if (parts.length === 2 && parts[1].length > 2) {
+          value = parts[0] + ':' + parts[1].slice(0, 2);
+        }
+      }
+    }
     const newRows = [...rows];
     newRows[index][field] = value;
     setRows(newRows);
@@ -2837,22 +2872,42 @@ export default function Dashboard() {
   const handleBlur = async (index: number) => {
     if (isAggregate) return;
     const row = rows[index];
-    if (!row.agent_name) return;
+    if (!row || !row.agent_name) return;
+
+    const teamCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
+    const updatedRow = { ...row };
+    let hasTimeFormatChanged = false;
+
+    teamCols.forEach(col => {
+      if (col.type === 'time' && updatedRow[col.id] && updatedRow[col.id].toString().trim() !== '') {
+        const formatted = formatToMinutesAndSeconds(updatedRow[col.id]);
+        if (formatted !== updatedRow[col.id]) {
+          updatedRow[col.id] = formatted;
+          hasTimeFormatChanged = true;
+        }
+      }
+    });
+
+    if (hasTimeFormatChanged) {
+      const newRows = [...rows];
+      newRows[index] = updatedRow;
+      setRows(newRows);
+    }
 
     try {
-      const { _memberId, _readonly, ...cleanRow } = row;
+      const { _memberId, _readonly, ...cleanRow } = updatedRow;
       const payload: any = { ...cleanRow, team: selectedTeam, month: selectedMonth, year: selectedYear, _arch: getSystemAuthor() };
       if (cleanRow.call_handled !== undefined) {
         payload.handled = cleanRow.call_handled;
       }
 
-      if (row.id) {
-        await updateDoc(doc(db, tableName, row.id), payload);
-        updateCachedMetric(payload, row.id);
+      if (updatedRow.id) {
+        await updateDoc(doc(db, tableName, updatedRow.id), payload);
+        updateCachedMetric(payload, updatedRow.id);
       } else {
         const docRef = await addDoc(collection(db, tableName), payload);
         const newRows = [...rows];
-        newRows[index] = { ...payload, id: docRef.id, _memberId: row._memberId };
+        newRows[index] = { ...payload, id: docRef.id, _memberId: updatedRow._memberId };
         setRows(newRows);
         updateCachedMetric(payload, docRef.id);
       }
@@ -3006,11 +3061,12 @@ export default function Dashboard() {
       let totalSeconds = 0;
       validRows.forEach(r => {
         const parts = r[col.id].toString().split(':');
-        if (parts.length === 2) totalSeconds += (parseInt(parts[0]) * 60) + parseInt(parts[1]);
+        if (parts.length === 3) totalSeconds += (parseInt(parts[0]) * 3600) + (parseInt(parts[1]) * 60) + parseInt(parts[2]);
+        else if (parts.length === 2) totalSeconds += (parseInt(parts[0]) * 60) + parseInt(parts[1]);
         else totalSeconds += parseInt(parts[0]) || 0;
       });
       const resultSecs = col.aggregation === 'sum' ? totalSeconds : Math.round(totalSeconds / validRows.length);
-      return `${Math.floor(resultSecs / 60)}:${(resultSecs % 60).toString().padStart(2, '0')}`;
+      return `${Math.floor(resultSecs / 60).toString().padStart(2, '0')}:${(resultSecs % 60).toString().padStart(2, '0')}`;
     } else {
       const sum = validRows.reduce((acc, r) => acc + parseFloat(r[col.id] || 0), 0);
       const result = col.aggregation === 'sum' ? sum : sum / validRows.length;
@@ -3264,7 +3320,10 @@ export default function Dashboard() {
         const col = teamCols[targetColIdx];
         if (!col) return;
 
-        const cleanVal = val.trim();
+        let cleanVal = val.trim();
+        if (col.type === 'time' && cleanVal !== '') {
+          cleanVal = formatToMinutesAndSeconds(cleanVal);
+        }
         updatedRow[col.id] = cleanVal;
         changed = true;
       });
@@ -4209,7 +4268,7 @@ export default function Dashboard() {
                               disabled={disabled}
                               type="text"
                               onDragStart={(e) => e.preventDefault()}
-                              placeholder={col.type === 'time' ? 'm:ss' : (col.aggregation === 'average' ? '%' : '#')}
+                              placeholder={col.type === 'time' ? 'mm:ss' : (col.aggregation === 'average' ? '%' : '#')}
                               value={row[col.id] || ''}
                               onChange={(e) => handleChange(actualIndex, col.id, e.target.value)}
                               onBlur={() => handleBlur(actualIndex)}
@@ -4424,7 +4483,7 @@ export default function Dashboard() {
                         onClick={() => setNewColType('time')}
                         className={`flex-1 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition ${newColType === 'time' ? 'bg-[#1C6B53] text-white' : 'text-gray-600 dark:text-gray-400'}`}
                       >
-                        Time (m:ss)
+                        Time (mm:ss)
                       </button>
                     </div>
                   </div>
@@ -4509,7 +4568,7 @@ export default function Dashboard() {
                                   onClick={() => setEditColType('time')}
                                   className={`flex-1 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded transition ${editColType === 'time' ? 'bg-[#1C6B53] text-white shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'}`}
                                 >
-                                  Time (m:ss)
+                                  Time (mm:ss)
                                 </button>
                               </div>
                             </div>
