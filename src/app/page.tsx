@@ -890,27 +890,24 @@ function AgentDashboard({
   const isChatTeam = currentAgent?.team === 'Mohammed Dlshad Team';
   const currentAgentCanonicalName = normalizeName(currentAgent?.agent_name || currentAgent?.name || "");
 
-  // Completeness check: Has the team leader completed 100% of all data for the month?
-  const myTeamCompleteness = isChatTeam ? topStarData?.chatCompleteness : topStarData?.callCompleteness;
-  const isMonthComplete = myTeamCompleteness?.isComplete === true;
+  const monthIndex = MONTHS.indexOf((selectedMonth || "").toUpperCase());
+  const yearNum = parseInt(selectedYear || "2026", 10);
+  const isSepOrLater = yearNum > 2026 || (yearNum === 2026 && (monthIndex >= 8 || selectedMonth === "Q4" || selectedMonth === "H2"));
 
   const agentRankInfo = useMemo(() => {
-    if (!topStarData || !isMonthComplete) return null;
+    if (!topStarData) return null;
     const teamList = isChatTeam ? topStarData.rankedChat : topStarData.rankedCall;
     return teamList.find((r: any) => normalizeName(r.name) === currentAgentCanonicalName) || null;
-  }, [topStarData, isChatTeam, currentAgentCanonicalName, isMonthComplete]);
+  }, [topStarData, isChatTeam, currentAgentCanonicalName]);
 
-  const myRank = isMonthComplete ? (agentRankInfo?.rank ?? null) : null;
-  const myScore = isMonthComplete ? (agentRankInfo?.scoreStr ?? null) : null;
-  const isTop3 = isMonthComplete && myRank !== null && myRank <= 3;
-
-  const activePodiumCompleteness = activePodiumTeam === "chat" ? topStarData?.chatCompleteness : topStarData?.callCompleteness;
-  const isPodiumComplete = activePodiumCompleteness?.isComplete === true;
+  const myRank = agentRankInfo?.rank ?? null;
+  const myScore = agentRankInfo?.scoreStr ?? null;
+  const isTop3 = isSepOrLater && myRank !== null && myRank <= 3;
 
   const currentTop3 = useMemo(() => {
-    if (!topStarData || !isPodiumComplete) return [];
-    return activePodiumTeam === "chat" ? topStarData.top3Chat : topStarData.top3Call;
-  }, [topStarData, activePodiumTeam, isPodiumComplete]);
+    if (!topStarData) return [];
+    return activePodiumTeam === "chat" ? (topStarData.top3Chat || []) : (topStarData.top3Call || []);
+  }, [topStarData, activePodiumTeam]);
 
   // Helper to parse a stored value to a numeric (seconds if mm:ss, else as-is)
   const parseVal = (col: any, row: any) => {
@@ -1194,59 +1191,74 @@ function AgentDashboard({
 
           <div className="flex items-center gap-3 self-end sm:self-auto flex-wrap sm:flex-nowrap justify-end">
             {/* Modern Top Star Standing Card on the Right */}
-            {isMonthComplete && myRank != null ? (
-              <div className={`flex items-center gap-3 px-3.5 py-2 rounded-2xl border transition-all ${
+            {myRank != null ? (
+              <div className={`relative overflow-hidden flex items-center gap-3.5 px-4 py-2.5 rounded-2xl sm:rounded-3xl border transition-all duration-300 shadow-sm hover:shadow-md ${
                 myRank === 1
-                  ? "bg-gradient-to-br from-amber-500/15 via-yellow-400/10 to-amber-500/5 border-amber-300/70 dark:border-amber-500/40 shadow-xs"
+                  ? "bg-gradient-to-br from-amber-500/15 via-yellow-400/10 to-amber-500/5 border-amber-300/80 dark:border-amber-500/40 shadow-amber-500/10"
                   : myRank === 2
-                  ? "bg-gradient-to-br from-slate-200/60 via-gray-100/50 to-slate-200/20 border-slate-300/80 dark:border-slate-600/50 dark:bg-slate-800/50 shadow-xs"
+                  ? "bg-gradient-to-br from-slate-200/70 via-gray-100/60 to-slate-200/30 border-slate-300 dark:border-slate-600/60 dark:bg-slate-800/50 shadow-slate-500/10"
                   : myRank === 3
-                  ? "bg-gradient-to-br from-amber-700/15 via-amber-600/10 to-amber-700/5 border-amber-600/60 dark:border-amber-600/40 shadow-xs"
-                  : "bg-gray-50/90 dark:bg-gray-800/70 border-gray-200/80 dark:border-gray-700/80 shadow-xs"
+                  ? "bg-gradient-to-br from-amber-700/15 via-amber-600/10 to-amber-700/5 border-amber-600/70 dark:border-amber-600/40 shadow-amber-700/10"
+                  : "bg-gradient-to-br from-white via-emerald-50/30 to-amber-50/15 dark:from-gray-800 dark:via-gray-850 dark:to-emerald-950/20 border-emerald-500/25 dark:border-emerald-500/30"
               }`}>
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 font-black shadow-xs ${
+                {/* Decorative background aura */}
+                <div className="absolute -right-5 -bottom-5 w-16 h-16 bg-gradient-to-br from-emerald-400/15 to-amber-400/15 rounded-full blur-lg pointer-events-none" />
+
+                {/* Left Badge with Rank or Medal */}
+                <div className={`w-11 h-11 rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-sm transition-transform duration-200 hover:scale-105 ${
                   myRank === 1
-                    ? "bg-gradient-to-tr from-amber-400 to-yellow-300 text-gray-950 ring-1 ring-amber-300"
+                    ? "bg-gradient-to-tr from-amber-400 to-yellow-300 text-gray-950 ring-2 ring-amber-300 shadow-amber-400/30 text-xl"
                     : myRank === 2
-                    ? "bg-gradient-to-tr from-slate-200 to-gray-300 text-gray-900 ring-1 ring-slate-300"
+                    ? "bg-gradient-to-tr from-slate-200 to-gray-300 text-gray-900 ring-2 ring-slate-300 shadow-slate-400/20 text-xl"
                     : myRank === 3
-                    ? "bg-gradient-to-tr from-amber-600 to-amber-700 text-white ring-1 ring-amber-500"
-                    : "bg-[#1C6B53]/10 dark:bg-emerald-400/15 text-[#1C6B53] dark:text-emerald-300 text-xs font-black"
+                    ? "bg-gradient-to-tr from-amber-600 to-amber-700 text-white ring-2 ring-amber-500 shadow-amber-700/30 text-xl"
+                    : "bg-gradient-to-tr from-[#1C6B53] to-emerald-600 text-white ring-2 ring-emerald-400/30 shadow-emerald-900/20"
                 }`}>
-                  {myRank === 1 ? "🥇" : myRank === 2 ? "🥈" : myRank === 3 ? "🥉" : `#${myRank}`}
+                  {myRank === 1 ? "🥇" : myRank === 2 ? "🥈" : myRank === 3 ? "🥉" : (
+                    <>
+                      <span className="text-[8px] font-black uppercase tracking-wider text-emerald-100/90 leading-none">RANK</span>
+                      <span className="text-sm font-black leading-tight text-white tracking-tight">#{myRank}</span>
+                    </>
+                  )}
                 </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-400">
-                      Top Star Standing
-                    </span>
-                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-gray-200/60 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+
+                {/* Center / Right Content */}
+                <div className="flex flex-col min-w-0 pr-1">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/15 dark:bg-amber-400/15 text-amber-700 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                      <Star size={10} className="fill-amber-500 text-amber-500" />
+                      <span>Top Star</span>
+                    </div>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700/80 text-gray-600 dark:text-gray-300 font-mono">
                       {selectedMonth.slice(0, 3)} {selectedYear}
                     </span>
                   </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-xs sm:text-sm font-black text-gray-900 dark:text-white">
-                      {myRank === 1 ? "Rank #1 Winner" :
-                       myRank === 2 ? "Rank #2 Runner-Up" :
-                       myRank === 3 ? "Rank #3 Finalist" :
+
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className="text-xs sm:text-sm font-black text-gray-900 dark:text-white truncate">
+                      {myRank === 1 ? "1st Place Winner" :
+                       myRank === 2 ? "2nd Place Runner-Up" :
+                       myRank === 3 ? "3rd Place Finalist" :
                        `Rank #${myRank}`}
                     </span>
-                    <span className="text-[11px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                      • {myScore} pts
-                    </span>
+                    <div className="inline-flex items-baseline gap-0.5 px-2 py-0.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-400/10 text-[#1C6B53] dark:text-emerald-300 border border-emerald-500/20 font-bold">
+                      <span className="font-mono text-xs font-black">{myScore}</span>
+                      <span className="text-[9px] uppercase font-bold opacity-75">pts</span>
+                    </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-gray-50/80 dark:bg-gray-800/60 border border-gray-200/70 dark:border-gray-700/60">
-                <div className="w-8 h-8 rounded-xl bg-gray-200/70 dark:bg-gray-700/80 flex items-center justify-center text-gray-400 shrink-0">
-                  <Clock size={14} />
+              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-gray-50/90 dark:bg-gray-800/80 border border-gray-200/80 dark:border-gray-700/80 shadow-xs">
+                <div className="w-9 h-9 rounded-xl bg-gray-200/80 dark:bg-gray-700 flex items-center justify-center text-gray-400 shrink-0">
+                  <Clock size={16} />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-400">
-                    Top Star Standing
-                  </span>
-                  <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-gray-400">
+                    <Star size={10} className="text-gray-400" />
+                    <span>Top Star</span>
+                  </div>
+                  <span className="text-xs font-bold text-gray-600 dark:text-gray-300">
                     Pending month data
                   </span>
                 </div>
@@ -1475,19 +1487,25 @@ function AgentDashboard({
 
               {/* 3 Podium Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {!isPodiumComplete ? (
+                {!isSepOrLater ? (
                   <div className="col-span-3 py-6 px-4 text-center bg-gray-50/70 dark:bg-gray-900/40 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
                     <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-2 shadow-inner">
-                      <Clock size={20} />
+                      <Sparkles size={20} className="text-amber-500" />
                     </div>
-                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">Rankings In Progress</h4>
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">Top Star KPI Active from September 2026</h4>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-md mx-auto">
-                      Top Star rankings for {activePodiumTeam === 'chat' ? 'Chat Team' : 'Call Center'} ({selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}) will appear once all team members' metrics are finalized by Team Leaders.
+                      Top Star team podium starts from September 2026 onwards. Select September or later to see the team leaderboard.
                     </p>
                   </div>
                 ) : currentTop3.length === 0 ? (
-                  <div className="col-span-3 py-4 text-center text-xs text-gray-400 dark:text-gray-500 font-medium">
-                    No Top Star scores available for {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}.
+                  <div className="col-span-3 py-6 px-4 text-center bg-gray-50/70 dark:bg-gray-900/40 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+                    <div className="w-10 h-10 rounded-2xl bg-gray-200/60 dark:bg-gray-700/60 text-gray-400 flex items-center justify-center mx-auto mb-2">
+                      <Clock size={20} />
+                    </div>
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">No Top Star Scores Yet</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-md mx-auto">
+                      No scores recorded for {activePodiumTeam === 'chat' ? 'Chat Team' : 'Call Center'} in {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear} yet.
+                    </p>
                   </div>
                 ) : (
                   currentTop3.map((agent: any) => {
@@ -1495,42 +1513,46 @@ function AgentDashboard({
                     return (
                       <div
                         key={agent.name}
-                        className={`relative p-3 sm:p-3.5 rounded-2xl border transition-all duration-200 flex items-center justify-between ${
+                        className={`relative p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border transition-all duration-200 flex items-center justify-between shadow-xs hover:shadow-md ${
                           isMe 
-                            ? "bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-400/80 shadow-md ring-2 ring-emerald-500/20" 
-                            : "bg-gray-50/70 dark:bg-gray-900/40 border-gray-200/80 dark:border-gray-700/70 hover:border-gray-300 dark:hover:border-gray-600"
+                            ? "bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-400/90 ring-2 ring-emerald-500/20" 
+                            : agent.rank === 1
+                            ? "bg-gradient-to-br from-amber-500/10 via-yellow-400/5 to-white dark:to-gray-800 border-amber-300/80 dark:border-amber-500/40"
+                            : agent.rank === 2
+                            ? "bg-gradient-to-br from-slate-200/50 via-gray-100/40 to-white dark:to-gray-800 border-slate-300/80 dark:border-slate-600/50"
+                            : "bg-gradient-to-br from-amber-700/10 via-amber-600/5 to-white dark:to-gray-800 border-amber-600/60 dark:border-amber-600/40"
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shrink-0 shadow-xs ${
-                            agent.rank === 1 ? "bg-gradient-to-tr from-amber-400 to-yellow-300 text-gray-950 ring-1 ring-amber-300" :
-                            agent.rank === 2 ? "bg-gradient-to-tr from-slate-200 to-gray-200 text-gray-900" :
-                            "bg-gradient-to-tr from-amber-600 to-amber-700 text-white"
+                          <div className={`w-9 h-9 rounded-2xl flex items-center justify-center text-lg font-black shrink-0 shadow-xs ${
+                            agent.rank === 1 ? "bg-gradient-to-tr from-amber-400 to-yellow-300 text-gray-950 ring-2 ring-amber-300" :
+                            agent.rank === 2 ? "bg-gradient-to-tr from-slate-200 to-gray-200 text-gray-900 ring-2 ring-slate-300" :
+                            "bg-gradient-to-tr from-amber-600 to-amber-700 text-white ring-2 ring-amber-500"
                           }`}>
                             {agent.rank === 1 ? "🥇" : agent.rank === 2 ? "🥈" : "🥉"}
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white truncate">
+                              <span className="font-black text-xs sm:text-sm text-gray-900 dark:text-white truncate">
                                 {agent.name}
                               </span>
                               {isMe && (
-                                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[#1C6B53] text-white shrink-0">
+                                <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-[#1C6B53] text-white shrink-0">
                                   You
                                 </span>
                               )}
                             </div>
-                            <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium block">
-                              {agent.rank === 1 ? "1st Place" : agent.rank === 2 ? "2nd Place" : "3rd Place"}
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">
+                              {agent.rank === 1 ? "Top Star Winner" : agent.rank === 2 ? "Runner-Up" : "3rd Place"}
                             </span>
                           </div>
                         </div>
-                        
-                        <div className="text-right shrink-0 pl-2">
-                          <span className="font-mono font-black text-sm text-[#1C6B53] dark:text-emerald-400">
-                            {agent.scoreStr}
-                          </span>
-                          <span className="text-[10px] text-gray-400 font-semibold block leading-none">pts</span>
+
+                        <div className="flex items-baseline gap-1 shrink-0 pl-2">
+                          <div className="flex items-baseline gap-0.5 px-2.5 py-1 rounded-xl bg-[#1C6B53]/10 dark:bg-emerald-400/15 text-[#1C6B53] dark:text-emerald-300 font-mono font-black text-xs sm:text-sm border border-emerald-500/20">
+                            <span>{agent.scoreStr || agent.score}</span>
+                            <span className="text-[9px] font-sans font-bold opacity-75">pts</span>
+                          </div>
                         </div>
                       </div>
                     );
