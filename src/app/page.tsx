@@ -1473,9 +1473,9 @@ function AgentDashboard({
                     <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-2 shadow-inner">
                       <Sparkles size={20} className="text-amber-500" />
                     </div>
-                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">Top Star KPI Active from September 2026</h4>
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">Active From September 2026</h4>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-md mx-auto">
-                      Top Star team podium starts from September 2026 onwards. Select September or later to see the team leaderboard.
+                      Leaderboard available from September 2026 onwards.
                     </p>
                   </div>
                 ) : !isPodiumComplete ? (
@@ -1483,9 +1483,9 @@ function AgentDashboard({
                     <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-2 shadow-inner">
                       <Clock size={20} className="text-amber-500" />
                     </div>
-                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">Podium Rankings Pending</h4>
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">Rankings Pending</h4>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-md mx-auto">
-                      Official Top Star rankings for {activePodiumTeam === 'chat' ? 'Chat Team' : 'Call Center'} ({selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}) will be revealed once all team evaluations are 100% completed by the Team Leader.
+                      Rankings will appear once monthly evaluations are complete.
                     </p>
                   </div>
                 ) : currentTop3.length === 0 ? (
@@ -1493,9 +1493,9 @@ function AgentDashboard({
                     <div className="w-10 h-10 rounded-2xl bg-gray-200/60 dark:bg-gray-700/60 text-gray-400 flex items-center justify-center mx-auto mb-2">
                       <Clock size={20} />
                     </div>
-                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">No Top Star Scores Yet</h4>
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">No Scores Yet</h4>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-md mx-auto">
-                      No scores recorded for {activePodiumTeam === 'chat' ? 'Chat Team' : 'Call Center'} in {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear} yet.
+                      No scores recorded for this period yet.
                     </p>
                   </div>
                 ) : (
