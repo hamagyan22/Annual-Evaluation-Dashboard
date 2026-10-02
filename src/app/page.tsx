@@ -5,7 +5,7 @@ import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
 import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal } from "lucide-react";
-import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesAndSeconds } from "@/lib/topStarUtils";
+import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesAndSeconds, getTopStarMotivationalQuote } from "@/lib/topStarUtils";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
 const TEAMS: TeamName[] = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team'];
@@ -894,20 +894,28 @@ function AgentDashboard({
   const yearNum = parseInt(selectedYear || "2026", 10);
   const isSepOrLater = yearNum > 2026 || (yearNum === 2026 && (monthIndex >= 8 || selectedMonth === "Q4" || selectedMonth === "H2"));
 
+  // Team completeness check for current agent's team
+  const myTeamCompleteness = isChatTeam ? topStarData?.chatCompleteness : topStarData?.callCompleteness;
+  const isMonthComplete = myTeamCompleteness?.isComplete === true;
+
+  // Active podium team completeness check (Only appears to employees when data is 100% complete)
+  const activePodiumCompleteness = activePodiumTeam === "chat" ? topStarData?.chatCompleteness : topStarData?.callCompleteness;
+  const isPodiumComplete = activePodiumCompleteness?.isComplete === true;
+
   const agentRankInfo = useMemo(() => {
-    if (!topStarData) return null;
+    if (!topStarData || !isMonthComplete) return null;
     const teamList = isChatTeam ? topStarData.rankedChat : topStarData.rankedCall;
     return teamList.find((r: any) => normalizeName(r.name) === currentAgentCanonicalName) || null;
-  }, [topStarData, isChatTeam, currentAgentCanonicalName]);
+  }, [topStarData, isChatTeam, currentAgentCanonicalName, isMonthComplete]);
 
-  const myRank = agentRankInfo?.rank ?? null;
-  const myScore = agentRankInfo?.scoreStr ?? null;
-  const isTop3 = isSepOrLater && myRank !== null && myRank <= 3;
+  const myRank = isMonthComplete ? (agentRankInfo?.rank ?? null) : null;
+  const myScore = isMonthComplete ? (agentRankInfo?.scoreStr ?? null) : null;
+  const isTop3 = isMonthComplete && isSepOrLater && myRank !== null && myRank <= 3;
 
   const currentTop3 = useMemo(() => {
-    if (!topStarData) return [];
+    if (!topStarData || !isPodiumComplete) return [];
     return activePodiumTeam === "chat" ? (topStarData.top3Chat || []) : (topStarData.top3Call || []);
-  }, [topStarData, activePodiumTeam]);
+  }, [topStarData, activePodiumTeam, isPodiumComplete]);
 
   // Helper to parse a stored value to a numeric (seconds if mm:ss, else as-is)
   const parseVal = (col: any, row: any) => {
@@ -1194,18 +1202,20 @@ function AgentDashboard({
             {myRank != null ? (
               <div className={`relative overflow-hidden flex items-center gap-3.5 px-4 py-2.5 rounded-2xl sm:rounded-3xl border transition-all duration-300 shadow-sm hover:shadow-md ${
                 myRank === 1
-                  ? "bg-gradient-to-br from-amber-500/15 via-yellow-400/10 to-amber-500/5 border-amber-300/80 dark:border-amber-500/40 shadow-amber-500/10"
+                  ? "bg-gradient-to-br from-amber-500/20 via-yellow-400/12 to-amber-500/5 border-amber-400/80 dark:border-amber-400/50 shadow-amber-500/15 ring-1 ring-amber-300/40"
                   : myRank === 2
-                  ? "bg-gradient-to-br from-slate-200/70 via-gray-100/60 to-slate-200/30 border-slate-300 dark:border-slate-600/60 dark:bg-slate-800/50 shadow-slate-500/10"
+                  ? "bg-gradient-to-br from-slate-200/80 via-gray-100/70 to-slate-200/40 border-slate-300 dark:border-slate-500/60 dark:bg-slate-800/60 shadow-slate-500/15 ring-1 ring-slate-300/40"
                   : myRank === 3
-                  ? "bg-gradient-to-br from-amber-700/15 via-amber-600/10 to-amber-700/5 border-amber-600/70 dark:border-amber-600/40 shadow-amber-700/10"
+                  ? "bg-gradient-to-br from-amber-700/20 via-amber-600/15 to-amber-700/8 border-amber-600/80 dark:border-amber-600/50 shadow-amber-700/15 ring-1 ring-amber-500/40"
                   : "bg-gradient-to-br from-white via-emerald-50/30 to-amber-50/15 dark:from-gray-800 dark:via-gray-850 dark:to-emerald-950/20 border-emerald-500/25 dark:border-emerald-500/30"
               }`}>
                 {/* Decorative background aura */}
-                <div className="absolute -right-5 -bottom-5 w-16 h-16 bg-gradient-to-br from-emerald-400/15 to-amber-400/15 rounded-full blur-lg pointer-events-none" />
+                <div className={`absolute -right-5 -bottom-5 w-20 h-20 rounded-full blur-xl pointer-events-none ${
+                  myRank === 1 ? "bg-amber-400/25" : myRank === 2 ? "bg-slate-300/25" : myRank === 3 ? "bg-amber-600/25" : "bg-emerald-400/15"
+                }`} />
 
                 {/* Left Badge with Rank or Medal */}
-                <div className={`w-11 h-11 rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-sm transition-transform duration-200 hover:scale-105 ${
+                <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-sm transition-transform duration-200 hover:scale-105 ${
                   myRank === 1
                     ? "bg-gradient-to-tr from-amber-400 to-yellow-300 text-gray-950 ring-2 ring-amber-300 shadow-amber-400/30 text-xl"
                     : myRank === 2
@@ -1223,11 +1233,16 @@ function AgentDashboard({
                 </div>
 
                 {/* Center / Right Content */}
-                <div className="flex flex-col min-w-0 pr-1">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/15 dark:bg-amber-400/15 text-amber-700 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                <div className="flex flex-col min-w-0 pr-1 max-w-xs sm:max-w-sm">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                      myRank === 1 ? "bg-amber-500/20 text-amber-900 dark:text-amber-200" :
+                      myRank === 2 ? "bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200" :
+                      myRank === 3 ? "bg-amber-700/20 text-amber-900 dark:text-amber-200" :
+                      "bg-amber-500/15 dark:bg-amber-400/15 text-amber-700 dark:text-amber-300"
+                    }`}>
                       <Star size={10} className="fill-amber-500 text-amber-500" />
-                      <span>Top Star</span>
+                      <span>{myRank <= 3 ? "Top Star Winner" : "Top Star"}</span>
                     </div>
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700/80 text-gray-600 dark:text-gray-300 font-mono">
                       {selectedMonth.slice(0, 3)} {selectedYear}
@@ -1236,7 +1251,7 @@ function AgentDashboard({
 
                   <div className="flex items-baseline gap-2 flex-wrap">
                     <span className="text-xs sm:text-sm font-black text-gray-900 dark:text-white truncate">
-                      {myRank === 1 ? "1st Place Winner" :
+                      {myRank === 1 ? "1st Place Champion" :
                        myRank === 2 ? "2nd Place Runner-Up" :
                        myRank === 3 ? "3rd Place Finalist" :
                        `Rank #${myRank}`}
@@ -1246,6 +1261,14 @@ function AgentDashboard({
                       <span className="text-[9px] uppercase font-bold opacity-75">pts</span>
                     </div>
                   </div>
+
+                  {/* Motivational Quote for Top 3 (Unique per Rank and Month) */}
+                  {myRank <= 3 && (
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-900/90 dark:text-amber-200/90 italic mt-1 leading-snug">
+                      <Sparkles size={11} className="text-amber-500 shrink-0" />
+                      <span className="truncate">"{getTopStarMotivationalQuote(myRank, selectedMonth)}"</span>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -1276,48 +1299,6 @@ function AgentDashboard({
             )}
           </div>
         </div>
-
-        {/* Top Star Winner Celebratory Badge Banner (When Agent is in Top 3 for Selected Month) */}
-        {isTop3 && (
-          <div className="mb-6 p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-emerald-500/20 border-2 border-amber-400/50 dark:border-amber-400/40 shadow-lg relative overflow-hidden">
-            <div className="absolute -top-10 -right-10 w-36 h-36 bg-amber-400/20 rounded-full blur-2xl pointer-events-none" />
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-              <div className="flex items-center gap-3.5 sm:gap-4">
-                <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl shrink-0 shadow-md ${
-                  myRank === 1 ? "bg-gradient-to-tr from-amber-400 to-yellow-300 text-gray-950 ring-2 ring-amber-300" :
-                  myRank === 2 ? "bg-gradient-to-tr from-slate-200 to-gray-300 text-gray-900 ring-2 ring-slate-200" :
-                  "bg-gradient-to-tr from-amber-600 to-amber-700 text-white ring-2 ring-amber-500"
-                }`}>
-                  {myRank === 1 ? "🥇" : myRank === 2 ? "🥈" : "🥉"}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-400/25 text-amber-900 dark:text-amber-200 border border-amber-400/40">
-                      Official Top Star Recognition Badge
-                    </span>
-                    <span className="text-xs text-gray-600 dark:text-gray-300 font-bold">
-                      {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}
-                    </span>
-                  </div>
-                  <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white leading-tight">
-                    {myRank === 1 ? "Congratulations! You are the #1 Top Star Champion!" :
-                     myRank === 2 ? "Great Job! You are the #2 Top Star Runner-Up!" :
-                     "Well Done! You achieved Top Star 3rd Place!"}
-                  </h3>
-                  <p className="text-xs text-gray-600 dark:text-gray-300 font-medium mt-0.5">
-                    Ranked <strong>#{myRank}</strong> in {isChatTeam ? "Chat Team" : "Call Center"} with an exceptional score of <strong>{myScore} pts</strong>!
-                  </p>
-                </div>
-              </div>
-              <div className="shrink-0 self-end sm:self-center">
-                <div className="px-4 py-2 rounded-xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-amber-400/40 shadow-xs text-center">
-                  <div className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Total Score</div>
-                  <div className="text-lg sm:text-xl font-black text-[#1C6B53] dark:text-emerald-400">{myScore} <span className="text-xs font-medium text-gray-400">pts</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {loading ? (
           <div className="p-12 text-center text-gray-500 font-medium">Loading performance data...</div>
@@ -1495,6 +1476,16 @@ function AgentDashboard({
                     <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">Top Star KPI Active from September 2026</h4>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-md mx-auto">
                       Top Star team podium starts from September 2026 onwards. Select September or later to see the team leaderboard.
+                    </p>
+                  </div>
+                ) : !isPodiumComplete ? (
+                  <div className="col-span-3 py-6 px-4 text-center bg-gray-50/70 dark:bg-gray-900/40 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-2 shadow-inner">
+                      <Clock size={20} className="text-amber-500" />
+                    </div>
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">Podium Rankings Pending</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-md mx-auto">
+                      Official Top Star rankings for {activePodiumTeam === 'chat' ? 'Chat Team' : 'Call Center'} ({selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear}) will be revealed once all team evaluations are 100% completed by the Team Leader.
                     </p>
                   </div>
                 ) : currentTop3.length === 0 ? (

@@ -160,6 +160,63 @@ export const formatDuration = (secs: number | string | null | undefined): string
 
 export const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 
+export const TOP_STAR_MOTIVATIONAL_QUOTES: Record<number, Record<string, string>> = {
+  1: {
+    JAN: "Pioneering the year at the absolute peak of excellence!",
+    FEB: "Setting the gold standard with championship performance!",
+    MAR: "Flawless leadership driving incredible results this March!",
+    APR: "Springing forward with unparalleled dedication and victory!",
+    MAY: "Leading from the front with mastery, focus, and passion!",
+    JUN: "Mid-year champion inspiring the entire team to greatness!",
+    JUL: "Radiating excellence and unstoppable championship energy!",
+    AUG: "Perfection in execution and unwavering dedication to quality!",
+    SEP: "The benchmark of true mastery and Top Star championship!",
+    OCT: "An inspiring triumph of consistency, skill, and leadership!",
+    NOV: "World-class execution leading the team to highest heights!",
+    DEC: "Finishing the year as the ultimate Top Star champion!",
+  },
+  2: {
+    JAN: "Exceptional brilliance launching a powerhouse year!",
+    FEB: "Superb execution and world-class consistency!",
+    MAR: "Outstanding momentum pushing the boundaries of success!",
+    APR: "Remarkable craft and relentless drive for excellence!",
+    MAY: "Phenomenal dedication shining bright among the finest!",
+    JUN: "Spectacular mid-year performance and top-tier agility!",
+    JUL: "Blazing an inspiring trail of high-impact achievement!",
+    AUG: "Tremendous focus and stellar quality day in, day out!",
+    SEP: "Incredible runner-up achievement with elite precision!",
+    OCT: "Remarkable perseverance and stellar craftsmanship!",
+    NOV: "A powerhouse of quality and client-first excellence!",
+    DEC: "Outstanding year-end performance at the highest tier!",
+  },
+  3: {
+    JAN: "A stellar start reaching the podium with proud dedication!",
+    FEB: "Passionate execution and commendable customer focus!",
+    MAR: "Podium-level brilliance and remarkable tenacity!",
+    APR: "Rising to the top with strong determination and skill!",
+    MAY: "Impressive mastery earning a well-deserved podium finish!",
+    JUN: "Mid-year excellence demonstrating true organizational value!",
+    JUL: "Shining bright with great resilience and positive energy!",
+    AUG: "Steadfast dedication securing an outstanding podium spot!",
+    SEP: "Exceptional finalist performance driving team pride!",
+    OCT: "Proud achievement showcasing great talent and grit!",
+    NOV: "High-caliber performance making a real difference!",
+    DEC: "Closing the year with pride on the prestigious podium!",
+  }
+};
+
+export function getTopStarMotivationalQuote(rank: number, month: string): string {
+  const m = (month || "").toUpperCase().slice(0, 3);
+  const rankQuotes = TOP_STAR_MOTIVATIONAL_QUOTES[rank];
+  if (rankQuotes && rankQuotes[m]) {
+    return rankQuotes[m];
+  }
+  if (rank === 1) return "Setting the gold standard for championship excellence!";
+  if (rank === 2) return "Outstanding brilliance and continuous momentum!";
+  if (rank === 3) return "Exceptional dedication driving podium performance!";
+  return "Keep striving for excellence and reaching new heights!";
+}
+
 export interface TopStarCriteria {
   chat: {
     qaMax: number; qaTarget: number;
