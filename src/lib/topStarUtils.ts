@@ -268,12 +268,18 @@ export function scoreAgent(
   if (t === "chat") {
     const c = criteria.chat;
     const art = parseSec(v.art);
+    const qaTarget = c.qaTarget > 0 ? c.qaTarget : 100;
+    const prodTarget = c.prodTarget > 0 ? c.prodTarget : 13;
+    const ahtTarget = c.ahtTarget > 0 ? c.ahtTarget : 210;
+    const artTarget = c.artTarget > 0 ? c.artTarget : 89;
+    const examTarget = c.examTarget > 0 ? c.examTarget : 100;
+
     const parts = [
-      { key: "qa",   pts: qa == null ? null : clamp01(Math.min(qa, c.qaTarget) / c.qaTarget) * c.qaMax, max: c.qaMax },
-      { key: "prod", pts: prod == null ? null : Math.min(prod / c.prodTarget, 1) * c.prodMax, max: c.prodMax },
-      { key: "aht",  pts: aht == null || aht <= 0 ? null : Math.min(c.ahtTarget / aht, 1) * c.ahtMax, max: c.ahtMax },
-      { key: "art",  pts: art == null || art <= 0 ? null : Math.min(c.artTarget / art, 1) * c.artMax, max: c.artMax },
-      { key: "exam", pts: exam == null ? null : (Math.min(exam, c.examTarget) / c.examTarget) * c.examMax, max: c.examMax }
+      { key: "qa",   pts: qa == null ? null : clamp01(Math.min(qa, qaTarget) / qaTarget) * c.qaMax, max: c.qaMax },
+      { key: "prod", pts: prod == null ? null : Math.min(prod / prodTarget, 1) * c.prodMax, max: c.prodMax },
+      { key: "aht",  pts: aht == null || aht <= 0 ? null : Math.min(ahtTarget / aht, 1) * c.ahtMax, max: c.ahtMax },
+      { key: "art",  pts: art == null || art <= 0 ? null : Math.min(artTarget / art, 1) * c.artMax, max: c.artMax },
+      { key: "exam", pts: exam == null ? null : (Math.min(exam, examTarget) / examTarget) * c.examMax, max: c.examMax }
     ];
     const any = parts.some(p => p.pts != null);
     const total = any ? parts.reduce((acc, p) => acc + (p.pts || 0), 0) : null;
@@ -284,20 +290,27 @@ export function scoreAgent(
   const wrapup = num(v.wrapup);
   const hold = parseSec(v.hold);
 
+  const qaTarget = c.qaTarget > 0 ? c.qaTarget : 100;
+  const prodTarget = c.prodTarget > 0 ? c.prodTarget : 100;
+  const ahtTarget = c.ahtTarget > 0 ? c.ahtTarget : 169;
+  const examTarget = c.examTarget > 0 ? c.examTarget : 100;
+  const holdTarget = c.holdTarget > 0 ? c.holdTarget : 45;
+
   let wrapupPts: number | null = null;
   if (wrapup != null && wrapupRange) {
-    wrapupPts = wrapupRange.max === wrapupRange.min 
+    const rangeDiff = wrapupRange.max - wrapupRange.min;
+    wrapupPts = rangeDiff <= 0 
       ? c.wrapupMax 
-      : Math.max(0, Math.min(c.wrapupMax, ((wrapupRange.max - wrapup) / (wrapupRange.max - wrapupRange.min)) * c.wrapupMax));
+      : Math.max(0, Math.min(c.wrapupMax, ((wrapupRange.max - wrapup) / rangeDiff) * c.wrapupMax));
   }
 
   const parts = [
-    { key: "qa",     pts: qa == null ? null : (Math.min(qa, c.qaTarget) / c.qaTarget) * c.qaMax, max: c.qaMax },
-    { key: "prod",   pts: prod == null ? null : (Math.min(prod, c.prodTarget) / c.prodTarget) * c.prodMax, max: c.prodMax },
-    { key: "aht",    pts: aht == null || aht <= 0 ? null : Math.min(c.ahtTarget / aht, 1) * c.ahtMax, max: c.ahtMax },
-    { key: "exam",   pts: exam == null ? null : (Math.min(exam, c.examTarget) / c.examTarget) * c.examMax, max: c.examMax },
+    { key: "qa",     pts: qa == null ? null : (Math.min(qa, qaTarget) / qaTarget) * c.qaMax, max: c.qaMax },
+    { key: "prod",   pts: prod == null ? null : (Math.min(prod, prodTarget) / prodTarget) * c.prodMax, max: c.prodMax },
+    { key: "aht",    pts: aht == null || aht <= 0 ? null : Math.min(ahtTarget / aht, 1) * c.ahtMax, max: c.ahtMax },
+    { key: "exam",   pts: exam == null ? null : (Math.min(exam, examTarget) / examTarget) * c.examMax, max: c.examMax },
     { key: "wrapup", pts: wrapupPts, max: c.wrapupMax },
-    { key: "hold",   pts: hold == null || hold <= 0 ? null : Math.min(c.holdTarget / hold, 1) * c.holdMax, max: c.holdMax }
+    { key: "hold",   pts: hold == null || hold <= 0 ? null : Math.min(holdTarget / hold, 1) * c.holdMax, max: c.holdMax }
   ];
 
   const any = parts.some(p => p.pts != null);
@@ -434,18 +447,39 @@ export function checkTeamCompleteness(
   };
 }
 
-export async function fetchTopStarCriteria(): Promise<TopStarCriteria> {
+let cachedCriteria: TopStarCriteria | null = null;
+let cachedCriteriaTime = 0;
+const CRITERIA_CACHE_TTL = 60_000; // 60s in-memory cache
+
+const topStarDataCache = new Map<string, { timestamp: number; data: any }>();
+const DATA_CACHE_TTL = 30_000; // 30s in-memory cache
+
+export function invalidateTopStarCache() {
+  cachedCriteria = null;
+  cachedCriteriaTime = 0;
+  topStarDataCache.clear();
+}
+
+export async function fetchTopStarCriteria(forceRefresh = false): Promise<TopStarCriteria> {
+  const now = Date.now();
+  if (!forceRefresh && cachedCriteria && now - cachedCriteriaTime < CRITERIA_CACHE_TTL) {
+    return cachedCriteria;
+  }
   try {
     const snap = await getDoc(doc(db, "settings", "top_star_criteria"));
     if (snap.exists()) {
       const data = snap.data();
       if (data && data.chat && data.call) {
-        return data as TopStarCriteria;
+        cachedCriteria = data as TopStarCriteria;
+        cachedCriteriaTime = now;
+        return cachedCriteria;
       }
     }
   } catch (e) {
     console.error("Error loading criteria:", e);
   }
+  cachedCriteria = DEFAULT_CRITERIA;
+  cachedCriteriaTime = now;
   return DEFAULT_CRITERIA;
 }
 
@@ -464,8 +498,18 @@ export async function fetchTopStarSyncStatus(): Promise<Record<string, any>> {
 export async function fetchTopStarData(
   year: string,
   month: string,
-  criteria: TopStarCriteria = DEFAULT_CRITERIA
+  criteria: TopStarCriteria = DEFAULT_CRITERIA,
+  forceRefresh = false
 ) {
+  const cacheKey = `${year}_${month}`;
+  const now = Date.now();
+  if (!forceRefresh) {
+    const cached = topStarDataCache.get(cacheKey);
+    if (cached && now - cached.timestamp < DATA_CACHE_TTL) {
+      return cached.data;
+    }
+  }
+
   const [mohammedSnap, younisSnap, ankidoSnap, syncStatus] = await Promise.all([
     getDocs(query(collection(db, "mohammed_metrics"), where("year", "==", year), where("month", "==", month))),
     getDocs(query(collection(db, "younis_metrics"), where("year", "==", year), where("month", "==", month))),
@@ -521,7 +565,7 @@ export async function fetchTopStarData(
   const top3Chat = rankedChat.filter(r => r.rank != null && r.rank <= 3).slice(0, 3);
   const top3Call = rankedCall.filter(r => r.rank != null && r.rank <= 3).slice(0, 3);
 
-  return {
+  const result = {
     rawChat: finalChat,
     rawCall: finalCall,
     rankedChat,
@@ -532,4 +576,7 @@ export async function fetchTopStarData(
     callCompleteness,
     syncStatus
   };
+
+  topStarDataCache.set(cacheKey, { timestamp: now, data: result });
+  return result;
 }

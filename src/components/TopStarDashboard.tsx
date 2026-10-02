@@ -10,7 +10,7 @@ import {
   CheckCircle2, Flame, Award, Filter, Edit3, X, Eye, BarChart3, HelpCircle,
   SlidersHorizontal, CheckCircle
 } from "lucide-react";
-import { formatDuration, checkTeamCompleteness, fetchTopStarSyncStatus } from "@/lib/topStarUtils";
+import { formatDuration, checkTeamCompleteness, fetchTopStarSyncStatus, invalidateTopStarCache } from "@/lib/topStarUtils";
 
 interface TopStarDashboardProps {
   userProfile: any;
@@ -345,6 +345,8 @@ export default function TopStarDashboard({
           }
         }, { merge: true });
 
+        invalidateTopStarCache();
+
         setSyncStatusRegistry(prev => ({
           ...prev,
           [syncKey]: {
@@ -548,6 +550,7 @@ export default function TopStarDashboard({
         updated_at: new Date().toISOString(),
         updated_by: userProfile?.email || "admin"
       });
+      invalidateTopStarCache();
       setCriteria(tempCriteria);
       setIsEditingCriteria(false);
       setShowCriteriaModal(false);
