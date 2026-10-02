@@ -44,7 +44,7 @@ const DEFAULT_OTHER_COLUMNS: ColumnConfig[] = [
   { id: 'productivity', label: 'Prod %', type: 'number', aggregation: 'average' },
   { id: 'aht', label: 'Aht S', type: 'time', aggregation: 'average' },
   { id: 'hold', label: 'Hold S', type: 'time', aggregation: 'average' },
-  { id: 'wrapup', label: 'Wrapup', type: 'time', aggregation: 'sum' },
+  { id: 'wrapup', label: 'Wrapup', type: 'number', aggregation: 'average' },
   { id: 'handled', label: 'Handled', type: 'number', aggregation: 'sum' },
   { id: 'abandoned', label: 'Abandoned', type: 'number', aggregation: 'sum' },
 ];
@@ -82,8 +82,15 @@ function getEffectiveColumns(
   year: string,
   baseCols?: ColumnConfig[]
 ): ColumnConfig[] {
+  const sanitizeCols = (cols: ColumnConfig[]) => cols.map(c => {
+    if (c.id === 'wrapup' || c.id?.toLowerCase().includes('wrapup') || c.label?.toLowerCase().includes('wrapup')) {
+      return { ...c, type: 'number' as const };
+    }
+    return c;
+  });
+
   if (team !== 'Mohammed Dlshad Team') {
-    return baseCols && baseCols.length > 0 ? baseCols : DEFAULT_OTHER_COLUMNS;
+    return sanitizeCols(baseCols && baseCols.length > 0 ? baseCols : DEFAULT_OTHER_COLUMNS);
   }
   const isMayPlus = isFromMayOnwards(year, month);
   const srcCols = baseCols && baseCols.length > 0 ? baseCols : (isMayPlus ? DEFAULT_CHAT_COLUMNS : DEFAULT_CHAT_COLUMNS_HISTORICAL);
@@ -417,7 +424,7 @@ const KPI_META: Record<string, { icon: any; color: string; bgLight: string; bgDa
     bgLight: 'bg-amber-500/10', 
     bgDark: 'dark:bg-amber-500/15',
     border: 'bg-amber-500',
-    label: 'Wrap-Up Time'
+    label: 'Wrapup'
   },
   handled: { 
     icon: PhoneCall, 
@@ -2121,7 +2128,14 @@ export default function Dashboard() {
     const unsub = onSnapshot(collection(db, 'columns_config'), (snap) => {
       const map: Record<string, ColumnConfig[]> = {};
       snap.docs.forEach(d => {
-        map[d.id] = d.data().columns;
+        const rawCols = d.data().columns || [];
+        const cols = rawCols.map((c: any) => {
+          if (c.id === 'wrapup' || c.id?.toLowerCase().includes('wrapup') || c.label?.toLowerCase().includes('wrapup')) {
+            return { ...c, type: 'number', aggregation: c.aggregation || 'average' };
+          }
+          return c;
+        });
+        map[d.id] = cols;
       });
       for (const t of TEAMS) {
         if (!map[t] || map[t].length === 0) {
@@ -4281,7 +4295,13 @@ export default function Dashboard() {
                               disabled={disabled}
                               type="text"
                               onDragStart={(e) => e.preventDefault()}
-                              placeholder={col.type === 'time' ? 'mm:ss' : (col.aggregation === 'average' ? '%' : '#')}
+                              placeholder={
+                                (col.id === 'wrapup' || col.id?.toLowerCase().includes('wrapup') || col.label?.toLowerCase().includes('wrapup'))
+                                  ? '#'
+                                  : col.type === 'time'
+                                  ? 'mm:ss'
+                                  : (col.aggregation === 'average' ? '%' : '#')
+                              }
                               value={row[col.id] || ''}
                               onChange={(e) => handleChange(actualIndex, col.id, e.target.value)}
                               onBlur={() => handleBlur(actualIndex)}

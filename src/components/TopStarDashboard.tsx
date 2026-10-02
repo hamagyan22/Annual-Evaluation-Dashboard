@@ -296,7 +296,7 @@ export default function TopStarDashboard({
           prod: raw.productivity ?? null,
           aht: raw.aht ? parseSec(raw.aht) : null,
           exam: raw.exam ?? null,
-          wrapup: raw.wrapup ? parseSec(raw.wrapup) : null,
+          wrapup: num(raw.wrapup),
           hold: raw.hold ? parseSec(raw.hold) : null
         };
       });
@@ -760,7 +760,7 @@ export default function TopStarDashboard({
                       <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{criteria.call.examMax} pts (Target {criteria.call.examTarget})</span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-amber-100 dark:border-amber-900/40">
-                      <span className="text-gray-600 dark:text-gray-300">5. Wrapup Time</span>
+                      <span className="text-gray-600 dark:text-gray-300">5. Wrapup</span>
                       <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{criteria.call.wrapupMax} pts (Relative)</span>
                     </div>
                     <div className="flex justify-between py-1">

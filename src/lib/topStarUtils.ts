@@ -551,7 +551,7 @@ export async function fetchTopStarData(
       prod: raw.productivity ?? null,
       aht: raw.aht ? parseSec(raw.aht) : null,
       exam: raw.exam ?? null,
-      wrapup: raw.wrapup ? parseSec(raw.wrapup) : null,
+      wrapup: num(raw.wrapup),
       hold: raw.hold ? parseSec(raw.hold) : null
     };
   });
