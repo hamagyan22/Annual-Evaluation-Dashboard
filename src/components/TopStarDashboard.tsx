@@ -195,23 +195,39 @@ export default function TopStarDashboard({
 
   // Top 3 Celebration & Appreciation Video Modal state
   const [showCelebrationVideo, setShowCelebrationVideo] = useState<boolean>(false);
+  const [membersList, setMembersList] = useState<any[]>(allMembers || []);
+
+  useEffect(() => {
+    setMembersList(allMembers || []);
+  }, [allMembers]);
+
+  const handlePhotoUpdated = (agentName: string, photoUrl: string) => {
+    setMembersList(prev => {
+      const norm = normalizeName(agentName);
+      const exists = prev.some(m => normalizeName(m.agent_name || m.name) === norm);
+      if (exists) {
+        return prev.map(m => normalizeName(m.agent_name || m.name) === norm ? { ...m, photo_url: photoUrl } : m);
+      }
+      return [...prev, { name: agentName, agent_name: agentName, photo_url: photoUrl }];
+    });
+  };
 
   // Active rosters
   const chatRoster = useMemo(() => {
-    const fromProps = allMembers
+    const fromProps = membersList
       .filter(m => m.team === "Mohammed Dlshad Team")
       .map(m => normalizeName(m.agent_name || m.name));
     const combined = Array.from(new Set([...fromProps, ...DEFAULT_CHAT_AGENTS]));
     return combined.sort((a, b) => a.localeCompare(b));
-  }, [allMembers]);
+  }, [membersList]);
 
   const callRoster = useMemo(() => {
-    const fromProps = allMembers
+    const fromProps = membersList
       .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
       .map(m => normalizeName(m.agent_name || m.name));
     const combined = Array.from(new Set([...fromProps, ...DEFAULT_CALL_AGENTS]));
     return combined.sort((a, b) => a.localeCompare(b));
-  }, [allMembers]);
+  }, [membersList]);
 
   // Load Criteria & Sync Status from Firestore
   useEffect(() => {
@@ -530,20 +546,28 @@ export default function TopStarDashboard({
   }, [activeRanked, searchQuery]);
 
   const top3Chat = useMemo(() => {
-    return rankedChat.filter(r => r.total != null).slice(0, 3).map((r, i) => ({
-      rank: i + 1,
-      name: r.name,
-      score: (r.total || 0).toFixed(1)
-    }));
-  }, [rankedChat]);
+    return rankedChat.filter(r => r.total != null).slice(0, 3).map((r, i) => {
+      const found = membersList.find(m => normalizeName(m.agent_name || m.name) === normalizeName(r.name));
+      return {
+        rank: i + 1,
+        name: r.name,
+        score: (r.total || 0).toFixed(1),
+        photoUrl: found?.photo_url || ""
+      };
+    });
+  }, [rankedChat, membersList]);
 
   const top3Call = useMemo(() => {
-    return rankedCall.filter(r => r.total != null).slice(0, 3).map((r, i) => ({
-      rank: i + 1,
-      name: r.name,
-      score: (r.total || 0).toFixed(1)
-    }));
-  }, [rankedCall]);
+    return rankedCall.filter(r => r.total != null).slice(0, 3).map((r, i) => {
+      const found = membersList.find(m => normalizeName(m.agent_name || m.name) === normalizeName(r.name));
+      return {
+        rank: i + 1,
+        name: r.name,
+        score: (r.total || 0).toFixed(1),
+        photoUrl: found?.photo_url || ""
+      };
+    });
+  }, [rankedCall, membersList]);
 
   const handleSaveCriteria = async () => {
     if (!canEdit) return;
@@ -824,7 +848,8 @@ export default function TopStarDashboard({
           selectedYear={selectedYear}
           top3Chat={top3Chat}
           top3Call={top3Call}
-          allMembers={allMembers}
+          allMembers={membersList}
+          onPhotoUpdated={handlePhotoUpdated}
         />
       )}
 
@@ -969,12 +994,25 @@ export default function TopStarDashboard({
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shrink-0 shadow-xs ${
-                        agent.rank === 1 ? "bg-gradient-to-tr from-amber-400 to-yellow-300 text-gray-950 font-black ring-1 ring-amber-300" :
-                        agent.rank === 2 ? "bg-gradient-to-tr from-slate-200 to-gray-200 text-gray-900 font-bold" :
-                        "bg-gradient-to-tr from-amber-600 to-amber-700 text-white font-bold"
-                      }`}>
-                        {agent.rank === 1 ? "🥇" : agent.rank === 2 ? "🥈" : "🥉"}
+                      <div className="relative shrink-0">
+                        {agent.photoUrl ? (
+                          <img 
+                            src={agent.photoUrl} 
+                            alt={agent.name} 
+                            className="w-8 h-8 rounded-full object-cover ring-2 ring-white/30 shadow-xs" 
+                          />
+                        ) : (
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 shadow-xs ${
+                            agent.rank === 1 ? "bg-gradient-to-tr from-amber-400 to-yellow-300 text-gray-950 font-black ring-1 ring-amber-300" :
+                            agent.rank === 2 ? "bg-gradient-to-tr from-slate-200 to-gray-200 text-gray-900 font-bold" :
+                            "bg-gradient-to-tr from-amber-600 to-amber-700 text-white font-bold"
+                          }`}>
+                            {agent.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <span className="absolute -bottom-1 -right-1 text-[11px] leading-none">
+                          {agent.rank === 1 ? "🥇" : agent.rank === 2 ? "🥈" : "🥉"}
+                        </span>
                       </div>
                       <span className="font-bold text-xs truncate text-white">{agent.name}</span>
                     </div>
@@ -1022,12 +1060,25 @@ export default function TopStarDashboard({
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shrink-0 shadow-xs ${
-                        agent.rank === 1 ? "bg-gradient-to-tr from-amber-400 to-yellow-300 text-gray-950 font-black ring-1 ring-amber-300" :
-                        agent.rank === 2 ? "bg-gradient-to-tr from-slate-200 to-gray-200 text-gray-900 font-bold" :
-                        "bg-gradient-to-tr from-amber-600 to-amber-700 text-white font-bold"
-                      }`}>
-                        {agent.rank === 1 ? "🥇" : agent.rank === 2 ? "🥈" : "🥉"}
+                      <div className="relative shrink-0">
+                        {agent.photoUrl ? (
+                          <img 
+                            src={agent.photoUrl} 
+                            alt={agent.name} 
+                            className="w-8 h-8 rounded-full object-cover ring-2 ring-white/30 shadow-xs" 
+                          />
+                        ) : (
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 shadow-xs ${
+                            agent.rank === 1 ? "bg-gradient-to-tr from-amber-400 to-yellow-300 text-gray-950 font-black ring-1 ring-amber-300" :
+                            agent.rank === 2 ? "bg-gradient-to-tr from-slate-200 to-gray-200 text-gray-900 font-bold" :
+                            "bg-gradient-to-tr from-amber-600 to-amber-700 text-white font-bold"
+                          }`}>
+                            {agent.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <span className="absolute -bottom-1 -right-1 text-[11px] leading-none">
+                          {agent.rank === 1 ? "🥇" : agent.rank === 2 ? "🥈" : "🥉"}
+                        </span>
                       </div>
                       <span className="font-bold text-xs truncate text-white">{agent.name}</span>
                     </div>
