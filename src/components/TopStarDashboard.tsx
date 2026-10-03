@@ -8,9 +8,10 @@ import {
   Sun, Moon, ChevronDown, RefreshCw, Calendar, Sparkles, Shield,
   ShieldCheck, AlertCircle, TrendingUp, Clock, Activity, MessageSquare, PhoneCall,
   CheckCircle2, Flame, Award, Filter, Edit3, X, Eye, BarChart3, HelpCircle,
-  SlidersHorizontal, CheckCircle
+  SlidersHorizontal, CheckCircle, Film
 } from "lucide-react";
 import { formatDuration, checkTeamCompleteness, fetchTopStarSyncStatus, invalidateTopStarCache } from "@/lib/topStarUtils";
+import TopStarCelebrationVideoModal from "./TopStarCelebrationVideoModal";
 
 interface TopStarDashboardProps {
   userProfile: any;
@@ -191,6 +192,9 @@ export default function TopStarDashboard({
   const [isEditingCriteria, setIsEditingCriteria] = useState<boolean>(false);
   const [tempCriteria, setTempCriteria] = useState(DEFAULT_CRITERIA);
   const [isSavingCriteria, setIsSavingCriteria] = useState<boolean>(false);
+
+  // Top 3 Celebration & Appreciation Video Modal state
+  const [showCelebrationVideo, setShowCelebrationVideo] = useState<boolean>(false);
 
   // Active rosters
   const chatRoster = useMemo(() => {
@@ -811,6 +815,19 @@ export default function TopStarDashboard({
         </div>
       )}
 
+      {/* Top 3 Celebration & Appreciation Video Modal */}
+      {showCelebrationVideo && (
+        <TopStarCelebrationVideoModal
+          isOpen={showCelebrationVideo}
+          onClose={() => setShowCelebrationVideo(false)}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+          top3Chat={top3Chat}
+          top3Call={top3Call}
+          allMembers={allMembers}
+        />
+      )}
+
       <div className="max-w-[1400px] mx-auto">
         
         {/* Top Header */}
@@ -860,6 +877,18 @@ export default function TopStarDashboard({
 
             <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
 
+            {/* Celebration Video Button */}
+            <button
+              onClick={() => setShowCelebrationVideo(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-amber-500 via-yellow-500 to-emerald-600 hover:from-amber-600 hover:to-emerald-700 shadow-md shadow-amber-500/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer"
+              title="Generate Motivational & Appreciation Celebration Video for Top 3"
+            >
+              <Film size={14} className="text-yellow-100 shrink-0" />
+              <span>Celebration Video</span>
+            </button>
+
+            <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
+
             {/* Dark Mode Toggle */}
             {toggleDarkMode && (
               <button
@@ -871,6 +900,36 @@ export default function TopStarDashboard({
               </button>
             )}
           </div>
+        </div>
+
+        {/* Celebration Reel Quick Access Banner */}
+        <div className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-teal-500/10 border border-amber-400/35 dark:border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-gray-950 flex items-center justify-center font-black shrink-0 shadow-md shadow-amber-500/20">
+              <Film size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <h3 className="text-xs sm:text-sm font-black text-gray-900 dark:text-white">
+                  Top 3 Motivational & Appreciation Celebration Video
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-800 dark:text-amber-200 border border-amber-400/30">
+                  {selectedMonth} {selectedYear}
+                </span>
+              </div>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                Generate an animated celebratory video and appreciation cards honoring the Top 3 performers in Chat & Call Center.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowCelebrationVideo(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white bg-gradient-to-r from-[#1C6B53] to-emerald-600 hover:from-emerald-700 hover:to-emerald-800 shadow-md shadow-emerald-700/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0 self-end sm:self-auto"
+          >
+            <Sparkles size={14} className="text-yellow-300" />
+            <span>Generate Video</span>
+          </button>
         </div>
 
         {/* Top 3 Vibrant Podium Cards (Both cards styled with matching Emerald color as requested) */}
