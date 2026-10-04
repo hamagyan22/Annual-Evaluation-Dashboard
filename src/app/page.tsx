@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
-import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal } from "lucide-react";
+import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal, BarChart3 } from "lucide-react";
 import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesAndSeconds, getTopStarMotivationalQuote } from "@/lib/topStarUtils";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
@@ -1860,6 +1860,19 @@ export default function Dashboard() {
     }
     return false;
   });
+  const [isCombinedCallCenter, setIsCombinedCallCenter] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("app_combined_call_center") === "true";
+    }
+    return false;
+  });
+  const [showCcBreakdownModal, setShowCcBreakdownModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("app_combined_call_center", isCombinedCallCenter ? "true" : "false");
+    }
+  }, [isCombinedCallCenter]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -2190,8 +2203,12 @@ export default function Dashboard() {
     selectedTeam === 'Ankido Buya Team' ? 'ankido_metrics' :
     'mohammed_metrics';
 
-  const calcYearTeamStat = (col: ColumnConfig) => {
-    const validMetrics = yearMetrics.filter(r => {
+  const calcYearTeamStat = (col: ColumnConfig, teamFilter?: string) => {
+    let metricsToUse = yearMetrics;
+    if (teamFilter) {
+      metricsToUse = yearMetrics.filter(r => r.team === teamFilter);
+    }
+    const validMetrics = metricsToUse.filter(r => {
       const val = getRowValForCol(r, col.id);
       return val !== "";
     });
@@ -2464,21 +2481,30 @@ export default function Dashboard() {
 
   // Helper to keep in-memory cache synchronized when editing cells
   const updateCachedMetric = (payload: any, docId?: string) => {
-    const cacheKey = `${selectedTeam}_${selectedYear}`;
-    const cached = teamDataCacheRef.current[cacheKey];
-    if (!cached) return;
-    const pAgentLower = (payload.agent_name || "").trim().toLowerCase();
-    const pMonthUpper = (payload.month || "").trim().toUpperCase();
-    const idx = cached.allYearData.findIndex((m: any) =>
-      (docId && m.id === docId) ||
-      ((m.agent_name || "").trim().toLowerCase() === pAgentLower && (m.month || "").trim().toUpperCase() === pMonthUpper)
-    );
-    if (idx >= 0) {
-      cached.allYearData[idx] = { ...cached.allYearData[idx], ...payload, ...(docId ? { id: docId } : {}) };
-    } else {
-      cached.allYearData.push({ ...payload, ...(docId ? { id: docId } : {}) });
+    const cacheKeys = isCombinedCallCenter 
+      ? [`Combined_CallCenter_${selectedYear}`, `${payload.team || selectedTeam}_${selectedYear}`]
+      : [`${selectedTeam}_${selectedYear}`];
+
+    cacheKeys.forEach(cacheKey => {
+      const cached = teamDataCacheRef.current[cacheKey];
+      if (!cached) return;
+      const pAgentLower = (payload.agent_name || "").trim().toLowerCase();
+      const pMonthUpper = (payload.month || "").trim().toUpperCase();
+      const idx = cached.allYearData.findIndex((m: any) =>
+        (docId && m.id === docId) ||
+        ((m.agent_name || "").trim().toLowerCase() === pAgentLower && (m.month || "").trim().toUpperCase() === pMonthUpper)
+      );
+      if (idx >= 0) {
+        cached.allYearData[idx] = { ...cached.allYearData[idx], ...payload, ...(docId ? { id: docId } : {}) };
+      } else {
+        cached.allYearData.push({ ...payload, ...(docId ? { id: docId } : {}) });
+      }
+    });
+
+    const activeKey = isCombinedCallCenter ? `Combined_CallCenter_${selectedYear}` : `${selectedTeam}_${selectedYear}`;
+    if (teamDataCacheRef.current[activeKey]) {
+      setYearMetrics([...teamDataCacheRef.current[activeKey].allYearData]);
     }
-    setYearMetrics([...cached.allYearData]);
   };
 
   // Pure in-memory row computer (runs in <1ms)
@@ -2510,6 +2536,7 @@ export default function Dashboard() {
           agent_name: member.agent_name,
           photo_url: member.photo_url || "",
           display_name: member.display_name || member.agent_name,
+          team: member.team || team,
           _readonly: true
         };
 
@@ -2530,11 +2557,12 @@ export default function Dashboard() {
 
       const hasQualityCol = teamCols.some((c: any) => c.id === 'quality');
       if (hasQualityCol) {
-        const sectionSlug = getQaSectionSlug(team);
-        const isChatT = team === 'Mohammed Dlshad Team';
         const syncedMonthsMap = qaCache['config_sync_status']?.synced_months || null;
 
         for (const row of aggregatedRows) {
+          const rowTeam = row.team || team;
+          const sectionSlug = getQaSectionSlug(rowTeam);
+          const isChatT = rowTeam === 'Mohammed Dlshad Team';
           const agentName = row.agent_name;
           const agentKey = (agentName || "").trim().toLowerCase();
           const slug = agentName.toLowerCase().replace(/[^a-z0-9]/g, '_');
@@ -2624,7 +2652,8 @@ export default function Dashboard() {
             agent_name: member.agent_name,
             _memberId: member.id,
             photo_url: member.photo_url || "",
-            display_name: member.display_name || member.agent_name
+            display_name: member.display_name || member.agent_name,
+            team: member.team || team
           };
           if (teamCols.some(c => c.id === 'call_handled') && (rowData.call_handled === undefined || rowData.call_handled === '')) {
             const computedVal = getRowValForCol(rowData, 'call_handled');
@@ -2638,7 +2667,8 @@ export default function Dashboard() {
           _memberId: member.id,
           agent_name: member.agent_name,
           photo_url: member.photo_url || "",
-          display_name: member.display_name || member.agent_name
+          display_name: member.display_name || member.agent_name,
+          team: member.team || team
         };
         teamCols.forEach(col => empty[col.id] = "");
         return empty;
@@ -2648,14 +2678,16 @@ export default function Dashboard() {
       // Only sync from quality_evaluations starting from SEP 2026 onwards; JAN–AUG 2026 keep manual values
       if (hasQualityCol && isQualitySyncEnabled(year, targetMonth)) {
         const wr = getQualityWeekRange(targetMonth);
-        const sectionSlug = getQaSectionSlug(team);
-        const isChatT = team === 'Mohammed Dlshad Team';
         const syncedMonthsMap = qaCache['config_sync_status']?.synced_months || null;
-        const syncKey = `${year}_${targetMonth.toUpperCase()}_${sectionSlug}`;
-        const isMonthSynced = !syncedMonthsMap || Boolean(syncedMonthsMap[syncKey]);
 
         if (wr) {
           for (const row of mergedRows) {
+            const rowTeam = row.team || team;
+            const sectionSlug = getQaSectionSlug(rowTeam);
+            const isChatT = rowTeam === 'Mohammed Dlshad Team';
+            const syncKey = `${year}_${targetMonth.toUpperCase()}_${sectionSlug}`;
+            const isMonthSynced = !syncedMonthsMap || Boolean(syncedMonthsMap[syncKey]);
+
             if (!isMonthSynced) {
               row['quality'] = "";
               continue;
@@ -2794,6 +2826,90 @@ export default function Dashboard() {
 
   const fetchData = async (forceRefresh = false) => {
     if (!session || Object.keys(columnsMap).length === 0) return;
+
+    if (isCombinedCallCenter) {
+      const cacheKey = `Combined_CallCenter_${selectedYear}`;
+      const teamCols = getEffectiveColumns('Ankido Buya Team', selectedMonth, selectedYear, columnsMap['Ankido Buya Team'] || columnsMap['Younis Kamal Team'] || DEFAULT_OTHER_COLUMNS);
+      const isAgg = Object.keys(aggregateMap).includes(selectedMonth);
+
+      // Fast path: In-memory cache hit
+      if (!forceRefresh && teamDataCacheRef.current[cacheKey]) {
+        const { roster, allYearData } = teamDataCacheRef.current[cacheKey];
+        setYearMetrics(allYearData);
+        const computed = buildComputedRows(
+          roster,
+          allYearData,
+          selectedMonth,
+          teamCols,
+          isAgg,
+          qaCacheRef.current,
+          'Ankido Buya Team',
+          selectedYear
+        );
+        setRows(computed);
+        setLoading(false);
+        const monthsToCheck = isAgg ? (aggregateMap[selectedMonth] || []) : [selectedMonth];
+        fetchMissingQaDocs(roster.filter(m => m.team === 'Younis Kamal Team'), monthsToCheck, 'Younis Kamal Team', selectedYear, 'younis_metrics');
+        fetchMissingQaDocs(roster.filter(m => m.team === 'Ankido Buya Team'), monthsToCheck, 'Ankido Buya Team', selectedYear, 'ankido_metrics');
+        return;
+      }
+
+      setLoading(true);
+      setErrorMsg(null);
+
+      try {
+        const [younisMembersSnap, ankidoMembersSnap, younisMetricsSnap, ankidoMetricsSnap] = await Promise.all([
+          getDocs(query(collection(db, 'team_members'), where('team', '==', 'Younis Kamal Team'))),
+          getDocs(query(collection(db, 'team_members'), where('team', '==', 'Ankido Buya Team'))),
+          getDocs(query(collection(db, 'younis_metrics'), where('year', '==', selectedYear))),
+          getDocs(query(collection(db, 'ankido_metrics'), where('year', '==', selectedYear)))
+        ]);
+
+        const younisRoster = younisMembersSnap.docs.map(d => ({ id: d.id, ...d.data(), team: 'Younis Kamal Team' })) as any[];
+        const ankidoRoster = ankidoMembersSnap.docs.map(d => ({ id: d.id, ...d.data(), team: 'Ankido Buya Team' })) as any[];
+        const roster = [...younisRoster, ...ankidoRoster].sort((a, b) => (a.agent_name > b.agent_name ? 1 : -1));
+
+        const younisNames = new Set(younisRoster.map(d => (d.agent_name || "").trim().toLowerCase()));
+        const ankidoNames = new Set(ankidoRoster.map(d => (d.agent_name || "").trim().toLowerCase()));
+
+        const younisData = younisMetricsSnap.docs
+          .map(d => ({ id: d.id, ...d.data(), team: 'Younis Kamal Team' }))
+          .filter((d: any) => younisNames.has((d.agent_name || "").trim().toLowerCase()));
+
+        const ankidoData = ankidoMetricsSnap.docs
+          .map(d => ({ id: d.id, ...d.data(), team: 'Ankido Buya Team' }))
+          .filter((d: any) => ankidoNames.has((d.agent_name || "").trim().toLowerCase()));
+
+        const allYearData = [...younisData, ...ankidoData];
+
+        teamDataCacheRef.current[cacheKey] = { roster, allYearData };
+        setYearMetrics(allYearData);
+
+        const computed = buildComputedRows(
+          roster,
+          allYearData,
+          selectedMonth,
+          teamCols,
+          isAgg,
+          qaCacheRef.current,
+          'Ankido Buya Team',
+          selectedYear
+        );
+        setRows(computed);
+
+        const monthsToCheck = isAgg ? (aggregateMap[selectedMonth] || []) : [selectedMonth];
+        fetchMissingQaDocs(younisRoster, monthsToCheck, 'Younis Kamal Team', selectedYear, 'younis_metrics');
+        fetchMissingQaDocs(ankidoRoster, monthsToCheck, 'Ankido Buya Team', selectedYear, 'ankido_metrics');
+      } catch (err: any) {
+        console.error("Error fetching combined data:", err);
+        setErrorMsg(err.message);
+        setRows([]);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     const cacheKey = `${selectedTeam}_${selectedYear}`;
     const teamCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
     const isAgg = Object.keys(aggregateMap).includes(selectedMonth);
@@ -2867,10 +2983,12 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => { fetchData(); }, [selectedMonth, selectedTeam, selectedYear, session, columnsMap]);
+  useEffect(() => { fetchData(); }, [selectedMonth, selectedTeam, selectedYear, session, columnsMap, isCombinedCallCenter]);
 
   const handleChange = (index: number, field: string, value: string) => {
-    const teamCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
+    const teamCols = isCombinedCallCenter
+      ? getEffectiveColumns('Ankido Buya Team', selectedMonth, selectedYear, columnsMap['Ankido Buya Team'] || DEFAULT_OTHER_COLUMNS)
+      : getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
     const col = teamCols.find(c => c.id === field);
     if (col && col.type === 'time') {
       const trimmed = value.trim();
@@ -2901,7 +3019,9 @@ export default function Dashboard() {
     const row = rows[index];
     if (!row || !row.agent_name) return;
 
-    const teamCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
+    const teamCols = isCombinedCallCenter
+      ? getEffectiveColumns('Ankido Buya Team', selectedMonth, selectedYear, columnsMap['Ankido Buya Team'] || DEFAULT_OTHER_COLUMNS)
+      : getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
     const updatedRow = { ...row };
     let hasTimeFormatChanged = false;
 
@@ -2923,18 +3043,20 @@ export default function Dashboard() {
 
     try {
       const { _memberId, _readonly, ...cleanRow } = updatedRow;
-      const payload: any = { ...cleanRow, team: selectedTeam, month: selectedMonth, year: selectedYear, _arch: getSystemAuthor() };
+      const rowTeam = updatedRow.team || (isCombinedCallCenter ? (rows[index]?.team || 'Ankido Buya Team') : selectedTeam);
+      const targetTable = rowTeam === 'Younis Kamal Team' ? 'younis_metrics' : (rowTeam === 'Ankido Buya Team' ? 'ankido_metrics' : tableName);
+      const payload: any = { ...cleanRow, team: rowTeam, month: selectedMonth, year: selectedYear, _arch: getSystemAuthor() };
       if (cleanRow.call_handled !== undefined) {
         payload.handled = cleanRow.call_handled;
       }
 
       if (updatedRow.id) {
-        await updateDoc(doc(db, tableName, updatedRow.id), payload);
+        await updateDoc(doc(db, targetTable, updatedRow.id), payload);
         updateCachedMetric(payload, updatedRow.id);
       } else {
-        const docRef = await addDoc(collection(db, tableName), payload);
+        const docRef = await addDoc(collection(db, targetTable), payload);
         const newRows = [...rows];
-        newRows[index] = { ...payload, id: docRef.id, _memberId: updatedRow._memberId };
+        newRows[index] = { ...payload, id: docRef.id, _memberId: updatedRow._memberId, team: rowTeam };
         setRows(newRows);
         updateCachedMetric(payload, docRef.id);
       }
@@ -3216,7 +3338,9 @@ export default function Dashboard() {
     const bounds = getSelectionBounds();
     if (!bounds) return;
 
-    const teamCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
+    const teamCols = isCombinedCallCenter
+      ? getEffectiveColumns('Ankido Buya Team', selectedMonth, selectedYear, columnsMap['Ankido Buya Team'] || DEFAULT_OTHER_COLUMNS)
+      : getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
     const newRows = [...rows];
     const rowsToSave: any[] = [];
 
@@ -3248,15 +3372,17 @@ export default function Dashboard() {
     try {
       for (const item of rowsToSave) {
         const { _memberId, _readonly, ...cleanRow } = item.row;
-        const payload: any = { ...cleanRow, team: selectedTeam, month: selectedMonth, year: selectedYear };
+        const rowTeam = item.row.team || (isCombinedCallCenter ? 'Ankido Buya Team' : selectedTeam);
+        const targetTable = rowTeam === 'Younis Kamal Team' ? 'younis_metrics' : (rowTeam === 'Ankido Buya Team' ? 'ankido_metrics' : tableName);
+        const payload: any = { ...cleanRow, team: rowTeam, month: selectedMonth, year: selectedYear };
         if (cleanRow.call_handled !== undefined) {
           payload.handled = cleanRow.call_handled;
         }
         if (item.row.id) {
-          await updateDoc(doc(db, tableName, item.row.id), payload);
+          await updateDoc(doc(db, targetTable, item.row.id), payload);
           updateCachedMetric(payload, item.row.id);
         } else {
-          const docRef = await addDoc(collection(db, tableName), payload);
+          const docRef = await addDoc(collection(db, targetTable), payload);
           item.row.id = docRef.id;
           updateCachedMetric(payload, docRef.id);
         }
@@ -3324,7 +3450,9 @@ export default function Dashboard() {
     const bounds = getSelectionBounds();
     const startRow = bounds ? bounds.minRow : 0;
     const startCol = bounds ? bounds.minCol : 0;
-    const teamCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
+    const teamCols = isCombinedCallCenter
+      ? getEffectiveColumns('Ankido Buya Team', selectedMonth, selectedYear, columnsMap['Ankido Buya Team'] || DEFAULT_OTHER_COLUMNS)
+      : getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
 
     const newRows = [...rows];
     const rowsToSave: any[] = [];
@@ -3367,15 +3495,17 @@ export default function Dashboard() {
     try {
       for (const item of rowsToSave) {
         const { _memberId, _readonly, ...cleanRow } = item.row;
-        const payload: any = { ...cleanRow, team: selectedTeam, month: selectedMonth, year: selectedYear };
+        const rowTeam = item.row.team || (isCombinedCallCenter ? 'Ankido Buya Team' : selectedTeam);
+        const targetTable = rowTeam === 'Younis Kamal Team' ? 'younis_metrics' : (rowTeam === 'Ankido Buya Team' ? 'ankido_metrics' : tableName);
+        const payload: any = { ...cleanRow, team: rowTeam, month: selectedMonth, year: selectedYear };
         if (cleanRow.call_handled !== undefined) {
           payload.handled = cleanRow.call_handled;
         }
         if (item.row.id) {
-          await updateDoc(doc(db, tableName, item.row.id), payload);
+          await updateDoc(doc(db, targetTable, item.row.id), payload);
           updateCachedMetric(payload, item.row.id);
         } else {
-          const docRef = await addDoc(collection(db, tableName), payload);
+          const docRef = await addDoc(collection(db, targetTable), payload);
           item.row.id = docRef.id;
           updateCachedMetric(payload, docRef.id);
         }
@@ -3803,7 +3933,9 @@ export default function Dashboard() {
       ? allMembers.filter(m => m.team === userProfile.team)
       : allMembers;
 
-    const activeCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
+    const activeCols = isCombinedCallCenter
+      ? getEffectiveColumns('Ankido Buya Team', selectedMonth, selectedYear, columnsMap['Ankido Buya Team'] || columnsMap['Younis Kamal Team'] || DEFAULT_OTHER_COLUMNS)
+      : getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
     const manageCols = manageColsTeam === 'ALL'
       ? (columnsMap['Ankido Buya Team'] || columnsMap['Younis Kamal Team'] || columnsMap[selectedTeam] || [])
       : (columnsMap[manageColsTeam] || []);
@@ -4055,49 +4187,112 @@ export default function Dashboard() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-6 mb-6 sm:mb-8">
-            {activeTeams.map((teamName) => {
-              const isActive = selectedTeam === teamName;
-              const teamCols = getEffectiveColumns(teamName, 'YEAR - AVG', selectedYear, columnsMap[teamName] || []);
-              return (
-                <button
-                  key={teamName}
-                  onClick={() => setSelectedTeam(teamName)}
-                  className={`text-left p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm flex flex-col justify-between transition-all border cursor-pointer relative overflow-hidden
-                    ${isActive 
-                      ? 'bg-gradient-to-br from-[#1C6B53] to-[#155a45] text-white border-transparent shadow-lg shadow-[#1C6B53]/20 ring-2 ring-[#1C6B53]/50 scale-[1.01]' 
-                      : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border-gray-200/80 dark:border-gray-700/80 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md'}`}
-                >
-                  <div className="flex justify-between items-start w-full mb-3 sm:mb-4">
+          <>
+            {isCombinedCallCenter && (
+              <div className="mb-5 sm:mb-6 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#0b3327] via-[#1C6B53] to-[#124d3a] text-white shadow-xl shadow-[#1C6B53]/25 border border-emerald-400/30 relative overflow-hidden animate-in fade-in slide-in-from-top-3 duration-200">
+                <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 relative z-10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/20 text-white flex items-center justify-center font-black shadow-md border border-white/20">
+                      <PhoneCall size={20} />
+                    </div>
                     <div>
-                      <span className={`text-[10px] font-bold tracking-widest block mb-0.5 sm:mb-1 ${isActive ? 'text-emerald-200' : 'text-gray-400'}`}>
-                        Team Performance
-                      </span>
-                      <h2 className="text-base sm:text-lg font-bold tracking-tight">
-                        {teamName}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300">
+                          Combined Call Center Analytics
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                          Younis + Ankido
+                        </span>
+                      </div>
+                      <h2 className="text-base sm:text-xl font-black tracking-tight text-white mt-0.5">
+                        Call Center Combined Performance
                       </h2>
                     </div>
-                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
-                      {isActive ? 'Selected' : 'Select'}
-                    </span>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-1.5 sm:gap-2 w-full mt-2">
-                    {teamCols.slice(0, 8).map(col => (
-                      <div key={col.id} className={`p-1.5 sm:p-2 rounded-xl text-center border ${isActive ? 'bg-white/10 border-white/10' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-100 dark:border-gray-700'}`}>
-                        <div className={`text-[9px] font-bold truncate ${isActive ? 'text-emerald-100/80' : 'text-gray-400'}`} title={col.label}>
-                          {toTitleCase(col.label)}
-                        </div>
-                        <div className="font-extrabold text-xs sm:text-sm mt-0.5">
-                          {isActive ? calcYearTeamStat(col) : '-'}
-                        </div>
-                      </div>
-                    ))}
+                  <div className="flex items-center gap-2 sm:gap-2.5">
+                    <span className="text-xs px-3 py-1 rounded-full font-bold bg-white/15 text-emerald-100 border border-white/20 backdrop-blur-md">
+                      {rows.length} Total Call Agents
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowCcBreakdownModal(true)}
+                      className="px-3.5 py-1.5 rounded-xl font-bold text-xs bg-amber-400 text-gray-950 hover:bg-amber-300 transition shadow-md flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <BarChart3 size={14} />
+                      <span>Side-by-Side Breakdown</span>
+                    </button>
                   </div>
-                </button>
-              );
-            })}
-          </div>
+                </div>
+
+                <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 w-full relative z-10">
+                  {(getEffectiveColumns('Ankido Buya Team', 'YEAR - AVG', selectedYear, columnsMap['Ankido Buya Team'] || DEFAULT_OTHER_COLUMNS)).slice(0, 8).map(col => (
+                    <div key={col.id} className="p-2 sm:p-2.5 rounded-xl text-center bg-white/10 border border-white/10 backdrop-blur-md">
+                      <div className="text-[10px] font-bold truncate text-emerald-100/90" title={col.label}>
+                        {toTitleCase(col.label)}
+                      </div>
+                      <div className="font-black text-xs sm:text-base mt-1 text-white tabular-nums">
+                        {calcYearTeamStat(col)}
+                      </div>
+                      <div className="text-[9px] text-emerald-300/70 font-semibold mt-0.5 uppercase">
+                        {toTitleCase(col.aggregation)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-6 mb-6 sm:mb-8">
+              {activeTeams.map((teamName) => {
+                const isActive = isCombinedCallCenter 
+                  ? (teamName === 'Younis Kamal Team' || teamName === 'Ankido Buya Team')
+                  : selectedTeam === teamName;
+                const teamCols = getEffectiveColumns(teamName, 'YEAR - AVG', selectedYear, columnsMap[teamName] || []);
+                return (
+                  <button
+                    key={teamName}
+                    onClick={() => {
+                      setSelectedTeam(teamName);
+                      setIsCombinedCallCenter(false);
+                    }}
+                    className={`text-left p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm flex flex-col justify-between transition-all border cursor-pointer relative overflow-hidden
+                      ${isActive 
+                        ? 'bg-gradient-to-br from-[#1C6B53] to-[#155a45] text-white border-transparent shadow-lg shadow-[#1C6B53]/20 ring-2 ring-[#1C6B53]/50 scale-[1.01]' 
+                        : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border-gray-200/80 dark:border-gray-700/80 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md'}`}
+                  >
+                    <div className="flex justify-between items-start w-full mb-3 sm:mb-4">
+                      <div>
+                        <span className={`text-[10px] font-bold tracking-widest block mb-0.5 sm:mb-1 ${isActive ? 'text-emerald-200' : 'text-gray-400'}`}>
+                          {isCombinedCallCenter && (teamName === 'Younis Kamal Team' || teamName === 'Ankido Buya Team') ? 'Call Center Member' : 'Team Performance'}
+                        </span>
+                        <h2 className="text-base sm:text-lg font-bold tracking-tight">
+                          {teamName}
+                        </h2>
+                      </div>
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
+                        {isActive ? (isCombinedCallCenter ? 'Active (CC)' : 'Selected') : 'Select'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-1.5 sm:gap-2 w-full mt-2">
+                      {teamCols.slice(0, 8).map(col => (
+                        <div key={col.id} className={`p-1.5 sm:p-2 rounded-xl text-center border ${isActive ? 'bg-white/10 border-white/10' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-100 dark:border-gray-700'}`}>
+                          <div className={`text-[9px] font-bold truncate ${isActive ? 'text-emerald-100/80' : 'text-gray-400'}`} title={col.label}>
+                            {toTitleCase(col.label)}
+                          </div>
+                          <div className="font-extrabold text-xs sm:text-sm mt-0.5">
+                            {isActive ? calcYearTeamStat(col, teamName) : '-'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {/* Month Tabs & Controls Bar */}
@@ -4212,6 +4407,29 @@ export default function Dashboard() {
               </button>
             );
           })}
+
+          {/* Separator */}
+          <div className="h-5 w-[1.5px] bg-gray-300 dark:bg-gray-600 mx-0.5 sm:mx-1 flex-shrink-0" />
+
+          {/* Button next to H1 / H2: Younis + Ankido Combined Data */}
+          <button
+            type="button"
+            onClick={() => setIsCombinedCallCenter(prev => !prev)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex-shrink-0 flex items-center gap-1.5 border cursor-pointer ${
+              isCombinedCallCenter
+                ? 'bg-gradient-to-r from-[#1C6B53] to-[#155a45] text-white border-transparent shadow-md shadow-[#1C6B53]/30 ring-2 ring-[#1C6B53]/50 scale-[1.02]'
+                : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 hover:shadow-xs'
+            }`}
+            title="عرض داتا تيم يونس وتيم انكيدو ويه بعض (Call Center Combined Data)"
+          >
+            <Users size={13} className={isCombinedCallCenter ? 'text-amber-300 animate-pulse' : 'text-emerald-600 dark:text-emerald-400'} />
+            <span>Younis + Ankido</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
+              isCombinedCallCenter ? 'bg-white/20 text-white' : 'bg-emerald-200/60 dark:bg-emerald-800/60 text-emerald-900 dark:text-emerald-200'
+            }`}>
+              CC
+            </span>
+          </button>
         </div>
 
         {/* Mobile Swipe Hint */}
@@ -4270,7 +4488,18 @@ export default function Dashboard() {
                             {row.agent_name ? row.agent_name.charAt(0).toUpperCase() : <Users size={12} />}
                           </div>
                         )}
-                        <span className="font-bold truncate max-w-[120px] sm:max-w-none text-gray-800 dark:text-gray-100">{row.display_name || row.agent_name}</span>
+                        <div className="flex items-center gap-1.5 truncate">
+                          <span className="font-bold truncate max-w-[110px] sm:max-w-none text-gray-800 dark:text-gray-100">{row.display_name || row.agent_name}</span>
+                          {isCombinedCallCenter && row.team && (
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-extrabold shrink-0 border ${
+                              row.team === 'Younis Kamal Team'
+                                ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border-amber-300/40'
+                                : 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border-emerald-300/40'
+                            }`}>
+                              {row.team === 'Younis Kamal Team' ? 'Younis' : 'Ankido'}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       {activeCols.map((col, colIndex) => {
                         const isSelected = isCellSelected(index, colIndex);
@@ -4329,7 +4558,7 @@ export default function Dashboard() {
                     style={{ gridTemplateColumns: `minmax(180px, 2.2fr) repeat(${activeCols.length}, minmax(105px, 1fr))` }}>
                  <div className="text-xs font-black text-gray-800 dark:text-gray-200 pl-2 sticky left-0 bg-[#F4F9F6] dark:bg-gray-850 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] flex items-center gap-2">
                    <span className="w-2 h-2 rounded-full bg-[#1C6B53] dark:bg-emerald-400" />
-                   <span>Team Average</span>
+                   <span>{isCombinedCallCenter ? 'Call Center Combined Total / Avg' : 'Team Average'}</span>
                  </div>
                  {activeCols.map(col => (
                    <div key={col.id} className="text-center text-xs sm:text-[13px] font-black text-[#1C6B53] dark:text-emerald-400 tabular-nums px-1">
@@ -4344,6 +4573,99 @@ export default function Dashboard() {
           Agent names are fixed from the roster. Use "Settings" to edit members or columns. Data auto-saves when you click out of a field.
         </div>
       </div>
+
+      {/* Side-by-Side Call Center Comparison Breakdown Modal */}
+      {showCcBreakdownModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCcBreakdownModal(false)} />
+          <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-5 sm:p-7 w-full max-w-2xl border border-gray-200 dark:border-gray-800 z-10 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-start justify-between mb-5 pb-4 border-b border-gray-200/80 dark:border-gray-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#1C6B53] to-teal-500 text-white flex items-center justify-center shadow-md">
+                  <BarChart3 size={20} />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-xl font-black text-gray-900 dark:text-white tracking-tight">
+                    Call Center Side-by-Side Breakdown
+                  </h2>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium">
+                    Younis Kamal Team vs. Ankido Buya Team • {selectedMonth} {selectedYear}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowCcBreakdownModal(false)}
+                className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center justify-center transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Breakdown Table */}
+            <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xs mb-5">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 font-black">
+                    <th className="p-3">KPI / Metric</th>
+                    <th className="p-3 text-center text-amber-700 dark:text-amber-400">Younis Kamal Team</th>
+                    <th className="p-3 text-center text-emerald-700 dark:text-emerald-400">Ankido Buya Team</th>
+                    <th className="p-3 text-center bg-[#1C6B53]/10 text-[#1C6B53] dark:text-emerald-300">Combined Total / Avg</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800 font-bold text-gray-800 dark:text-gray-200">
+                  <tr className="hover:bg-gray-50/50 dark:hover:bg-gray-850/50">
+                    <td className="p-3 font-extrabold flex items-center gap-2">
+                      <Users size={14} className="text-gray-400" />
+                      <span>Active Agents</span>
+                    </td>
+                    <td className="p-3 text-center tabular-nums font-semibold">
+                      {rows.filter(r => r.team === 'Younis Kamal Team').length}
+                    </td>
+                    <td className="p-3 text-center tabular-nums font-semibold">
+                      {rows.filter(r => r.team === 'Ankido Buya Team').length}
+                    </td>
+                    <td className="p-3 text-center font-black bg-[#1C6B53]/5 text-[#1C6B53] dark:text-emerald-300 tabular-nums">
+                      {rows.length}
+                    </td>
+                  </tr>
+                  {activeCols.map(col => {
+                    const younisVal = calcAvg(col, rows.filter(r => r.team === 'Younis Kamal Team'));
+                    const ankidoVal = calcAvg(col, rows.filter(r => r.team === 'Ankido Buya Team'));
+                    const combinedVal = calcAvg(col, rows);
+                    return (
+                      <tr key={col.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-850/50">
+                        <td className="p-3">
+                          <span className="font-extrabold">{toTitleCase(col.label)}</span>
+                          <span className="text-[10px] text-gray-400 ml-1.5 uppercase font-medium">({col.aggregation})</span>
+                        </td>
+                        <td className="p-3 text-center tabular-nums font-semibold text-gray-700 dark:text-gray-300">
+                          {younisVal}
+                        </td>
+                        <td className="p-3 text-center tabular-nums font-semibold text-gray-700 dark:text-gray-300">
+                          {ankidoVal}
+                        </td>
+                        <td className="p-3 text-center font-black bg-[#1C6B53]/5 text-[#1C6B53] dark:text-emerald-300 tabular-nums">
+                          {combinedVal}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowCcBreakdownModal(false)}
+                className="px-5 py-2.5 bg-[#1C6B53] hover:bg-[#155a45] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Manage Settings Modal (System Configuration) */}
       {showManageMembers && isAdmin && (
