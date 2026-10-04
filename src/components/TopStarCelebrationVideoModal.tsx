@@ -175,8 +175,8 @@ export default function TopStarCelebrationVideoModal({
         id: "chat_title",
         type: "team_title",
         team: "chat",
-        title: "Chat Operations Team",
-        subtitle: "Mohammed Dlshad Team",
+        title: "Chat Team",
+        subtitle: "Top 3 Stars Recognition",
         durationMs: 2800
       });
 
@@ -187,7 +187,7 @@ export default function TopStarCelebrationVideoModal({
           id: `chat_${p.rank}`,
           type: "performer",
           team: "chat",
-          teamLabel: "Chat Operations",
+          teamLabel: "Chat Team",
           name: p.name,
           rank: p.rank,
           score: p.score,
@@ -204,8 +204,8 @@ export default function TopStarCelebrationVideoModal({
         id: "call_title",
         type: "team_title",
         team: "call",
-        title: "Call Center Operations",
-        subtitle: "Inbound & Outbound Voice Support",
+        title: "Call Team",
+        subtitle: "Top 3 Stars Recognition",
         durationMs: 2800
       });
 
@@ -216,7 +216,7 @@ export default function TopStarCelebrationVideoModal({
           id: `call_${p.rank}`,
           type: "performer",
           team: "call",
-          teamLabel: "Call Center",
+          teamLabel: "Call Team",
           name: p.name,
           rank: p.rank,
           score: p.score,
@@ -338,17 +338,17 @@ export default function TopStarCelebrationVideoModal({
     if (slide.type === "intro" || slide.type === "team_title" || slide.type === "outro") {
       // 1. Luxury Dark Emerald & Obsidian Silk
       const grad = ctx.createRadialGradient(size * 0.5, size * 0.35, size * 0.1, size * 0.5, size * 0.5, size * 0.7);
-      grad.addColorStop(0, "#0C342A");
-      grad.addColorStop(0.5, "#072019");
+      grad.addColorStop(0, "#092E24");
+      grad.addColorStop(0.5, "#061F18");
       grad.addColorStop(1, "#03110D");
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, size, size);
 
-      // Subtle warm champagne gold light glow
-      const goldGlow = ctx.createRadialGradient(size * 0.5, size * 0.45, 10, size * 0.5, size * 0.45, size * 0.45);
-      goldGlow.addColorStop(0, "rgba(245, 158, 11, 0.14)");
-      goldGlow.addColorStop(1, "rgba(245, 158, 11, 0)");
-      ctx.fillStyle = goldGlow;
+      // Subtle FIB Teal ambient glow
+      const tealGlow = ctx.createRadialGradient(size * 0.5, size * 0.45, 10, size * 0.5, size * 0.45, size * 0.45);
+      tealGlow.addColorStop(0, "rgba(0, 169, 145, 0.22)");
+      tealGlow.addColorStop(1, "rgba(0, 169, 145, 0)");
+      ctx.fillStyle = tealGlow;
       ctx.fillRect(0, 0, size, size);
 
       // Top Logo: FIB
@@ -357,7 +357,7 @@ export default function TopStarCelebrationVideoModal({
       ctx.textBaseline = "middle";
 
       const logoY = size * 0.34;
-      ctx.fillStyle = "#10B981";
+      ctx.fillStyle = "#00A991";
       ctx.font = `900 ${Math.round(size * 0.046)}px 'Outfit', sans-serif`;
       ctx.fillText("B", size * 0.45, logoY);
 
@@ -366,35 +366,40 @@ export default function TopStarCelebrationVideoModal({
       ctx.fillText("FIB", size * 0.53, logoY);
 
       // Elegant Title with Soft Glow
-      ctx.shadowColor = "rgba(16, 185, 129, 0.4)";
+      ctx.shadowColor = "rgba(0, 169, 145, 0.4)";
       ctx.shadowBlur = 18;
-      ctx.fillStyle = "#FFFFFF";
-      ctx.font = `800 ${Math.round(size * 0.052)}px 'Plus Jakarta Sans', sans-serif`;
 
       if (slide.type === "intro") {
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = `800 ${Math.round(size * 0.052)}px 'Plus Jakarta Sans', sans-serif`;
         ctx.fillText("CONTACT CENTER", size * 0.5, size * 0.47);
-        ctx.fillText("TOP STARS AWARDS", size * 0.5, size * 0.54);
+        ctx.fillStyle = "#00A991";
+        ctx.fillText("TOP STARS RECOGNITION", size * 0.5, size * 0.54);
 
         ctx.shadowBlur = 0;
-        ctx.fillStyle = "#F59E0B";
+        ctx.fillStyle = "#2DD4BF";
         ctx.font = `bold ${Math.round(size * 0.03)}px 'Plus Jakarta Sans', sans-serif`;
         ctx.fillText(`• ${selectedMonth.toUpperCase()} ${selectedYear} •`, size * 0.5, size * 0.62);
       } else if (slide.type === "team_title") {
-        ctx.fillText("TOP 3 PERFORMERS", size * 0.5, size * 0.47);
         ctx.shadowBlur = 0;
-        ctx.fillStyle = "#34D399";
-        ctx.font = `800 ${Math.round(size * 0.05)}px 'Plus Jakarta Sans', sans-serif`;
-        ctx.fillText(slide.title || "", size * 0.5, size * 0.55);
-        ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+        ctx.fillStyle = "#2DD4BF";
+        ctx.font = `bold ${Math.round(size * 0.026)}px 'Plus Jakarta Sans', sans-serif`;
+        ctx.fillText("TOP 3 STARS", size * 0.5, size * 0.45);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = `800 ${Math.round(size * 0.056)}px 'Plus Jakarta Sans', sans-serif`;
+        ctx.fillText(slide.title || "", size * 0.5, size * 0.54);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
         ctx.font = `500 ${Math.round(size * 0.026)}px 'Plus Jakarta Sans', sans-serif`;
         ctx.fillText(slide.subtitle || "", size * 0.5, size * 0.62);
       } else if (slide.type === "outro") {
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = `800 ${Math.round(size * 0.052)}px 'Plus Jakarta Sans', sans-serif`;
         ctx.fillText("THANK YOU FOR YOUR EFFORTS", size * 0.5, size * 0.48);
         ctx.shadowBlur = 0;
         ctx.fillStyle = "#E2E8F0";
         ctx.font = `500 ${Math.round(size * 0.028)}px 'Plus Jakarta Sans', sans-serif`;
         ctx.fillText("Together We Deliver Excellence Everyday", size * 0.5, size * 0.56);
-        ctx.fillStyle = "#F59E0B";
+        ctx.fillStyle = "#00A991";
         ctx.font = `bold ${Math.round(size * 0.024)}px 'Plus Jakarta Sans', sans-serif`;
         ctx.fillText("Customer Experience Operations • First Iraqi Bank", size * 0.5, size * 0.64);
       }
@@ -412,7 +417,7 @@ export default function TopStarCelebrationVideoModal({
       // Soft ambient card glow
       ctx.save();
       const rank = slide.rank || 1;
-      const rankColor = rank === 1 ? "#F59E0B" : rank === 2 ? "#CBD5E1" : "#D97706";
+      const rankColor = rank === 1 ? "#00A991" : rank === 2 ? "#FFFFFF" : "#2DD4BF";
 
       // Top Header Pill
       const pillW = size * 0.44;
@@ -424,7 +429,7 @@ export default function TopStarCelebrationVideoModal({
       ctx.roundRect(pillX, pillY, pillW, pillH, 14);
       ctx.fill();
 
-      ctx.fillStyle = "#34D399";
+      ctx.fillStyle = "#2DD4BF";
       ctx.font = `bold ${Math.round(size * 0.022)}px 'Plus Jakarta Sans', sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -451,9 +456,9 @@ export default function TopStarCelebrationVideoModal({
       ctx.fillText(initials, size * 0.5, photoY + photoH * 0.5);
 
       // Rank Medal Pill
-      const badgeW = size * 0.34;
+      const badgeW = size * 0.36;
       const badgeH = size * 0.048;
-      ctx.fillStyle = rank === 1 ? "rgba(245, 158, 11, 0.25)" : "rgba(255, 255, 255, 0.15)";
+      ctx.fillStyle = rank === 1 ? "rgba(0, 169, 145, 0.35)" : "rgba(255, 255, 255, 0.15)";
       ctx.beginPath();
       ctx.roundRect(size * 0.5 - badgeW / 2, photoY + photoH - badgeH / 2, badgeW, badgeH, 12);
       ctx.fill();
@@ -465,19 +470,19 @@ export default function TopStarCelebrationVideoModal({
       ctx.font = `800 ${Math.round(size * 0.022)}px 'Plus Jakarta Sans', sans-serif`;
       ctx.fillText(`${rank === 1 ? "🥇 CHAMPION" : rank === 2 ? "🥈 1ST RUNNER-UP" : "🥉 2ND RUNNER-UP"}`, size * 0.5, photoY + photoH);
 
-      // Agent Name
+      // Agent Name in crisp pure White
       ctx.fillStyle = "#FFFFFF";
       ctx.font = `800 ${Math.round(size * 0.048)}px 'Plus Jakarta Sans', sans-serif`;
       ctx.fillText(slide.name || "", size * 0.5, size * 0.77);
 
       // Score Pill
-      ctx.fillStyle = "#10B981";
+      ctx.fillStyle = "#2DD4BF";
       ctx.font = `800 ${Math.round(size * 0.038)}px 'Plus Jakarta Sans', sans-serif`;
       ctx.fillText(`${slide.score} PTS`, size * 0.5, size * 0.83);
 
       // Motivational Quote
       if (slide.quote) {
-        ctx.fillStyle = "#FDE68A";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
         ctx.font = `italic 500 ${Math.round(size * 0.022)}px 'Plus Jakarta Sans', sans-serif`;
         ctx.fillText(`"${slide.quote}"`, size * 0.5, size * 0.89);
       }
@@ -615,7 +620,7 @@ export default function TopStarCelebrationVideoModal({
       list.push({
         name: p.name,
         team: "call",
-        teamLabel: "Call Center",
+        teamLabel: "Call Team",
         rank: p.rank,
         score: p.score,
         photoUrl: getPhoto(p.name)
@@ -660,7 +665,7 @@ export default function TopStarCelebrationVideoModal({
         {/* Top Header Bar */}
         <div className="flex items-center justify-between px-4 py-3 bg-[#08221B]/95 border-b border-emerald-500/20 backdrop-blur-md z-30">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-400 to-yellow-500 text-gray-950 flex items-center justify-center font-black shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-[#00A991] text-white flex items-center justify-center font-black shadow-sm">
               <Film size={15} />
             </div>
             <div>
@@ -679,7 +684,7 @@ export default function TopStarCelebrationVideoModal({
               onClick={() => setShowPhotoManager(p => !p)}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                 showPhotoManager 
-                  ? "bg-amber-400 text-gray-950 shadow-sm" 
+                  ? "bg-[#00A991] text-white shadow-sm" 
                   : "bg-white/10 hover:bg-white/15 text-white/90 border border-white/10"
               }`}
               title="Upload & Manage Employee Photos"
@@ -727,34 +732,32 @@ export default function TopStarCelebrationVideoModal({
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 sm:p-8 bg-gradient-to-br from-[#0B342A] via-[#07251E] to-[#041510] overflow-hidden">
               
               {/* Subtle Ambient Radial Lighting */}
-              <div className="absolute top-1/3 w-80 h-80 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute bottom-1/4 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute top-1/3 w-80 h-80 bg-[#00A991]/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-1/4 w-80 h-80 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
 
               {/* FIB Brand Badge */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md mb-6 shadow-sm">
-                <div className="w-6 h-6 rounded-lg bg-[#00A991] text-white flex items-center justify-center font-black text-sm">
-                  B
-                </div>
+              <div className="flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md mb-6 shadow-sm">
+                <img src="/logo.webp" alt="FIB" className="h-6 w-auto object-contain" />
                 <span className="font-['Outfit',sans-serif] font-black text-sm text-white tracking-widest">
                   FIRST IRAQI BANK
                 </span>
               </div>
 
-              {/* Classy Headline */}
+              {/* Classy Headline: White on top, official FIB teal color below */}
               <h1 className="font-black text-2xl sm:text-4xl text-white tracking-tight leading-tight mb-2">
                 CONTACT CENTER<br />
-                <span className="bg-gradient-to-r from-emerald-300 via-teal-200 to-amber-200 bg-clip-text text-transparent">
+                <span className="text-[#00A991] drop-shadow-sm">
                   TOP STARS RECOGNITION
                 </span>
               </h1>
 
               {/* Month Pill */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold font-mono tracking-wider mt-2 mb-4">
-                <Sparkles size={12} className="text-amber-400" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00A991]/20 text-teal-300 border border-[#00A991]/40 text-xs font-bold font-mono tracking-wider mt-2 mb-4">
+                <Sparkles size={12} className="text-[#2DD4BF]" />
                 <span>{selectedMonth.toUpperCase()} {selectedYear}</span>
               </div>
 
-              <p className="text-xs sm:text-sm text-emerald-100/80 font-medium max-w-xs sm:max-w-md">
+              <p className="text-xs sm:text-sm text-emerald-100/90 font-medium max-w-xs sm:max-w-md">
                 Honoring the exceptional performers who drive customer trust and excellence everyday.
               </p>
             </div>
@@ -763,11 +766,11 @@ export default function TopStarCelebrationVideoModal({
           {/* 2. Team Title Slide */}
           {activeSlide.type === "team_title" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 sm:p-8 bg-gradient-to-br from-[#0B342A] via-[#07251E] to-[#041510] overflow-hidden">
-              <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center shadow-xl shadow-emerald-500/20 ring-4 ring-emerald-400/25 mb-4">
+              <div className="w-16 h-16 rounded-3xl bg-[#00A991] text-white flex items-center justify-center shadow-xl shadow-[#00A991]/30 ring-4 ring-[#00A991]/30 mb-4">
                 <Trophy size={32} />
               </div>
 
-              <span className="text-xs font-black uppercase tracking-widest text-amber-400 mb-1">
+              <span className="text-xs font-black uppercase tracking-widest text-[#2DD4BF] mb-1">
                 TOP 3 PODIUM
               </span>
 
@@ -775,7 +778,7 @@ export default function TopStarCelebrationVideoModal({
                 {activeSlide.title}
               </h1>
 
-              <p className="text-xs sm:text-sm text-emerald-200/90 font-bold bg-white/5 border border-white/10 px-4 py-1.5 rounded-xl">
+              <p className="text-xs sm:text-sm text-emerald-100 font-bold bg-white/10 border border-white/15 px-4 py-1.5 rounded-xl">
                 {activeSlide.subtitle}
               </p>
             </div>
@@ -787,16 +790,16 @@ export default function TopStarCelebrationVideoModal({
               
               {/* Top Row: Department Pill on Left, Rank Badge on Right */}
               <div className="flex items-center justify-between w-full relative z-20">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/10 border border-white/15 text-emerald-300 text-[11px] font-bold tracking-wider backdrop-blur-md">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/10 border border-white/15 text-[#2DD4BF] text-[11px] font-bold tracking-wider backdrop-blur-md">
                   <span>{activeSlide.teamLabel}</span>
                 </div>
 
                 <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black tracking-wider shadow-sm ${
                   activeSlide.rank === 1 
-                    ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-gray-950 ring-2 ring-amber-300/40" 
+                    ? "bg-[#00A991] text-white ring-2 ring-teal-300/40" 
                     : activeSlide.rank === 2
-                    ? "bg-gradient-to-r from-slate-200 to-gray-300 text-gray-900 ring-2 ring-slate-300/40"
-                    : "bg-gradient-to-r from-amber-600 to-amber-700 text-white ring-2 ring-amber-500/40"
+                    ? "bg-white/20 text-white ring-2 ring-white/30 backdrop-blur-md"
+                    : "bg-white/10 text-emerald-200 ring-2 ring-emerald-500/30 backdrop-blur-md"
                 }`}>
                   <span>{activeSlide.rank === 1 ? "🥇 Champion" : activeSlide.rank === 2 ? "🥈 1st Runner-Up" : "🥉 2nd Runner-Up"}</span>
                 </div>
@@ -808,10 +811,10 @@ export default function TopStarCelebrationVideoModal({
                   {/* Portrait Frame */}
                   <div className={`w-36 h-48 sm:w-44 sm:h-56 rounded-2xl overflow-hidden shadow-2xl p-1 relative flex items-center justify-center transition-transform duration-300 group-hover:scale-102 ${
                     activeSlide.rank === 1 
-                      ? "bg-gradient-to-tr from-amber-400 via-yellow-200 to-amber-500 ring-4 ring-amber-400/40" 
+                      ? "bg-gradient-to-tr from-[#00A991] via-teal-200 to-white ring-4 ring-[#00A991]/50" 
                       : activeSlide.rank === 2
-                      ? "bg-gradient-to-tr from-slate-200 via-gray-100 to-slate-400 ring-4 ring-slate-300/40"
-                      : "bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-700 ring-4 ring-amber-600/40"
+                      ? "bg-gradient-to-tr from-slate-300 via-white to-slate-400 ring-4 ring-white/30"
+                      : "bg-gradient-to-tr from-[#0B342A] via-teal-600 to-emerald-400 ring-4 ring-emerald-500/30"
                   }`}>
                     <div className="w-full h-full rounded-xl bg-gray-950 overflow-hidden flex items-center justify-center relative">
                       {activeSlide.photoUrl ? (
@@ -839,9 +842,9 @@ export default function TopStarCelebrationVideoModal({
                     title={`Upload/Change photo for ${activeSlide.name}`}
                   >
                     {uploadingAgent === activeSlide.name ? (
-                      <RefreshCw size={14} className="animate-spin text-emerald-600" />
+                      <RefreshCw size={14} className="animate-spin text-[#00A991]" />
                     ) : (
-                      <Camera size={14} className="text-[#1C6B53]" />
+                      <Camera size={14} className="text-[#00A991]" />
                     )}
                   </button>
                 </div>
@@ -852,18 +855,18 @@ export default function TopStarCelebrationVideoModal({
                 {/* Agent Name */}
                 <h2 className="font-extrabold text-xl sm:text-2xl text-white tracking-tight flex items-center gap-1.5">
                   <span>{activeSlide.name}</span>
-                  <span className="text-amber-400 text-sm">✦</span>
+                  <span className="text-[#2DD4BF] text-sm">✦</span>
                 </h2>
 
                 {/* Score Chip */}
-                <div className="inline-flex items-baseline gap-1 px-3 py-0.5 rounded-xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 font-bold text-xs mt-1 mb-2">
+                <div className="inline-flex items-baseline gap-1 px-3 py-0.5 rounded-xl bg-[#00A991]/20 border border-[#00A991]/40 text-[#2DD4BF] font-bold text-xs mt-1 mb-2">
                   <span className="text-white text-sm font-black font-mono">{activeSlide.score}</span>
-                  <span className="text-[10px] uppercase opacity-75">pts</span>
+                  <span className="text-[10px] uppercase text-emerald-200 font-semibold">pts</span>
                 </div>
 
                 {/* Dynamic Motivational Quote */}
                 {activeSlide.quote && (
-                  <div className="text-[11px] sm:text-xs font-semibold text-amber-200/95 italic max-w-sm bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-xl backdrop-blur-md">
+                  <div className="text-[11px] sm:text-xs font-semibold text-white/90 italic max-w-sm bg-white/10 border border-white/15 px-3.5 py-1.5 rounded-xl backdrop-blur-md">
                     "{activeSlide.quote}"
                   </div>
                 )}
@@ -874,7 +877,7 @@ export default function TopStarCelebrationVideoModal({
           {/* 4. Outro Slide */}
           {activeSlide.type === "outro" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 sm:p-8 bg-gradient-to-br from-[#0B342A] via-[#07251E] to-[#041510] overflow-hidden">
-              <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-400 to-yellow-500 text-gray-950 flex items-center justify-center text-3xl shadow-xl shadow-amber-400/20 ring-4 ring-amber-300/30 mb-5">
+              <div className="w-16 h-16 rounded-3xl bg-[#00A991] text-white flex items-center justify-center text-3xl shadow-xl shadow-[#00A991]/30 ring-4 ring-[#00A991]/30 mb-5">
                 🌟
               </div>
 
@@ -882,11 +885,11 @@ export default function TopStarCelebrationVideoModal({
                 THANK YOU FOR YOUR EFFORTS
               </h1>
 
-              <p className="text-xs sm:text-sm text-emerald-100/90 font-medium max-w-sm mb-4">
+              <p className="text-xs sm:text-sm text-emerald-100 font-medium max-w-sm mb-4">
                 Your daily excellence, dedication, and care inspire the entire team. Together we build lasting customer satisfaction!
               </p>
 
-              <div className="text-[11px] font-bold text-amber-300 uppercase tracking-widest">
+              <div className="text-[11px] font-bold text-[#2DD4BF] uppercase tracking-widest">
                 Customer Experience Leadership • First Iraqi Bank
               </div>
             </div>
@@ -897,7 +900,7 @@ export default function TopStarCelebrationVideoModal({
             <div className="absolute inset-0 z-50 bg-[#061C16]/95 backdrop-blur-md p-4 sm:p-5 flex flex-col justify-between animate-in fade-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between pb-3 border-b border-white/10">
                 <div className="flex items-center gap-2">
-                  <Camera size={16} className="text-amber-400" />
+                  <Camera size={16} className="text-[#2DD4BF]" />
                   <h3 className="text-sm font-black text-white">Upload Top 3 Employee Photos</h3>
                 </div>
                 <button
@@ -929,7 +932,7 @@ export default function TopStarCelebrationVideoModal({
                       <div className="min-w-0">
                         <div className="text-xs font-bold text-white truncate flex items-center gap-1.5">
                           <span>{p.name}</span>
-                          <span className="text-[10px] text-amber-400 font-mono">#{p.rank}</span>
+                          <span className="text-[10px] text-[#2DD4BF] font-mono">#{p.rank}</span>
                         </div>
                         <span className="text-[10px] text-gray-400 font-medium">
                           {p.teamLabel} • {p.score} pts
@@ -940,7 +943,7 @@ export default function TopStarCelebrationVideoModal({
                     <button
                       onClick={() => triggerUploadFor(p.name, p.team)}
                       disabled={uploadingAgent === p.name}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold transition shadow-xs cursor-pointer disabled:opacity-50 shrink-0"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#00A991] hover:bg-[#00927d] text-white text-[11px] font-bold transition shadow-xs cursor-pointer disabled:opacity-50 shrink-0"
                     >
                       {uploadingAgent === p.name ? (
                         <>
@@ -961,7 +964,7 @@ export default function TopStarCelebrationVideoModal({
               <div className="pt-3 border-t border-white/10 flex justify-end">
                 <button
                   onClick={() => setShowPhotoManager(false)}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                  className="px-4 py-2 bg-[#00A991] hover:bg-[#00927d] text-white rounded-xl text-xs font-bold transition cursor-pointer"
                 >
                   Done & Return to Video
                 </button>
@@ -981,10 +984,10 @@ export default function TopStarCelebrationVideoModal({
                 onClick={() => goToSlide(idx)}
                 className={`h-1.5 flex-1 rounded-full transition-all duration-300 cursor-pointer ${
                   idx === currentSlideIdx 
-                    ? "bg-amber-400 shadow-xs shadow-amber-400" 
+                    ? "bg-white shadow-xs shadow-white" 
                     : idx < currentSlideIdx 
-                    ? "bg-[#00A991]/80" 
-                    : "bg-white/10"
+                    ? "bg-[#00A991]" 
+                    : "bg-white/15"
                 }`}
                 title={`Slide ${idx + 1}`}
               />
@@ -1051,7 +1054,7 @@ export default function TopStarCelebrationVideoModal({
               <button
                 onClick={handleExportVideo}
                 disabled={isExporting}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-gray-950 font-black text-xs transition cursor-pointer shadow-md shadow-amber-500/20 disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#00A991] hover:bg-[#00927d] text-white font-black text-xs transition cursor-pointer shadow-md shadow-emerald-500/20 disabled:opacity-50"
                 title="Download complete video with music"
               >
                 {isExporting ? (

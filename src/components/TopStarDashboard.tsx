@@ -905,10 +905,10 @@ export default function TopStarDashboard({
             {/* Celebration Video Button */}
             <button
               onClick={() => setShowCelebrationVideo(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-amber-500 via-yellow-500 to-emerald-600 hover:from-amber-600 hover:to-emerald-700 shadow-md shadow-amber-500/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-white bg-[#00A991] hover:bg-[#00927d] shadow-md shadow-emerald-500/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer"
               title="Generate Motivational & Appreciation Celebration Video for Top 3"
             >
-              <Film size={14} className="text-yellow-100 shrink-0" />
+              <Film size={14} className="text-white shrink-0" />
               <span>Celebration Video</span>
             </button>
 
@@ -928,9 +928,9 @@ export default function TopStarDashboard({
         </div>
 
         {/* Celebration Reel Quick Access Banner */}
-        <div className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-teal-500/10 border border-amber-400/35 dark:border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+        <div className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-[#00A991]/10 border border-emerald-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-gray-950 flex items-center justify-center font-black shrink-0 shadow-md shadow-amber-500/20">
+            <div className="w-10 h-10 rounded-2xl bg-[#00A991] text-white flex items-center justify-center font-black shrink-0 shadow-md shadow-emerald-500/20">
               <Film size={20} />
             </div>
             <div>
@@ -938,21 +938,21 @@ export default function TopStarDashboard({
                 <h3 className="text-xs sm:text-sm font-black text-gray-900 dark:text-white">
                   Top 3 Motivational & Appreciation Celebration Video
                 </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-800 dark:text-amber-200 border border-amber-400/30">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-[#00A991] dark:text-teal-300 border border-emerald-500/30">
                   {selectedMonth} {selectedYear}
                 </span>
               </div>
               <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                Generate an animated celebratory video and appreciation cards honoring the Top 3 performers in Chat & Call Center.
+                Generate an animated celebratory video and appreciation cards honoring the Top 3 performers in Chat Team & Call Team.
               </p>
             </div>
           </div>
 
           <button
             onClick={() => setShowCelebrationVideo(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white bg-gradient-to-r from-[#1C6B53] to-emerald-600 hover:from-emerald-700 hover:to-emerald-800 shadow-md shadow-emerald-700/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0 self-end sm:self-auto"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white bg-[#00A991] hover:bg-[#00927d] shadow-md shadow-emerald-700/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0 self-end sm:self-auto"
           >
-            <Sparkles size={14} className="text-yellow-300" />
+            <Sparkles size={14} className="text-emerald-100" />
             <span>Generate Video</span>
           </button>
         </div>
@@ -969,8 +969,8 @@ export default function TopStarDashboard({
                   <MessageSquare size={16} />
                 </div>
                 <div>
-                  <h3 className="font-black text-xs sm:text-sm tracking-wide text-emerald-100">Top 3 Chat Agents</h3>
-                  <p className="text-[10px] text-emerald-200/80">Mohammed Dlshad Team</p>
+                  <h3 className="font-black text-xs sm:text-sm tracking-wide text-white">Top 3 Chat Team</h3>
+                  <p className="text-[10px] text-emerald-200/80">Chat Operations</p>
                 </div>
               </div>
               <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-white/15 text-white border border-white/20 backdrop-blur-md">
@@ -1017,7 +1017,7 @@ export default function TopStarDashboard({
                       <span className="font-bold text-xs truncate text-white">{agent.name}</span>
                     </div>
                     <div className="flex items-center gap-1 shrink-0 pl-2">
-                      <span className="font-mono font-black text-sm text-amber-300">{agent.score}</span>
+                      <span className="font-mono font-black text-sm text-emerald-200">{agent.score}</span>
                       <span className="text-[10px] text-emerald-200/80 font-semibold">pts</span>
                     </div>
                   </div>
@@ -1026,7 +1026,7 @@ export default function TopStarDashboard({
             </div>
           </div>
 
-          {/* Top 3 Call Center Card */}
+          {/* Top 3 Call Team Card */}
           <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#1C6B53] via-[#145a46] to-[#0c392c] border border-emerald-700/70 text-white shadow-lg shadow-[#1C6B53]/20 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-44 h-44 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
             <div className="flex items-center justify-between mb-3.5 relative z-10">
@@ -1035,8 +1035,8 @@ export default function TopStarDashboard({
                   <PhoneCall size={16} />
                 </div>
                 <div>
-                  <h3 className="font-black text-xs sm:text-sm tracking-wide text-emerald-100">Top 3 Call Center</h3>
-                  <p className="text-[10px] text-emerald-200/80">Call Inbound & Outbound</p>
+                  <h3 className="font-black text-xs sm:text-sm tracking-wide text-white">Top 3 Call Team</h3>
+                  <p className="text-[10px] text-emerald-200/80">Voice Operations</p>
                 </div>
               </div>
               <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-white/15 text-white border border-white/20 backdrop-blur-md">
@@ -1125,24 +1125,24 @@ export default function TopStarDashboard({
                   onClick={() => setTeam("chat")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                     team === "chat"
-                      ? "bg-[#1C6B53] text-white shadow-xs"
+                      ? "bg-[#00A991] text-white shadow-xs"
                       : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   }`}
                 >
                   <MessageSquare size={13} />
-                  <span>Chat ({chatRoster.length})</span>
+                  <span>Chat Team ({chatRoster.length})</span>
                 </button>
 
                 <button
                   onClick={() => setTeam("call")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                     team === "call"
-                      ? "bg-[#1C6B53] text-white shadow-xs"
+                      ? "bg-[#00A991] text-white shadow-xs"
                       : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   }`}
                 >
                   <PhoneCall size={13} />
-                  <span>Call ({callRoster.length})</span>
+                  <span>Call Team ({callRoster.length})</span>
                 </button>
               </div>
 
