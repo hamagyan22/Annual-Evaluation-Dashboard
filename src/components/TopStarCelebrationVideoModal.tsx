@@ -468,7 +468,7 @@ export default function TopStarCelebrationVideoModal({
 
       ctx.fillStyle = "#FFFFFF";
       ctx.font = `800 ${Math.round(size * 0.022)}px 'Plus Jakarta Sans', sans-serif`;
-      ctx.fillText(`${rank === 1 ? "🥇 CHAMPION" : rank === 2 ? "🥈 1ST RUNNER-UP" : "🥉 2ND RUNNER-UP"}`, size * 0.5, photoY + photoH);
+      ctx.fillText(`${rank === 1 ? "🥇 1ST PLACE" : rank === 2 ? "🥈 2ND PLACE" : "🥉 3RD PLACE"}`, size * 0.5, photoY + photoH);
 
       // Agent Name in crisp pure White
       ctx.fillStyle = "#FFFFFF";
@@ -801,7 +801,7 @@ export default function TopStarCelebrationVideoModal({
                     ? "bg-white/20 text-white ring-2 ring-white/30 backdrop-blur-md"
                     : "bg-white/10 text-emerald-200 ring-2 ring-emerald-500/30 backdrop-blur-md"
                 }`}>
-                  <span>{activeSlide.rank === 1 ? "🥇 Champion" : activeSlide.rank === 2 ? "🥈 1st Runner-Up" : "🥉 2nd Runner-Up"}</span>
+                  <span>{activeSlide.rank === 1 ? "🥇 1st Place" : activeSlide.rank === 2 ? "🥈 2nd Place" : "🥉 3rd Place"}</span>
                 </div>
               </div>
 

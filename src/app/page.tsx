@@ -1258,9 +1258,9 @@ function AgentDashboard({
 
                   <div className="flex items-baseline gap-2 flex-wrap">
                     <span className="text-xs sm:text-sm font-black text-gray-900 dark:text-white truncate">
-                      {myRank === 1 ? "1st Place Champion" :
-                       myRank === 2 ? "2nd Place Runner-Up" :
-                       myRank === 3 ? "3rd Place Finalist" :
+                      {myRank === 1 ? "1st Place" :
+                       myRank === 2 ? "2nd Place" :
+                       myRank === 3 ? "3rd Place" :
                        `Rank #${myRank}`}
                     </span>
                     <div className="inline-flex items-baseline gap-0.5 px-2 py-0.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-400/10 text-[#1C6B53] dark:text-emerald-300 border border-emerald-500/20 font-bold">
@@ -1541,7 +1541,7 @@ function AgentDashboard({
                               )}
                             </div>
                             <span className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">
-                              {agent.rank === 1 ? "Top Star Winner" : agent.rank === 2 ? "Runner-Up" : "3rd Place"}
+                              {agent.rank === 1 ? "1st Place" : agent.rank === 2 ? "2nd Place" : "3rd Place"}
                             </span>
                           </div>
                         </div>
