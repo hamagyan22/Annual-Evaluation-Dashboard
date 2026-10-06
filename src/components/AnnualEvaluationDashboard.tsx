@@ -561,39 +561,26 @@ export default function AnnualEvaluationDashboard({
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-800 shadow-2xs print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onBack}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 hover:text-[#1C6B53] dark:hover:text-emerald-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition active:scale-95 border border-gray-200/60 dark:border-gray-700 cursor-pointer"
-              title="Return to Main Dashboard"
-            >
-              <ArrowLeft size={14} />
-              <span>Back</span>
-            </button>
-
-            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block" />
-
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-[#1C6B53] flex items-center justify-center text-white shadow-xs">
-                <Award size={16} />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#1C6B53] flex items-center justify-center text-white shadow-xs">
+              <Award size={16} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm sm:text-base font-black text-gray-900 dark:text-white tracking-tight">
+                  Performance Evaluation
+                </h1>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1C6B53]/10 text-[#1C6B53] dark:bg-emerald-400/10 dark:text-emerald-400 border border-[#1C6B53]/20 dark:border-emerald-400/20">
+                  Younis Team
+                </span>
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-sm sm:text-base font-black text-gray-900 dark:text-white tracking-tight">
-                    Performance Evaluation
-                  </h1>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1C6B53]/10 text-[#1C6B53] dark:bg-emerald-400/10 dark:text-emerald-400 border border-[#1C6B53]/20 dark:border-emerald-400/20">
-                    Younis Team
-                  </span>
-                </div>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium hidden sm:block">
-                  Semi-Annual & Annual Performance Review
-                </p>
-              </div>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium hidden sm:block">
+                Semi-Annual & Annual Performance Review
+              </p>
             </div>
           </div>
 
-          {/* Quick Header Actions */}
+          {/* Quick Header Actions with Back Button on the Right */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowBenchmarkGuideModal(true)}
@@ -623,6 +610,17 @@ export default function AnnualEvaluationDashboard({
                 {isDarkMode ? <Sun size={15} /> : <Moon size={15} />}
               </button>
             )}
+
+            <div className="h-5 w-px bg-gray-200 dark:bg-gray-700" />
+
+            <button
+              onClick={onBack}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 hover:text-[#1C6B53] dark:hover:text-emerald-400 transition active:scale-95 border border-gray-200/80 dark:border-gray-700 cursor-pointer shadow-2xs"
+              title="Return to Main Dashboard"
+            >
+              <ArrowLeft size={14} />
+              <span>Back</span>
+            </button>
           </div>
         </div>
       </header>
@@ -1431,17 +1429,6 @@ export default function AnnualEvaluationDashboard({
               </div>
 
               <div className="flex items-center gap-2.5 w-full sm:w-auto">
-                {/* Save Draft */}
-                <button
-                  type="button"
-                  onClick={() => handleSaveEvaluation("draft")}
-                  disabled={isSaving}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 disabled:opacity-50 cursor-pointer"
-                >
-                  <Save size={14} />
-                  <span>{isSaving ? "Saving..." : "Save Draft"}</span>
-                </button>
-
                 {/* Submit Self-Evaluation for Agent */}
                 {isAgent && (
                   <button

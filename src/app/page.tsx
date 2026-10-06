@@ -1148,7 +1148,7 @@ function AgentDashboard({
                 title="Performance Evaluation"
               >
                 <ClipboardCheck size={13} />
-                <span className="hidden xs:inline">Evaluation</span>
+                <span className="text-xs font-bold">Evaluation</span>
               </button>
             )}
 
@@ -4150,7 +4150,7 @@ export default function Dashboard() {
                   <div className="w-5 h-5 rounded-lg bg-[#1C6B53]/15 dark:bg-emerald-400/15 flex items-center justify-center text-[#1C6B53] dark:text-emerald-400 group-hover:scale-110 transition-transform">
                     <ClipboardCheck size={13} />
                   </div>
-                  <span className="hidden xs:inline sm:inline">Evaluation</span>
+                  <span className="text-xs font-bold">Evaluation</span>
                 </button>
               </div>
 
