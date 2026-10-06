@@ -3940,6 +3940,7 @@ export default function Dashboard() {
           onLogout={handleLogout}
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
+          onOpenAnnualEval={() => setShowAnnualEvalView(true)}
         />
       );
     }
@@ -3957,6 +3958,7 @@ export default function Dashboard() {
           onLogout={handleLogout}
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
+          onOpenAnnualEval={() => setShowAnnualEvalView(true)}
         />
       );
     }

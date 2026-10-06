@@ -9,7 +9,7 @@ import {
   Award, ArrowLeft, Search, Users, Check, Save, Download, 
   Sun, Moon, ChevronDown, ChevronLeft, ChevronRight, CheckCheck, RefreshCw, Calendar, Plus,
   LogOut, PhoneIncoming, PhoneOutgoing, Camera, X, Trash2, FileText, MessageSquare, ShieldCheck, UserPlus, ExternalLink, Link2,
-  CheckCircle2, AlertCircle, Activity, Clock, Lock
+  CheckCircle2, AlertCircle, Activity, Clock, Lock, ClipboardCheck
 } from "lucide-react";
 import { compressImageFile } from "@/lib/imageUtils";
 
@@ -20,6 +20,7 @@ interface QualityDashboardProps {
   onOpenProfile?: () => void;
   isDarkMode?: boolean;
   toggleDarkMode?: () => void;
+  onOpenAnnualEval?: () => void;
 }
 
 interface EvaluatorSection {
@@ -306,7 +307,8 @@ export default function QualityDashboard({
   onLogout,
   onOpenProfile,
   isDarkMode = false,
-  toggleDarkMode
+  toggleDarkMode,
+  onOpenAnnualEval
 }: QualityDashboardProps) {
   const isQaUser = userProfile?.role === "qa";
   const isAdmin = userProfile?.role === "admin" || userProfile?.email?.toLowerCase() === "mohammed.dlshad0@gmail.com";
@@ -4229,6 +4231,18 @@ export default function QualityDashboard({
               </div>
             ) : (
               <>
+                {/* Evaluation View for Quality Team */}
+                {onOpenAnnualEval && (
+                  <button
+                    onClick={onOpenAnnualEval}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-[#1C6B53] dark:hover:text-emerald-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition shadow-xs cursor-pointer"
+                    title="Annual & Semi-Annual Performance Evaluation"
+                  >
+                    <ClipboardCheck size={14} className="text-[#1C6B53] dark:text-emerald-400" />
+                    <span>Evaluation</span>
+                  </button>
+                )}
+
                 {/* Dark Mode Toggle */}
                 {toggleDarkMode && (
                   <button 
