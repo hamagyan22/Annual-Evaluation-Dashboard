@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { db } from "@/lib/firebaseClient";
 import { collection, doc, getDocs, query, where, onSnapshot, setDoc } from "firebase/firestore";
 import { 
@@ -8,7 +8,7 @@ import {
   Sun, Moon, ChevronDown, Sparkles,
   Award, X, Printer, UserCheck, Star,
   Info, ThumbsUp, Target, BookOpen, AlertTriangle,
-  PhoneCall, MessageSquare, ShieldCheck, CheckCircle
+  PhoneCall, ShieldCheck, CheckCircle, Calendar
 } from "lucide-react";
 
 export interface AnnualEvaluationDashboardProps {
@@ -20,12 +20,55 @@ export interface AnnualEvaluationDashboardProps {
   toggleDarkMode?: () => void;
 }
 
+export function toTitleCase(str: string) {
+  if (!str) return '';
+  return str.replace(/\w\S*/g, (txt) => {
+    return txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase();
+  });
+}
+
+// Modern, distinct, executive rating levels with luxury styling
 export const RATING_LEVELS = [
-  { level: 5, label: "Outstanding", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700", desc: "Consistently exceeds targets and acts as an exemplary role model." },
-  { level: 4, label: "Exceeds Expectations", color: "text-teal-700 dark:text-teal-400", bg: "bg-teal-50 dark:bg-teal-950/60 border-teal-300 dark:border-teal-700", desc: "Frequently exceeds benchmarks with high competence and proactive contribution." },
-  { level: 3, label: "Meets Expectations", color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700", desc: "Reliably meets all targets and quality standards." },
-  { level: 2, label: "Developing", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700", desc: "Meets some targets but requires closer supervision and coaching." },
-  { level: 1, label: "Needs Improvement", color: "text-rose-700 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-700", desc: "Consistently below standards; requires a targeted performance improvement plan." },
+  { 
+    level: 5, 
+    label: "Outstanding", 
+    color: "text-white", 
+    bg: "bg-[#1C6B53] text-white border-[#155340] shadow-xs", 
+    badgeBg: "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 text-[#1C6B53] dark:text-emerald-300",
+    desc: "Consistently exceeds performance targets and acts as an exemplary institutional role model." 
+  },
+  { 
+    level: 4, 
+    label: "Exceeds Expectations", 
+    color: "text-white", 
+    bg: "bg-[#1E40AF] text-white border-[#1E3A8A] shadow-xs", 
+    badgeBg: "bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300",
+    desc: "Frequently exceeds operational benchmarks with high competence and proactive contribution." 
+  },
+  { 
+    level: 3, 
+    label: "Meets Expectations", 
+    color: "text-slate-800 dark:text-slate-200", 
+    bg: "bg-slate-200 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 shadow-2xs", 
+    badgeBg: "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300",
+    desc: "Reliably meets all targets and quality standards according to required benchmarks." 
+  },
+  { 
+    level: 2, 
+    label: "Developing", 
+    color: "text-amber-900 dark:text-amber-200", 
+    bg: "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-800 shadow-2xs", 
+    badgeBg: "bg-amber-50 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300",
+    desc: "Meets some targets but requires targeted coaching and supervision to reach full standard." 
+  },
+  { 
+    level: 1, 
+    label: "Needs Improvement", 
+    color: "text-rose-900 dark:text-rose-200", 
+    bg: "bg-rose-100 text-rose-900 border-rose-300 dark:bg-rose-950 dark:text-rose-200 dark:border-rose-800 shadow-2xs", 
+    badgeBg: "bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-700 text-rose-800 dark:text-rose-300",
+    desc: "Consistently below standard; requires an immediate formal performance improvement plan." 
+  },
 ];
 
 export function getRatingInfo(score: number) {
@@ -69,6 +112,8 @@ export const COMPETENCIES_LIST = [
   }
 ];
 
+const AVAILABLE_YEARS = ["2026", "2027", "2028", "2029", "2030"];
+
 export default function AnnualEvaluationDashboard({
   userProfile,
   allMembers = [],
@@ -83,28 +128,24 @@ export default function AnnualEvaluationDashboard({
   const isAgent = userProfile?.role === 'agent';
   const isReviewer = isAdmin || isManager || isTL;
 
-  // Selected filters: Year (2026-2030) and Period (Semi-Annual / Annual)
+  // Selected filters: Year (2026-2030) and Period (Semi-Annual & Annual only)
   const [selectedYear, setSelectedYear] = useState<string>("2026");
+  const [yearDropdownOpen, setYearDropdownOpen] = useState<boolean>(false);
   const [selectedPeriod, setSelectedPeriod] = useState<"Semi-Annual" | "Annual">("Semi-Annual");
-  const [semiAnnualHalf, setSemiAnnualHalf] = useState<"H1" | "H2">("H1");
 
-  // Selected Employee
+  // Selected Employee (Filtered to Younis Team only as requested)
   const [selectedEmployeeName, setSelectedEmployeeName] = useState<string>("");
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState<string>("");
   const [employeeDropdownOpen, setEmployeeDropdownOpen] = useState<boolean>(false);
 
   // Guide Modal State
   const [showBenchmarkGuideModal, setShowBenchmarkGuideModal] = useState<boolean>(false);
-  const [benchmarkGuideTab, setBenchmarkGuideTab] = useState<"calls" | "chat" | "competencies">("calls");
+  const [benchmarkGuideTab, setBenchmarkGuideTab] = useState<"calls" | "competencies">("calls");
 
   // Form State
-  const [evaluationDate, setEvaluationDate] = useState<string>(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
+  const [evaluationDate, setEvaluationDate] = useState<string>("");
   const [employeeId, setEmployeeId] = useState<string>("");
-  const [department] = useState<string>("Contact Center");
-  const [teamLeader, setTeamLeader] = useState<string>("");
+  const [teamLeader, setTeamLeader] = useState<string>("Younis Kamal");
 
   // KPIs State (Self & Manager)
   const [selfKpis, setSelfKpis] = useState<Record<string, number>>({});
@@ -129,35 +170,27 @@ export default function AnnualEvaluationDashboard({
   // Real actual metrics fetched for the period to assist evaluation
   const [actualMetricsSummary, setActualMetricsSummary] = useState<any | null>(null);
 
-  // Filtered members list
+  // Filtered members list: Younis Team Only as requested ("و خلي يونس تيم بس")
   const filteredMembers = useMemo(() => {
-    let list = [...allMembers];
+    let list = allMembers.filter(m => m.team === 'Younis Kamal Team');
+    
     if (isAgent) {
       const myName = (userProfile?.name || userProfile?.agent_name || "").toLowerCase().trim();
-      return list.filter(m => (m.agent_name || "").toLowerCase().trim() === myName);
+      const me = list.filter(m => (m.agent_name || "").toLowerCase().trim() === myName);
+      if (me.length > 0) return me;
     }
-    if (isTL && userProfile?.team) {
-      list = list.filter(m => m.team === userProfile.team);
-    }
+    
     if (employeeSearchTerm.trim()) {
       const term = employeeSearchTerm.toLowerCase().trim();
-      list = list.filter(m => 
-        (m.agent_name || "").toLowerCase().includes(term) ||
-        (m.team || "").toLowerCase().includes(term)
-      );
+      list = list.filter(m => (m.agent_name || "").toLowerCase().includes(term));
     }
     return list;
-  }, [allMembers, employeeSearchTerm, isAgent, isTL, userProfile]);
+  }, [allMembers, employeeSearchTerm, isAgent, userProfile]);
 
   // Current selected member object
   const currentMember = useMemo(() => {
     return allMembers.find(m => (m.agent_name || "").toLowerCase().trim() === (selectedEmployeeName || "").toLowerCase().trim()) || null;
   }, [allMembers, selectedEmployeeName]);
-
-  // Determine channel type (Calls vs Chat)
-  const isChatTeam = useMemo(() => {
-    return currentMember?.team === "Mohammed Dlshad Team";
-  }, [currentMember]);
 
   // Initialize selected employee on load
   useEffect(() => {
@@ -173,22 +206,16 @@ export default function AnnualEvaluationDashboard({
   useEffect(() => {
     if (currentMember) {
       setEmployeeId(currentMember.employee_id || currentMember.employee_code || `FIB-${currentMember.agent_name?.slice(0, 3).toUpperCase() || 'CC'}`);
-      if (currentMember.team === 'Younis Kamal Team') setTeamLeader("Younis Kamal");
-      else if (currentMember.team === 'Ankido Buya Team') setTeamLeader("Ankido Buya");
-      else if (currentMember.team === 'Mohammed Dlshad Team') setTeamLeader("Mohammed Dlshad");
-      else setTeamLeader("Contact Center Manager");
+      setTeamLeader("Younis Kamal");
     }
   }, [currentMember]);
 
-  // Effective review period string for document ID and storage
-  const effectivePeriodKey = selectedPeriod === "Semi-Annual" ? semiAnnualHalf : "Annual";
-
-  // Document ID in Firestore: `${year}_${effectivePeriodKey}_${cleanSlug}`
+  // Document ID in Firestore: `${year}_${period}_${cleanSlug}`
   const docId = useMemo(() => {
     if (!selectedEmployeeName) return "";
     const cleanName = selectedEmployeeName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    return `${selectedYear}_${effectivePeriodKey}_${cleanName}`;
-  }, [selectedYear, effectivePeriodKey, selectedEmployeeName]);
+    return `${selectedYear}_${selectedPeriod}_${cleanName}`;
+  }, [selectedYear, selectedPeriod, selectedEmployeeName]);
 
   // Load existing evaluation data from Firestore
   useEffect(() => {
@@ -199,9 +226,9 @@ export default function AnnualEvaluationDashboard({
       if (!isMounted) return;
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setEvaluationDate(data.evaluation_date || new Date().toISOString().split('T')[0]);
+        setEvaluationDate(data.evaluation_date || "");
         setEmployeeId(data.employee_id || "");
-        setTeamLeader(data.team_leader || "");
+        setTeamLeader("Younis Kamal");
         setSelfKpis(data.self_kpis || {});
         setManagerKpis(data.manager_kpis || {});
         setSelfCompetencies(data.self_competencies || {});
@@ -213,7 +240,7 @@ export default function AnnualEvaluationDashboard({
         setEvaluationStatus(data.status || "draft");
         setLastSavedAt(data.updated_at || "");
       } else {
-        setEvaluationDate(new Date().toISOString().split('T')[0]);
+        setEvaluationDate("");
         setSelfKpis({});
         setManagerKpis({});
         setSelfCompetencies({});
@@ -235,9 +262,10 @@ export default function AnnualEvaluationDashboard({
     };
   }, [docId]);
 
-  // Fetch actual performance metrics from team tables for period
+  // Fetch actual performance metrics from Younis metrics table
+  // Semi-Annual is H1 (Jan-Jun) and Annual is full year as requested
   useEffect(() => {
-    if (!selectedEmployeeName || !currentMember) {
+    if (!selectedEmployeeName) {
       setActualMetricsSummary(null);
       return;
     }
@@ -245,19 +273,15 @@ export default function AnnualEvaluationDashboard({
     let isMounted = true;
     const fetchActuals = async () => {
       try {
-        const tableName = currentMember.team === 'Younis Kamal Team' ? 'younis_metrics' :
-                          currentMember.team === 'Ankido Buya Team' ? 'ankido_metrics' :
-                          'mohammed_metrics';
-
         const q = query(
-          collection(db, tableName),
+          collection(db, 'younis_metrics'),
           where("year", "==", selectedYear)
         );
         const snap = await getDocs(q);
         
         const periodMonths = selectedPeriod === 'Semi-Annual'
-          ? (semiAnnualHalf === 'H1' ? ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"] : ["JUL", "AUG", "SEP", "OCT", "NOV", "DEC"])
-          : ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+          ? ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"] // Semi-Annual IS H1
+          : ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]; // Annual is Full Year
 
         const targetLower = selectedEmployeeName.toLowerCase().trim();
         const rows = snap.docs
@@ -273,7 +297,6 @@ export default function AnnualEvaluationDashboard({
         let totalExam = 0, countExam = 0;
         let totalProd = 0, countProd = 0;
         let totalAhtSec = 0, countAht = 0;
-        let totalArtSec = 0, countArt = 0;
 
         const parseSec = (val: any) => {
           if (!val) return 0;
@@ -291,14 +314,12 @@ export default function AnnualEvaluationDashboard({
           if (r.exam != null && r.exam !== "") { totalExam += parseFloat(r.exam) || 0; countExam++; }
           if (r.productivity != null && r.productivity !== "") { totalProd += parseFloat(r.productivity) || 0; countProd++; }
           if (r.aht != null && r.aht !== "") { totalAhtSec += parseSec(r.aht); countAht++; }
-          if (r.art != null && r.art !== "") { totalArtSec += parseSec(r.art); countArt++; }
         });
 
         const avgQA = countQA > 0 ? (totalQA / countQA) : null;
         const avgExam = countExam > 0 ? (totalExam / countExam) : null;
         const avgProd = countProd > 0 ? (totalProd / countProd) : null;
         const avgAhtSec = countAht > 0 ? (totalAhtSec / countAht) : null;
-        const avgArtSec = countArt > 0 ? (totalArtSec / countArt) : null;
 
         const formatTime = (secs: number | null) => {
           if (secs === null) return "-";
@@ -309,71 +330,34 @@ export default function AnnualEvaluationDashboard({
 
         const suggestions: Record<string, number> = {};
 
-        if (isChatTeam) {
-          if (avgExam !== null) {
-            if (avgExam >= 99) suggestions.knowledge = 5;
-            else if (avgExam >= 96) suggestions.knowledge = 4;
-            else if (avgExam >= 94) suggestions.knowledge = 3;
-            else if (avgExam >= 90) suggestions.knowledge = 2;
-            else suggestions.knowledge = 1;
-          }
-          if (avgQA !== null) {
-            if (avgQA >= 99) suggestions.qa = 5;
-            else if (avgQA >= 96) suggestions.qa = 4;
-            else if (avgQA >= 94) suggestions.qa = 3;
-            else if (avgQA >= 90) suggestions.qa = 2;
-            else suggestions.qa = 1;
-          }
-          if (avgAhtSec !== null) {
-            if (avgAhtSec <= 210) suggestions.aht = 5;
-            else if (avgAhtSec <= 299) suggestions.aht = 4;
-            else if (avgAhtSec <= 330) suggestions.aht = 3;
-            else if (avgAhtSec <= 360) suggestions.aht = 2;
-            else suggestions.aht = 1;
-          }
-          if (avgArtSec !== null) {
-            if (avgArtSec <= 89) suggestions.art = 5;
-            else if (avgArtSec <= 119) suggestions.art = 4;
-            else if (avgArtSec <= 150) suggestions.art = 3;
-            else if (avgArtSec <= 180) suggestions.art = 2;
-            else suggestions.art = 1;
-          }
-          if (avgProd !== null) {
-            if (avgProd >= 13) suggestions.productivity = 5;
-            else if (avgProd >= 11) suggestions.productivity = 4;
-            else if (avgProd >= 8.5) suggestions.productivity = 3;
-            else if (avgProd >= 7.5) suggestions.productivity = 2;
-            else suggestions.productivity = 1;
-          }
-        } else {
-          if (avgQA !== null) {
-            if (avgQA >= 99) suggestions.qa = 5;
-            else if (avgQA >= 96) suggestions.qa = 4;
-            else if (avgQA >= 94) suggestions.qa = 3;
-            else if (avgQA >= 90) suggestions.qa = 2;
-            else suggestions.qa = 1;
-          }
-          if (avgAhtSec !== null) {
-            if (avgAhtSec <= 169) suggestions.aht = 5;
-            else if (avgAhtSec <= 179) suggestions.aht = 4;
-            else if (avgAhtSec <= 180) suggestions.aht = 3;
-            else if (avgAhtSec <= 190) suggestions.aht = 2;
-            else suggestions.aht = 1;
-          }
-          if (avgExam !== null) {
-            if (avgExam >= 99) suggestions.knowledge = 5;
-            else if (avgExam >= 96) suggestions.knowledge = 4;
-            else if (avgExam >= 94) suggestions.knowledge = 3;
-            else if (avgExam >= 90) suggestions.knowledge = 2;
-            else suggestions.knowledge = 1;
-          }
-          if (avgProd !== null) {
-            if (avgProd >= 93) suggestions.productivity = 5;
-            else if (avgProd >= 91) suggestions.productivity = 4;
-            else if (avgProd >= 90) suggestions.productivity = 3;
-            else if (avgProd >= 88) suggestions.productivity = 2;
-            else suggestions.productivity = 1;
-          }
+        // Calls Benchmarks for Younis Team
+        if (avgQA !== null) {
+          if (avgQA >= 99) suggestions.qa = 5;
+          else if (avgQA >= 96) suggestions.qa = 4;
+          else if (avgQA >= 94) suggestions.qa = 3;
+          else if (avgQA >= 90) suggestions.qa = 2;
+          else suggestions.qa = 1;
+        }
+        if (avgAhtSec !== null) {
+          if (avgAhtSec <= 169) suggestions.aht = 5;
+          else if (avgAhtSec <= 179) suggestions.aht = 4;
+          else if (avgAhtSec <= 180) suggestions.aht = 3;
+          else if (avgAhtSec <= 190) suggestions.aht = 2;
+          else suggestions.aht = 1;
+        }
+        if (avgExam !== null) {
+          if (avgExam >= 99) suggestions.knowledge = 5;
+          else if (avgExam >= 96) suggestions.knowledge = 4;
+          else if (avgExam >= 94) suggestions.knowledge = 3;
+          else if (avgExam >= 90) suggestions.knowledge = 2;
+          else suggestions.knowledge = 1;
+        }
+        if (avgProd !== null) {
+          if (avgProd >= 93) suggestions.productivity = 5;
+          else if (avgProd >= 91) suggestions.productivity = 4;
+          else if (avgProd >= 90) suggestions.productivity = 3;
+          else if (avgProd >= 88) suggestions.productivity = 2;
+          else suggestions.productivity = 1;
         }
 
         if (isMounted) {
@@ -381,9 +365,8 @@ export default function AnnualEvaluationDashboard({
             monthsCount: rows.length,
             qa: avgQA !== null ? `${avgQA.toFixed(1)}%` : null,
             exam: avgExam !== null ? `${avgExam.toFixed(1)}%` : null,
-            productivity: avgProd !== null ? (isChatTeam ? avgProd.toFixed(2) : `${avgProd.toFixed(1)}%`) : null,
+            productivity: avgProd !== null ? `${avgProd.toFixed(1)}%` : null,
             aht: formatTime(avgAhtSec),
-            art: isChatTeam ? formatTime(avgArtSec) : null,
             suggestions
           });
         }
@@ -394,20 +377,10 @@ export default function AnnualEvaluationDashboard({
 
     fetchActuals();
     return () => { isMounted = false; };
-  }, [selectedEmployeeName, currentMember, selectedYear, selectedPeriod, semiAnnualHalf, isChatTeam]);
+  }, [selectedEmployeeName, selectedYear, selectedPeriod]);
 
-  // KPI Definitions based on channel
+  // Calls KPIs for Younis Team
   const kpiDefinitions = useMemo(() => {
-    if (isChatTeam) {
-      return [
-        { id: "qa", name: "Quality Assurance (QA)", actual: actualMetricsSummary?.qa },
-        { id: "productivity", name: "Productivity", actual: actualMetricsSummary?.productivity },
-        { id: "attendance", name: "Attendance & Punctuality", actual: null },
-        { id: "aht", name: "Average Handling Time (AHT)", actual: actualMetricsSummary?.aht },
-        { id: "art", name: "Average Response Time (ART)", actual: actualMetricsSummary?.art },
-        { id: "knowledge", name: "Knowledge & Exam", actual: actualMetricsSummary?.exam },
-      ];
-    }
     return [
       { id: "qa", name: "Quality Assurance (QA)", actual: actualMetricsSummary?.qa },
       { id: "productivity", name: "Productivity", actual: actualMetricsSummary?.productivity },
@@ -415,7 +388,7 @@ export default function AnnualEvaluationDashboard({
       { id: "aht", name: "Average Handling Time (AHT)", actual: actualMetricsSummary?.aht },
       { id: "knowledge", name: "Knowledge & Exam", actual: actualMetricsSummary?.exam },
     ];
-  }, [isChatTeam, actualMetricsSummary]);
+  }, [actualMetricsSummary]);
 
   // KPI Averages
   const selfKpiAvg = useMemo(() => {
@@ -480,6 +453,16 @@ export default function AnnualEvaluationDashboard({
     setTimeout(() => setSaveToast(null), 3500);
   };
 
+  // Auto-stamp submission date on submit
+  const getSubmissionFormattedDate = () => {
+    const d = new Date();
+    return d.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   // Save to Firestore
   const handleSaveEvaluation = async (newStatus?: "draft" | "self_submitted" | "manager_finalized") => {
     if (!docId || !selectedEmployeeName) {
@@ -489,19 +472,20 @@ export default function AnnualEvaluationDashboard({
 
     setIsSaving(true);
     const targetStatus = newStatus || evaluationStatus;
+    const autoDate = evaluationDate || getSubmissionFormattedDate();
 
     try {
       const payload: any = {
         year: selectedYear,
-        period: effectivePeriodKey,
+        period: selectedPeriod,
         period_type: selectedPeriod,
-        evaluation_date: evaluationDate,
+        evaluation_date: autoDate,
         employee_name: selectedEmployeeName,
         employee_id: employeeId || "",
-        department: department || "Contact Center",
-        team: currentMember?.team || "",
-        team_leader: teamLeader || "",
-        channel_type: isChatTeam ? "chat" : "calls",
+        department: "Contact Center",
+        team: "Younis Kamal Team",
+        team_leader: "Younis Kamal",
+        channel_type: "calls",
         
         self_kpis: selfKpis,
         self_competencies: selfCompetencies,
@@ -524,11 +508,15 @@ export default function AnnualEvaluationDashboard({
         last_modified_by: userProfile?.name || userProfile?.agent_name || "Authorized User"
       };
 
-      if (targetStatus === 'self_submitted' && !payload.self_submitted_at) {
+      if (targetStatus === 'self_submitted') {
         payload.self_submitted_at = new Date().toISOString();
+        payload.evaluation_date = autoDate;
+        setEvaluationDate(autoDate);
       }
-      if (targetStatus === 'manager_finalized' && !payload.manager_submitted_at) {
+      if (targetStatus === 'manager_finalized') {
         payload.manager_submitted_at = new Date().toISOString();
+        payload.evaluation_date = autoDate;
+        setEvaluationDate(autoDate);
       }
 
       await setDoc(doc(db, "annual_evaluations", docId), payload, { merge: true });
@@ -576,7 +564,7 @@ export default function AnnualEvaluationDashboard({
           <div className="flex items-center gap-3">
             <button
               onClick={onBack}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 hover:text-[#1C6B53] dark:hover:text-emerald-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition active:scale-95 border border-gray-200/60 dark:border-gray-700"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 hover:text-[#1C6B53] dark:hover:text-emerald-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition active:scale-95 border border-gray-200/60 dark:border-gray-700 cursor-pointer"
               title="Return to Main Dashboard"
             >
               <ArrowLeft size={14} />
@@ -595,11 +583,11 @@ export default function AnnualEvaluationDashboard({
                     Performance Evaluation
                   </h1>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1C6B53]/10 text-[#1C6B53] dark:bg-emerald-400/10 dark:text-emerald-400 border border-[#1C6B53]/20 dark:border-emerald-400/20">
-                    FIB Contact Center
+                    Younis Team
                   </span>
                 </div>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium hidden sm:block">
-                  Annual & Semi-Annual Performance & Competencies Review
+                  Semi-Annual & Annual Performance Review
                 </p>
               </div>
             </div>
@@ -629,7 +617,7 @@ export default function AnnualEvaluationDashboard({
             {toggleDarkMode && (
               <button
                 onClick={toggleDarkMode}
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
                 title="Toggle Dark Mode"
               >
                 {isDarkMode ? <Sun size={15} /> : <Moon size={15} />}
@@ -642,34 +630,61 @@ export default function AnnualEvaluationDashboard({
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-3 sm:px-6 pt-5">
         
-        {/* Top Modern Control Toolbar: Year Dropdown (2026-2030), Period (Semi-Annual & Annual), Evaluation Date & Employee Selector */}
+        {/* Top Control Toolbar: Modern Year Dropdown (2026-2030), Period Switcher (Semi-Annual & Annual only), and Employee Selector */}
         <section className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-xs mb-6 print:hidden">
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             
-            {/* Left Controls: Period & Year Dropdown & Evaluation Date */}
+            {/* Left Controls: Custom Modern Year Dropdown & Period Switcher */}
             <div className="flex flex-wrap items-center gap-3">
               
-              {/* Year Dropdown (2026-2030) */}
-              <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 rounded-2xl border border-gray-200/80 dark:border-gray-700">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Year</span>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className="bg-transparent text-xs font-black text-[#1C6B53] dark:text-emerald-400 outline-none cursor-pointer pr-1"
+              {/* Custom Modern Year Dropdown (2026-2030) */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setYearDropdownOpen(!yearDropdownOpen)}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200/90 dark:border-gray-700 text-xs font-black text-[#1C6B53] dark:text-emerald-400 transition shadow-2xs cursor-pointer"
                 >
-                  <option value="2026">2026</option>
-                  <option value="2027">2027</option>
-                  <option value="2028">2028</option>
-                  <option value="2029">2029</option>
-                  <option value="2030">2030</option>
-                </select>
+                  <Calendar size={13} className="text-[#1C6B53] dark:text-emerald-400" />
+                  <span>{selectedYear}</span>
+                  <ChevronDown size={13} className={`text-gray-400 transition-transform duration-200 ${yearDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {yearDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setYearDropdownOpen(false)} />
+                    <div className="absolute left-0 top-full mt-2 w-36 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                      {AVAILABLE_YEARS.map(y => {
+                        const isSelected = selectedYear === y;
+                        return (
+                          <button
+                            key={y}
+                            type="button"
+                            onClick={() => {
+                              setSelectedYear(y);
+                              setYearDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                              isSelected
+                                ? 'bg-[#1C6B53] text-white shadow-2xs'
+                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                            }`}
+                          >
+                            <span>{y}</span>
+                            {isSelected && <Check size={13} className="text-white" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
               </div>
 
-              {/* Period Switcher: Only Semi-Annual & Annual */}
+              {/* Period Switcher: Only Semi-Annual & Annual (as requested) */}
               <div className="flex items-center bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-2xl border border-gray-200/60 dark:border-gray-700/60">
                 <button
+                  type="button"
                   onClick={() => setSelectedPeriod("Semi-Annual")}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
                     selectedPeriod === "Semi-Annual"
                       ? 'bg-[#1C6B53] text-white shadow-xs'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -679,8 +694,9 @@ export default function AnnualEvaluationDashboard({
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setSelectedPeriod("Annual")}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
                     selectedPeriod === "Annual"
                       ? 'bg-[#1C6B53] text-white shadow-xs'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -690,55 +706,18 @@ export default function AnnualEvaluationDashboard({
                 </button>
               </div>
 
-              {/* Semi-Annual Half Selector (H1 vs H2) */}
-              {selectedPeriod === "Semi-Annual" && (
-                <div className="flex items-center bg-gray-100/70 dark:bg-gray-800/70 p-1 rounded-2xl border border-gray-200/60 dark:border-gray-700/60">
-                  <button
-                    onClick={() => setSemiAnnualHalf("H1")}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition ${
-                      semiAnnualHalf === "H1"
-                        ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-400 shadow-2xs'
-                        : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
-                    }`}
-                  >
-                    H1 (Jan - Jun)
-                  </button>
-                  <button
-                    onClick={() => setSemiAnnualHalf("H2")}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition ${
-                      semiAnnualHalf === "H2"
-                        ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-400 shadow-2xs'
-                        : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
-                    }`}
-                  >
-                    H2 (Jul - Dec)
-                  </button>
-                </div>
-              )}
-
-              {/* Evaluation Date Input */}
-              <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 rounded-2xl border border-gray-200/80 dark:border-gray-700">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Date</span>
-                <input
-                  type="date"
-                  value={evaluationDate}
-                  onChange={(e) => setEvaluationDate(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-gray-800 dark:text-gray-200 outline-none cursor-pointer"
-                />
-              </div>
-
             </div>
 
-            {/* Right Side: Employee Selector */}
-            <div className="relative flex-1 sm:flex-initial min-w-[280px]">
+            {/* Right Side: Employee Selector (Younis Team Only) */}
+            <div className="relative flex-1 sm:flex-initial min-w-[260px]">
               {isAgent ? (
                 <div className="flex items-center gap-2.5 px-3.5 py-2 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
                   <div className="w-7 h-7 rounded-full bg-[#1C6B53] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                     {userProfile?.name?.charAt(0) || userProfile?.agent_name?.charAt(0) || "A"}
                   </div>
                   <div>
-                    <div className="text-xs font-black text-gray-900 dark:text-white">{selectedEmployeeName}</div>
-                    <div className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">{currentMember?.team || userProfile?.team}</div>
+                    <div className="text-xs font-black text-gray-900 dark:text-white">{toTitleCase(selectedEmployeeName)}</div>
+                    <div className="text-[10px] text-[#1C6B53] dark:text-emerald-400 font-bold">Younis Team</div>
                   </div>
                 </div>
               ) : (
@@ -746,17 +725,17 @@ export default function AnnualEvaluationDashboard({
                   <button
                     type="button"
                     onClick={() => setEmployeeDropdownOpen(!employeeDropdownOpen)}
-                    className="w-full flex items-center justify-between gap-3 px-3.5 py-2 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200 dark:border-gray-700 rounded-2xl text-xs font-bold text-gray-900 dark:text-white transition shadow-2xs"
+                    className="w-full flex items-center justify-between gap-3 px-3.5 py-2 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200 dark:border-gray-700 rounded-2xl text-xs font-bold text-gray-900 dark:text-white transition shadow-2xs cursor-pointer"
                   >
                     <div className="flex items-center gap-2 truncate">
                       <div className="w-6 h-6 rounded-full bg-[#1C6B53]/20 text-[#1C6B53] dark:text-emerald-400 flex items-center justify-center text-xs font-black shrink-0">
                         {selectedEmployeeName ? selectedEmployeeName.charAt(0).toUpperCase() : <Users size={12} />}
                       </div>
-                      <span className="truncate">{selectedEmployeeName || "Select Employee..."}</span>
+                      <span className="truncate">{toTitleCase(selectedEmployeeName) || "Select Employee..."}</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[10px] px-2 py-0.5 rounded-lg bg-gray-200/70 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                        {currentMember?.team?.replace(' Team', '') || ''}
+                      <span className="text-[10px] px-2 py-0.5 rounded-lg bg-emerald-100/70 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 font-bold">
+                        Younis Team
                       </span>
                       <ChevronDown size={14} className={`text-gray-400 transition-transform ${employeeDropdownOpen ? 'rotate-180' : ''}`} />
                     </div>
@@ -770,7 +749,7 @@ export default function AnnualEvaluationDashboard({
                           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                           <input
                             type="text"
-                            placeholder="Filter by name or team..."
+                            placeholder="Filter Younis Team agents..."
                             value={employeeSearchTerm}
                             onChange={(e) => setEmployeeSearchTerm(e.target.value)}
                             className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 font-medium"
@@ -789,7 +768,7 @@ export default function AnnualEvaluationDashboard({
                                   setEmployeeDropdownOpen(false);
                                   setEmployeeSearchTerm("");
                                 }}
-                                className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition ${
+                                className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition cursor-pointer ${
                                   isSelected
                                     ? 'bg-[#1C6B53]/10 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-bold'
                                     : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium'
@@ -799,11 +778,11 @@ export default function AnnualEvaluationDashboard({
                                   <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[10px] font-bold text-gray-600 dark:text-gray-300 shrink-0">
                                     {m.agent_name?.charAt(0).toUpperCase()}
                                   </div>
-                                  <span className="truncate">{m.agent_name}</span>
+                                  <span className="truncate">{toTitleCase(m.agent_name)}</span>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                                    {m.team?.replace(' Team', '')}
+                                    Younis Team
                                   </span>
                                   {isSelected && <Check size={13} className="text-[#1C6B53] dark:text-emerald-400" />}
                                 </div>
@@ -824,41 +803,42 @@ export default function AnnualEvaluationDashboard({
         {/* Evaluation Paper Card */}
         <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl shadow-xs overflow-hidden print:border-none print:shadow-none print:p-0">
           
-          {/* Header Banner of Evaluation Document with Clean Integrated Metadata (Replacing the removed 6-box grid) */}
+          {/* Header Banner: Crisp Luxury Branding, Title Case, Nicer Logo, Younis Team Only */}
           <div className="bg-gradient-to-r from-[#0E3A2F] via-[#1C6B53] to-[#0E3A2F] text-white p-6 sm:p-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
             
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
               
               {/* Employee Information & Brand Info */}
-              <div className="flex items-center gap-4">
-                <img 
-                  src="/logo.webp" 
-                  alt="FIB Logo" 
-                  className="h-12 sm:h-14 w-auto object-contain bg-white/95 rounded-2xl p-1.5 shadow-md shrink-0" 
-                />
+              <div className="flex items-center gap-4 sm:gap-5">
+                
+                {/* Modern, Prestigious FIB Logo Emblem */}
+                <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-white shadow-md ring-1 ring-black/5 flex items-center justify-center p-2.5 shrink-0">
+                  <img 
+                    src="/logo.webp" 
+                    alt="First Iraqi Bank" 
+                    className="w-full h-full object-contain" 
+                  />
+                </div>
+
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-black tracking-widest uppercase bg-white/20 px-2.5 py-0.5 rounded-full text-emerald-100">
-                      {selectedPeriod} {selectedPeriod === 'Semi-Annual' ? `(${semiAnnualHalf})` : ''} • {selectedYear}
+                    <span className="text-xs font-black tracking-wider uppercase bg-white/20 text-emerald-100 px-3 py-0.5 rounded-full backdrop-blur-xs">
+                      {toTitleCase(selectedPeriod)} • {selectedYear}
                     </span>
                     <span className="text-xs font-medium text-emerald-200">
-                      Evaluation Date: {evaluationDate}
+                      {evaluationDate ? `Submitted: ${evaluationDate}` : "Auto-Stamped Upon Submission"}
                     </span>
                   </div>
 
                   <h2 className="text-xl sm:text-2xl font-black mt-1 text-white tracking-tight">
-                    {selectedEmployeeName || "Select Employee"}
+                    {toTitleCase(selectedEmployeeName || "Select Employee")}
                   </h2>
 
                   <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-emerald-100/90 font-medium">
-                    <span className="font-mono bg-white/10 px-2 py-0.5 rounded-md">{employeeId || "FIB-CC"}</span>
+                    <span className="font-mono bg-white/15 px-2 py-0.5 rounded-md font-bold">{employeeId || "FIB-CC"}</span>
                     <span>•</span>
-                    <span>Contact Center</span>
-                    <span>•</span>
-                    <span>{currentMember?.team || "Team"}</span>
-                    <span>•</span>
-                    <span>TL: {teamLeader || "Leader"}</span>
+                    <span className="font-bold text-white">Younis Team</span>
                   </div>
                 </div>
               </div>
@@ -899,20 +879,20 @@ export default function AnnualEvaluationDashboard({
             </div>
           </div>
 
-          {/* Rating Scale Legend Reference Strip */}
+          {/* Rating Scale Legend Reference Strip with Refined Executive Colors */}
           <div className="bg-white dark:bg-gray-900 px-6 sm:px-8 py-3.5 border-b border-gray-200/80 dark:border-gray-800">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <Info size={14} className="text-emerald-600 dark:text-emerald-400" />
+                <Info size={14} className="text-[#1C6B53] dark:text-emerald-400" />
                 <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Rating Scale (1 to 5):</span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 {RATING_LEVELS.map(r => (
-                  <div key={r.level} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-[11px] font-bold ${r.bg}`}>
-                    <span className="w-4 h-4 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-[10px] font-black shadow-2xs">
+                  <div key={r.level} className={`flex items-center gap-2 px-3 py-1 rounded-xl border text-[11px] font-bold ${r.bg}`}>
+                    <span className="w-4 h-4 rounded-full bg-white/25 flex items-center justify-center text-[10px] font-black">
                       {r.level}
                     </span>
-                    <span className={r.color}>{r.label}</span>
+                    <span>{r.label}</span>
                   </div>
                 ))}
               </div>
@@ -932,7 +912,7 @@ export default function AnnualEvaluationDashboard({
                   </h3>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-9">
-                  Target metrics evaluation for {isChatTeam ? "Chat Team" : "Calls Team"} (Rate 1 to 5).
+                  Younis Team calls performance metrics evaluation (Rate 1 to 5).
                 </p>
               </div>
 
@@ -947,7 +927,7 @@ export default function AnnualEvaluationDashboard({
                     <button
                       type="button"
                       onClick={() => handleApplySuggestions("manager")}
-                      className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-[#1C6B53] text-white hover:bg-[#155340] transition"
+                      className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-[#1C6B53] text-white hover:bg-[#155340] transition cursor-pointer"
                       title="Apply benchmark suggestions to manager ratings"
                     >
                       Apply Manager
@@ -957,7 +937,7 @@ export default function AnnualEvaluationDashboard({
                     <button
                       type="button"
                       onClick={() => handleApplySuggestions("self")}
-                      className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition"
+                      className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition cursor-pointer"
                       title="Apply benchmark suggestions to self evaluation"
                     >
                       Apply Self
@@ -1018,9 +998,9 @@ export default function AnnualEvaluationDashboard({
                                   }
                                 }}
                                 disabled={!isAgent && !isReviewer}
-                                className={`w-7 h-7 rounded-xl font-black text-xs transition active:scale-90 ${
+                                className={`w-7 h-7 rounded-xl font-black text-xs transition active:scale-90 cursor-pointer ${
                                   selfVal === lvl
-                                    ? 'bg-blue-600 text-white shadow-xs ring-2 ring-blue-300 dark:ring-blue-800'
+                                    ? 'bg-[#1E40AF] text-white shadow-xs ring-2 ring-blue-300 dark:ring-blue-800'
                                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-blue-100/60 border border-gray-200 dark:border-gray-700'
                                 }`}
                                 title={`Self Rating: ${lvl}`}
@@ -1044,9 +1024,9 @@ export default function AnnualEvaluationDashboard({
                                   }
                                 }}
                                 disabled={!isReviewer}
-                                className={`w-7 h-7 rounded-xl font-black text-xs transition active:scale-90 ${
+                                className={`w-7 h-7 rounded-xl font-black text-xs transition active:scale-90 cursor-pointer ${
                                   mgrVal === lvl
-                                    ? 'bg-[#1C6B53] text-white shadow-xs ring-2 ring-emerald-300 dark:ring-emerald-800'
+                                    ? lvl === 5 ? 'bg-[#1C6B53] text-white shadow-xs ring-2 ring-emerald-300 dark:ring-emerald-800' : 'bg-[#1E40AF] text-white shadow-xs ring-2 ring-blue-300 dark:ring-blue-800'
                                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-emerald-100/60 border border-gray-200 dark:border-gray-700'
                                 } ${!isReviewer ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 title={`Manager Rating: ${lvl}`}
@@ -1165,9 +1145,9 @@ export default function AnnualEvaluationDashboard({
                                   }
                                 }}
                                 disabled={!isAgent && !isReviewer}
-                                className={`w-7 h-7 rounded-xl font-black text-xs transition active:scale-90 ${
+                                className={`w-7 h-7 rounded-xl font-black text-xs transition active:scale-90 cursor-pointer ${
                                   selfVal === lvl
-                                    ? 'bg-blue-600 text-white shadow-xs ring-2 ring-blue-300 dark:ring-blue-800'
+                                    ? 'bg-[#1E40AF] text-white shadow-xs ring-2 ring-blue-300 dark:ring-blue-800'
                                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-blue-100/60 border border-gray-200 dark:border-gray-700'
                                 }`}
                                 title={`Self Rating: ${lvl}`}
@@ -1191,9 +1171,9 @@ export default function AnnualEvaluationDashboard({
                                   }
                                 }}
                                 disabled={!isReviewer}
-                                className={`w-7 h-7 rounded-xl font-black text-xs transition active:scale-90 ${
+                                className={`w-7 h-7 rounded-xl font-black text-xs transition active:scale-90 cursor-pointer ${
                                   mgrVal === lvl
-                                    ? 'bg-[#1C6B53] text-white shadow-xs ring-2 ring-emerald-300 dark:ring-emerald-800'
+                                    ? lvl === 5 ? 'bg-[#1C6B53] text-white shadow-xs ring-2 ring-emerald-300 dark:ring-emerald-800' : 'bg-[#1E40AF] text-white shadow-xs ring-2 ring-blue-300 dark:ring-blue-800'
                                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-emerald-100/60 border border-gray-200 dark:border-gray-700'
                                 } ${!isReviewer ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 title={`Manager Rating: ${lvl}`}
@@ -1319,7 +1299,7 @@ export default function AnnualEvaluationDashboard({
               </div>
 
               {/* Final Agreed Level Card */}
-              <div className={`p-5 rounded-2xl border shadow-2xs flex flex-col justify-between ${ratingTier.bg}`}>
+              <div className={`p-5 rounded-2xl border shadow-2xs flex flex-col justify-between ${ratingTier.badgeBg}`}>
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-gray-200">
@@ -1331,7 +1311,7 @@ export default function AnnualEvaluationDashboard({
                     {officialOverallScore > 0 ? officialOverallScore.toFixed(2) : "--"}
                     <span className="text-xs text-gray-500 font-normal"> / 5.0</span>
                   </div>
-                  <div className={`text-sm font-black mt-1 ${ratingTier.color}`}>
+                  <div className="text-sm font-black mt-1">
                     {ratingTier.label}
                   </div>
                 </div>
@@ -1408,7 +1388,7 @@ export default function AnnualEvaluationDashboard({
               {/* Employee's Feedback / Agreement */}
               <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
                 <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5 mb-2">
-                  <MessageSquare size={14} className="text-blue-600 dark:text-blue-400" />
+                  <Users size={14} className="text-blue-600 dark:text-blue-400" />
                   <span>Employee's Feedback & Remarks</span>
                 </label>
                 <textarea
@@ -1428,12 +1408,12 @@ export default function AnnualEvaluationDashboard({
               <div>
                 <div className="text-xs font-bold text-gray-600">Employee Signature:</div>
                 <div className="h-14 border-b border-gray-400 mt-2"></div>
-                <div className="text-[10px] text-gray-500 mt-1">{selectedEmployeeName}</div>
+                <div className="text-[10px] text-gray-500 mt-1">{toTitleCase(selectedEmployeeName)}</div>
               </div>
               <div>
                 <div className="text-xs font-bold text-gray-600">Team Leader / Manager Signature:</div>
                 <div className="h-14 border-b border-gray-400 mt-2"></div>
-                <div className="text-[10px] text-gray-500 mt-1">{teamLeader || "Contact Center Leader"}</div>
+                <div className="text-[10px] text-gray-500 mt-1">Younis Kamal</div>
               </div>
             </div>
 
@@ -1512,7 +1492,7 @@ export default function AnnualEvaluationDashboard({
                     KPI & Competency Benchmark Guide
                   </h3>
                   <p className="text-xs text-emerald-100 font-medium">
-                    Official rating benchmarks (Scale 1 to 5) for Contact Center teams
+                    Official rating benchmarks (Scale 1 to 5) for Younis Team
                   </p>
                 </div>
               </div>
@@ -1535,19 +1515,7 @@ export default function AnnualEvaluationDashboard({
                 }`}
               >
                 <PhoneCall size={14} />
-                <span>Calls Team Benchmarks</span>
-              </button>
-
-              <button
-                onClick={() => setBenchmarkGuideTab("chat")}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                  benchmarkGuideTab === "chat"
-                    ? 'bg-[#1C6B53] text-white shadow-xs'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-700'
-                }`}
-              >
-                <MessageSquare size={14} />
-                <span>Chat Team Benchmarks</span>
+                <span>Calls Benchmarks</span>
               </button>
 
               <button
@@ -1569,7 +1537,7 @@ export default function AnnualEvaluationDashboard({
               {benchmarkGuideTab === "calls" && (
                 <div className="space-y-4">
                   <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3 rounded-2xl text-xs text-emerald-800 dark:text-emerald-200 font-medium">
-                    Calls Team Performance Rating Benchmarks (Younis Kamal & Ankido Buya Teams):
+                    Calls Performance Rating Benchmarks for Younis Team:
                   </div>
 
                   <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700">
@@ -1593,7 +1561,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono">&gt; 93%</td>
                           <td className="p-3 font-mono">100%</td>
                         </tr>
-                        <tr className="bg-teal-50/40 dark:bg-teal-950/20 text-teal-800 dark:text-teal-300">
+                        <tr className="bg-blue-50/40 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300">
                           <td className="p-3 text-left font-black">4 ⭐ Exceeds Expectations</td>
                           <td className="p-3 font-mono">96% - 98%</td>
                           <td className="p-3 font-mono">2:50 - 2:59</td>
@@ -1601,7 +1569,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono">91% - 92%</td>
                           <td className="p-3 font-mono">98% - 99%</td>
                         </tr>
-                        <tr className="bg-blue-50/40 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300">
+                        <tr className="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-300">
                           <td className="p-3 text-left font-black">3 ⭐ Meets Expectations</td>
                           <td className="p-3 font-mono">94% - 95%</td>
                           <td className="p-3 font-mono">3:00 (3M)</td>
@@ -1623,77 +1591,6 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono">&gt; 3:11</td>
                           <td className="p-3 font-mono">&lt; 89%</td>
                           <td className="p-3 font-mono">&lt; 87%</td>
-                          <td className="p-3 font-mono">&lt; 90%</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {benchmarkGuideTab === "chat" && (
-                <div className="space-y-4">
-                  <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3 rounded-2xl text-xs text-emerald-800 dark:text-emerald-200 font-medium">
-                    Chat Team Performance Rating Benchmarks (Mohammed Dlshad Team):
-                  </div>
-
-                  <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700">
-                    <table className="w-full text-center text-xs">
-                      <thead>
-                        <tr className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-black">
-                          <th className="p-3 text-left">Rating Tier</th>
-                          <th className="p-3">Exam</th>
-                          <th className="p-3">QA</th>
-                          <th className="p-3">AHT</th>
-                          <th className="p-3">ART</th>
-                          <th className="p-3">Productivity</th>
-                          <th className="p-3">Attendance</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700 font-semibold">
-                        <tr className="bg-emerald-50/40 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300">
-                          <td className="p-3 text-left font-black">5 ⭐ Outstanding</td>
-                          <td className="p-3 font-mono">99% - 100%</td>
-                          <td className="p-3 font-mono">99% - 100%</td>
-                          <td className="p-3 font-mono">3:00 - 3:30</td>
-                          <td className="p-3 font-mono">&lt; 1:29</td>
-                          <td className="p-3 font-mono">&gt; 13</td>
-                          <td className="p-3 font-mono">100%</td>
-                        </tr>
-                        <tr className="bg-teal-50/40 dark:bg-teal-950/20 text-teal-800 dark:text-teal-300">
-                          <td className="p-3 text-left font-black">4 ⭐ Exceeds Expectations</td>
-                          <td className="p-3 font-mono">96% - 98%</td>
-                          <td className="p-3 font-mono">96% - 98%</td>
-                          <td className="p-3 font-mono">4:00 - 4:59</td>
-                          <td className="p-3 font-mono">1:30 - 1:59</td>
-                          <td className="p-3 font-mono">11.00 - 12.99</td>
-                          <td className="p-3 font-mono">98% - 99%</td>
-                        </tr>
-                        <tr className="bg-blue-50/40 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300">
-                          <td className="p-3 text-left font-black">3 ⭐ Meets Expectations</td>
-                          <td className="p-3 font-mono">94% - 95%</td>
-                          <td className="p-3 font-mono">94% - 95%</td>
-                          <td className="p-3 font-mono">5:00 - 5:30</td>
-                          <td className="p-3 font-mono">2:00 - 2:30</td>
-                          <td className="p-3 font-mono">8.50 - 10.99</td>
-                          <td className="p-3 font-mono">95% - 97%</td>
-                        </tr>
-                        <tr className="bg-amber-50/40 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
-                          <td className="p-3 text-left font-black">2 ⭐ Developing</td>
-                          <td className="p-3 font-mono">90% - 93%</td>
-                          <td className="p-3 font-mono">90% - 93%</td>
-                          <td className="p-3 font-mono">5:31 - 6:00</td>
-                          <td className="p-3 font-mono">2:31 - 3:00</td>
-                          <td className="p-3 font-mono">7.50 - 8.49</td>
-                          <td className="p-3 font-mono">90% - 94%</td>
-                        </tr>
-                        <tr className="bg-rose-50/40 dark:bg-rose-950/20 text-rose-800 dark:text-rose-300">
-                          <td className="p-3 text-left font-black">1 ⭐ Needs Improvement</td>
-                          <td className="p-3 font-mono">&lt; 89%</td>
-                          <td className="p-3 font-mono">&lt; 89%</td>
-                          <td className="p-3 font-mono">&gt; 6:01</td>
-                          <td className="p-3 font-mono">&gt; 3:01</td>
-                          <td className="p-3 font-mono">&lt; 7.50</td>
                           <td className="p-3 font-mono">&lt; 90%</td>
                         </tr>
                       </tbody>
