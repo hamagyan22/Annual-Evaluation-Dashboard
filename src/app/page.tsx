@@ -1145,10 +1145,10 @@ function AgentDashboard({
                 type="button"
                 onClick={onOpenAnnualEval}
                 className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100/80 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 border border-emerald-200/80 dark:border-emerald-800/60 shadow-xs transition active:scale-95 shrink-0 cursor-pointer"
-                title="التقييم السنوي والنصف سنوي"
+                title="Performance Evaluation"
               >
                 <ClipboardCheck size={13} />
-                <span className="hidden xs:inline">التقييم السنوي</span>
+                <span className="hidden xs:inline">Evaluation</span>
               </button>
             )}
 
@@ -4145,12 +4145,12 @@ export default function Dashboard() {
                 <button
                   onClick={() => setShowAnnualEvalView(true)}
                   className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-[#1C6B53] dark:hover:text-emerald-300 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40 transition-all group cursor-pointer"
-                  title="التقييم السنوي والنصف سنوي (Annual & Semi-Annual Performance Evaluation)"
+                  title="Annual & Semi-Annual Performance Evaluation"
                 >
                   <div className="w-5 h-5 rounded-lg bg-[#1C6B53]/15 dark:bg-emerald-400/15 flex items-center justify-center text-[#1C6B53] dark:text-emerald-400 group-hover:scale-110 transition-transform">
                     <ClipboardCheck size={13} />
                   </div>
-                  <span className="hidden xs:inline sm:inline">التقييم السنوي</span>
+                  <span className="hidden xs:inline sm:inline">Evaluation</span>
                 </button>
               </div>
 

@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import { db, auth, getSystemAuthor } from "@/lib/firebaseClient";
-import { collection, doc, getDoc, setDoc, getDocs, query, where, onSnapshot } from "firebase/firestore";
+import React, { useState, useEffect, useMemo } from "react";
+import { db } from "@/lib/firebaseClient";
+import { collection, doc, getDocs, query, where, onSnapshot, setDoc } from "firebase/firestore";
 import { 
-  ArrowLeft, Search, Users, Check, Save, Download, 
-  Sun, Moon, ChevronDown, Calendar, Sparkles, Shield,
-  ShieldCheck, AlertCircle, TrendingUp, Clock, Activity, MessageSquare, PhoneCall,
-  CheckCircle2, Flame, Award, Filter, Edit3, X, Eye, BarChart3, HelpCircle,
-  FileText, CheckCircle, Printer, RefreshCw, UserCheck, Star, ChevronRight,
-  Info, ThumbsUp, Target, BookOpen, AlertTriangle
+  ArrowLeft, Search, Users, Check, Save, 
+  Sun, Moon, ChevronDown, Sparkles,
+  Award, X, Printer, UserCheck, Star,
+  Info, ThumbsUp, Target, BookOpen, AlertTriangle,
+  PhoneCall, MessageSquare, ShieldCheck, CheckCircle
 } from "lucide-react";
 
 export interface AnnualEvaluationDashboardProps {
@@ -21,13 +20,12 @@ export interface AnnualEvaluationDashboardProps {
   toggleDarkMode?: () => void;
 }
 
-// Rating Levels based on Image 1
 export const RATING_LEVELS = [
-  { level: 5, label: "Outstanding", labelAr: "أداء استثنائي / ممتاز جداً", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700" },
-  { level: 4, label: "Exceeds Expectations", labelAr: "يفوق التوقعات", color: "text-teal-700 dark:text-teal-400", bg: "bg-teal-50 dark:bg-teal-950/60 border-teal-300 dark:border-teal-700" },
-  { level: 3, label: "Meets Expectations", labelAr: "يلبي التوقعات بالكامل", color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700" },
-  { level: 2, label: "Developing", labelAr: "في طور التطور / يحتاج تحسين", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700" },
-  { level: 1, label: "Needs Improvement", labelAr: "يحتاج إلى تحسين ملحوظ", color: "text-rose-700 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-700" },
+  { level: 5, label: "Outstanding", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700", desc: "Consistently exceeds targets and acts as an exemplary role model." },
+  { level: 4, label: "Exceeds Expectations", color: "text-teal-700 dark:text-teal-400", bg: "bg-teal-50 dark:bg-teal-950/60 border-teal-300 dark:border-teal-700", desc: "Frequently exceeds benchmarks with high competence and proactive contribution." },
+  { level: 3, label: "Meets Expectations", color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700", desc: "Reliably meets all targets and quality standards." },
+  { level: 2, label: "Developing", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700", desc: "Meets some targets but requires closer supervision and coaching." },
+  { level: 1, label: "Needs Improvement", color: "text-rose-700 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-700", desc: "Consistently below standards; requires a targeted performance improvement plan." },
 ];
 
 export function getRatingInfo(score: number) {
@@ -38,49 +36,36 @@ export function getRatingInfo(score: number) {
   return RATING_LEVELS[4];
 }
 
-// 6 Competencies from Image 1
 export const COMPETENCIES_LIST = [
   {
     id: "communication",
     name: "Communication",
-    nameAr: "التواصل الفعال",
-    description: "Effectively conveys information clearly and professionally. Actively listens and maintains polite, empathetic tone with customers and colleagues.",
-    descriptionAr: "وضوح التعبير، الاستماع الفعال، اللباقة، والقدرة على شرح الحلول المصرفية للعميل بأسلوب راقٍ واحترافي."
+    description: "Conveys information clearly and professionally. Actively listens, demonstrates empathy, and maintains high standards of courteous communication with customers and colleagues."
   },
   {
     id: "problem_solving",
     name: "Problem Solving",
-    nameAr: "حل المشكلات",
-    description: "Identifies root causes quickly and proposes practical, compliant solutions. Remains calm and constructive during escalations.",
-    descriptionAr: "القدرة على تحليل استفسارات وشكاوى العملاء، والوصول إلى حل جذري ومرضٍ دون تأخير أو ارتباك."
+    description: "Quickly diagnoses customer needs and formulates compliant, practical solutions. Maintains composure and analytical clarity during escalations."
   },
   {
     id: "accountability",
     name: "Accountability",
-    nameAr: "المساءلة والمسؤولية",
-    description: "Takes ownership of work and outcomes. Acknowledges mistakes readily and follows through on commitments without supervision.",
-    descriptionAr: "تحمل مسؤولية القرارات والإجراءات، والاعتراف بالخطأ والعمل على تصحيحه فوراً والوفاء بالوعود المقدمة للعميل."
+    description: "Takes ownership of tasks and outcomes. Follows through on commitments and addresses mistakes constructively without requiring close supervision."
   },
   {
     id: "initiative",
     name: "Initiative",
-    nameAr: "المبادرة والابتكار",
-    description: "Proactively suggests workflow improvements, takes on additional tasks, and seeks learning opportunities independently.",
-    descriptionAr: "طرح أفكار لتطوير العمل، المبادرة بمساعدة الزملاء، والتعامل الاستباقي مع الحالات دون انتظار التوجيه الدائم."
+    description: "Proactively suggests workflow enhancements, assists team members, and seeks professional self-development opportunities independently."
   },
   {
     id: "responsibility",
     name: "Responsibility",
-    nameAr: "الالتزام بالواجبات",
-    description: "Consistently adheres to bank policies, data security, and attendance rules. Shows strong professional ethics and reliability.",
-    descriptionAr: "الامتثال لسياسات البنك وسرية البيانات، الانضباط في المواعيد، والالتزام بأعلى معايير النزاهة المصرفية."
+    description: "Strictly complies with banking policies, data security guidelines, and work schedules. Demonstrates high integrity and reliability."
   },
   {
     id: "team_work",
     name: "Team Work",
-    nameAr: "العمل الجماعي وروح الفريق",
-    description: "Collaborates positively with peers and leaders. Shares knowledge, supports teammates during peak hours, and fosters high morale.",
-    descriptionAr: "التعاون الإيجابي مع الزملاء ومشاركة المعرفة ودعم الفريق وقت الذروة، ونبذ السلبية لتعزيز بيئة عمل محفزة."
+    description: "Collaborates positively with peers and leaders. Shares domain knowledge, supports team members during peak volumes, and fosters high team morale."
   }
 ];
 
@@ -98,14 +83,10 @@ export default function AnnualEvaluationDashboard({
   const isAgent = userProfile?.role === 'agent';
   const isReviewer = isAdmin || isManager || isTL;
 
-  // Selected filters
+  // Selected filters: Year (2026-2030) and Period (Semi-Annual / Annual)
   const [selectedYear, setSelectedYear] = useState<string>("2026");
-  const [selectedPeriod, setSelectedPeriod] = useState<"H1" | "H2" | "Annual">("H1");
-  const [selectedTeam, setSelectedTeam] = useState<string>(() => {
-    if (isTL && userProfile?.team) return userProfile.team;
-    if (isAgent && userProfile?.team) return userProfile.team;
-    return "All Teams";
-  });
+  const [selectedPeriod, setSelectedPeriod] = useState<"Semi-Annual" | "Annual">("Semi-Annual");
+  const [semiAnnualHalf, setSemiAnnualHalf] = useState<"H1" | "H2">("H1");
 
   // Selected Employee
   const [selectedEmployeeName, setSelectedEmployeeName] = useState<string>("");
@@ -117,9 +98,12 @@ export default function AnnualEvaluationDashboard({
   const [benchmarkGuideTab, setBenchmarkGuideTab] = useState<"calls" | "chat" | "competencies">("calls");
 
   // Form State
-  const [evaluationDate, setEvaluationDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [evaluationDate, setEvaluationDate] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const [employeeId, setEmployeeId] = useState<string>("");
-  const [department, setDepartment] = useState<string>("Contact Center");
+  const [department] = useState<string>("Contact Center");
   const [teamLeader, setTeamLeader] = useState<string>("");
 
   // KPIs State (Self & Manager)
@@ -144,7 +128,6 @@ export default function AnnualEvaluationDashboard({
 
   // Real actual metrics fetched for the period to assist evaluation
   const [actualMetricsSummary, setActualMetricsSummary] = useState<any | null>(null);
-  const [fetchingActuals, setFetchingActuals] = useState<boolean>(false);
 
   // Filtered members list
   const filteredMembers = useMemo(() => {
@@ -153,8 +136,8 @@ export default function AnnualEvaluationDashboard({
       const myName = (userProfile?.name || userProfile?.agent_name || "").toLowerCase().trim();
       return list.filter(m => (m.agent_name || "").toLowerCase().trim() === myName);
     }
-    if (selectedTeam !== "All Teams") {
-      list = list.filter(m => m.team === selectedTeam);
+    if (isTL && userProfile?.team) {
+      list = list.filter(m => m.team === userProfile.team);
     }
     if (employeeSearchTerm.trim()) {
       const term = employeeSearchTerm.toLowerCase().trim();
@@ -164,7 +147,7 @@ export default function AnnualEvaluationDashboard({
       );
     }
     return list;
-  }, [allMembers, selectedTeam, employeeSearchTerm, isAgent, userProfile]);
+  }, [allMembers, employeeSearchTerm, isAgent, isTL, userProfile]);
 
   // Current selected member object
   const currentMember = useMemo(() => {
@@ -173,9 +156,8 @@ export default function AnnualEvaluationDashboard({
 
   // Determine channel type (Calls vs Chat)
   const isChatTeam = useMemo(() => {
-    const t = currentMember?.team || selectedTeam;
-    return t === "Mohammed Dlshad Team";
-  }, [currentMember, selectedTeam]);
+    return currentMember?.team === "Mohammed Dlshad Team";
+  }, [currentMember]);
 
   // Initialize selected employee on load
   useEffect(() => {
@@ -198,12 +180,15 @@ export default function AnnualEvaluationDashboard({
     }
   }, [currentMember]);
 
-  // Document ID in Firestore: `${year}_${period}_${cleanSlug}`
+  // Effective review period string for document ID and storage
+  const effectivePeriodKey = selectedPeriod === "Semi-Annual" ? semiAnnualHalf : "Annual";
+
+  // Document ID in Firestore: `${year}_${effectivePeriodKey}_${cleanSlug}`
   const docId = useMemo(() => {
     if (!selectedEmployeeName) return "";
     const cleanName = selectedEmployeeName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    return `${selectedYear}_${selectedPeriod}_${cleanName}`;
-  }, [selectedYear, selectedPeriod, selectedEmployeeName]);
+    return `${selectedYear}_${effectivePeriodKey}_${cleanName}`;
+  }, [selectedYear, effectivePeriodKey, selectedEmployeeName]);
 
   // Load existing evaluation data from Firestore
   useEffect(() => {
@@ -216,7 +201,6 @@ export default function AnnualEvaluationDashboard({
         const data = docSnap.data();
         setEvaluationDate(data.evaluation_date || new Date().toISOString().split('T')[0]);
         setEmployeeId(data.employee_id || "");
-        setDepartment(data.department || "Contact Center");
         setTeamLeader(data.team_leader || "");
         setSelfKpis(data.self_kpis || {});
         setManagerKpis(data.manager_kpis || {});
@@ -229,7 +213,6 @@ export default function AnnualEvaluationDashboard({
         setEvaluationStatus(data.status || "draft");
         setLastSavedAt(data.updated_at || "");
       } else {
-        // Reset to default empty form for new evaluation
         setEvaluationDate(new Date().toISOString().split('T')[0]);
         setSelfKpis({});
         setManagerKpis({});
@@ -261,7 +244,6 @@ export default function AnnualEvaluationDashboard({
 
     let isMounted = true;
     const fetchActuals = async () => {
-      setFetchingActuals(true);
       try {
         const tableName = currentMember.team === 'Younis Kamal Team' ? 'younis_metrics' :
                           currentMember.team === 'Ankido Buya Team' ? 'ankido_metrics' :
@@ -273,10 +255,8 @@ export default function AnnualEvaluationDashboard({
         );
         const snap = await getDocs(q);
         
-        const periodMonths = selectedPeriod === 'H1'
-          ? ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"]
-          : selectedPeriod === 'H2'
-          ? ["JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+        const periodMonths = selectedPeriod === 'Semi-Annual'
+          ? (semiAnnualHalf === 'H1' ? ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"] : ["JUL", "AUG", "SEP", "OCT", "NOV", "DEC"])
           : ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
         const targetLower = selectedEmployeeName.toLowerCase().trim();
@@ -289,7 +269,6 @@ export default function AnnualEvaluationDashboard({
           return;
         }
 
-        // Calculate averages for period
         let totalQA = 0, countQA = 0;
         let totalExam = 0, countExam = 0;
         let totalProd = 0, countProd = 0;
@@ -328,12 +307,9 @@ export default function AnnualEvaluationDashboard({
           return `${m}:${s.toString().padStart(2, '0')}`;
         };
 
-        // Determine suggested ratings based on Image 2 Benchmarks
         const suggestions: Record<string, number> = {};
 
         if (isChatTeam) {
-          // Chat Benchmarks
-          // Exam: 5 (99-100), 4 (96-98), 3 (94-95), 2 (90-93), 1 (<89)
           if (avgExam !== null) {
             if (avgExam >= 99) suggestions.knowledge = 5;
             else if (avgExam >= 96) suggestions.knowledge = 4;
@@ -341,7 +317,6 @@ export default function AnnualEvaluationDashboard({
             else if (avgExam >= 90) suggestions.knowledge = 2;
             else suggestions.knowledge = 1;
           }
-          // QA: 5 (99-100), 4 (96-98), 3 (94-95), 2 (90-93), 1 (<89)
           if (avgQA !== null) {
             if (avgQA >= 99) suggestions.qa = 5;
             else if (avgQA >= 96) suggestions.qa = 4;
@@ -349,7 +324,6 @@ export default function AnnualEvaluationDashboard({
             else if (avgQA >= 90) suggestions.qa = 2;
             else suggestions.qa = 1;
           }
-          // AHT: 5 (3-3:30 = 180-210s), 4 (4-4:59 = 240-299s), 3 (5-5:30 = 300-330s), 2 (5:31-6 = 331-360s), 1 (>6:01 = >361s)
           if (avgAhtSec !== null) {
             if (avgAhtSec <= 210) suggestions.aht = 5;
             else if (avgAhtSec <= 299) suggestions.aht = 4;
@@ -357,7 +331,6 @@ export default function AnnualEvaluationDashboard({
             else if (avgAhtSec <= 360) suggestions.aht = 2;
             else suggestions.aht = 1;
           }
-          // ART: 5 (<1:29 = <89s), 4 (1:30-1:59 = 90-119s), 3 (2-2:30 = 120-150s), 2 (2:31-3 = 151-180s), 1 (>3:01 = >181s)
           if (avgArtSec !== null) {
             if (avgArtSec <= 89) suggestions.art = 5;
             else if (avgArtSec <= 119) suggestions.art = 4;
@@ -365,7 +338,6 @@ export default function AnnualEvaluationDashboard({
             else if (avgArtSec <= 180) suggestions.art = 2;
             else suggestions.art = 1;
           }
-          // Productivity: 5 (>13), 4 (11-12.99), 3 (8.5-10.99), 2 (7.50-8.49), 1 (<7.50)
           if (avgProd !== null) {
             if (avgProd >= 13) suggestions.productivity = 5;
             else if (avgProd >= 11) suggestions.productivity = 4;
@@ -374,8 +346,6 @@ export default function AnnualEvaluationDashboard({
             else suggestions.productivity = 1;
           }
         } else {
-          // Calls Benchmarks
-          // QA: 5 (99-100), 4 (96-98), 3 (94-95), 2 (90-93), 1 (<89)
           if (avgQA !== null) {
             if (avgQA >= 99) suggestions.qa = 5;
             else if (avgQA >= 96) suggestions.qa = 4;
@@ -383,7 +353,6 @@ export default function AnnualEvaluationDashboard({
             else if (avgQA >= 90) suggestions.qa = 2;
             else suggestions.qa = 1;
           }
-          // AHT: 5 (<2:49 = <169s), 4 (2:50-2:59 = 170-179s), 3 (3M = 180s), 2 (3:01-3:10 = 181-190s), 1 (>3:11 = >191s)
           if (avgAhtSec !== null) {
             if (avgAhtSec <= 169) suggestions.aht = 5;
             else if (avgAhtSec <= 179) suggestions.aht = 4;
@@ -391,7 +360,6 @@ export default function AnnualEvaluationDashboard({
             else if (avgAhtSec <= 190) suggestions.aht = 2;
             else suggestions.aht = 1;
           }
-          // Exam: 5 (99-100), 4 (96-98), 3 (94-95), 2 (90-93), 1 (<89)
           if (avgExam !== null) {
             if (avgExam >= 99) suggestions.knowledge = 5;
             else if (avgExam >= 96) suggestions.knowledge = 4;
@@ -399,7 +367,6 @@ export default function AnnualEvaluationDashboard({
             else if (avgExam >= 90) suggestions.knowledge = 2;
             else suggestions.knowledge = 1;
           }
-          // Productivity: 5 (>93), 4 (91-92), 3 (90), 2 (88-89), 1 (<87)
           if (avgProd !== null) {
             if (avgProd >= 93) suggestions.productivity = 5;
             else if (avgProd >= 91) suggestions.productivity = 4;
@@ -422,37 +389,35 @@ export default function AnnualEvaluationDashboard({
         }
       } catch (err) {
         console.error("Error fetching actual metrics:", err);
-      } finally {
-        if (isMounted) setFetchingActuals(false);
       }
     };
 
     fetchActuals();
     return () => { isMounted = false; };
-  }, [selectedEmployeeName, currentMember, selectedYear, selectedPeriod, isChatTeam]);
+  }, [selectedEmployeeName, currentMember, selectedYear, selectedPeriod, semiAnnualHalf, isChatTeam]);
 
-  // Definition of KPIs based on channel
+  // KPI Definitions based on channel
   const kpiDefinitions = useMemo(() => {
     if (isChatTeam) {
       return [
-        { id: "qa", name: "Quality Assurance (QA)", nameAr: "جودة المحادثات (QA)", actual: actualMetricsSummary?.qa },
-        { id: "productivity", name: "Productivity", nameAr: "الإنتاجية (Productivity)", actual: actualMetricsSummary?.productivity },
-        { id: "attendance", name: "Attendance & Punctuality", nameAr: "الالتزام بالحضور والمواعيد", actual: null },
-        { id: "aht", name: "Average Handling Time (AHT)", nameAr: "معدل وقت المعالجة (AHT)", actual: actualMetricsSummary?.aht },
-        { id: "art", name: "Average Response Time (ART)", nameAr: "معدل سرعة الاستجابة (ART)", actual: actualMetricsSummary?.art },
-        { id: "knowledge", name: "Knowledge & Exam", nameAr: "المعرفة والاختبارات الدورية", actual: actualMetricsSummary?.exam },
+        { id: "qa", name: "Quality Assurance (QA)", actual: actualMetricsSummary?.qa },
+        { id: "productivity", name: "Productivity", actual: actualMetricsSummary?.productivity },
+        { id: "attendance", name: "Attendance & Punctuality", actual: null },
+        { id: "aht", name: "Average Handling Time (AHT)", actual: actualMetricsSummary?.aht },
+        { id: "art", name: "Average Response Time (ART)", actual: actualMetricsSummary?.art },
+        { id: "knowledge", name: "Knowledge & Exam", actual: actualMetricsSummary?.exam },
       ];
     }
     return [
-      { id: "qa", name: "Quality Assurance (QA)", nameAr: "جودة المكالمات (QA)", actual: actualMetricsSummary?.qa },
-      { id: "productivity", name: "Productivity", nameAr: "الإنتاجية (Productivity)", actual: actualMetricsSummary?.productivity },
-      { id: "attendance", name: "Attendance & Punctuality", nameAr: "الالتزام بالحضور والمواعيد", actual: null },
-      { id: "aht", name: "Average Handling Time (AHT)", nameAr: "معدل وقت المكالمة (AHT)", actual: actualMetricsSummary?.aht },
-      { id: "knowledge", name: "Knowledge & Exam", nameAr: "المعرفة والاختبارات الدورية", actual: actualMetricsSummary?.exam },
+      { id: "qa", name: "Quality Assurance (QA)", actual: actualMetricsSummary?.qa },
+      { id: "productivity", name: "Productivity", actual: actualMetricsSummary?.productivity },
+      { id: "attendance", name: "Attendance & Punctuality", actual: null },
+      { id: "aht", name: "Average Handling Time (AHT)", actual: actualMetricsSummary?.aht },
+      { id: "knowledge", name: "Knowledge & Exam", actual: actualMetricsSummary?.exam },
     ];
   }, [isChatTeam, actualMetricsSummary]);
 
-  // Compute KPI Averages
+  // KPI Averages
   const selfKpiAvg = useMemo(() => {
     const vals = kpiDefinitions.map(k => selfKpis[k.id]).filter(v => v !== undefined && v !== null && v > 0);
     if (vals.length === 0) return 0;
@@ -465,7 +430,7 @@ export default function AnnualEvaluationDashboard({
     return parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
   }, [kpiDefinitions, managerKpis]);
 
-  // Compute Competencies Averages
+  // Competencies Averages
   const selfCompAvg = useMemo(() => {
     const vals = COMPETENCIES_LIST.map(c => selfCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
     if (vals.length === 0) return 0;
@@ -478,7 +443,7 @@ export default function AnnualEvaluationDashboard({
     return parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
   }, [managerCompetencies]);
 
-  // Compute Overall Scores (50% KPI + 50% Competencies)
+  // Overall Scores
   const selfOverall = useMemo(() => {
     if (selfKpiAvg > 0 && selfCompAvg > 0) return parseFloat(((selfKpiAvg + selfCompAvg) / 2).toFixed(2));
     if (selfKpiAvg > 0) return selfKpiAvg;
@@ -493,20 +458,20 @@ export default function AnnualEvaluationDashboard({
     return 0;
   }, [managerKpiAvg, managerCompAvg]);
 
-  // Final Official Rating (Manager rating is official when entered, else self)
+  // Official Score
   const officialOverallScore = managerOverall > 0 ? managerOverall : selfOverall;
   const ratingTier = getRatingInfo(officialOverallScore);
 
-  // Apply benchmark suggestions from actual data
+  // Apply suggestions
   const handleApplySuggestions = (target: "self" | "manager") => {
     if (!actualMetricsSummary?.suggestions) return;
     const sugg = actualMetricsSummary.suggestions;
     if (target === "self") {
       setSelfKpis(prev => ({ ...prev, ...sugg }));
-      showToastNotification("تم تطبيق التقييم المقترح من البيانات الفعلية للموظف بنجاح", "success");
+      showToastNotification("Applied benchmark suggestions to Self-Evaluation", "success");
     } else {
       setManagerKpis(prev => ({ ...prev, ...sugg }));
-      showToastNotification("تم تطبيق التقييم المقترح من البيانات الفعلية للمدير بنجاح", "success");
+      showToastNotification("Applied benchmark suggestions to Manager Evaluation", "success");
     }
   };
 
@@ -518,7 +483,7 @@ export default function AnnualEvaluationDashboard({
   // Save to Firestore
   const handleSaveEvaluation = async (newStatus?: "draft" | "self_submitted" | "manager_finalized") => {
     if (!docId || !selectedEmployeeName) {
-      showToastNotification("يرجى اختيار الموظف أولاً", "error");
+      showToastNotification("Please select an employee first", "error");
       return;
     }
 
@@ -528,16 +493,16 @@ export default function AnnualEvaluationDashboard({
     try {
       const payload: any = {
         year: selectedYear,
-        period: selectedPeriod,
+        period: effectivePeriodKey,
+        period_type: selectedPeriod,
         evaluation_date: evaluationDate,
         employee_name: selectedEmployeeName,
         employee_id: employeeId || "",
         department: department || "Contact Center",
-        team: currentMember?.team || selectedTeam,
+        team: currentMember?.team || "",
         team_leader: teamLeader || "",
         channel_type: isChatTeam ? "chat" : "calls",
         
-        // Self Evaluation
         self_kpis: selfKpis,
         self_competencies: selfCompetencies,
         self_kpi_avg: selfKpiAvg,
@@ -545,7 +510,6 @@ export default function AnnualEvaluationDashboard({
         self_overall_score: selfOverall,
         self_comments: employeeComments,
 
-        // Manager Evaluation
         manager_kpis: managerKpis,
         manager_competencies: managerCompetencies,
         manager_kpi_avg: managerKpiAvg,
@@ -555,7 +519,6 @@ export default function AnnualEvaluationDashboard({
         manager_improvements: areasForDevelopment,
         manager_comments: managerComments,
 
-        // Status & Auditing
         status: targetStatus,
         updated_at: new Date().toISOString(),
         last_modified_by: userProfile?.name || userProfile?.agent_name || "Authorized User"
@@ -573,15 +536,15 @@ export default function AnnualEvaluationDashboard({
       setLastSavedAt(new Date().toLocaleTimeString());
       
       const successMsg = targetStatus === 'manager_finalized'
-        ? "تم اعتماد التقييم النهائي وحفظه بنجاح! ✅"
+        ? "Evaluation approved & finalized successfully!"
         : targetStatus === 'self_submitted'
-        ? "تم إرسال التقييم الذاتي للمدير بنجاح! 📨"
-        : "تم حفظ المسودة بنجاح! 💾";
+        ? "Self-Evaluation submitted to manager successfully!"
+        : "Evaluation draft saved successfully!";
 
       showToastNotification(successMsg, "success");
     } catch (err: any) {
       console.error("Save error:", err);
-      showToastNotification("حدث خطأ أثناء حفظ التقييم: " + (err.message || ""), "error");
+      showToastNotification("Error saving evaluation: " + (err.message || ""), "error");
     } finally {
       setIsSaving(false);
     }
@@ -596,25 +559,25 @@ export default function AnnualEvaluationDashboard({
       
       {/* Toast Notification */}
       {saveToast && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-2xl border text-sm font-bold animate-in fade-in slide-in-from-bottom-3 duration-200 ${
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-2xl border text-xs font-bold animate-in fade-in slide-in-from-bottom-3 duration-200 ${
           saveToast.type === 'success' 
             ? 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-500/20' 
             : 'bg-rose-600 text-white border-rose-500 shadow-rose-500/20'
         }`}>
-          {saveToast.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+          {saveToast.type === 'success' ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
           <span>{saveToast.message}</span>
         </div>
       )}
 
       {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-800 shadow-xs print:hidden">
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-800 shadow-2xs print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           
           <div className="flex items-center gap-3">
             <button
               onClick={onBack}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 hover:text-[#1C6B53] dark:hover:text-emerald-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition active:scale-95 border border-gray-200/60 dark:border-gray-700"
-              title="الرجوع للداشبورد الرئيسي"
+              title="Return to Main Dashboard"
             >
               <ArrowLeft size={14} />
               <span>Back</span>
@@ -623,51 +586,51 @@ export default function AnnualEvaluationDashboard({
             <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block" />
 
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#1C6B53] to-emerald-400 flex items-center justify-center text-white shadow-xs">
-                <FileText size={16} />
+              <div className="w-8 h-8 rounded-xl bg-[#1C6B53] flex items-center justify-center text-white shadow-xs">
+                <Award size={16} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-sm sm:text-base font-black text-gray-900 dark:text-white tracking-tight">
-                    التقييم السنوي والنصف سنوي
+                    Performance Evaluation
                   </h1>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1C6B53]/10 text-[#1C6B53] dark:bg-emerald-400/10 dark:text-emerald-400 border border-[#1C6B53]/20 dark:border-emerald-400/20">
                     FIB Contact Center
                   </span>
                 </div>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium hidden sm:block">
-                  Annual & Semi-Annual Performance & Competencies Evaluation
+                  Annual & Semi-Annual Performance & Competencies Review
                 </p>
               </div>
             </div>
           </div>
 
           {/* Quick Header Actions */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setShowBenchmarkGuideModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-50 hover:bg-amber-100/80 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 transition active:scale-95 cursor-pointer shadow-xs"
-              title="دليل معايير التقييم (KPI Benchmark Guide)"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-50 hover:bg-amber-100/80 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 transition active:scale-95 cursor-pointer shadow-2xs"
+              title="KPI & Competency Benchmark Guide"
             >
               <BookOpen size={14} className="text-amber-600 dark:text-amber-400" />
-              <span className="hidden xs:inline">دليل المعايير</span>
-              <span className="text-[10px] px-1 bg-amber-200/60 dark:bg-amber-800/60 rounded">Info</span>
+              <span className="hidden xs:inline">Benchmark Guide</span>
+              <span className="text-[9px] px-1 bg-amber-200/60 dark:bg-amber-800/60 rounded font-black">Info</span>
             </button>
 
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 cursor-pointer shadow-xs"
-              title="طباعة / تصدير PDF"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 cursor-pointer shadow-2xs"
+              title="Print / Save PDF"
             >
               <Printer size={14} />
-              <span className="hidden sm:inline">طباعة / PDF</span>
+              <span className="hidden sm:inline">Print / PDF</span>
             </button>
 
             {toggleDarkMode && (
               <button
                 onClick={toggleDarkMode}
                 className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                title="تبديل الوضع الليلي"
+                title="Toggle Dark Mode"
               >
                 {isDarkMode ? <Sun size={15} /> : <Moon size={15} />}
               </button>
@@ -679,91 +642,98 @@ export default function AnnualEvaluationDashboard({
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-3 sm:px-6 pt-5">
         
-        {/* Top Control Bar: Year, Period, Team, and Employee Selector */}
+        {/* Top Modern Control Toolbar: Year Dropdown (2026-2030), Period (Semi-Annual & Annual), Evaluation Date & Employee Selector */}
         <section className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-xs mb-6 print:hidden">
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
             
-            {/* Period & Year Switches */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              {/* Year Selector */}
-              <div className="flex items-center bg-gray-100/80 dark:bg-gray-800/80 p-1 rounded-2xl border border-gray-200/60 dark:border-gray-700/60">
-                {["2025", "2026", "2027"].map(y => (
-                  <button
-                    key={y}
-                    onClick={() => setSelectedYear(y)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                      selectedYear === y 
-                        ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-400 shadow-xs' 
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                  >
-                    {y}
-                  </button>
-                ))}
+            {/* Left Controls: Period & Year Dropdown & Evaluation Date */}
+            <div className="flex flex-wrap items-center gap-3">
+              
+              {/* Year Dropdown (2026-2030) */}
+              <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 rounded-2xl border border-gray-200/80 dark:border-gray-700">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Year</span>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="bg-transparent text-xs font-black text-[#1C6B53] dark:text-emerald-400 outline-none cursor-pointer pr-1"
+                >
+                  <option value="2026">2026</option>
+                  <option value="2027">2027</option>
+                  <option value="2028">2028</option>
+                  <option value="2029">2029</option>
+                  <option value="2030">2030</option>
+                </select>
               </div>
 
-              {/* Review Period Switcher */}
-              <div className="flex items-center bg-gray-100/80 dark:bg-gray-800/80 p-1 rounded-2xl border border-gray-200/60 dark:border-gray-700/60">
+              {/* Period Switcher: Only Semi-Annual & Annual */}
+              <div className="flex items-center bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-2xl border border-gray-200/60 dark:border-gray-700/60">
                 <button
-                  onClick={() => setSelectedPeriod("H1")}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
-                    selectedPeriod === "H1"
+                  onClick={() => setSelectedPeriod("Semi-Annual")}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                    selectedPeriod === "Semi-Annual"
                       ? 'bg-[#1C6B53] text-white shadow-xs'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
-                  <span>H1</span>
-                  <span className="text-[10px] opacity-80">(Jan - Jun)</span>
+                  <span>Semi-Annual</span>
                 </button>
-                <button
-                  onClick={() => setSelectedPeriod("H2")}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
-                    selectedPeriod === "H2"
-                      ? 'bg-[#1C6B53] text-white shadow-xs'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  <span>H2</span>
-                  <span className="text-[10px] opacity-80">(Jul - Dec)</span>
-                </button>
+
                 <button
                   onClick={() => setSelectedPeriod("Annual")}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
                     selectedPeriod === "Annual"
                       ? 'bg-[#1C6B53] text-white shadow-xs'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
                   <span>Annual</span>
-                  <span className="text-[10px] opacity-80">(Full Year)</span>
                 </button>
               </div>
 
-              {/* Team Filter (for reviewers) */}
-              {isReviewer && (
-                <div className="flex items-center">
-                  <select
-                    value={selectedTeam}
-                    onChange={(e) => {
-                      setSelectedTeam(e.target.value);
-                      setSelectedEmployeeName("");
-                    }}
-                    className="px-3 py-1.5 text-xs font-bold bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-200 focus:outline-none focus:border-[#1C6B53]"
+              {/* Semi-Annual Half Selector (H1 vs H2) */}
+              {selectedPeriod === "Semi-Annual" && (
+                <div className="flex items-center bg-gray-100/70 dark:bg-gray-800/70 p-1 rounded-2xl border border-gray-200/60 dark:border-gray-700/60">
+                  <button
+                    onClick={() => setSemiAnnualHalf("H1")}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition ${
+                      semiAnnualHalf === "H1"
+                        ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-400 shadow-2xs'
+                        : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+                    }`}
                   >
-                    {!isTL && <option value="All Teams">All Teams (كل الفرق)</option>}
-                    <option value="Younis Kamal Team">Younis Kamal Team (Calls)</option>
-                    <option value="Ankido Buya Team">Ankido Buya Team (Calls)</option>
-                    <option value="Mohammed Dlshad Team">Mohammed Dlshad Team (Chat)</option>
-                  </select>
+                    H1 (Jan - Jun)
+                  </button>
+                  <button
+                    onClick={() => setSemiAnnualHalf("H2")}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition ${
+                      semiAnnualHalf === "H2"
+                        ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-400 shadow-2xs'
+                        : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    H2 (Jul - Dec)
+                  </button>
                 </div>
               )}
+
+              {/* Evaluation Date Input */}
+              <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 rounded-2xl border border-gray-200/80 dark:border-gray-700">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Date</span>
+                <input
+                  type="date"
+                  value={evaluationDate}
+                  onChange={(e) => setEvaluationDate(e.target.value)}
+                  className="bg-transparent text-xs font-bold text-gray-800 dark:text-gray-200 outline-none cursor-pointer"
+                />
+              </div>
+
             </div>
 
-            {/* Employee Selector Dropdown */}
-            <div className="relative flex-1 sm:flex-initial min-w-[260px]">
+            {/* Right Side: Employee Selector */}
+            <div className="relative flex-1 sm:flex-initial min-w-[280px]">
               {isAgent ? (
-                <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
-                  <div className="w-7 h-7 rounded-full bg-[#1C6B53] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                <div className="flex items-center gap-2.5 px-3.5 py-2 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
+                  <div className="w-7 h-7 rounded-full bg-[#1C6B53] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                     {userProfile?.name?.charAt(0) || userProfile?.agent_name?.charAt(0) || "A"}
                   </div>
                   <div>
@@ -782,7 +752,7 @@ export default function AnnualEvaluationDashboard({
                       <div className="w-6 h-6 rounded-full bg-[#1C6B53]/20 text-[#1C6B53] dark:text-emerald-400 flex items-center justify-center text-xs font-black shrink-0">
                         {selectedEmployeeName ? selectedEmployeeName.charAt(0).toUpperCase() : <Users size={12} />}
                       </div>
-                      <span className="truncate">{selectedEmployeeName || "اختر الموظف للتقييم..."}</span>
+                      <span className="truncate">{selectedEmployeeName || "Select Employee..."}</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-[10px] px-2 py-0.5 rounded-lg bg-gray-200/70 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
@@ -800,7 +770,7 @@ export default function AnnualEvaluationDashboard({
                           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                           <input
                             type="text"
-                            placeholder="بحث بالاسم أو الفريق..."
+                            placeholder="Filter by name or team..."
                             value={employeeSearchTerm}
                             onChange={(e) => setEmployeeSearchTerm(e.target.value)}
                             className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 font-medium"
@@ -851,42 +821,52 @@ export default function AnnualEvaluationDashboard({
           </div>
         </section>
 
-        {/* Evaluation Paper Card (Matching the Bank Template) */}
-        <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl shadow-sm overflow-hidden print:border-none print:shadow-none print:p-0">
+        {/* Evaluation Paper Card */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl shadow-xs overflow-hidden print:border-none print:shadow-none print:p-0">
           
-          {/* Header Banner of Evaluation Document */}
+          {/* Header Banner of Evaluation Document with Clean Integrated Metadata (Replacing the removed 6-box grid) */}
           <div className="bg-gradient-to-r from-[#0E3A2F] via-[#1C6B53] to-[#0E3A2F] text-white p-6 sm:p-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
             
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+              
+              {/* Employee Information & Brand Info */}
               <div className="flex items-center gap-4">
                 <img 
                   src="/logo.webp" 
                   alt="FIB Logo" 
-                  className="h-12 sm:h-14 w-auto object-contain bg-white/95 rounded-2xl p-1.5 shadow-md" 
+                  className="h-12 sm:h-14 w-auto object-contain bg-white/95 rounded-2xl p-1.5 shadow-md shrink-0" 
                 />
                 <div>
-                  <div className="flex items-center gap-2.5 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-black tracking-widest uppercase bg-white/20 px-2.5 py-0.5 rounded-full text-emerald-100">
-                      Performance Evaluation
+                      {selectedPeriod} {selectedPeriod === 'Semi-Annual' ? `(${semiAnnualHalf})` : ''} • {selectedYear}
                     </span>
-                    <span className="text-xs font-bold text-emerald-200">
-                      {selectedPeriod} {selectedYear}
+                    <span className="text-xs font-medium text-emerald-200">
+                      Evaluation Date: {evaluationDate}
                     </span>
                   </div>
+
                   <h2 className="text-xl sm:text-2xl font-black mt-1 text-white tracking-tight">
-                    استمارة التقييم السنوي والنصف سنوي
+                    {selectedEmployeeName || "Select Employee"}
                   </h2>
-                  <p className="text-xs text-emerald-100/80 mt-0.5 font-medium">
-                    First Iraqi Bank • Contact Center Department
-                  </p>
+
+                  <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-emerald-100/90 font-medium">
+                    <span className="font-mono bg-white/10 px-2 py-0.5 rounded-md">{employeeId || "FIB-CC"}</span>
+                    <span>•</span>
+                    <span>Contact Center</span>
+                    <span>•</span>
+                    <span>{currentMember?.team || "Team"}</span>
+                    <span>•</span>
+                    <span>TL: {teamLeader || "Leader"}</span>
+                  </div>
                 </div>
               </div>
 
               {/* Status Badge & Score Highlights */}
               <div className="flex items-center gap-3 self-start md:self-auto flex-wrap">
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-4 py-2.5 text-center">
-                  <div className="text-[10px] text-emerald-200 font-bold uppercase tracking-wider">الدرجة النهائية</div>
+                  <div className="text-[10px] text-emerald-200 font-bold uppercase tracking-wider">Final Score</div>
                   <div className="text-2xl font-black text-white leading-tight">
                     {officialOverallScore > 0 ? officialOverallScore.toFixed(2) : "--"}
                     <span className="text-xs text-emerald-200 font-normal"> / 5.0</span>
@@ -894,114 +874,42 @@ export default function AnnualEvaluationDashboard({
                 </div>
 
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-4 py-2.5">
-                  <div className="text-[10px] text-emerald-200 font-bold uppercase tracking-wider">المستوى المستحق</div>
+                  <div className="text-[10px] text-emerald-200 font-bold uppercase tracking-wider">Rating Tier</div>
                   <div className="text-sm font-black text-white mt-1 flex items-center gap-1.5">
                     <Award size={16} className="text-amber-300" />
-                    <span>{officialOverallScore > 0 ? ratingTier.label : "قيد التقييم"}</span>
+                    <span>{officialOverallScore > 0 ? ratingTier.label : "Pending"}</span>
                   </div>
                 </div>
 
                 <div className="bg-white/15 backdrop-blur-md border border-white/20 rounded-2xl px-3.5 py-2">
-                  <div className="text-[9px] text-emerald-200 font-bold uppercase">حالة التقييم</div>
+                  <div className="text-[9px] text-emerald-200 font-bold uppercase">Status</div>
                   <div className="text-xs font-bold text-white mt-0.5 flex items-center gap-1.5">
                     <span className={`w-2 h-2 rounded-full ${
                       evaluationStatus === 'manager_finalized' ? 'bg-emerald-400 animate-pulse' :
                       evaluationStatus === 'self_submitted' ? 'bg-amber-400' : 'bg-gray-300'
                     }`} />
                     <span>
-                      {evaluationStatus === 'manager_finalized' ? 'معتمد ومكتمل' :
-                       evaluationStatus === 'self_submitted' ? 'تم التقييم الذاتي' : 'مسودة'}
+                      {evaluationStatus === 'manager_finalized' ? 'Finalized' :
+                       evaluationStatus === 'self_submitted' ? 'Self Completed' : 'Draft'}
                     </span>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Form Meta Information (Grid Layout from Excel) */}
-          <div className="p-6 sm:p-8 border-b border-gray-200/80 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              
-              <div className="bg-white dark:bg-gray-800 p-3.5 rounded-2xl border border-gray-200/70 dark:border-gray-700 shadow-2xs">
-                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">
-                  Employee Name (اسم الموظف)
-                </label>
-                <div className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-[#1C6B53]/15 text-[#1C6B53] dark:text-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">
-                    {selectedEmployeeName ? selectedEmployeeName.charAt(0) : "E"}
-                  </div>
-                  <span className="truncate">{selectedEmployeeName || "لم يتم التحديد"}</span>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 p-3.5 rounded-2xl border border-gray-200/70 dark:border-gray-700 shadow-2xs">
-                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">
-                  Employee ID (الرقم الوظيفي)
-                </label>
-                <input
-                  type="text"
-                  value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  placeholder="e.g. FIB-1042"
-                  className="w-full text-sm font-bold bg-transparent text-gray-900 dark:text-white outline-none"
-                  disabled={!isReviewer && !isAgent}
-                />
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 p-3.5 rounded-2xl border border-gray-200/70 dark:border-gray-700 shadow-2xs">
-                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">
-                  Department (القسم)
-                </label>
-                <div className="text-sm font-bold text-gray-900 dark:text-white">
-                  {department}
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 p-3.5 rounded-2xl border border-gray-200/70 dark:border-gray-700 shadow-2xs">
-                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">
-                  Team Leader (مسؤول الفريق)
-                </label>
-                <div className="text-sm font-bold text-gray-900 dark:text-white">
-                  {teamLeader || currentMember?.team?.replace(' Team', '') || "Team Lead"}
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 p-3.5 rounded-2xl border border-gray-200/70 dark:border-gray-700 shadow-2xs">
-                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">
-                  Review Period (فترة التقييم)
-                </label>
-                <div className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
-                  <Calendar size={14} className="text-[#1C6B53] dark:text-emerald-400" />
-                  <span>{selectedPeriod} {selectedYear}</span>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 p-3.5 rounded-2xl border border-gray-200/70 dark:border-gray-700 shadow-2xs">
-                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">
-                  Evaluation Date (تاريخ التقييم)
-                </label>
-                <input
-                  type="date"
-                  value={evaluationDate}
-                  onChange={(e) => setEvaluationDate(e.target.value)}
-                  className="w-full text-sm font-bold bg-transparent text-gray-900 dark:text-white outline-none cursor-pointer"
-                />
               </div>
 
             </div>
           </div>
 
           {/* Rating Scale Legend Reference Strip */}
-          <div className="bg-white dark:bg-gray-900 px-6 sm:px-8 py-4 border-b border-gray-200/80 dark:border-gray-800">
+          <div className="bg-white dark:bg-gray-900 px-6 sm:px-8 py-3.5 border-b border-gray-200/80 dark:border-gray-800">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <Info size={15} className="text-emerald-600 dark:text-emerald-400" />
-                <span className="text-xs font-black text-gray-900 dark:text-white">سلم التقييم المعتمد (Rates 1 to 5):</span>
+                <Info size={14} className="text-emerald-600 dark:text-emerald-400" />
+                <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Rating Scale (1 to 5):</span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 {RATING_LEVELS.map(r => (
                   <div key={r.level} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-[11px] font-bold ${r.bg}`}>
-                    <span className="w-4 h-4 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-[10px] font-black shadow-xs">
+                    <span className="w-4 h-4 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-[10px] font-black shadow-2xs">
                       {r.level}
                     </span>
                     <span className={r.color}>{r.label}</span>
@@ -1011,7 +919,7 @@ export default function AnnualEvaluationDashboard({
             </div>
           </div>
 
-          {/* Section 1: KPI Evaluation (معايير الأداء التشغيلي) */}
+          {/* Section 1: KPI Evaluation */}
           <div className="p-6 sm:p-8 border-b border-gray-200/80 dark:border-gray-800">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
               <div>
@@ -1020,11 +928,11 @@ export default function AnnualEvaluationDashboard({
                     1
                   </div>
                   <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                    معايير الأداء التشغيلي (KPI Evaluation)
+                    Operational KPI Evaluation
                   </h3>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 mr-9">
-                  تقييم الأرقام والإنتاجية والجودة لفريق {isChatTeam ? "الشات (Chat)" : "المكالمات (Calls)"} من 1 إلى 5.
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-9">
+                  Target metrics evaluation for {isChatTeam ? "Chat Team" : "Calls Team"} (Rate 1 to 5).
                 </p>
               </div>
 
@@ -1032,17 +940,17 @@ export default function AnnualEvaluationDashboard({
               {actualMetricsSummary && (
                 <div className="flex items-center gap-2 self-start sm:self-auto bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 px-3 py-1.5 rounded-2xl">
                   <div className="text-[11px] font-bold text-[#1C6B53] dark:text-emerald-400 flex items-center gap-1.5">
-                    <Sparkles size={13} className="animate-spin text-emerald-500" />
-                    <span>متوفر أرقام فعلية لـ ({actualMetricsSummary.monthsCount} أشهر)</span>
+                    <Sparkles size={13} className="text-emerald-500" />
+                    <span>Actual Metrics Available ({actualMetricsSummary.monthsCount} Months)</span>
                   </div>
                   {isReviewer && (
                     <button
                       type="button"
                       onClick={() => handleApplySuggestions("manager")}
                       className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-[#1C6B53] text-white hover:bg-[#155340] transition"
-                      title="ملء تقييم المدير تلقائياً بناءً على جدول المعايير"
+                      title="Apply benchmark suggestions to manager ratings"
                     >
-                      تطبيق للمدير
+                      Apply Manager
                     </button>
                   )}
                   {isAgent && (
@@ -1050,9 +958,9 @@ export default function AnnualEvaluationDashboard({
                       type="button"
                       onClick={() => handleApplySuggestions("self")}
                       className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition"
-                      title="ملء تقييمي الذاتي بناءً على أرقامي الفعلية"
+                      title="Apply benchmark suggestions to self evaluation"
                     >
-                      تطبيق للتقييم الذاتي
+                      Apply Self
                     </button>
                   )}
                 </div>
@@ -1061,18 +969,18 @@ export default function AnnualEvaluationDashboard({
 
             {/* KPI Table */}
             <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
-              <table className="w-full text-right border-collapse">
+              <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-100/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-black border-b border-gray-200 dark:border-gray-700">
-                    <th className="p-3.5 text-right w-1/3">المعيار (KPI Metric)</th>
-                    <th className="p-3.5 text-center w-24">الأداء الفعلي</th>
+                    <th className="p-3.5 text-left w-1/3">KPI Metric</th>
+                    <th className="p-3.5 text-center w-28">Actual Result</th>
                     <th className="p-3.5 text-center bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
-                      تقييم الموظف الذاتي (Self)
+                      Self-Evaluation (Agent)
                     </th>
                     <th className="p-3.5 text-center bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
-                      تقييم المدير (Manager)
+                      Manager Evaluation
                     </th>
-                    <th className="p-3.5 text-center w-20">الفارق</th>
+                    <th className="p-3.5 text-center w-20">Gap</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800 text-xs font-medium">
@@ -1084,8 +992,7 @@ export default function AnnualEvaluationDashboard({
                     return (
                       <tr key={kpi.id} className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors">
                         <td className="p-3.5">
-                          <div className="font-bold text-gray-900 dark:text-white text-sm">{kpi.nameAr}</div>
-                          <div className="text-[11px] text-gray-500 dark:text-gray-400 font-normal">{kpi.name}</div>
+                          <div className="font-bold text-gray-900 dark:text-white text-sm">{kpi.name}</div>
                         </td>
 
                         <td className="p-3.5 text-center font-bold text-gray-700 dark:text-gray-300">
@@ -1173,7 +1080,7 @@ export default function AnnualEvaluationDashboard({
                     <td className="p-3.5" colSpan={2}>
                       <div className="flex items-center gap-2">
                         <Target size={16} className="text-[#1C6B53] dark:text-emerald-400" />
-                        <span className="text-sm">Final Score (1-5) - متوسط المعايير التشغيلية</span>
+                        <span className="text-sm">Final Score (1-5 Average)</span>
                       </div>
                     </td>
                     <td className="p-3.5 text-center bg-blue-100/50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200">
@@ -1199,7 +1106,7 @@ export default function AnnualEvaluationDashboard({
             </div>
           </div>
 
-          {/* Section 2: Behavioral & Professional Competencies (الكفاءات السلوكية والمهنية) */}
+          {/* Section 2: Core Competencies */}
           <div className="p-6 sm:p-8 border-b border-gray-200/80 dark:border-gray-800">
             <div className="mb-5">
               <div className="flex items-center gap-2">
@@ -1207,27 +1114,27 @@ export default function AnnualEvaluationDashboard({
                   2
                 </div>
                 <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                  الكفاءات السلوكية والمهنية (Competencies Evaluation)
+                  Core Competencies Evaluation
                 </h3>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 mr-9">
-                تقييم السمات المهنية والسلوكية الست المعتمدة من 1 إلى 5 (التواصل، حل المشكلات، المساءلة، المبادرة، الالتزام، والعمل الجماعي).
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-9">
+                Assessment of the 6 core institutional competencies (Rate 1 to 5).
               </p>
             </div>
 
             {/* Competencies Table */}
             <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
-              <table className="w-full text-right border-collapse">
+              <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-100/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-black border-b border-gray-200 dark:border-gray-700">
-                    <th className="p-3.5 text-right w-1/2">الكفاءة والمؤشرات السلوكية</th>
+                    <th className="p-3.5 text-left w-1/2">Competency & Behavioral Indicators</th>
                     <th className="p-3.5 text-center bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
-                      تقييم الموظف الذاتي (Self)
+                      Self-Evaluation (Agent)
                     </th>
                     <th className="p-3.5 text-center bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
-                      تقييم المدير (Manager)
+                      Manager Evaluation
                     </th>
-                    <th className="p-3.5 text-center w-20">الفارق</th>
+                    <th className="p-3.5 text-center w-20">Gap</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800 text-xs font-medium">
@@ -1239,10 +1146,9 @@ export default function AnnualEvaluationDashboard({
                     return (
                       <tr key={comp.id} className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors">
                         <td className="p-3.5">
-                          <div className="font-bold text-gray-900 dark:text-white text-sm">{comp.nameAr}</div>
-                          <div className="text-[11px] text-[#1C6B53] dark:text-emerald-400 font-semibold">{comp.name}</div>
+                          <div className="font-bold text-gray-900 dark:text-white text-sm">{comp.name}</div>
                           <p className="text-[11px] text-gray-500 dark:text-gray-400 font-normal mt-0.5 leading-relaxed">
-                            {comp.descriptionAr}
+                            {comp.description}
                           </p>
                         </td>
 
@@ -1321,7 +1227,7 @@ export default function AnnualEvaluationDashboard({
                     <td className="p-3.5">
                       <div className="flex items-center gap-2">
                         <Users size={16} className="text-[#1C6B53] dark:text-emerald-400" />
-                        <span className="text-sm">Competency Average (1-5) - متوسط الكفاءات السلوكية</span>
+                        <span className="text-sm">Competency Average (1-5)</span>
                       </div>
                     </td>
                     <td className="p-3.5 text-center bg-blue-100/50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200">
@@ -1347,14 +1253,14 @@ export default function AnnualEvaluationDashboard({
             </div>
           </div>
 
-          {/* Section 3: Overall Performance Rating Summary (الملخص النهائي) */}
+          {/* Section 3: Overall Performance Rating Summary */}
           <div className="p-6 sm:p-8 border-b border-gray-200/80 dark:border-gray-800 bg-gray-50/40 dark:bg-gray-900/40">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-7 h-7 rounded-lg bg-[#1C6B53]/15 text-[#1C6B53] dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
                 3
               </div>
               <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                خلاصة التقييم الإجمالي (Overall Evaluation Summary)
+                Overall Performance Summary
               </h3>
             </div>
 
@@ -1363,22 +1269,22 @@ export default function AnnualEvaluationDashboard({
               {/* Employee Summary Card */}
               <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-blue-200 dark:border-blue-900/60 shadow-2xs">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-blue-700 dark:text-blue-300">التقييم الذاتي للموظف</span>
+                  <span className="text-xs font-bold text-blue-700 dark:text-blue-300">Agent Self-Review</span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">
-                    Self Review
+                    Self
                   </span>
                 </div>
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between items-center text-gray-600 dark:text-gray-300">
-                    <span>معدل معايير الأداء (KPI):</span>
+                    <span>KPI Average:</span>
                     <span className="font-bold font-mono">{selfKpiAvg > 0 ? selfKpiAvg.toFixed(2) : "--"} / 5.0</span>
                   </div>
                   <div className="flex justify-between items-center text-gray-600 dark:text-gray-300">
-                    <span>معدل الكفاءات السلوكية:</span>
+                    <span>Competency Average:</span>
                     <span className="font-bold font-mono">{selfCompAvg > 0 ? selfCompAvg.toFixed(2) : "--"} / 5.0</span>
                   </div>
                   <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-sm font-black text-gray-900 dark:text-white">
-                    <span>المعدل الإجمالي:</span>
+                    <span>Combined Score:</span>
                     <span className="font-mono text-base text-blue-600 dark:text-blue-400">
                       {selfOverall > 0 ? selfOverall.toFixed(2) : "--"}
                     </span>
@@ -1389,22 +1295,22 @@ export default function AnnualEvaluationDashboard({
               {/* Manager Summary Card */}
               <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 shadow-2xs">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-[#1C6B53] dark:text-emerald-300">تقييم المدير المعتمد</span>
+                  <span className="text-xs font-bold text-[#1C6B53] dark:text-emerald-300">Manager Review</span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200">
-                    Manager Review
+                    Official
                   </span>
                 </div>
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between items-center text-gray-600 dark:text-gray-300">
-                    <span>معدل معايير الأداء (KPI):</span>
+                    <span>KPI Average:</span>
                     <span className="font-bold font-mono">{managerKpiAvg > 0 ? managerKpiAvg.toFixed(2) : "--"} / 5.0</span>
                   </div>
                   <div className="flex justify-between items-center text-gray-600 dark:text-gray-300">
-                    <span>معدل الكفاءات السلوكية:</span>
+                    <span>Competency Average:</span>
                     <span className="font-bold font-mono">{managerCompAvg > 0 ? managerCompAvg.toFixed(2) : "--"} / 5.0</span>
                   </div>
                   <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-sm font-black text-gray-900 dark:text-white">
-                    <span>المعدل الإجمالي:</span>
+                    <span>Combined Score:</span>
                     <span className="font-mono text-base text-[#1C6B53] dark:text-emerald-400">
                       {managerOverall > 0 ? managerOverall.toFixed(2) : "--"}
                     </span>
@@ -1426,31 +1332,26 @@ export default function AnnualEvaluationDashboard({
                     <span className="text-xs text-gray-500 font-normal"> / 5.0</span>
                   </div>
                   <div className={`text-sm font-black mt-1 ${ratingTier.color}`}>
-                    {ratingTier.label} • {ratingTier.labelAr}
+                    {ratingTier.label}
                   </div>
                 </div>
 
                 <div className="text-[11px] text-gray-600 dark:text-gray-300 mt-3 pt-2 border-t border-gray-200/60 dark:border-gray-700/60">
-                  {officialOverallScore >= 4.5 && "أداء استثنائي يتفوق على كافة المستهدفات ويعد نموذجاً يحتذى به في البنك."}
-                  {officialOverallScore >= 3.5 && officialOverallScore < 4.5 && "أداء عالي يتجاوز التوقعات مع مساهمات ملحوظة في جودة الخدمة."}
-                  {officialOverallScore >= 2.5 && officialOverallScore < 3.5 && "أداء منضبط ومستقر يلبي كافة متطلبات العمل ومستهدفات القسم."}
-                  {officialOverallScore >= 1.5 && officialOverallScore < 2.5 && "أداء متوسط يحتاج إلى تركيز أكبر وتدريب لتطوير بعض المؤشرات."}
-                  {officialOverallScore < 1.5 && officialOverallScore > 0 && "أداء منخفض دون المستوى المطلوب يستوجب خطة تصحيحية عاجلة."}
-                  {officialOverallScore === 0 && "بانتظار استكمال التقييم لحساب النتيجة النهائية."}
+                  {officialOverallScore > 0 ? ratingTier.desc : "Complete evaluation to compute official final score."}
                 </div>
               </div>
 
             </div>
           </div>
 
-          {/* Section 4: Qualitative Feedback & Action Plan (الملاحظات وخطة التطوير) */}
+          {/* Section 4: Qualitative Feedback & Action Plan */}
           <div className="p-6 sm:p-8 space-y-6">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-[#1C6B53]/15 text-[#1C6B53] dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
                 4
               </div>
               <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                التقييم النوعي والتوصيات (Qualitative Feedback & Development)
+                Qualitative Feedback & Development Plan
               </h3>
             </div>
 
@@ -1460,14 +1361,14 @@ export default function AnnualEvaluationDashboard({
               <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
                 <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5 mb-2">
                   <ThumbsUp size={14} className="text-emerald-600 dark:text-emerald-400" />
-                  <span>نقاط القوة الرئيسية (Key Strengths)</span>
+                  <span>Key Strengths & Accomplishments</span>
                 </label>
                 <textarea
                   rows={3}
                   value={keyStrengths}
                   onChange={(e) => setKeyStrengths(e.target.value)}
                   disabled={!isReviewer}
-                  placeholder="أبرز الإنجازات ونقاط القوة التي أظهرها الموظف خلال فترة التقييم..."
+                  placeholder="Key contributions and achievements demonstrated during the review period..."
                   className="w-full text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 resize-none"
                 />
               </div>
@@ -1476,14 +1377,14 @@ export default function AnnualEvaluationDashboard({
               <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
                 <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5 mb-2">
                   <Target size={14} className="text-amber-600 dark:text-amber-400" />
-                  <span>مجالات التطوير وفرص التحسين (Areas for Development)</span>
+                  <span>Areas for Development & Training Plan</span>
                 </label>
                 <textarea
                   rows={3}
                   value={areasForDevelopment}
                   onChange={(e) => setAreasForDevelopment(e.target.value)}
                   disabled={!isReviewer}
-                  placeholder="المهارات والمؤشرات التي تحتاج إلى تركيز وتدريب في النصف القادم..."
+                  placeholder="Target competencies, skills, and coaching goals for the next review cycle..."
                   className="w-full text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 resize-none"
                 />
               </div>
@@ -1491,15 +1392,15 @@ export default function AnnualEvaluationDashboard({
               {/* Manager's Overall Comments */}
               <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
                 <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5 mb-2">
-                  <FileText size={14} className="text-[#1C6B53] dark:text-emerald-400" />
-                  <span>ملاحظات وتوصيات المدير (Manager's Overall Comments)</span>
+                  <Award size={14} className="text-[#1C6B53] dark:text-emerald-400" />
+                  <span>Manager's Overall Comments & Recommendations</span>
                 </label>
                 <textarea
                   rows={3}
                   value={managerComments}
                   onChange={(e) => setManagerComments(e.target.value)}
                   disabled={!isReviewer}
-                  placeholder="توصيات مسؤول الفريق والمدير العام لخدمة العملاء..."
+                  placeholder="Leadership summary, guidance, and strategic recommendations..."
                   className="w-full text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 resize-none"
                 />
               </div>
@@ -1508,14 +1409,14 @@ export default function AnnualEvaluationDashboard({
               <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
                 <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5 mb-2">
                   <MessageSquare size={14} className="text-blue-600 dark:text-blue-400" />
-                  <span>تعليق وملاحظات الموظف (Employee's Feedback)</span>
+                  <span>Employee's Feedback & Remarks</span>
                 </label>
                 <textarea
                   rows={3}
                   value={employeeComments}
                   onChange={(e) => setEmployeeComments(e.target.value)}
                   disabled={!isAgent && !isReviewer}
-                  placeholder="رأي الموظف وأهدافه وتطلعاته للنصف القادم بعد الجلسة الحوارية مع المدير..."
+                  placeholder="Agent reflections, aspirations, and feedback following review meeting..."
                   className="w-full text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 resize-none"
                 />
               </div>
@@ -1525,12 +1426,12 @@ export default function AnnualEvaluationDashboard({
             {/* Signature Line for Print */}
             <div className="hidden print:grid grid-cols-2 gap-8 pt-8 mt-6 border-t border-gray-300">
               <div>
-                <div className="text-xs font-bold text-gray-600">توقيع الموظف (Employee Signature):</div>
+                <div className="text-xs font-bold text-gray-600">Employee Signature:</div>
                 <div className="h-14 border-b border-gray-400 mt-2"></div>
                 <div className="text-[10px] text-gray-500 mt-1">{selectedEmployeeName}</div>
               </div>
               <div>
-                <div className="text-xs font-bold text-gray-600">توقيع مسؤول الفريق / المدير (Manager Signature):</div>
+                <div className="text-xs font-bold text-gray-600">Team Leader / Manager Signature:</div>
                 <div className="h-14 border-b border-gray-400 mt-2"></div>
                 <div className="text-[10px] text-gray-500 mt-1">{teamLeader || "Contact Center Leader"}</div>
               </div>
@@ -1541,11 +1442,11 @@ export default function AnnualEvaluationDashboard({
               <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
                 {lastSavedAt ? (
                   <>
-                    <CheckCircle2 size={14} className="text-emerald-500" />
-                    <span>آخر حفظ: {lastSavedAt}</span>
+                    <CheckCircle size={14} className="text-emerald-500" />
+                    <span>Last Saved: {lastSavedAt}</span>
                   </>
                 ) : (
-                  <span>لم يتم حفظ أي تغييرات بعد</span>
+                  <span>No changes saved yet</span>
                 )}
               </div>
 
@@ -1555,10 +1456,10 @@ export default function AnnualEvaluationDashboard({
                   type="button"
                   onClick={() => handleSaveEvaluation("draft")}
                   disabled={isSaving}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 disabled:opacity-50"
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
                   <Save size={14} />
-                  <span>{isSaving ? "جاري الحفظ..." : "حفظ كمسودة"}</span>
+                  <span>{isSaving ? "Saving..." : "Save Draft"}</span>
                 </button>
 
                 {/* Submit Self-Evaluation for Agent */}
@@ -1567,10 +1468,10 @@ export default function AnnualEvaluationDashboard({
                     type="button"
                     onClick={() => handleSaveEvaluation("self_submitted")}
                     disabled={isSaving}
-                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 shadow-md transition active:scale-95 disabled:opacity-50"
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer"
                   >
                     <CheckCircle size={14} />
-                    <span>إرسال التقييم الذاتي للمدير</span>
+                    <span>Submit Self-Evaluation</span>
                   </button>
                 )}
 
@@ -1580,10 +1481,10 @@ export default function AnnualEvaluationDashboard({
                     type="button"
                     onClick={() => handleSaveEvaluation("manager_finalized")}
                     disabled={isSaving}
-                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-gradient-to-r from-[#1C6B53] to-emerald-600 hover:opacity-95 shadow-md transition active:scale-95 disabled:opacity-50"
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-gradient-to-r from-[#1C6B53] to-emerald-600 hover:opacity-95 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer"
                   >
                     <ShieldCheck size={15} />
-                    <span>اعتماد التقييم النهائي</span>
+                    <span>Approve & Finalize Evaluation</span>
                   </button>
                 )}
               </div>
@@ -1595,7 +1496,7 @@ export default function AnnualEvaluationDashboard({
 
       </main>
 
-      {/* KPI Benchmark Informational Guide Modal (Image 2) */}
+      {/* KPI Benchmark Informational Guide Modal */}
       {showBenchmarkGuideModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
@@ -1608,16 +1509,16 @@ export default function AnnualEvaluationDashboard({
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-black tracking-tight">
-                    دليل معايير التقييم (KPI & Competency Benchmark Guide)
+                    KPI & Competency Benchmark Guide
                   </h3>
                   <p className="text-xs text-emerald-100 font-medium">
-                    المرجع الرسمي لتحديد درجات التقييم (1 إلى 5) لفريق خدمة العملاء
+                    Official rating benchmarks (Scale 1 to 5) for Contact Center teams
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowBenchmarkGuideModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition cursor-pointer"
               >
                 <X size={16} />
               </button>
@@ -1627,38 +1528,38 @@ export default function AnnualEvaluationDashboard({
             <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setBenchmarkGuideTab("calls")}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                   benchmarkGuideTab === "calls"
                     ? 'bg-[#1C6B53] text-white shadow-xs'
                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-700'
                 }`}
               >
                 <PhoneCall size={14} />
-                <span>معايير المكالمات (Calls Team)</span>
+                <span>Calls Team Benchmarks</span>
               </button>
 
               <button
                 onClick={() => setBenchmarkGuideTab("chat")}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                   benchmarkGuideTab === "chat"
                     ? 'bg-[#1C6B53] text-white shadow-xs'
                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-700'
                 }`}
               >
                 <MessageSquare size={14} />
-                <span>معايير الشات (Chat Team)</span>
+                <span>Chat Team Benchmarks</span>
               </button>
 
               <button
                 onClick={() => setBenchmarkGuideTab("competencies")}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                   benchmarkGuideTab === "competencies"
                     ? 'bg-[#1C6B53] text-white shadow-xs'
                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-700'
                 }`}
               >
                 <Users size={14} />
-                <span>دليل الكفاءات السلوكية</span>
+                <span>Competency Descriptions</span>
               </button>
             </div>
 
@@ -1668,24 +1569,24 @@ export default function AnnualEvaluationDashboard({
               {benchmarkGuideTab === "calls" && (
                 <div className="space-y-4">
                   <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3 rounded-2xl text-xs text-emerald-800 dark:text-emerald-200 font-medium">
-                    معايير احتساب تقييم فريق المكالمات (Younis Kamal & Ankido Buya Teams) حسب الصورة المعتمدة:
+                    Calls Team Performance Rating Benchmarks (Younis Kamal & Ankido Buya Teams):
                   </div>
 
                   <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700">
                     <table className="w-full text-center text-xs">
                       <thead>
                         <tr className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-black">
-                          <th className="p-3 text-right">الدرجة</th>
-                          <th className="p-3">QA (الجودة)</th>
-                          <th className="p-3">AHT (وقت المكالمة)</th>
-                          <th className="p-3">Exam (المعرفة)</th>
-                          <th className="p-3">Productivity (الإنتاجية)</th>
-                          <th className="p-3">Attendance (الالتزام)</th>
+                          <th className="p-3 text-left">Rating Tier</th>
+                          <th className="p-3">QA</th>
+                          <th className="p-3">AHT</th>
+                          <th className="p-3">Exam</th>
+                          <th className="p-3">Productivity</th>
+                          <th className="p-3">Attendance</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700 font-semibold">
                         <tr className="bg-emerald-50/40 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300">
-                          <td className="p-3 text-right font-black">5 ⭐ Outstanding</td>
+                          <td className="p-3 text-left font-black">5 ⭐ Outstanding</td>
                           <td className="p-3 font-mono">99% - 100%</td>
                           <td className="p-3 font-mono">&lt; 2:49</td>
                           <td className="p-3 font-mono">99% - 100%</td>
@@ -1693,7 +1594,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono">100%</td>
                         </tr>
                         <tr className="bg-teal-50/40 dark:bg-teal-950/20 text-teal-800 dark:text-teal-300">
-                          <td className="p-3 text-right font-black">4 ⭐ Exceeds</td>
+                          <td className="p-3 text-left font-black">4 ⭐ Exceeds Expectations</td>
                           <td className="p-3 font-mono">96% - 98%</td>
                           <td className="p-3 font-mono">2:50 - 2:59</td>
                           <td className="p-3 font-mono">96% - 98%</td>
@@ -1701,7 +1602,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono">98% - 99%</td>
                         </tr>
                         <tr className="bg-blue-50/40 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300">
-                          <td className="p-3 text-right font-black">3 ⭐ Meets</td>
+                          <td className="p-3 text-left font-black">3 ⭐ Meets Expectations</td>
                           <td className="p-3 font-mono">94% - 95%</td>
                           <td className="p-3 font-mono">3:00 (3M)</td>
                           <td className="p-3 font-mono">94% - 95%</td>
@@ -1709,7 +1610,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono">95% - 97%</td>
                         </tr>
                         <tr className="bg-amber-50/40 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
-                          <td className="p-3 text-right font-black">2 ⭐ Developing</td>
+                          <td className="p-3 text-left font-black">2 ⭐ Developing</td>
                           <td className="p-3 font-mono">90% - 93%</td>
                           <td className="p-3 font-mono">3:01 - 3:10</td>
                           <td className="p-3 font-mono">90% - 93%</td>
@@ -1717,7 +1618,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono">90% - 94%</td>
                         </tr>
                         <tr className="bg-rose-50/40 dark:bg-rose-950/20 text-rose-800 dark:text-rose-300">
-                          <td className="p-3 text-right font-black">1 ⭐ Needs Imp.</td>
+                          <td className="p-3 text-left font-black">1 ⭐ Needs Improvement</td>
                           <td className="p-3 font-mono">&lt; 89%</td>
                           <td className="p-3 font-mono">&gt; 3:11</td>
                           <td className="p-3 font-mono">&lt; 89%</td>
@@ -1733,25 +1634,25 @@ export default function AnnualEvaluationDashboard({
               {benchmarkGuideTab === "chat" && (
                 <div className="space-y-4">
                   <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3 rounded-2xl text-xs text-emerald-800 dark:text-emerald-200 font-medium">
-                    معايير احتساب تقييم فريق الشات (Mohammed Dlshad Team) حسب الصورة المعتمدة:
+                    Chat Team Performance Rating Benchmarks (Mohammed Dlshad Team):
                   </div>
 
                   <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700">
                     <table className="w-full text-center text-xs">
                       <thead>
                         <tr className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-black">
-                          <th className="p-3 text-right">الدرجة</th>
-                          <th className="p-3">Exam (المعرفة)</th>
-                          <th className="p-3">QA (الجودة)</th>
-                          <th className="p-3">AHT (وقت المعالجة)</th>
-                          <th className="p-3">ART (سرعة الاستجابة)</th>
+                          <th className="p-3 text-left">Rating Tier</th>
+                          <th className="p-3">Exam</th>
+                          <th className="p-3">QA</th>
+                          <th className="p-3">AHT</th>
+                          <th className="p-3">ART</th>
                           <th className="p-3">Productivity</th>
                           <th className="p-3">Attendance</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700 font-semibold">
                         <tr className="bg-emerald-50/40 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300">
-                          <td className="p-3 text-right font-black">5 ⭐ Outstanding</td>
+                          <td className="p-3 text-left font-black">5 ⭐ Outstanding</td>
                           <td className="p-3 font-mono">99% - 100%</td>
                           <td className="p-3 font-mono">99% - 100%</td>
                           <td className="p-3 font-mono">3:00 - 3:30</td>
@@ -1760,7 +1661,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono">100%</td>
                         </tr>
                         <tr className="bg-teal-50/40 dark:bg-teal-950/20 text-teal-800 dark:text-teal-300">
-                          <td className="p-3 text-right font-black">4 ⭐ Exceeds</td>
+                          <td className="p-3 text-left font-black">4 ⭐ Exceeds Expectations</td>
                           <td className="p-3 font-mono">96% - 98%</td>
                           <td className="p-3 font-mono">96% - 98%</td>
                           <td className="p-3 font-mono">4:00 - 4:59</td>
@@ -1769,7 +1670,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono">98% - 99%</td>
                         </tr>
                         <tr className="bg-blue-50/40 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300">
-                          <td className="p-3 text-right font-black">3 ⭐ Meets</td>
+                          <td className="p-3 text-left font-black">3 ⭐ Meets Expectations</td>
                           <td className="p-3 font-mono">94% - 95%</td>
                           <td className="p-3 font-mono">94% - 95%</td>
                           <td className="p-3 font-mono">5:00 - 5:30</td>
@@ -1778,7 +1679,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono">95% - 97%</td>
                         </tr>
                         <tr className="bg-amber-50/40 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
-                          <td className="p-3 text-right font-black">2 ⭐ Developing</td>
+                          <td className="p-3 text-left font-black">2 ⭐ Developing</td>
                           <td className="p-3 font-mono">90% - 93%</td>
                           <td className="p-3 font-mono">90% - 93%</td>
                           <td className="p-3 font-mono">5:31 - 6:00</td>
@@ -1787,7 +1688,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono">90% - 94%</td>
                         </tr>
                         <tr className="bg-rose-50/40 dark:bg-rose-950/20 text-rose-800 dark:text-rose-300">
-                          <td className="p-3 text-right font-black">1 ⭐ Needs Imp.</td>
+                          <td className="p-3 text-left font-black">1 ⭐ Needs Improvement</td>
                           <td className="p-3 font-mono">&lt; 89%</td>
                           <td className="p-3 font-mono">&lt; 89%</td>
                           <td className="p-3 font-mono">&gt; 6:01</td>
@@ -1810,13 +1711,10 @@ export default function AnnualEvaluationDashboard({
                           {idx + 1}
                         </span>
                         <h4 className="text-sm font-black text-gray-900 dark:text-white">
-                          {c.nameAr} ({c.name})
+                          {c.name}
                         </h4>
                       </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-300 mr-7 leading-relaxed">
-                        {c.descriptionAr}
-                      </p>
-                      <p className="text-[11px] text-gray-400 dark:text-gray-500 mr-7 mt-0.5 font-normal">
+                      <p className="text-xs text-gray-600 dark:text-gray-300 ml-7 leading-relaxed">
                         {c.description}
                       </p>
                     </div>
@@ -1831,9 +1729,9 @@ export default function AnnualEvaluationDashboard({
               <button
                 type="button"
                 onClick={() => setShowBenchmarkGuideModal(false)}
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#1C6B53] text-white hover:bg-[#155340] transition"
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#1C6B53] text-white hover:bg-[#155340] transition cursor-pointer"
               >
-                إغلاق الدليل
+                Close Guide
               </button>
             </div>
 
