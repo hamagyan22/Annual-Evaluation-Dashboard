@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
-import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal, BarChart3 } from "lucide-react";
+import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal, BarChart3, ClipboardCheck } from "lucide-react";
 import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesAndSeconds, getTopStarMotivationalQuote } from "@/lib/topStarUtils";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
@@ -169,6 +169,16 @@ const TopStarDashboard = dynamic(() => import("@/components/TopStarDashboard"), 
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFCFB] dark:bg-gray-950 text-gray-800 dark:text-gray-200">
       <div className="w-10 h-10 border-3 border-amber-500 border-t-transparent rounded-full animate-spin mb-3"></div>
       <p className="text-xs font-bold text-gray-500 dark:text-gray-400">Loading Top Star Leaderboard...</p>
+    </div>
+  ),
+  ssr: false,
+});
+
+const AnnualEvaluationDashboard = dynamic(() => import("@/components/AnnualEvaluationDashboard"), {
+  loading: () => (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFCFB] dark:bg-gray-950 text-gray-800 dark:text-gray-200">
+      <div className="w-10 h-10 border-3 border-[#1C6B53] border-t-transparent rounded-full animate-spin mb-3"></div>
+      <p className="text-xs font-bold text-gray-500 dark:text-gray-400">Loading Annual Evaluation Dashboard...</p>
     </div>
   ),
   ssr: false,
@@ -651,7 +661,8 @@ function AgentDashboard({
   allMembers = [], 
   onExitPreview,
   isDarkMode = false,
-  toggleDarkMode
+  toggleDarkMode,
+  onOpenAnnualEval
 }: { 
   userProfile: any; 
   onLogout: () => void; 
@@ -661,6 +672,7 @@ function AgentDashboard({
   onExitPreview?: () => void; 
   isDarkMode?: boolean;
   toggleDarkMode?: () => void;
+  onOpenAnnualEval?: () => void;
 }) {
   const defaultPeriod = getPreviousMonthAndYear();
 
@@ -1125,6 +1137,19 @@ function AgentDashboard({
                   </>
                 )}
               </div>
+            )}
+
+            {/* Annual & Semi-Annual Evaluation Button */}
+            {onOpenAnnualEval && (
+              <button
+                type="button"
+                onClick={onOpenAnnualEval}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100/80 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 border border-emerald-200/80 dark:border-emerald-800/60 shadow-xs transition active:scale-95 shrink-0 cursor-pointer"
+                title="التقييم السنوي والنصف سنوي"
+              >
+                <ClipboardCheck size={13} />
+                <span className="hidden xs:inline">التقييم السنوي</span>
+              </button>
             )}
 
             {/* Back to Dashboard Button in Preview Mode */}
@@ -1860,6 +1885,12 @@ export default function Dashboard() {
     }
     return false;
   });
+  const [showAnnualEvalView, setShowAnnualEvalView] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("app_show_annual_eval_view") === "true";
+    }
+    return false;
+  });
   const [isCombinedCallCenter, setIsCombinedCallCenter] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("app_combined_call_center") === "true";
@@ -1885,6 +1916,12 @@ export default function Dashboard() {
       localStorage.setItem("app_show_top_star_view", String(showTopStarView));
     }
   }, [showTopStarView]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("app_show_annual_eval_view", String(showAnnualEvalView));
+    }
+  }, [showAnnualEvalView]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -3851,6 +3888,21 @@ export default function Dashboard() {
       );
     }
 
+    if (showAnnualEvalView) {
+      return (
+        <AnnualEvaluationDashboard
+          userProfile={userProfile}
+          allMembers={allMembers}
+          onBack={() => {
+            setShowAnnualEvalView(false);
+          }}
+          onLogout={handleLogout}
+          isDarkMode={isDarkMode}
+          toggleDarkMode={toggleDarkMode}
+        />
+      );
+    }
+
     if (userProfile?.role === 'agent') {
       return (
         <AgentDashboard 
@@ -3859,6 +3911,7 @@ export default function Dashboard() {
           columnsMap={columnsMap} 
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
+          onOpenAnnualEval={() => setShowAnnualEvalView(true)}
         />
       );
     }
@@ -3874,6 +3927,7 @@ export default function Dashboard() {
           onExitPreview={() => setShowAgentPreview(false)} 
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
+          onOpenAnnualEval={() => setShowAnnualEvalView(true)}
         />
       );
     }
@@ -4087,6 +4141,17 @@ export default function Dashboard() {
                     <span className="hidden xs:inline sm:inline">Top Star</span>
                   </button>
                 )}
+
+                <button
+                  onClick={() => setShowAnnualEvalView(true)}
+                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-[#1C6B53] dark:hover:text-emerald-300 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40 transition-all group cursor-pointer"
+                  title="التقييم السنوي والنصف سنوي (Annual & Semi-Annual Performance Evaluation)"
+                >
+                  <div className="w-5 h-5 rounded-lg bg-[#1C6B53]/15 dark:bg-emerald-400/15 flex items-center justify-center text-[#1C6B53] dark:text-emerald-400 group-hover:scale-110 transition-transform">
+                    <ClipboardCheck size={13} />
+                  </div>
+                  <span className="hidden xs:inline sm:inline">التقييم السنوي</span>
+                </button>
               </div>
 
               <div className="h-4 w-px bg-gray-200 dark:bg-gray-700/80 mx-0.5" />
