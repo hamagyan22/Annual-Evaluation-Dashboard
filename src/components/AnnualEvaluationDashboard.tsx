@@ -155,7 +155,7 @@ export default function AnnualEvaluationDashboard({
   const [yearDropdownOpen, setYearDropdownOpen] = useState<boolean>(false);
   const [selectedPeriod, setSelectedPeriod] = useState<"Semi-Annual" | "Annual">("Semi-Annual");
 
-  // Selected Employee (Filtered to Younis Team only as requested)
+  // Selected Employee (Supports all employees across teams)
   const [selectedEmployeeName, setSelectedEmployeeName] = useState<string>("");
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState<string>("");
   const [employeeDropdownOpen, setEmployeeDropdownOpen] = useState<boolean>(false);
@@ -164,10 +164,19 @@ export default function AnnualEvaluationDashboard({
   const [showBenchmarkGuideModal, setShowBenchmarkGuideModal] = useState<boolean>(false);
   const [benchmarkGuideTab, setBenchmarkGuideTab] = useState<"calls" | "competencies">("calls");
 
+  // Helper to dynamically determine team leader from team name
+  const resolveTeamLeader = (teamName?: string) => {
+    if (!teamName) return "Contact Center Team Leader";
+    if (teamName.includes('Ankido')) return "Ankido Buya";
+    if (teamName.includes('Mohammed') || teamName.includes('Dlshad')) return "Mohammed Dlshad";
+    if (teamName.includes('Younis')) return "Younis Kamal";
+    return teamName;
+  };
+
   // Form State
   const [evaluationDate, setEvaluationDate] = useState<string>("");
   const [employeeId, setEmployeeId] = useState<string>("");
-  const [teamLeader, setTeamLeader] = useState<string>("Younis Kamal");
+  const [teamLeader, setTeamLeader] = useState<string>("Contact Center Team Leader");
 
   // KPIs State (Self & Manager)
   const [selfKpis, setSelfKpis] = useState<Record<string, number>>({});
@@ -205,9 +214,9 @@ export default function AnnualEvaluationDashboard({
   // Real actual metrics fetched for the period to assist evaluation
   const [actualMetricsSummary, setActualMetricsSummary] = useState<any | null>(null);
 
-  // Filtered members list: Younis Team Only as requested ("و خلي يونس تيم بس")
+  // Filtered members list: All employees across all teams as requested ("خلي جميع الموظفين")
   const filteredMembers = useMemo(() => {
-    let list = allMembers.filter(m => m.team === 'Younis Kamal Team');
+    let list = [...allMembers];
     
     if (isAgent) {
       const myName = (userProfile?.name || userProfile?.agent_name || "").toLowerCase().trim();
@@ -217,9 +226,12 @@ export default function AnnualEvaluationDashboard({
     
     if (employeeSearchTerm.trim()) {
       const term = employeeSearchTerm.toLowerCase().trim();
-      list = list.filter(m => (m.agent_name || "").toLowerCase().includes(term));
+      list = list.filter(m => 
+        (m.agent_name || "").toLowerCase().includes(term) ||
+        (m.team || "").toLowerCase().includes(term)
+      );
     }
-    return list;
+    return list.sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
   }, [allMembers, employeeSearchTerm, isAgent, userProfile]);
 
   // Current selected member object
@@ -240,8 +252,8 @@ export default function AnnualEvaluationDashboard({
   // Auto-fill Employee info when currentMember changes
   useEffect(() => {
     if (currentMember) {
-      setEmployeeId(currentMember.employee_id || currentMember.employee_code || `FIB-${currentMember.agent_name?.slice(0, 3).toUpperCase() || 'CC'}`);
-      setTeamLeader("Younis Kamal");
+      setEmployeeId(currentMember.employee_id || currentMember.employee_code || "");
+      setTeamLeader(resolveTeamLeader(currentMember.team));
     }
   }, [currentMember]);
 
@@ -263,7 +275,7 @@ export default function AnnualEvaluationDashboard({
         const data = docSnap.data();
         setEvaluationDate(data.evaluation_date || "");
         setEmployeeId(data.employee_id || "");
-        setTeamLeader("Younis Kamal");
+        setTeamLeader(data.team_leader || resolveTeamLeader(currentMember?.team));
         setSelfKpis(data.self_kpis || {});
         setManagerKpis(data.manager_kpis || {});
         setSelfCompetencies(data.self_competencies || {});
@@ -297,7 +309,7 @@ export default function AnnualEvaluationDashboard({
     };
   }, [docId]);
 
-  // Fetch actual performance metrics from Younis metrics table
+  // Fetch actual performance metrics from team metrics table (ankido_metrics, mohammed_metrics, younis_metrics)
   // Semi-Annual is H1 (Jan-Jun) and Annual is full year as requested
   useEffect(() => {
     if (!selectedEmployeeName) {
@@ -308,8 +320,13 @@ export default function AnnualEvaluationDashboard({
     let isMounted = true;
     const fetchActuals = async () => {
       try {
+        const targetTeam = currentMember?.team || "";
+        const collectionName = targetTeam.includes('Ankido') ? 'ankido_metrics' :
+                               (targetTeam.includes('Mohammed') || targetTeam.includes('Dlshad')) ? 'mohammed_metrics' :
+                               'younis_metrics';
+
         const q = query(
-          collection(db, 'younis_metrics'),
+          collection(db, collectionName),
           where("year", "==", selectedYear)
         );
         const snap = await getDocs(q);
@@ -365,7 +382,7 @@ export default function AnnualEvaluationDashboard({
 
         const suggestions: Record<string, number> = {};
 
-        // Calls Benchmarks for Younis Team
+        // Rating Benchmarks
         if (avgQA !== null) {
           if (avgQA >= 99) suggestions.qa = 5;
           else if (avgQA >= 96) suggestions.qa = 4;
@@ -412,9 +429,9 @@ export default function AnnualEvaluationDashboard({
 
     fetchActuals();
     return () => { isMounted = false; };
-  }, [selectedEmployeeName, selectedYear, selectedPeriod]);
+  }, [selectedEmployeeName, selectedYear, selectedPeriod, currentMember?.team]);
 
-  // Calls KPIs for Younis Team
+  // Operational KPIs for Contact Center
   const kpiDefinitions = useMemo(() => {
     return [
       { id: "qa", name: "Quality Assurance (QA)", actual: actualMetricsSummary?.qa },
@@ -518,8 +535,8 @@ export default function AnnualEvaluationDashboard({
         employee_name: selectedEmployeeName,
         employee_id: employeeId || "",
         department: "Contact Center",
-        team: "Younis Kamal Team",
-        team_leader: "Younis Kamal",
+        team: currentMember?.team || "Contact Center",
+        team_leader: teamLeader || resolveTeamLeader(currentMember?.team),
         channel_type: "calls",
         
         self_kpis: selfKpis,
@@ -606,7 +623,7 @@ export default function AnnualEvaluationDashboard({
                   Performance Evaluation
                 </h1>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1C6B53]/10 text-[#1C6B53] dark:bg-emerald-400/10 dark:text-emerald-400 border border-[#1C6B53]/20 dark:border-emerald-400/20">
-                  Younis Team
+                  {currentMember?.team?.replace(' Team', '') || "Contact Center"}
                 </span>
               </div>
               <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium hidden sm:block">
@@ -741,7 +758,7 @@ export default function AnnualEvaluationDashboard({
 
             </div>
 
-            {/* Right Side: Employee Selector (Younis Team Only) */}
+            {/* Right Side: Employee Selector (All Employees) */}
             <div className="relative flex-1 sm:flex-initial min-w-[260px]">
               {isAgent ? (
                 <div className="flex items-center gap-2.5 px-3.5 py-2 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
@@ -750,7 +767,7 @@ export default function AnnualEvaluationDashboard({
                   </div>
                   <div>
                     <div className="text-xs font-black text-gray-900 dark:text-white">{toTitleCase(selectedEmployeeName)}</div>
-                    <div className="text-[10px] text-[#1C6B53] dark:text-emerald-400 font-bold">Younis Team</div>
+                    <div className="text-[10px] text-[#1C6B53] dark:text-emerald-400 font-bold">{currentMember?.team?.replace(' Team', '') || 'Contact Center'}</div>
                   </div>
                 </div>
               ) : (
@@ -768,7 +785,7 @@ export default function AnnualEvaluationDashboard({
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-[10px] px-2 py-0.5 rounded-lg bg-emerald-100/70 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 font-bold">
-                        Younis Team
+                        {currentMember?.team?.replace(' Team', '') || 'All Teams'}
                       </span>
                       <ChevronDown size={14} className={`text-gray-400 transition-transform ${employeeDropdownOpen ? 'rotate-180' : ''}`} />
                     </div>
@@ -782,7 +799,7 @@ export default function AnnualEvaluationDashboard({
                           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                           <input
                             type="text"
-                            placeholder="Filter Younis Team agents..."
+                            placeholder="Search all employees..."
                             value={employeeSearchTerm}
                             onChange={(e) => setEmployeeSearchTerm(e.target.value)}
                             className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 font-medium"
@@ -815,7 +832,7 @@ export default function AnnualEvaluationDashboard({
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                                    Younis Team
+                                    {m.team?.replace(' Team', '') || 'Team'}
                                   </span>
                                   {isSelected && <Check size={13} className="text-[#1C6B53] dark:text-emerald-400" />}
                                 </div>
@@ -836,17 +853,18 @@ export default function AnnualEvaluationDashboard({
         {/* Evaluation Paper Card */}
         <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl shadow-xs overflow-hidden print:border-none print:shadow-none print:p-0">
           
-          {/* Header Card: Simple, Modern, Eye-Friendly Luxury Design */}
-          <div className="bg-[#FAF9F6] dark:bg-gray-850 border-b border-gray-200/80 dark:border-gray-800 p-6 sm:p-7 relative overflow-hidden">
-            <div className="absolute -right-20 -top-20 w-72 h-72 bg-[#1C6B53]/5 dark:bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+          {/* Header Card: Rich Brand Emerald Gradient Design */}
+          <div className="bg-gradient-to-r from-[#0C382E] via-[#135B47] to-[#1C6B53] border-b border-[#135B47]/60 p-6 sm:p-8 relative overflow-hidden text-white">
+            <div className="absolute -right-16 -top-16 w-80 h-80 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute left-1/3 -bottom-16 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
             
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
               
               {/* Employee Information & Brand Info */}
               <div className="flex items-center gap-4 sm:gap-5">
                 
-                {/* Modern FIB Logo Emblem: Seamlessly integrated with light surface */}
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200/90 dark:border-gray-700 shadow-2xs flex items-center justify-center p-2.5 shrink-0">
+                {/* Modern FIB Logo Emblem: Crisp white container popping against emerald background */}
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white shadow-md flex items-center justify-center p-2.5 shrink-0 ring-4 ring-white/10">
                   <img 
                     src="/logo.webp" 
                     alt="First Iraqi Bank" 
@@ -856,72 +874,83 @@ export default function AnnualEvaluationDashboard({
 
                 <div>
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-[11px] font-black tracking-wider uppercase bg-[#1C6B53]/10 text-[#1C6B53] dark:bg-emerald-950/60 dark:text-emerald-300 px-3 py-0.5 rounded-full border border-[#1C6B53]/20 dark:border-emerald-700/50">
+                    <span className="text-[11px] font-black tracking-wider uppercase bg-white/15 text-emerald-100 px-3 py-0.5 rounded-full border border-white/20 backdrop-blur-sm shadow-xs">
                       {toTitleCase(selectedPeriod)} • {selectedYear}
                     </span>
-                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                      {evaluationDate ? `Submitted: ${evaluationDate}` : "Auto-Stamped Upon Submission"}
-                    </span>
+                    {evaluationDate && (
+                      <span className="text-xs font-semibold text-emerald-200">
+                        Submitted: {evaluationDate}
+                      </span>
+                    )}
                     {isReadOnly && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-white border border-white/20 flex items-center gap-1 backdrop-blur-sm">
                         <Eye size={11} />
                         <span>View Only</span>
                       </span>
                     )}
                   </div>
 
-                  <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+                  <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                     {toTitleCase(selectedEmployeeName || "Select Employee")}
                   </h2>
 
-                  <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs text-gray-500 dark:text-gray-400 font-medium">
-                    <span className="font-mono bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-0.5 rounded-md font-bold">
-                      {employeeId || "FIB-CC"}
-                    </span>
-                    <span>•</span>
-                    <span className="font-bold text-[#1C6B53] dark:text-emerald-400">Younis Team</span>
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs text-emerald-100/90 font-medium">
+                    <span className="font-bold text-white">{currentMember?.team?.replace(' Team', '') || 'Contact Center'} Team</span>
                     <span>•</span>
                     <span>Contact Center</span>
                   </div>
                 </div>
               </div>
 
-              {/* Status Badge & Score Highlights */}
+              {/* Status Badge & Score Highlights: 100% Uniform, Symmetrical, Aligned */}
               <div className="flex items-center gap-3 self-start lg:self-auto flex-wrap">
-                <div className="bg-white dark:bg-gray-800/90 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl px-4 py-2.5 text-center min-w-[110px] shadow-2xs">
-                  <div className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">Final Score</div>
-                  <div className="text-2xl font-black text-gray-900 dark:text-white leading-tight">
+                {/* Final Score Card */}
+                <div className="w-[130px] sm:w-[145px] h-[78px] bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between items-center text-center shadow-xs">
+                  <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider leading-none">
+                    Final Score
+                  </div>
+                  <div className="flex-1 flex items-center justify-center">
                     {isManagerDataVisible && officialOverallScore > 0 ? (
-                      <>
-                        <span className="text-[#1C6B53] dark:text-emerald-400">{officialOverallScore.toFixed(2)}</span>
-                        <span className="text-xs text-gray-400 font-normal"> / 5.0</span>
-                      </>
+                      <div className="text-2xl font-black text-white leading-none">
+                        <span>{officialOverallScore.toFixed(2)}</span>
+                        <span className="text-xs text-emerald-200/80 font-normal"> / 5.0</span>
+                      </div>
                     ) : (
-                      <span className="text-sm font-bold text-gray-400">--</span>
+                      <span className="text-base font-bold text-white/50">--</span>
                     )}
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800/90 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl px-4 py-2.5 min-w-[130px] shadow-2xs">
-                  <div className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">Rating Tier</div>
-                  <div className="text-sm font-black text-gray-900 dark:text-white mt-1 flex items-center gap-1.5">
-                    <Award size={15} className={isManagerDataVisible && officialOverallScore > 0 ? "text-amber-500" : "text-gray-400"} />
-                    <span>{isManagerDataVisible && officialOverallScore > 0 ? ratingTier.label : "Pending"}</span>
+                {/* Rating Tier Card */}
+                <div className="w-[130px] sm:w-[145px] h-[78px] bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between items-center text-center shadow-xs">
+                  <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider leading-none">
+                    Rating Tier
+                  </div>
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-xs sm:text-sm font-black text-white flex items-center gap-1.5 leading-none">
+                      <Award size={15} className={isManagerDataVisible && officialOverallScore > 0 ? "text-amber-300 shrink-0" : "text-white/40 shrink-0"} />
+                      <span className="truncate max-w-[100px]">{isManagerDataVisible && officialOverallScore > 0 ? ratingTier.label : "Pending"}</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800/90 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl px-3.5 py-2.5 shadow-2xs">
-                  <div className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">Status</div>
-                  <div className="text-xs font-bold text-gray-800 dark:text-gray-200 mt-1 flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full ${
-                      evaluationStatus === 'manager_finalized' ? 'bg-emerald-500 ring-4 ring-emerald-100 dark:ring-emerald-950/60' :
-                      evaluationStatus === 'self_submitted' ? 'bg-amber-500 ring-4 ring-amber-100 dark:ring-amber-950/60' : 
-                      'bg-gray-400 ring-4 ring-gray-100 dark:ring-gray-800'
-                    }`} />
-                    <span>
-                      {evaluationStatus === 'manager_finalized' ? 'Finalized' :
-                       evaluationStatus === 'self_submitted' ? 'Self Completed' : 'Draft'}
-                    </span>
+                {/* Status Card */}
+                <div className="w-[130px] sm:w-[145px] h-[78px] bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between items-center text-center shadow-xs">
+                  <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider leading-none">
+                    Status
+                  </div>
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-xs font-bold text-white flex items-center gap-1.5 leading-none">
+                      <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                        evaluationStatus === 'manager_finalized' ? 'bg-emerald-400 ring-4 ring-emerald-400/20' :
+                        evaluationStatus === 'self_submitted' ? 'bg-amber-400 ring-4 ring-amber-400/20' : 
+                        'bg-white/40 ring-4 ring-white/10'
+                      }`} />
+                      <span>
+                        {evaluationStatus === 'manager_finalized' ? 'Finalized' :
+                         evaluationStatus === 'self_submitted' ? 'Self Done' : 'Draft'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -962,7 +991,7 @@ export default function AnnualEvaluationDashboard({
                   </h3>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-9">
-                  Younis Team calls performance metrics evaluation (Rate 1 to 5).
+                  Operational performance metrics evaluation (Rate 1 to 5).
                 </p>
               </div>
 
@@ -1485,7 +1514,7 @@ export default function AnnualEvaluationDashboard({
               <div>
                 <div className="text-xs font-bold text-gray-600">Team Leader / Manager Signature:</div>
                 <div className="h-14 border-b border-gray-400 mt-2"></div>
-                <div className="text-[10px] text-gray-500 mt-1">Younis Kamal</div>
+                <div className="text-[10px] text-gray-500 mt-1">{teamLeader || "Team Leader"}</div>
               </div>
             </div>
 
@@ -1566,7 +1595,7 @@ export default function AnnualEvaluationDashboard({
                     KPI & Competency Benchmark Guide
                   </h3>
                   <p className="text-xs text-emerald-100 font-medium">
-                    Official rating benchmarks (Scale 1 to 5) for Younis Team
+                    Official rating benchmarks (Scale 1 to 5) for Contact Center
                   </p>
                 </div>
               </div>
@@ -1611,7 +1640,7 @@ export default function AnnualEvaluationDashboard({
               {benchmarkGuideTab === "calls" && (
                 <div className="space-y-4">
                   <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3 rounded-2xl text-xs text-emerald-800 dark:text-emerald-200 font-medium">
-                    Calls Performance Rating Benchmarks for Younis Team:
+                    Calls Performance Rating Benchmarks:
                   </div>
 
                   <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700">
