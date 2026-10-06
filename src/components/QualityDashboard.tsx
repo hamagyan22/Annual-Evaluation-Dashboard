@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
-import { collection, query, where, doc, setDoc, onSnapshot, getDocs, updateDoc, addDoc } from "firebase/firestore";
+import { collection, query, where, doc, setDoc, onSnapshot, getDocs, updateDoc, addDoc, deleteField } from "firebase/firestore";
 import { updatePassword } from "firebase/auth";
 import { 
   Award, ArrowLeft, Search, Users, Check, Save, Download, 
@@ -503,6 +503,8 @@ export default function QualityDashboard({
     score: string;
     noteText: string;
     linkUrl: string;
+    docId?: string;
+    hasExistingData?: boolean;
   } | null>(null);
   const [savingNote, setSavingNote] = useState(false);
 
@@ -2801,6 +2803,52 @@ export default function QualityDashboard({
     }
   };
 
+  // Helper to resolve all possible key aliases for a cell (chat/call, bonus, and weekly variations)
+  const getAllCellKeys = useCallback((key: string, week: number, isChat: boolean): string[] => {
+    const keys = new Set<string>();
+    if (!key) return [];
+    keys.add(key);
+
+    // 1. Matches call_N or chat_N (with optional week prefix)
+    const m = key.match(/(?:w\d+_)?(call|chat)_(\d+)/i);
+    if (m) {
+      const cNum = parseInt(m[2], 10);
+      keys.add(`call_${cNum}`);
+      keys.add(`chat_${cNum}`);
+
+      // Bonus week mapping: w = floor((cNum - 1) / 6) + 1
+      const wBonus = Math.floor((cNum - 1) / 6) + 1;
+      keys.add(`w${wBonus}_call_${cNum}`);
+      keys.add(`w${wBonus}_chat_${cNum}`);
+
+      // All 5 weeks standard variants
+      for (let w = 1; w <= 5; w++) {
+        keys.add(`w${w}_call_${cNum}`);
+        keys.add(`w${w}_chat_${cNum}`);
+
+        // Standard inbound call index mapping: callBase = (w - 1) * 3
+        const callIndex = (w - 1) * 3 + cNum;
+        keys.add(`w${w}_call_${callIndex}`);
+        keys.add(`w${w}_chat_${callIndex}`);
+
+        if (cNum > (w - 1) * 3 && cNum <= w * 3) {
+          const subIndex = cNum - (w - 1) * 3;
+          keys.add(`w${w}_call_${subIndex}`);
+          keys.add(`w${w}_chat_${subIndex}`);
+        }
+      }
+    }
+
+    // 2. Monitoring eval matches: m{month}_eval_{N}
+    const evalMatch = key.match(/m\d+_eval_(\d+)/i);
+    if (evalMatch) {
+      keys.add(`eval_${evalMatch[1]}`);
+      keys.add(key);
+    }
+
+    return Array.from(keys);
+  }, []);
+
   // Open note modal for a specific cell
   const handleOpenNote = (csrName: string, key: string, callLabel: string) => {
     if (!isTrainer && !isCallMon && !isBonus && !isCShift && unsyncedPreviousMonthRef.current) {
@@ -2811,21 +2859,28 @@ export default function QualityDashboard({
     const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
     const docId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
+
+    const candidateKeys = getAllCellKeys(key, selectedWeek, isChatTeam);
     let existingNote = (evalData[docId]?.notes || {})[key] || "";
     let existingLink = (evalData[docId]?.links || {})[key] || "";
     let scoreVal = (evalData[docId]?.scores || {})[key] || "";
 
-    if (isBonus && (!existingNote || !existingLink || !scoreVal)) {
-      const m = key.match(/(?:call|chat)_(\d+)/);
-      if (m) {
-        const cNum = parseInt(m[1], 10);
-        const prefixKey = isChatTeam ? "chat" : "call";
-        const altKey = key.startsWith(`${prefixKey}_`)
-          ? `w${Math.floor((cNum - 1) / 6) + 1}_${prefixKey}_${cNum}`
-          : `${prefixKey}_${cNum}`;
-        if (!existingNote) existingNote = (evalData[docId]?.notes || {})[altKey] || (evalData[docId]?.notes || {})[`call_${cNum}`] || (evalData[docId]?.notes || {})[`chat_${cNum}`] || "";
-        if (!existingLink) existingLink = (evalData[docId]?.links || {})[altKey] || (evalData[docId]?.links || {})[`call_${cNum}`] || (evalData[docId]?.links || {})[`chat_${cNum}`] || "";
-        if (!scoreVal) scoreVal = (evalData[docId]?.scores || {})[altKey] || (evalData[docId]?.scores || {})[`call_${cNum}`] || (evalData[docId]?.scores || {})[`chat_${cNum}`] || "";
+    if (!existingNote) {
+      for (const k of candidateKeys) {
+        const n = (evalData[docId]?.notes || {})[k];
+        if (n && String(n).trim()) { existingNote = String(n); break; }
+      }
+    }
+    if (!existingLink) {
+      for (const k of candidateKeys) {
+        const l = (evalData[docId]?.links || {})[k];
+        if (l && String(l).trim()) { existingLink = String(l); break; }
+      }
+    }
+    if (!scoreVal) {
+      for (const k of candidateKeys) {
+        const s = (evalData[docId]?.scores || {})[k];
+        if (s !== undefined && s !== null && s !== "") { scoreVal = String(s); break; }
       }
     }
 
@@ -2843,7 +2898,9 @@ export default function QualityDashboard({
       callLabel,
       score: scoreVal,
       noteText: existingNote,
-      linkUrl: existingLink
+      linkUrl: existingLink,
+      docId,
+      hasExistingData: Boolean(existingNote.trim() || existingLink.trim())
     });
   };
 
@@ -2851,52 +2908,73 @@ export default function QualityDashboard({
   const handleSaveNote = async () => {
     if (!activeNoteModal) return;
     setSavingNote(true);
-    const { csrName, key, noteText, linkUrl } = activeNoteModal;
+    const { csrName, key, noteText, linkUrl, docId: modalDocId } = activeNoteModal;
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
     const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
-    const docId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
+    const docId = modalDocId || `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
+
+    const candidateKeys = getAllCellKeys(key, selectedWeek, isChatTeam);
+    const nowIso = new Date().toISOString();
 
     try {
       const updatedNotes = {
         ...((evalData[docId]?.notes) || {})
       };
-      if (noteText.trim()) {
-        updatedNotes[key] = noteText.trim();
-      } else {
-        delete updatedNotes[key];
-      }
-
       const updatedLinks = {
         ...((evalData[docId]?.links) || {})
       };
+      const updatedTimestamps = {
+        ...((evalData[docId]?.cell_timestamps) || {})
+      };
+
+      const firestorePayload: Record<string, any> = {
+        year: selectedYear,
+        quarter: effectiveQuarter,
+        evaluator: currentSection.evaluator,
+        team: currentSection.team,
+        csr_name: csrName,
+        _arch: getSystemAuthor(),
+        updated_at: nowIso
+      };
+
+      if (noteText.trim()) {
+        updatedNotes[key] = noteText.trim();
+        firestorePayload[`notes.${key}`] = noteText.trim();
+        if (isBonus) {
+          candidateKeys.forEach(k => {
+            updatedNotes[k] = noteText.trim();
+            firestorePayload[`notes.${k}`] = noteText.trim();
+          });
+        }
+      } else {
+        // If note text is empty, deleteField() all candidate key variations
+        candidateKeys.forEach(k => {
+          delete updatedNotes[k];
+          firestorePayload[`notes.${k}`] = deleteField();
+        });
+      }
+
       if (linkUrl.trim()) {
         updatedLinks[key] = linkUrl.trim();
+        firestorePayload[`links.${key}`] = linkUrl.trim();
+        if (isBonus) {
+          candidateKeys.forEach(k => {
+            updatedLinks[k] = linkUrl.trim();
+            firestorePayload[`links.${k}`] = linkUrl.trim();
+          });
+        }
       } else {
-        delete updatedLinks[key];
+        // If link URL is empty, deleteField() all candidate key variations
+        candidateKeys.forEach(k => {
+          delete updatedLinks[k];
+          firestorePayload[`links.${k}`] = deleteField();
+        });
       }
 
-      let altKey: string | null = null;
-      if (isBonus && key.match(/call_(\d+)/)) {
-        const cNum = parseInt(key.match(/call_(\d+)/)![1], 10);
-        altKey = key.startsWith("call_")
-          ? `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`
-          : `call_${cNum}`;
-      }
-      if (altKey) {
-        if (noteText.trim()) updatedNotes[altKey] = noteText.trim();
-        else delete updatedNotes[altKey];
-        if (linkUrl.trim()) updatedLinks[altKey] = linkUrl.trim();
-        else delete updatedLinks[altKey];
-      }
-
-      const nowIso = new Date().toISOString();
-      const updatedTimestamps = {
-        ...((evalData[docId]?.cell_timestamps) || {}),
-      };
       if (noteText.trim() || linkUrl.trim() || evalData[docId]?.scores?.[key] !== undefined) {
         updatedTimestamps[key] = nowIso;
-        if (altKey) updatedTimestamps[altKey] = nowIso;
+        firestorePayload[`cell_timestamps.${key}`] = nowIso;
       }
 
       setEvalData(prev => {
@@ -2923,22 +3001,12 @@ export default function QualityDashboard({
         };
       });
 
-      await setDoc(doc(db, "quality_evaluations", docId), {
-        year: selectedYear,
-        quarter: effectiveQuarter,
-        evaluator: currentSection.evaluator,
-        team: currentSection.team,
-        csr_name: csrName,
-        notes: updatedNotes,
-        links: updatedLinks,
-        cell_timestamps: updatedTimestamps,
-        _arch: getSystemAuthor(),
-        updated_at: nowIso
-      }, { merge: true });
+      await setDoc(doc(db, "quality_evaluations", docId), firestorePayload, { merge: true });
 
       setActiveNoteModal(null);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Error saving note:", e);
+      alert("Error saving note: " + (e?.message || e));
     } finally {
       setSavingNote(false);
     }
@@ -2948,54 +3016,58 @@ export default function QualityDashboard({
   const handleDeleteNote = async () => {
     if (!activeNoteModal) return;
     setSavingNote(true);
-    const { csrName, key } = activeNoteModal;
+    const { csrName, key, docId: modalDocId } = activeNoteModal;
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
     const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
-    const docId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
+    const docId = modalDocId || `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
+
+    const candidateKeys = getAllCellKeys(key, selectedWeek, isChatTeam);
+    const nowIso = new Date().toISOString();
 
     try {
-      const updatedNotes = { ...((evalData[docId]?.notes) || {}) };
-      delete updatedNotes[key];
-
-      const updatedLinks = { ...((evalData[docId]?.links) || {}) };
-      delete updatedLinks[key];
-
-      let altKey: string | null = null;
-      if (isBonus && key.match(/call_(\d+)/)) {
-        const cNum = parseInt(key.match(/call_(\d+)/)![1], 10);
-        altKey = key.startsWith("call_")
-          ? `w${Math.floor((cNum - 1) / 6) + 1}_call_${cNum}`
-          : `call_${cNum}`;
-      }
-      if (altKey) {
-        delete updatedNotes[altKey];
-        delete updatedLinks[altKey];
-      }
-
+      // 1. Optimistically update local evalData state so the red mark and note disappear immediately
       setEvalData(prev => {
         const currentDoc = prev[docId];
         if (!currentDoc) return prev;
+        const updatedNotes = { ...(currentDoc.notes || {}) };
+        const updatedLinks = { ...(currentDoc.links || {}) };
+        candidateKeys.forEach(k => {
+          delete updatedNotes[k];
+          delete updatedLinks[k];
+        });
         return {
           ...prev,
           [docId]: {
             ...currentDoc,
             notes: updatedNotes,
             links: updatedLinks,
-            updated_at: new Date().toISOString()
+            updated_at: nowIso
           }
         };
       });
 
-      await setDoc(doc(db, "quality_evaluations", docId), {
-        notes: updatedNotes,
-        links: updatedLinks,
-        updated_at: new Date().toISOString()
-      }, { merge: true });
+      // 2. Prepare payload using deleteField() for all candidate keys
+      const deletePayload: Record<string, any> = {
+        updated_at: nowIso
+      };
+      candidateKeys.forEach(k => {
+        deletePayload[`notes.${k}`] = deleteField();
+        deletePayload[`links.${k}`] = deleteField();
+      });
 
+      // 3. Persist to Firestore
+      try {
+        await updateDoc(doc(db, "quality_evaluations", docId), deletePayload);
+      } catch (upErr) {
+        await setDoc(doc(db, "quality_evaluations", docId), deletePayload, { merge: true });
+      }
+
+      // 4. Close modal
       setActiveNoteModal(null);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Error deleting note:", e);
+      alert("Error deleting note: " + (e?.message || e));
     } finally {
       setSavingNote(false);
     }
@@ -6209,15 +6281,19 @@ export default function QualityDashboard({
                   </p>
                 </div>
               </div>
-              {(activeNoteModal.noteText.trim() || activeNoteModal.linkUrl.trim()) && (
+              {(Boolean(activeNoteModal.noteText?.trim()) || Boolean(activeNoteModal.linkUrl?.trim()) || Boolean(activeNoteModal.hasExistingData)) && (
                 <button
                   type="button"
-                  onClick={handleDeleteNote}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleDeleteNote();
+                  }}
                   disabled={savingNote}
-                  className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/50 cursor-pointer disabled:opacity-50"
+                  className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/50 cursor-pointer disabled:opacity-50 flex items-center justify-center"
                   title="Delete Note & Link"
                 >
-                  <Trash2 size={15} />
+                  {savingNote ? <RefreshCw size={15} className="animate-spin text-red-500" /> : <Trash2 size={15} />}
                 </button>
               )}
             </div>
@@ -6274,20 +6350,38 @@ export default function QualityDashboard({
               </div>
             </div>
 
-            {/* Footer: Press Enter to save + Save Note & Link Button */}
-            <div className="flex justify-between items-center pt-2.5 border-t border-gray-100 dark:border-gray-800">
+            {/* Footer: Press Enter to save + Delete + Save Note & Link Button */}
+            <div className="flex justify-between items-center pt-2.5 border-t border-gray-100 dark:border-gray-800 gap-2">
               <span className="text-[11px] text-gray-400 font-medium">
                 Press Enter to save
               </span>
-              <button
-                type="button"
-                onClick={handleSaveNote}
-                disabled={savingNote}
-                className="bg-[#00A991] hover:bg-[#008f7a] text-white text-xs font-black px-4 py-2 rounded-xl transition shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
-              >
-                {savingNote ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
-                <span>Save Note & Link</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {(Boolean(activeNoteModal.noteText?.trim()) || Boolean(activeNoteModal.linkUrl?.trim()) || Boolean(activeNoteModal.hasExistingData)) && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleDeleteNote();
+                    }}
+                    disabled={savingNote}
+                    className="px-3 py-2 text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition cursor-pointer disabled:opacity-50 flex items-center gap-1"
+                    title="Delete Note & Link"
+                  >
+                    {savingNote ? <RefreshCw size={13} className="animate-spin text-red-500" /> : <Trash2 size={13} />}
+                    <span>Delete</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleSaveNote}
+                  disabled={savingNote}
+                  className="bg-[#00A991] hover:bg-[#008f7a] text-white text-xs font-black px-4 py-2 rounded-xl transition shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                >
+                  {savingNote ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+                  <span>Save Note & Link</span>
+                </button>
+              </div>
             </div>
 
           </div>
