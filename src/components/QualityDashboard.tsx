@@ -544,7 +544,25 @@ export default function QualityDashboard({
     }
     return "main";
   });
-  const [cShiftRoster, setCShiftRoster] = useState<string[]>([]);
+  const DEFAULT_C_SHIFT_AGENTS = [
+    "Azad Muhammad", "Shahab Ahmed Muhammed", "Ismail Ahmed", "Ahmed Jalil", "Hewr Adnan",
+    "Mokhalad Ali", "Rabar Mohammed", "Haseeb Adeeb", "Laveen Khaleel", "Marwa Khalil", "Zhalla Sherzad"
+  ];
+  const [cShiftRoster, setCShiftRoster] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const savedLocal = localStorage.getItem("c_shift_roster");
+      if (savedLocal) {
+        try {
+          const parsed = JSON.parse(savedLocal);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (e) {}
+      }
+    }
+    return [
+      "Azad Muhammad", "Shahab Ahmed Muhammed", "Ismail Ahmed", "Ahmed Jalil", "Hewr Adnan",
+      "Mokhalad Ali", "Rabar Mohammed", "Haseeb Adeeb", "Laveen Khaleel", "Marwa Khalil", "Zhalla Sherzad"
+    ];
+  });
   const [cShiftWeeklyAdded, setCShiftWeeklyAdded] = useState<Record<string, string[]>>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("qa_c_shift_weekly_added");
@@ -607,6 +625,7 @@ export default function QualityDashboard({
       }
     }, (err) => {
       console.error("Error listening to c_shift_roster:", err);
+      setCShiftRoster(prev => prev.length > 0 ? prev : DEFAULT_C_SHIFT_AGENTS);
     });
 
     const unsubWeekly = onSnapshot(doc(db, "quality_evaluations", "config_c_shift_weekly"), (snap) => {
@@ -764,6 +783,7 @@ export default function QualityDashboard({
       }
     }, (err) => {
       console.error("Error listening to call_mon_roster:", err);
+      setCallMonRoster(prev => prev.length > 0 ? prev : DEFAULT_COMPANY_EMPLOYEES.filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team").map(m => m.agent_name).sort((a, b) => a.localeCompare(b)));
     });
 
     return () => unsubCallMon();

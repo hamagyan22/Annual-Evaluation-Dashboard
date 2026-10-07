@@ -7,6 +7,7 @@ import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc
 import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal, BarChart3, ClipboardCheck } from "lucide-react";
 import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesAndSeconds, getTopStarMotivationalQuote } from "@/lib/topStarUtils";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
+import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
 const TEAMS: TeamName[] = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team'];
@@ -49,6 +50,12 @@ const DEFAULT_OTHER_COLUMNS: ColumnConfig[] = [
   { id: 'handled', label: 'Handled', type: 'number', aggregation: 'sum' },
   { id: 'abandoned', label: 'Abandoned', type: 'number', aggregation: 'sum' },
 ];
+
+const DEFAULT_COLUMNS_MAP: Record<string, ColumnConfig[]> = {
+  'Mohammed Dlshad Team': DEFAULT_CHAT_COLUMNS,
+  'Younis Kamal Team': DEFAULT_OTHER_COLUMNS,
+  'Ankido Buya Team': DEFAULT_OTHER_COLUMNS,
+};
 
 const DESIRED_COLUMN_ORDER = ['chat_handled', 'exam', 'quality', 'productivity', 'aht', 'art', 'hold', 'wrapup', 'handled', 'call_handled', 'inbound', 'outbound', 'abandoned'];
 
@@ -791,11 +798,21 @@ function AgentDashboard({
       where('year', '==', selectedYear)
     );
     const unsubMetrics = onSnapshot(q, (snap) => {
-      rawMetricsDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (docs.length > 0) {
+        rawMetricsDocs = docs;
+      } else {
+        rawMetricsDocs = BASELINE_TEAM_METRICS.filter(
+          m => m.team === currentAgent.team && m.year === selectedYear
+        );
+      }
       applyAgentMetrics();
     }, (err) => {
       console.error(err);
-      setLoading(false);
+      rawMetricsDocs = BASELINE_TEAM_METRICS.filter(
+        m => m.team === currentAgent.team && m.year === selectedYear
+      );
+      applyAgentMetrics();
     });
 
     const unsubSync = onSnapshot(doc(db, 'quality_evaluations', 'config_sync_status'), (snap) => {
@@ -1977,7 +1994,7 @@ export default function Dashboard() {
   useEffect(() => { selectedTeamRef.current = selectedTeam; }, [selectedTeam]);
   useEffect(() => { selectedYearRef.current = selectedYear; }, [selectedYear]);
 
-  const [columnsMap, setColumnsMap] = useState<Record<string, ColumnConfig[]>>({});
+  const [columnsMap, setColumnsMap] = useState<Record<string, ColumnConfig[]>>(DEFAULT_COLUMNS_MAP);
 
   // TL & Manager Profile Modal State
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -2198,6 +2215,7 @@ export default function Dashboard() {
       setColumnsMap(map);
     }, (err) => {
       console.error("Columns listener error:", err);
+      setColumnsMap(prev => Object.keys(prev).length > 0 ? prev : DEFAULT_COLUMNS_MAP);
     });
     return () => unsub();
   }, []);
@@ -2221,6 +2239,7 @@ export default function Dashboard() {
       });
     }, (err) => {
       console.error("Members listener error:", err);
+      setAllMembers(prev => prev.length > 0 ? prev : DEFAULT_COMPANY_EMPLOYEES);
     });
 
     // Also trigger direct fetch in case snapshot is delayed
@@ -2889,11 +2908,12 @@ export default function Dashboard() {
   };
 
   const fetchData = async (forceRefresh = false) => {
-    if (!session || Object.keys(columnsMap).length === 0) return;
+    if (!session) return;
 
     if (isCombinedCallCenter) {
       const cacheKey = `Combined_CallCenter_${selectedYear}`;
-      const teamCols = getEffectiveColumns('Ankido Buya Team', selectedMonth, selectedYear, columnsMap['Ankido Buya Team'] || columnsMap['Younis Kamal Team'] || DEFAULT_OTHER_COLUMNS);
+      const effectiveCols = columnsMap['Ankido Buya Team'] || columnsMap['Younis Kamal Team'] || DEFAULT_OTHER_COLUMNS;
+      const teamCols = getEffectiveColumns('Ankido Buya Team', selectedMonth, selectedYear, effectiveCols);
       const isAgg = Object.keys(aggregateMap).includes(selectedMonth);
 
       // Fast path: In-memory cache hit
@@ -2921,30 +2941,46 @@ export default function Dashboard() {
       setLoading(true);
       setErrorMsg(null);
 
+      const defaultYounis = DEFAULT_COMPANY_EMPLOYEES.filter(m => m.team === 'Younis Kamal Team');
+      const defaultAnkido = DEFAULT_COMPANY_EMPLOYEES.filter(m => m.team === 'Ankido Buya Team');
+      const defaultCombinedRoster = [...defaultYounis, ...defaultAnkido].sort((a, b) => a.agent_name.localeCompare(b.agent_name));
+      const defaultBaselineMetrics = BASELINE_TEAM_METRICS.filter(m => (m.team === 'Younis Kamal Team' || m.team === 'Ankido Buya Team') && m.year === selectedYear);
+
       try {
         const [younisMembersSnap, ankidoMembersSnap, younisMetricsSnap, ankidoMetricsSnap] = await Promise.all([
-          getDocs(query(collection(db, 'team_members'), where('team', '==', 'Younis Kamal Team'))),
-          getDocs(query(collection(db, 'team_members'), where('team', '==', 'Ankido Buya Team'))),
-          getDocs(query(collection(db, 'younis_metrics'), where('year', '==', selectedYear))),
-          getDocs(query(collection(db, 'ankido_metrics'), where('year', '==', selectedYear)))
+          getDocs(query(collection(db, 'team_members'), where('team', '==', 'Younis Kamal Team'))).catch(() => null),
+          getDocs(query(collection(db, 'team_members'), where('team', '==', 'Ankido Buya Team'))).catch(() => null),
+          getDocs(query(collection(db, 'younis_metrics'), where('year', '==', selectedYear))).catch(() => null),
+          getDocs(query(collection(db, 'ankido_metrics'), where('year', '==', selectedYear))).catch(() => null)
         ]);
 
-        const younisRoster = younisMembersSnap.docs.map(d => ({ id: d.id, ...d.data(), team: 'Younis Kamal Team' })) as any[];
-        const ankidoRoster = ankidoMembersSnap.docs.map(d => ({ id: d.id, ...d.data(), team: 'Ankido Buya Team' })) as any[];
-        const roster = [...younisRoster, ...ankidoRoster].sort((a, b) => (a.agent_name > b.agent_name ? 1 : -1));
+        const younisRoster = (younisMembersSnap && younisMembersSnap.docs.length > 0)
+          ? (younisMembersSnap.docs.map(d => ({ id: d.id, ...d.data(), team: 'Younis Kamal Team' })) as any[])
+          : (defaultYounis as any[]);
+        const ankidoRoster = (ankidoMembersSnap && ankidoMembersSnap.docs.length > 0)
+          ? (ankidoMembersSnap.docs.map(d => ({ id: d.id, ...d.data(), team: 'Ankido Buya Team' })) as any[])
+          : (defaultAnkido as any[]);
+        const roster = [...younisRoster, ...ankidoRoster].sort((a: any, b: any) => (a.agent_name > b.agent_name ? 1 : -1));
 
-        const younisNames = new Set(younisRoster.map(d => (d.agent_name || "").trim().toLowerCase()));
-        const ankidoNames = new Set(ankidoRoster.map(d => (d.agent_name || "").trim().toLowerCase()));
+        const younisNames = new Set(younisRoster.map((d: any) => (d.agent_name || "").trim().toLowerCase()));
+        const ankidoNames = new Set(ankidoRoster.map((d: any) => (d.agent_name || "").trim().toLowerCase()));
 
-        const younisData = younisMetricsSnap.docs
-          .map(d => ({ id: d.id, ...d.data(), team: 'Younis Kamal Team' }))
-          .filter((d: any) => younisNames.has((d.agent_name || "").trim().toLowerCase()));
+        const younisData = younisMetricsSnap
+          ? (younisMetricsSnap.docs
+              .map(d => ({ id: d.id, ...d.data(), team: 'Younis Kamal Team' })) as any[])
+              .filter((d: any) => younisNames.has((d.agent_name || "").trim().toLowerCase()))
+          : defaultBaselineMetrics.filter(m => m.team === 'Younis Kamal Team');
 
-        const ankidoData = ankidoMetricsSnap.docs
-          .map(d => ({ id: d.id, ...d.data(), team: 'Ankido Buya Team' }))
-          .filter((d: any) => ankidoNames.has((d.agent_name || "").trim().toLowerCase()));
+        const ankidoData = ankidoMetricsSnap
+          ? (ankidoMetricsSnap.docs
+              .map(d => ({ id: d.id, ...d.data(), team: 'Ankido Buya Team' })) as any[])
+              .filter((d: any) => ankidoNames.has((d.agent_name || "").trim().toLowerCase()))
+          : defaultBaselineMetrics.filter(m => m.team === 'Ankido Buya Team');
 
-        const allYearData = [...younisData, ...ankidoData];
+        let allYearData = [...younisData, ...ankidoData];
+        if (allYearData.length === 0 && defaultBaselineMetrics.length > 0) {
+          allYearData = defaultBaselineMetrics;
+        }
 
         teamDataCacheRef.current[cacheKey] = { roster, allYearData };
         setYearMetrics(allYearData);
@@ -2967,7 +3003,20 @@ export default function Dashboard() {
       } catch (err: any) {
         console.error("Error fetching combined data:", err);
         setErrorMsg(err.message);
-        setRows([]);
+        const roster = defaultCombinedRoster;
+        const allYearData = defaultBaselineMetrics;
+        setYearMetrics(allYearData);
+        const computed = buildComputedRows(
+          roster,
+          allYearData,
+          selectedMonth,
+          teamCols,
+          isAgg,
+          qaCacheRef.current,
+          'Ankido Buya Team',
+          selectedYear
+        );
+        setRows(computed);
       } finally {
         setLoading(false);
       }
@@ -2975,7 +3024,8 @@ export default function Dashboard() {
     }
 
     const cacheKey = `${selectedTeam}_${selectedYear}`;
-    const teamCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
+    const effectiveCols = columnsMap[selectedTeam] || (selectedTeam === 'Mohammed Dlshad Team' ? DEFAULT_CHAT_COLUMNS : DEFAULT_OTHER_COLUMNS);
+    const teamCols = getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, effectiveCols);
     const isAgg = Object.keys(aggregateMap).includes(selectedMonth);
 
     // 1. FAST PATH: In-memory cache hit -> INSTANT rendering (<1ms, zero spinner delay)
@@ -2995,31 +3045,38 @@ export default function Dashboard() {
       setRows(computed);
       setLoading(false);
 
-      // Background check for missing QA docs without blocking UI
       const monthsToCheck = isAgg ? (aggregateMap[selectedMonth] || []) : [selectedMonth];
       fetchMissingQaDocs(roster, monthsToCheck, selectedTeam, selectedYear, tableName);
       return;
     }
 
-    // 2. SLOW PATH (only initial load or team/year switch): Concurrent network fetch
     setLoading(true);
     setErrorMsg(null);
 
+    const defaultRoster = DEFAULT_COMPANY_EMPLOYEES.filter(m => m.team === selectedTeam);
+    const defaultMetrics = BASELINE_TEAM_METRICS.filter(m => m.team === selectedTeam && m.year === selectedYear);
+
     try {
       const [membersSnap, metricsSnap] = await Promise.all([
-        getDocs(query(collection(db, 'team_members'), where('team', '==', selectedTeam))),
-        getDocs(query(collection(db, tableName), where('team', '==', selectedTeam), where('year', '==', selectedYear)))
+        getDocs(query(collection(db, 'team_members'), where('team', '==', selectedTeam))).catch(() => null),
+        getDocs(query(collection(db, tableName), where('team', '==', selectedTeam), where('year', '==', selectedYear))).catch(() => null)
       ]);
 
-      const roster = membersSnap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
-      roster.sort((a, b) => (a.agent_name > b.agent_name ? 1 : -1));
+      const roster = (membersSnap && membersSnap.docs.length > 0)
+        ? (membersSnap.docs.map(d => ({ id: d.id, ...d.data() })) as any[]).sort((a, b) => (a.agent_name > b.agent_name ? 1 : -1))
+        : defaultRoster;
 
       const rosterNames = new Set(roster.map(d => (d.agent_name || "").trim().toLowerCase()));
-      const allYearData = metricsSnap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .filter((d: any) => rosterNames.has((d.agent_name || "").trim().toLowerCase())) as any[];
+      let allYearData = (metricsSnap && metricsSnap.docs.length > 0)
+        ? (metricsSnap.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .filter((d: any) => rosterNames.has((d.agent_name || "").trim().toLowerCase())) as any[])
+        : defaultMetrics;
 
-      // Store in memory cache
+      if (allYearData.length === 0 && defaultMetrics.length > 0) {
+        allYearData = defaultMetrics;
+      }
+
       teamDataCacheRef.current[cacheKey] = { roster, allYearData };
       setYearMetrics(allYearData);
 
@@ -3035,13 +3092,25 @@ export default function Dashboard() {
       );
       setRows(computed);
 
-      // Background check for missing QA docs in parallel
       const monthsToCheck = isAgg ? (aggregateMap[selectedMonth] || []) : [selectedMonth];
       fetchMissingQaDocs(roster, monthsToCheck, selectedTeam, selectedYear, tableName);
     } catch (err: any) {
       console.error("Error fetching data:", err);
       setErrorMsg(err.message);
-      setRows([]);
+      const roster = defaultRoster;
+      const allYearData = defaultMetrics;
+      setYearMetrics(allYearData);
+      const computed = buildComputedRows(
+        roster,
+        allYearData,
+        selectedMonth,
+        teamCols,
+        isAgg,
+        qaCacheRef.current,
+        selectedTeam,
+        selectedYear
+      );
+      setRows(computed);
     } finally {
       setLoading(false);
     }

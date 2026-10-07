@@ -11,6 +11,8 @@ import {
   SlidersHorizontal, CheckCircle, Film
 } from "lucide-react";
 import { formatDuration, checkTeamCompleteness, fetchTopStarSyncStatus, invalidateTopStarCache } from "@/lib/topStarUtils";
+import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
+import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
 import TopStarCelebrationVideoModal from "./TopStarCelebrationVideoModal";
 
 interface TopStarDashboardProps {
@@ -195,10 +197,10 @@ export default function TopStarDashboard({
 
   // Top 3 Celebration & Appreciation Video Modal state
   const [showCelebrationVideo, setShowCelebrationVideo] = useState<boolean>(false);
-  const [membersList, setMembersList] = useState<any[]>(allMembers || []);
+  const [membersList, setMembersList] = useState<any[]>(allMembers && allMembers.length > 0 ? allMembers : DEFAULT_COMPANY_EMPLOYEES);
 
   useEffect(() => {
-    setMembersList(allMembers || []);
+    setMembersList(allMembers && allMembers.length > 0 ? allMembers : DEFAULT_COMPANY_EMPLOYEES);
   }, [allMembers]);
 
   const handlePhotoUpdated = (agentName: string, photoUrl: string) => {
@@ -272,29 +274,47 @@ export default function TopStarDashboard({
 
     try {
       const [mohammedSnap, younisSnap, ankidoSnap, statusSnap] = await Promise.all([
-        getDocs(query(collection(db, "mohammed_metrics"), where("year", "==", selectedYear), where("month", "==", selectedMonth))),
-        getDocs(query(collection(db, "younis_metrics"), where("year", "==", selectedYear), where("month", "==", selectedMonth))),
-        getDocs(query(collection(db, "ankido_metrics"), where("year", "==", selectedYear), where("month", "==", selectedMonth))),
-        getDoc(doc(db, "settings", "top_star_status"))
+        getDocs(query(collection(db, "mohammed_metrics"), where("year", "==", selectedYear), where("month", "==", selectedMonth))).catch(() => null),
+        getDocs(query(collection(db, "younis_metrics"), where("year", "==", selectedYear), where("month", "==", selectedMonth))).catch(() => null),
+        getDocs(query(collection(db, "ankido_metrics"), where("year", "==", selectedYear), where("month", "==", selectedMonth))).catch(() => null),
+        getDoc(doc(db, "settings", "top_star_status")).catch(() => null)
       ]);
 
-      if (statusSnap.exists()) {
+      if (statusSnap && statusSnap.exists()) {
         setSyncStatusRegistry(statusSnap.data()?.synced_months || {});
       }
 
       const chatMap: Record<string, any> = {};
-      mohammedSnap.docs.forEach(docSnap => {
-        const d = docSnap.data();
+      const baselineChat = BASELINE_TEAM_METRICS.filter(
+        m => m.team === "Mohammed Dlshad Team" && m.year === selectedYear && m.month.toLowerCase() === selectedMonth.toLowerCase()
+      );
+      baselineChat.forEach(d => {
         const cName = normalizeName(d.agent_name || "");
         if (cName) chatMap[cName] = d;
       });
+      if (mohammedSnap) {
+        mohammedSnap.docs.forEach(docSnap => {
+          const d = docSnap.data();
+          const cName = normalizeName(d.agent_name || "");
+          if (cName) chatMap[cName] = { ...chatMap[cName], ...d };
+        });
+      }
 
       const callMap: Record<string, any> = {};
-      [...younisSnap.docs, ...ankidoSnap.docs].forEach(docSnap => {
-        const d = docSnap.data();
+      const baselineCall = BASELINE_TEAM_METRICS.filter(
+        m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && m.year === selectedYear && m.month.toLowerCase() === selectedMonth.toLowerCase()
+      );
+      baselineCall.forEach(d => {
         const cName = normalizeName(d.agent_name || "");
         if (cName) callMap[cName] = d;
       });
+      if (younisSnap || ankidoSnap) {
+        [...(younisSnap?.docs || []), ...(ankidoSnap?.docs || [])].forEach(docSnap => {
+          const d = docSnap.data();
+          const cName = normalizeName(d.agent_name || "");
+          if (cName) callMap[cName] = { ...callMap[cName], ...d };
+        });
+      }
 
       const finalChat: Record<string, Record<string, any>> = {};
       chatRoster.forEach(name => {
