@@ -9,7 +9,7 @@ import {
   Award, X, Printer, UserCheck, Star,
   Info, ThumbsUp, Target, BookOpen, AlertTriangle,
   PhoneCall, ShieldCheck, CheckCircle, Calendar,
-  Clock, Eye, Lock
+  Clock, Eye, Lock, MessageSquare
 } from "lucide-react";
 
 export interface AnnualEvaluationDashboardProps {
@@ -26,6 +26,14 @@ export function toTitleCase(str: string) {
   return str.replace(/\w\S*/g, (txt) => {
     return txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase();
   });
+}
+
+export function normalizeAgentName(raw: string): string {
+  return (raw || "")
+    .toLowerCase()
+    .replace(/[\._\-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 // Distinct, vibrant, executive rating levels (Scale 1 to 5)
@@ -162,11 +170,11 @@ export default function AnnualEvaluationDashboard({
   const [selectedEmployeeName, setSelectedEmployeeName] = useState<string>("");
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState<string>("");
   const [employeeDropdownOpen, setEmployeeDropdownOpen] = useState<boolean>(false);
-  const [teamTabFilter, setTeamTabFilter] = useState<string>("All");
+  const [teamTabFilter, setTeamTabFilter] = useState<string>("Younis");
 
   // Guide Modal State
   const [showBenchmarkGuideModal, setShowBenchmarkGuideModal] = useState<boolean>(false);
-  const [benchmarkGuideTab, setBenchmarkGuideTab] = useState<"calls" | "competencies">("calls");
+  const [benchmarkGuideTab, setBenchmarkGuideTab] = useState<"calls" | "chat" | "competencies">("calls");
 
   // Helper to dynamically determine team leader from team name
   const resolveTeamLeader = (teamName?: string) => {
@@ -209,6 +217,8 @@ export default function AnnualEvaluationDashboard({
   const canEditSelf = isAgent && !isReadOnly && evaluationStatus !== 'manager_finalized';
   const canEditManager = (isManager || isAdmin) && !isReadOnly;
   const canApplySuggestions = canEditManager; // Auto suggestion button only for manager, removed from employee
+  // Employee's Feedback & Remarks can be edited by Admin, Manager, and the Agent themselves (Image 1 fix):
+  const canEditEmployeeFeedback = !isReadOnly && (isAdmin || isManager || canEditSelf);
 
   // Manager data visibility:
   // Manager ratings and scores are only visible to the agent AFTER manager finalizes:
@@ -242,12 +252,13 @@ export default function AnnualEvaluationDashboard({
       if (members.length > 0) {
         setInternalMembers(prev => {
           const map = new Map<string, any>();
-          DEFAULT_COMPANY_EMPLOYEES.forEach(m => map.set(m.agent_name.toLowerCase(), { ...m }));
-          prev.forEach(m => map.set((m.agent_name || m.name || "").toLowerCase(), { ...m }));
+          DEFAULT_COMPANY_EMPLOYEES.forEach(m => map.set(normalizeAgentName(m.agent_name), { ...m }));
           members.forEach(m => {
-            const k = (m.agent_name || m.name || "").toLowerCase();
+            const k = normalizeAgentName(m.agent_name);
             const existing = map.get(k);
-            map.set(k, { ...existing, ...m });
+            if (existing) {
+              map.set(k, { ...existing, id: m.id, team: m.team || existing.team });
+            }
           });
           return Array.from(map.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
         });
@@ -262,132 +273,52 @@ export default function AnnualEvaluationDashboard({
     };
   }, []);
 
-  // 2. Direct fetch & comprehensive multi-collection sync to guarantee ALL employees across all teams are present
+  // 2. Direct fetch & sync to attach Firestore IDs to canonical roster
   useEffect(() => {
     let isMounted = true;
     const fetchAllCompanyEmployees = async () => {
       try {
         const membersMap = new Map<string, any>();
-
-        // A. Start with default official roster (all 38 Contact Center employees)
         DEFAULT_COMPANY_EMPLOYEES.forEach(m => {
-          membersMap.set(m.agent_name.toLowerCase().trim(), { ...m });
+          membersMap.set(normalizeAgentName(m.agent_name), { ...m });
         });
 
-        // B. Add members from props
-        (allMembers || []).forEach(m => {
-          const name = (m.agent_name || m.name || m.display_name || "").trim();
-          if (name) {
-            const key = name.toLowerCase().trim();
-            const existing = membersMap.get(key);
-            membersMap.set(key, {
-              id: m.id || existing?.id || name,
-              ...existing,
-              ...m,
-              agent_name: name,
-              name: name,
-              team: m.team || existing?.team || "Contact Center"
-            });
-          }
-        });
-
-        // C. Add from team_members direct getDocs
+        // Add from team_members direct getDocs
         try {
           const tmSnap = await getDocs(collection(db, 'team_members'));
           tmSnap.forEach(d => {
             const data = d.data();
             const name = (data.agent_name || data.name || data.display_name || "").trim();
             if (name) {
-              const key = name.toLowerCase().trim();
+              const key = normalizeAgentName(name);
               const existing = membersMap.get(key);
-              membersMap.set(key, {
-                id: d.id,
-                ...existing,
-                ...data,
-                agent_name: name,
-                name: name,
-                team: data.team || existing?.team || "Contact Center"
-              });
-            }
-          });
-        } catch (e) {
-          console.warn("team_members getDocs warning:", e);
-        }
-
-        // D. Metrics agents extraction (individual try-catch to avoid single point of failure)
-        try {
-          const ymSnap = await getDocs(query(collection(db, 'younis_metrics'), where('year', '==', selectedYear)));
-          ymSnap.forEach(d => {
-            const data = d.data();
-            const name = (data.agent_name || data.agent || data.name || "").trim();
-            if (name && !membersMap.has(name.toLowerCase().trim())) {
-              membersMap.set(name.toLowerCase().trim(), {
-                id: d.id,
-                agent_name: name,
-                name: name,
-                team: "Younis Kamal Team"
-              });
+              if (existing) {
+                membersMap.set(key, { ...existing, id: d.id, team: data.team || existing.team });
+              }
             }
           });
         } catch (e) {}
 
-        try {
-          const amSnap = await getDocs(query(collection(db, 'ankido_metrics'), where('year', '==', selectedYear)));
-          amSnap.forEach(d => {
-            const data = d.data();
-            const name = (data.agent_name || data.agent || data.name || "").trim();
-            if (name && !membersMap.has(name.toLowerCase().trim())) {
-              membersMap.set(name.toLowerCase().trim(), {
-                id: d.id,
-                agent_name: name,
-                name: name,
-                team: "Ankido Buya Team"
-              });
-            }
-          });
-        } catch (e) {}
-
-        try {
-          const mmSnap = await getDocs(query(collection(db, 'mohammed_metrics'), where('year', '==', selectedYear)));
-          mmSnap.forEach(d => {
-            const data = d.data();
-            const name = (data.agent_name || data.agent || data.name || "").trim();
-            if (name && !membersMap.has(name.toLowerCase().trim())) {
-              membersMap.set(name.toLowerCase().trim(), {
-                id: d.id,
-                agent_name: name,
-                name: name,
-                team: "Mohammed Dlshad Team"
-              });
-            }
-          });
-        } catch (e) {}
-
-        // E. Users collection
+        // Add from users collection
         try {
           const usersSnap = await getDocs(collection(db, 'users'));
           usersSnap.forEach(d => {
             const data = d.data();
             const name = (data.name || data.agent_name || data.display_name || "").trim();
-            if (name && (data.role === 'agent' || data.team)) {
-              const key = name.toLowerCase().trim();
+            if (name) {
+              const key = normalizeAgentName(name);
               const existing = membersMap.get(key);
-              membersMap.set(key, {
-                id: d.id,
-                ...existing,
-                agent_name: name,
-                name: name,
-                team: data.team || existing?.team || "Contact Center"
-              });
+              if (existing) {
+                membersMap.set(key, { ...existing, id: d.id, team: data.team || existing.team });
+              }
             }
           });
         } catch (e) {}
 
         if (isMounted && membersMap.size > 0) {
-          const finalMembersList = Array.from(membersMap.values()).sort((a, b) => 
+          setInternalMembers(Array.from(membersMap.values()).sort((a, b) => 
             a.agent_name.localeCompare(b.agent_name)
-          );
-          setInternalMembers(finalMembersList);
+          ));
         }
       } catch (err) {
         console.error("Error ensuring all company employees:", err);
@@ -400,96 +331,96 @@ export default function AnnualEvaluationDashboard({
     return () => { isMounted = false; };
   }, [allMembers, selectedYear]);
 
-  // Combined master members list across all sources
+  // Combined master members list: Strictly the 38 canonical official employees
   const effectiveAllMembers = useMemo(() => {
     const map = new Map<string, any>();
     
     // 1. Initial base: All 38 Company employees
     DEFAULT_COMPANY_EMPLOYEES.forEach(m => {
-      map.set(m.agent_name.toLowerCase().trim(), { ...m });
+      map.set(normalizeAgentName(m.agent_name), { ...m });
     });
 
-    // 2. Props from parent
-    (allMembers || []).forEach(m => {
+    // 2. Attach any Firestore metadata
+    (allMembers || []).concat(internalMembers || []).forEach(m => {
       const name = (m.agent_name || m.name || m.display_name || "").trim();
       if (name) {
-        const key = name.toLowerCase().trim();
+        const key = normalizeAgentName(name);
         const existing = map.get(key);
-        map.set(key, {
-          id: m.id || existing?.id || name,
-          ...existing,
-          ...m,
-          agent_name: name,
-          name: name,
-          team: m.team || existing?.team || "Contact Center"
-        });
-      }
-    });
-
-    // 3. Internal loaded members (live Firestore sync)
-    (internalMembers || []).forEach(m => {
-      const name = (m.agent_name || m.name || m.display_name || "").trim();
-      if (name) {
-        const key = name.toLowerCase().trim();
-        const existing = map.get(key);
-        map.set(key, {
-          id: m.id || existing?.id || name,
-          ...existing,
-          ...m,
-          agent_name: name,
-          name: name,
-          team: m.team || existing?.team || "Contact Center"
-        });
+        if (existing) {
+          map.set(key, {
+            ...existing,
+            id: m.id || existing.id,
+            team: m.team || existing.team
+          });
+        }
       }
     });
 
     return Array.from(map.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
   }, [allMembers, internalMembers]);
 
-  // Filtered members list: All employees across all teams as requested ("خلي جميع الموظفين")
+  // Team counts for the 3 tabs (Younis: 12, Ankido: 13, Mohammed: 13)
+  const teamCounts = useMemo(() => {
+    return {
+      Younis: effectiveAllMembers.filter(m => (m.team || "").toLowerCase().includes("younis")).length,
+      Ankido: effectiveAllMembers.filter(m => (m.team || "").toLowerCase().includes("ankido")).length,
+      Mohammed: effectiveAllMembers.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad")).length,
+    };
+  }, [effectiveAllMembers]);
+
+  // Filtered members list: Younis Kamal, Ankido Buya, or Mohammed Dlshad (No "All" tab)
   const filteredMembers = useMemo(() => {
     let list = [...effectiveAllMembers];
     
     if (isAgent) {
-      const myName = (userProfile?.name || userProfile?.agent_name || "").toLowerCase().trim();
+      const myName = normalizeAgentName(userProfile?.name || userProfile?.agent_name || "");
       const me = list.filter(m => {
-        const aName = (m.agent_name || "").toLowerCase().trim();
+        const aName = normalizeAgentName(m.agent_name || "");
         return aName === myName || aName.includes(myName) || myName.includes(aName);
       });
       if (me.length > 0) return me;
-      if (myName) {
-        return [{
-          id: userProfile?.uid || myName,
-          agent_name: userProfile?.name || userProfile?.agent_name || myName,
-          name: userProfile?.name || userProfile?.agent_name || myName,
-          team: userProfile?.team || "Contact Center"
-        }];
-      }
+      return list.slice(0, 1);
     }
 
-    // Team Tab Filter
-    if (teamTabFilter !== "All") {
-      list = list.filter(m => (m.team || "").toLowerCase().includes(teamTabFilter.toLowerCase()));
+    // Search Term Filter: When searching, search across all 38 agents
+    if (employeeSearchTerm.trim()) {
+      const term = normalizeAgentName(employeeSearchTerm);
+      return list.filter(m => 
+        normalizeAgentName(m.agent_name).includes(term) ||
+        (m.team || "").toLowerCase().includes(term)
+      ).sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
+    }
+
+    // Team Tab Filter: Strictly Younis, Ankido, or Mohammed (No "All" tab)
+    if (teamTabFilter === "Ankido") {
+      list = list.filter(m => (m.team || "").toLowerCase().includes("ankido"));
+    } else if (teamTabFilter === "Mohammed") {
+      list = list.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad"));
+    } else {
+      // Default to Younis
+      list = list.filter(m => (m.team || "").toLowerCase().includes("younis"));
     }
     
-    // Search Term Filter
-    if (employeeSearchTerm.trim()) {
-      const term = employeeSearchTerm.toLowerCase().trim();
-      list = list.filter(m => 
-        (m.agent_name || "").toLowerCase().includes(term) ||
-        (m.team || "").toLowerCase().includes(term)
-      );
-    }
-    if (list.length === 0 && !employeeSearchTerm.trim() && teamTabFilter === "All") {
-      return [...DEFAULT_COMPANY_EMPLOYEES];
-    }
     return list.sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
   }, [effectiveAllMembers, employeeSearchTerm, teamTabFilter, isAgent, userProfile]);
 
   // Current selected member object
   const currentMember = useMemo(() => {
-    return effectiveAllMembers.find(m => (m.agent_name || "").toLowerCase().trim() === (selectedEmployeeName || "").toLowerCase().trim()) || null;
+    const targetNorm = normalizeAgentName(selectedEmployeeName);
+    return effectiveAllMembers.find(m => normalizeAgentName(m.agent_name) === targetNorm) || null;
   }, [effectiveAllMembers, selectedEmployeeName]);
+
+  // Detect if current employee is Chat
+  const isSelectedEmployeeChat = useMemo(() => {
+    const t = (currentMember?.team || "").toLowerCase();
+    return t.includes("mohammed") || t.includes("dlshad");
+  }, [currentMember]);
+
+  // Open Benchmark Guide modal with auto-selected tab based on employee
+  const openBenchmarkGuide = () => {
+    setBenchmarkGuideTab(isSelectedEmployeeChat ? "chat" : "calls");
+    setShowBenchmarkGuideModal(true);
+  };
 
   // Initialize selected employee on load
   useEffect(() => {
@@ -498,18 +429,41 @@ export default function AnnualEvaluationDashboard({
       if (agentName && selectedEmployeeName !== agentName) {
         setSelectedEmployeeName(agentName);
       }
-    } else if (!selectedEmployeeName && filteredMembers.length > 0) {
-      setSelectedEmployeeName(filteredMembers[0].agent_name);
+    } else if (!selectedEmployeeName && effectiveAllMembers.length > 0) {
+      const myTeam = (userProfile?.team || "").toLowerCase();
+      let match = null;
+      if (myTeam.includes("ankido")) {
+        match = effectiveAllMembers.find(m => (m.team || "").toLowerCase().includes("ankido"));
+        setTeamTabFilter("Ankido");
+      } else if (myTeam.includes("mohammed") || myTeam.includes("dlshad")) {
+        match = effectiveAllMembers.find(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad"));
+        setTeamTabFilter("Mohammed");
+      } else {
+        match = effectiveAllMembers.find(m => (m.team || "").toLowerCase().includes("younis"));
+        setTeamTabFilter("Younis");
+      }
+      setSelectedEmployeeName(match ? match.agent_name : effectiveAllMembers[0].agent_name);
     }
-  }, [isAgent, userProfile, filteredMembers, selectedEmployeeName]);
+  }, [isAgent, userProfile, effectiveAllMembers, selectedEmployeeName]);
 
   // Auto-fill Employee info when currentMember changes
   useEffect(() => {
     if (currentMember) {
       setEmployeeId(currentMember.employee_id || currentMember.employee_code || "");
       setTeamLeader(resolveTeamLeader(currentMember.team));
+      // Sync team tab filter if not searching
+      if (!employeeSearchTerm.trim()) {
+        const t = (currentMember.team || "").toLowerCase();
+        if (t.includes("ankido") && teamTabFilter !== "Ankido") {
+          setTeamTabFilter("Ankido");
+        } else if ((t.includes("mohammed") || t.includes("dlshad")) && teamTabFilter !== "Mohammed") {
+          setTeamTabFilter("Mohammed");
+        } else if (t.includes("younis") && teamTabFilter !== "Younis") {
+          setTeamTabFilter("Younis");
+        }
+      }
     }
-  }, [currentMember]);
+  }, [currentMember, employeeSearchTerm]);
 
   // Document ID in Firestore: `${year}_${period}_${cleanSlug}`
   const docId = useMemo(() => {
@@ -630,6 +584,7 @@ export default function AnnualEvaluationDashboard({
         let totalExam = 0, countExam = 0;
         let totalProd = 0, countProd = 0;
         let totalAhtSec = 0, countAht = 0;
+        let totalArtSec = 0, countArt = 0;
 
         const parseSec = (val: any) => {
           if (!val) return 0;
@@ -647,12 +602,14 @@ export default function AnnualEvaluationDashboard({
           if (r.exam != null && r.exam !== "") { totalExam += parseFloat(r.exam) || 0; countExam++; }
           if (r.productivity != null && r.productivity !== "") { totalProd += parseFloat(r.productivity) || 0; countProd++; }
           if (r.aht != null && r.aht !== "") { totalAhtSec += parseSec(r.aht); countAht++; }
+          if (r.art != null && r.art !== "") { totalArtSec += parseSec(r.art); countArt++; }
         });
 
         const avgQA = countQA > 0 ? (totalQA / countQA) : null;
         const avgExam = countExam > 0 ? (totalExam / countExam) : null;
         const avgProd = countProd > 0 ? (totalProd / countProd) : null;
         const avgAhtSec = countAht > 0 ? (totalAhtSec / countAht) : null;
+        const avgArtSec = countArt > 0 ? (totalArtSec / countArt) : null;
 
         const formatTime = (secs: number | null) => {
           if (secs === null) return "-";
@@ -661,36 +618,89 @@ export default function AnnualEvaluationDashboard({
           return `${m}:${s.toString().padStart(2, '0')}`;
         };
 
+        const isChat = (currentMember?.team || "").toLowerCase().includes("mohammed") || 
+                       (currentMember?.team || "").toLowerCase().includes("dlshad");
+
         const suggestions: Record<string, number> = {};
 
-        // Rating Benchmarks
-        if (avgQA !== null) {
-          if (avgQA >= 99) suggestions.qa = 5;
-          else if (avgQA >= 96) suggestions.qa = 4;
-          else if (avgQA >= 94) suggestions.qa = 3;
-          else if (avgQA >= 90) suggestions.qa = 2;
-          else suggestions.qa = 1;
-        }
-        if (avgAhtSec !== null) {
-          if (avgAhtSec <= 169) suggestions.aht = 5;
-          else if (avgAhtSec <= 179) suggestions.aht = 4;
-          else if (avgAhtSec <= 180) suggestions.aht = 3;
-          else if (avgAhtSec <= 190) suggestions.aht = 2;
-          else suggestions.aht = 1;
-        }
-        if (avgExam !== null) {
-          if (avgExam >= 99) suggestions.knowledge = 5;
-          else if (avgExam >= 96) suggestions.knowledge = 4;
-          else if (avgExam >= 94) suggestions.knowledge = 3;
-          else if (avgExam >= 90) suggestions.knowledge = 2;
-          else suggestions.knowledge = 1;
-        }
-        if (avgProd !== null) {
-          if (avgProd >= 93) suggestions.productivity = 5;
-          else if (avgProd >= 91) suggestions.productivity = 4;
-          else if (avgProd >= 90) suggestions.productivity = 3;
-          else if (avgProd >= 88) suggestions.productivity = 2;
-          else suggestions.productivity = 1;
+        if (isChat) {
+          // Chat Rating Benchmarks (Image 4)
+          // Exam: 99-100 (5), 96-98 (4), 95 (3), 90-94 (2), <89 (1)
+          if (avgExam !== null) {
+            if (avgExam >= 99) suggestions.exam = 5;
+            else if (avgExam >= 96) suggestions.exam = 4;
+            else if (avgExam >= 95) suggestions.exam = 3;
+            else if (avgExam >= 90) suggestions.exam = 2;
+            else suggestions.exam = 1;
+            suggestions.knowledge = suggestions.exam;
+          }
+          // QA: 99-100 (5), 96-98 (4), 95 (3), 90-94 (2), <89 (1)
+          if (avgQA !== null) {
+            if (avgQA >= 99) suggestions.qa = 5;
+            else if (avgQA >= 96) suggestions.qa = 4;
+            else if (avgQA >= 95) suggestions.qa = 3;
+            else if (avgQA >= 90) suggestions.qa = 2;
+            else suggestions.qa = 1;
+          }
+          // AHT: 3:00-3:30 (5), 3:31-4:00 (4), 4:01-4:59 (3), 5:00-5:59 (2), >6:00 (1)
+          if (avgAhtSec !== null) {
+            if (avgAhtSec <= 210) suggestions.aht = 5;
+            else if (avgAhtSec <= 240) suggestions.aht = 4;
+            else if (avgAhtSec <= 299) suggestions.aht = 3;
+            else if (avgAhtSec <= 359) suggestions.aht = 2;
+            else suggestions.aht = 1;
+          }
+          // ART: Less than 1:15 (<75s -> 5), 1:16-1:30 (76-90s -> 4), 1:31-2:30 (91-150s -> 3), 2:31-3:00 (151-180s -> 2), >3:01 (>181s -> 1)
+          if (avgArtSec !== null) {
+            if (avgArtSec <= 75) suggestions.art = 5;
+            else if (avgArtSec <= 90) suggestions.art = 4;
+            else if (avgArtSec <= 150) suggestions.art = 3;
+            else if (avgArtSec <= 180) suggestions.art = 2;
+            else suggestions.art = 1;
+          }
+          // Productivity: >13 (5), 11-12.99 (4), 8.5-10.99 (3), 7.50-8.49 (2), <7.50 (1)
+          if (avgProd !== null) {
+            if (avgProd > 13) suggestions.productivity = 5;
+            else if (avgProd >= 11) suggestions.productivity = 4;
+            else if (avgProd >= 8.5) suggestions.productivity = 3;
+            else if (avgProd >= 7.5) suggestions.productivity = 2;
+            else suggestions.productivity = 1;
+          }
+        } else {
+          // Calls Rating Benchmarks (Image 4)
+          // QA: 99-100 (5), 96-98 (4), 95 (3), 90-94 (2), <89 (1)
+          if (avgQA !== null) {
+            if (avgQA >= 99) suggestions.qa = 5;
+            else if (avgQA >= 96) suggestions.qa = 4;
+            else if (avgQA >= 95) suggestions.qa = 3;
+            else if (avgQA >= 90) suggestions.qa = 2;
+            else suggestions.qa = 1;
+          }
+          // AHT: Less than 2:54 (<174s -> 5), 2:55-2:59 (175-179s -> 4), 3:00-3:10 (180-190s -> 3), 3:11-3:30 (191-210s -> 2), >3:31 (>211s -> 1)
+          if (avgAhtSec !== null) {
+            if (avgAhtSec < 174) suggestions.aht = 5;
+            else if (avgAhtSec <= 179) suggestions.aht = 4;
+            else if (avgAhtSec <= 190) suggestions.aht = 3;
+            else if (avgAhtSec <= 210) suggestions.aht = 2;
+            else suggestions.aht = 1;
+          }
+          // Exam / Knowledge: 99-100 (5), 96-98 (4), 95 (3), 90-94 (2), <89 (1)
+          if (avgExam !== null) {
+            if (avgExam >= 99) suggestions.knowledge = 5;
+            else if (avgExam >= 96) suggestions.knowledge = 4;
+            else if (avgExam >= 95) suggestions.knowledge = 3;
+            else if (avgExam >= 90) suggestions.knowledge = 2;
+            else suggestions.knowledge = 1;
+            suggestions.exam = suggestions.knowledge;
+          }
+          // Productivity: Greater than 93 (>93 -> 5), 91-92 (4), 90 (3), 88-89 (2), <87 (1)
+          if (avgProd !== null) {
+            if (avgProd > 93) suggestions.productivity = 5;
+            else if (avgProd >= 91) suggestions.productivity = 4;
+            else if (avgProd >= 90) suggestions.productivity = 3;
+            else if (avgProd >= 88) suggestions.productivity = 2;
+            else suggestions.productivity = 1;
+          }
         }
 
         if (isMounted) {
@@ -698,8 +708,9 @@ export default function AnnualEvaluationDashboard({
             monthsCount: rows.length,
             qa: avgQA !== null ? `${avgQA.toFixed(1)}%` : null,
             exam: avgExam !== null ? `${avgExam.toFixed(1)}%` : null,
-            productivity: avgProd !== null ? `${avgProd.toFixed(1)}%` : null,
+            productivity: avgProd !== null ? (isChat ? avgProd.toFixed(2) : `${avgProd.toFixed(1)}%`) : null,
             aht: formatTime(avgAhtSec),
+            art: formatTime(avgArtSec),
             suggestions
           });
         }
@@ -712,8 +723,18 @@ export default function AnnualEvaluationDashboard({
     return () => { isMounted = false; };
   }, [selectedEmployeeName, selectedYear, selectedPeriod, currentMember?.team]);
 
-  // Operational KPIs for Contact Center
+  // Operational KPIs for Contact Center (Chat vs Calls channel dynamic definitions)
   const kpiDefinitions = useMemo(() => {
+    if (isSelectedEmployeeChat) {
+      return [
+        { id: "exam", name: "Knowledge & Exam", actual: actualMetricsSummary?.exam },
+        { id: "qa", name: "Quality Assurance (QA)", actual: actualMetricsSummary?.qa },
+        { id: "aht", name: "Average Handling Time (AHT)", actual: actualMetricsSummary?.aht },
+        { id: "art", name: "Average Response Time (ART)", actual: actualMetricsSummary?.art },
+        { id: "productivity", name: "Productivity", actual: actualMetricsSummary?.productivity },
+        { id: "attendance", name: "Attendance & Punctuality", actual: null },
+      ];
+    }
     return [
       { id: "qa", name: "Quality Assurance (QA)", actual: actualMetricsSummary?.qa },
       { id: "productivity", name: "Productivity", actual: actualMetricsSummary?.productivity },
@@ -721,17 +742,25 @@ export default function AnnualEvaluationDashboard({
       { id: "aht", name: "Average Handling Time (AHT)", actual: actualMetricsSummary?.aht },
       { id: "knowledge", name: "Knowledge & Exam", actual: actualMetricsSummary?.exam },
     ];
-  }, [actualMetricsSummary]);
+  }, [actualMetricsSummary, isSelectedEmployeeChat]);
+
+  // Helper to reliably read KPI score whether keyed by 'exam' or 'knowledge'
+  const getKpiScore = (kpisMap: Record<string, number>, id: string) => {
+    if (kpisMap[id] !== undefined && kpisMap[id] !== null && kpisMap[id] > 0) return kpisMap[id];
+    if (id === 'exam' && kpisMap['knowledge']) return kpisMap['knowledge'];
+    if (id === 'knowledge' && kpisMap['exam']) return kpisMap['exam'];
+    return 0;
+  };
 
   // KPI Averages
   const selfKpiAvg = useMemo(() => {
-    const vals = kpiDefinitions.map(k => selfKpis[k.id]).filter(v => v !== undefined && v !== null && v > 0);
+    const vals = kpiDefinitions.map(k => getKpiScore(selfKpis, k.id)).filter(v => v > 0);
     if (vals.length === 0) return 0;
     return parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
   }, [kpiDefinitions, selfKpis]);
 
   const managerKpiAvg = useMemo(() => {
-    const vals = kpiDefinitions.map(k => managerKpis[k.id]).filter(v => v !== undefined && v !== null && v > 0);
+    const vals = kpiDefinitions.map(k => getKpiScore(managerKpis, k.id)).filter(v => v > 0);
     if (vals.length === 0) return 0;
     return parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
   }, [kpiDefinitions, managerKpis]);
@@ -818,7 +847,7 @@ export default function AnnualEvaluationDashboard({
         department: "Contact Center",
         team: currentMember?.team || "Contact Center",
         team_leader: teamLeader || resolveTeamLeader(currentMember?.team),
-        channel_type: "calls",
+        channel_type: isSelectedEmployeeChat ? "chat" : "calls",
         
         self_kpis: selfKpis,
         self_competencies: selfCompetencies,
@@ -916,7 +945,7 @@ export default function AnnualEvaluationDashboard({
           {/* Quick Header Actions with Back Button on the Right */}
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowBenchmarkGuideModal(true)}
+              onClick={openBenchmarkGuide}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-50 hover:bg-amber-100/80 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 transition active:scale-95 cursor-pointer shadow-2xs"
               title="KPI & Competency Benchmark Guide"
             >
@@ -1056,73 +1085,127 @@ export default function AnnualEvaluationDashboard({
                   <button
                     type="button"
                     onClick={() => setEmployeeDropdownOpen(!employeeDropdownOpen)}
-                    className="w-full flex items-center justify-between gap-3 px-3.5 py-2 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200 dark:border-gray-700 rounded-2xl text-xs font-bold text-gray-900 dark:text-white transition shadow-2xs cursor-pointer"
+                    className="w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-white hover:bg-gray-50/80 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200/90 dark:border-gray-700 rounded-2xl text-xs font-bold text-gray-900 dark:text-white transition shadow-2xs cursor-pointer"
                   >
-                    <div className="flex items-center gap-2 truncate">
-                      <div className="w-6 h-6 rounded-full bg-[#1C6B53]/20 text-[#1C6B53] dark:text-emerald-400 flex items-center justify-center text-xs font-black shrink-0">
-                        {selectedEmployeeName ? selectedEmployeeName.charAt(0).toUpperCase() : <Users size={12} />}
+                    <div className="flex items-center gap-2.5 truncate">
+                      <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#1C6B53] to-emerald-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-2xs">
+                        {selectedEmployeeName ? selectedEmployeeName.charAt(0).toUpperCase() : <Users size={13} />}
                       </div>
-                      <span className="truncate">{toTitleCase(selectedEmployeeName) || "Select Employee..."}</span>
+                      <div className="truncate text-left">
+                        <div className="truncate font-black text-gray-900 dark:text-white leading-tight">
+                          {toTitleCase(selectedEmployeeName) || "Select Employee..."}
+                        </div>
+                        <div className="text-[10px] text-gray-400 dark:text-gray-500 font-medium truncate">
+                          {currentMember?.team?.replace(' Team', '') || 'Contact Center'}
+                        </div>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[10px] px-2 py-0.5 rounded-lg bg-emerald-100/70 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 font-bold">
-                        {currentMember?.team?.replace(' Team', '') || 'All Teams'}
+                      <span className={`text-[10px] px-2 py-0.5 rounded-lg border font-bold flex items-center gap-1 ${
+                        isSelectedEmployeeChat
+                          ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                          : "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
+                      }`}>
+                        {isSelectedEmployeeChat ? <MessageSquare size={10} /> : <PhoneCall size={10} />}
+                        <span>{isSelectedEmployeeChat ? 'Chat' : 'Calls'}</span>
                       </span>
-                      <ChevronDown size={14} className={`text-gray-400 transition-transform ${employeeDropdownOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${employeeDropdownOpen ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
 
                   {employeeDropdownOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setEmployeeDropdownOpen(false)} />
-                      <div className="absolute right-0 top-full mt-2 w-full sm:w-96 bg-white/98 dark:bg-gray-900/98 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-2.5 z-50 max-h-96 flex flex-col animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md ring-1 ring-black/5">
+                      <div className="absolute right-0 top-full mt-2 w-full sm:w-[420px] bg-white/98 dark:bg-gray-900/98 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-2xl p-3 z-50 max-h-[460px] flex flex-col animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md ring-1 ring-black/5">
                         
+                        {/* Header */}
+                        <div className="px-2 pt-1 pb-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
+                          <div>
+                            <h4 className="text-xs font-black text-gray-900 dark:text-white">
+                              Select Employee
+                            </h4>
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">
+                              38 Official Contact Center Agents
+                            </p>
+                          </div>
+                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                            {filteredMembers.length} Available
+                          </span>
+                        </div>
+
                         {/* Search Input */}
-                        <div className="relative mb-2">
+                        <div className="relative mt-2.5 mb-2">
                           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                           <input
                             type="text"
-                            placeholder="Search employee or team..."
+                            placeholder="Search employee across all teams..."
                             value={employeeSearchTerm}
                             onChange={(e) => setEmployeeSearchTerm(e.target.value)}
-                            className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 font-medium"
+                            className="w-full pl-8 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 font-medium"
                             autoFocus
                           />
+                          {employeeSearchTerm && (
+                            <button
+                              type="button"
+                              onClick={() => setEmployeeSearchTerm("")}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5"
+                            >
+                              <X size={12} />
+                            </button>
+                          )}
                         </div>
 
-                        {/* Team Filter Pills: All, Younis Kamal, Ankido Buya, Mohammed Dlshad */}
-                        <div className="flex items-center gap-1 p-1 bg-gray-100/90 dark:bg-gray-800/90 rounded-xl mb-2 overflow-x-auto shrink-0">
+                        {/* Team Filter Pills: Younis Kamal, Ankido Buya, Mohammed Dlshad (Strictly 3 tabs, No "All") */}
+                        <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100/90 dark:bg-gray-800/90 rounded-2xl mb-2 shrink-0">
                           {[
-                            { id: "All", label: "All" },
-                            { id: "Younis", label: "Younis Kamal" },
-                            { id: "Ankido", label: "Ankido Buya" },
-                            { id: "Mohammed", label: "Mohammed Dlshad" },
-                          ].map(tab => (
-                            <button
-                              key={tab.id}
-                              type="button"
-                              onClick={() => setTeamTabFilter(tab.id)}
-                              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition cursor-pointer ${
-                                teamTabFilter === tab.id
-                                  ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-400 shadow-2xs font-black'
-                                  : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                              }`}
-                            >
-                              {tab.label}
-                            </button>
-                          ))}
+                            { id: "Younis", label: "Younis Kamal", count: teamCounts.Younis, icon: PhoneCall },
+                            { id: "Ankido", label: "Ankido Buya", count: teamCounts.Ankido, icon: PhoneCall },
+                            { id: "Mohammed", label: "Mohammed Dlshad", count: teamCounts.Mohammed, icon: MessageSquare },
+                          ].map(tab => {
+                            const TabIcon = tab.icon;
+                            const isActive = teamTabFilter === tab.id;
+                            return (
+                              <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => {
+                                  setTeamTabFilter(tab.id);
+                                  setEmployeeSearchTerm("");
+                                }}
+                                className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-[10px] font-bold transition cursor-pointer ${
+                                  isActive
+                                    ? 'bg-[#1C6B53] text-white shadow-xs font-black'
+                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-750'
+                                }`}
+                              >
+                                <TabIcon size={11} className={isActive ? 'text-emerald-200' : 'text-gray-400'} />
+                                <span className="truncate">{tab.label.split(' ')[0]}</span>
+                                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
+                                  isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                                }`}>
+                                  {tab.count}
+                                </span>
+                              </button>
+                            );
+                          })}
                         </div>
 
                         {/* Roster Count Summary */}
-                        <div className="px-1.5 py-1 text-[10px] font-bold text-gray-400 dark:text-gray-500 flex items-center justify-between border-b border-gray-100 dark:border-gray-800/60 mb-1">
-                          <span>{filteredMembers.length} Employees</span>
-                          <span className="text-[9px] uppercase tracking-wider text-[#1C6B53] dark:text-emerald-400 font-extrabold">All Contact Center Teams</span>
+                        <div className="px-2 py-1 text-[10px] font-bold text-gray-400 dark:text-gray-500 flex items-center justify-between border-b border-gray-100 dark:border-gray-800/60 mb-1.5">
+                          <span>
+                            {employeeSearchTerm.trim() 
+                              ? `${filteredMembers.length} Matching Search` 
+                              : `${filteredMembers.length} Agents in ${teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' : teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'}`}
+                          </span>
+                          <span className="text-[9px] font-bold text-[#1C6B53] dark:text-emerald-400">
+                            {teamTabFilter === 'Mohammed' ? 'Digital Chat' : 'Voice Calls'}
+                          </span>
                         </div>
 
                         {/* Scrollable Members List */}
-                        <div className="overflow-y-auto space-y-1 flex-1 pr-1 overscroll-contain">
+                        <div className="overflow-y-auto space-y-1.5 flex-1 pr-1 overscroll-contain max-h-64">
                           {filteredMembers.length === 0 ? (
-                            <div className="py-6 px-3 text-center text-xs text-gray-400 dark:text-gray-500 font-medium flex flex-col items-center gap-2">
+                            <div className="py-8 px-3 text-center text-xs text-gray-400 dark:text-gray-500 font-medium flex flex-col items-center gap-2">
                               {isLoadingMembers ? (
                                 <>
                                   <div className="w-5 h-5 border-2 border-[#1C6B53] border-t-transparent rounded-full animate-spin" />
@@ -1160,23 +1243,35 @@ export default function AnnualEvaluationDashboard({
                                     setEmployeeDropdownOpen(false);
                                     setEmployeeSearchTerm("");
                                   }}
-                                  className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition cursor-pointer ${
+                                  className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left text-xs transition-all cursor-pointer ${
                                     isSelected
-                                      ? 'bg-[#1C6B53]/10 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-bold'
-                                      : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium'
+                                      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800'
+                                      : 'hover:bg-gray-50 dark:hover:bg-gray-800/70 text-gray-700 dark:text-gray-200 font-medium'
                                   }`}
                                 >
-                                  <div className="flex items-center gap-2 truncate">
-                                    <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[10px] font-bold text-gray-600 dark:text-gray-300 shrink-0">
+                                  <div className="flex items-center gap-2.5 truncate">
+                                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-black shrink-0 ${
+                                      isSelected
+                                        ? 'bg-[#1C6B53] text-white shadow-2xs'
+                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                                    }`}>
                                       {m.agent_name?.charAt(0).toUpperCase()}
                                     </div>
-                                    <span className="truncate">{toTitleCase(m.agent_name)}</span>
+                                    <div className="truncate">
+                                      <div className="font-bold truncate text-gray-900 dark:text-gray-100">
+                                        {toTitleCase(m.agent_name)}
+                                      </div>
+                                      <div className="text-[10px] text-gray-400 dark:text-gray-500 font-medium truncate">
+                                        {teamStr.replace(' Team', '')}
+                                      </div>
+                                    </div>
                                   </div>
                                   <div className="flex items-center gap-2 shrink-0">
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md border font-semibold ${teamBadgeClass}`}>
-                                      {teamStr.replace(' Team', '')}
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-md border font-semibold flex items-center gap-1 ${teamBadgeClass}`}>
+                                      {isDlshad ? <MessageSquare size={10} /> : <PhoneCall size={10} />}
+                                      <span>{isDlshad ? 'Chat' : 'Calls'}</span>
                                     </span>
-                                    {isSelected && <Check size={13} className="text-[#1C6B53] dark:text-emerald-400" />}
+                                    {isSelected && <Check size={14} className="text-[#1C6B53] dark:text-emerald-400" />}
                                   </div>
                                 </button>
                               );
@@ -1375,8 +1470,8 @@ export default function AnnualEvaluationDashboard({
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800 text-xs font-medium">
                   {kpiDefinitions.map((kpi) => {
-                    const selfVal = selfKpis[kpi.id] || 0;
-                    const mgrVal = managerKpis[kpi.id] || 0;
+                    const selfVal = getKpiScore(selfKpis, kpi.id);
+                    const mgrVal = getKpiScore(managerKpis, kpi.id);
                     const diff = mgrVal > 0 && selfVal > 0 ? (mgrVal - selfVal) : null;
 
                     return (
@@ -1404,7 +1499,12 @@ export default function AnnualEvaluationDashboard({
                                 type="button"
                                 onClick={() => {
                                   if (canEditSelf) {
-                                    setSelfKpis(prev => ({ ...prev, [kpi.id]: lvl }));
+                                    setSelfKpis(prev => ({
+                                      ...prev,
+                                      [kpi.id]: lvl,
+                                      ...(kpi.id === 'exam' ? { knowledge: lvl } : {}),
+                                      ...(kpi.id === 'knowledge' ? { exam: lvl } : {})
+                                    }));
                                   }
                                 }}
                                 disabled={!canEditSelf}
@@ -1434,7 +1534,12 @@ export default function AnnualEvaluationDashboard({
                                   type="button"
                                   onClick={() => {
                                     if (canEditManager) {
-                                      setManagerKpis(prev => ({ ...prev, [kpi.id]: lvl }));
+                                      setManagerKpis(prev => ({
+                                        ...prev,
+                                        [kpi.id]: lvl,
+                                        ...(kpi.id === 'exam' ? { knowledge: lvl } : {}),
+                                        ...(kpi.id === 'knowledge' ? { exam: lvl } : {})
+                                      }));
                                     }
                                   }}
                                   disabled={!canEditManager}
@@ -1839,7 +1944,7 @@ export default function AnnualEvaluationDashboard({
                   rows={3}
                   value={employeeComments}
                   onChange={(e) => setEmployeeComments(e.target.value)}
-                  disabled={!canEditSelf}
+                  disabled={!canEditEmployeeFeedback}
                   placeholder="Agent reflections, aspirations, and feedback following review meeting..."
                   className="w-full text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 resize-none disabled:opacity-75"
                 />
@@ -1903,15 +2008,26 @@ export default function AnnualEvaluationDashboard({
 
                 {/* Manager actions */}
                 {canEditManager && (
-                  <button
-                    type="button"
-                    onClick={() => handleSaveEvaluation("manager_finalized")}
-                    disabled={isSaving}
-                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-gradient-to-r from-[#1C6B53] to-emerald-600 hover:opacity-95 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer"
-                  >
-                    <ShieldCheck size={15} />
-                    <span>{evaluationStatus === 'manager_finalized' ? 'Update & Finalize Evaluation' : 'Approve & Finalize Evaluation'}</span>
-                  </button>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleSaveEvaluation(evaluationStatus === 'manager_finalized' ? 'manager_finalized' : 'draft')}
+                      disabled={isSaving}
+                      className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200 dark:border-gray-700 transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                    >
+                      <Save size={14} />
+                      <span>Save Draft</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSaveEvaluation("manager_finalized")}
+                      disabled={isSaving}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-gradient-to-r from-[#1C6B53] to-emerald-600 hover:opacity-95 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                    >
+                      <ShieldCheck size={15} />
+                      <span>{evaluationStatus === 'manager_finalized' ? 'Update & Finalize Evaluation' : 'Approve & Finalize Evaluation'}</span>
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -1952,19 +2068,38 @@ export default function AnnualEvaluationDashboard({
 
             {/* Modal Tabs */}
             <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => setBenchmarkGuideTab("calls")}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                  benchmarkGuideTab === "calls"
-                    ? 'bg-[#1C6B53] text-white shadow-xs'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-700'
-                }`}
-              >
-                <PhoneCall size={14} />
-                <span>Calls Benchmarks</span>
-              </button>
+              {(!isAgent || !isSelectedEmployeeChat) && (
+                <button
+                  type="button"
+                  onClick={() => setBenchmarkGuideTab("calls")}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    benchmarkGuideTab === "calls"
+                      ? 'bg-[#1C6B53] text-white shadow-xs'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <PhoneCall size={14} />
+                  <span>Calls Benchmarks</span>
+                </button>
+              )}
+
+              {(!isAgent || isSelectedEmployeeChat) && (
+                <button
+                  type="button"
+                  onClick={() => setBenchmarkGuideTab("chat")}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    benchmarkGuideTab === "chat"
+                      ? 'bg-[#1C6B53] text-white shadow-xs'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <MessageSquare size={14} />
+                  <span>Chat Benchmarks</span>
+                </button>
+              )}
 
               <button
+                type="button"
                 onClick={() => setBenchmarkGuideTab("competencies")}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                   benchmarkGuideTab === "competencies"
@@ -1980,13 +2115,23 @@ export default function AnnualEvaluationDashboard({
             {/* Modal Body */}
             <div className="p-5 sm:p-6 overflow-y-auto space-y-4">
               
+              {/* Calls Benchmarks (Younis & Ankido Teams) */}
               {benchmarkGuideTab === "calls" && (
                 <div className="space-y-4">
-                  <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3 rounded-2xl text-xs text-emerald-800 dark:text-emerald-200 font-medium">
-                    Calls Performance Rating Benchmarks:
+                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800">
+                    <div className="flex items-center gap-2">
+                      <PhoneCall size={16} className="text-sky-600 dark:text-sky-400" />
+                      <span className="text-xs font-black text-sky-950 dark:text-sky-200">
+                        Calls Performance Rating Benchmarks (Younis Kamal & Ankido Buya Teams)
+                      </span>
+                    </div>
+                    <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-sky-200/80 dark:bg-sky-900 text-sky-900 dark:text-sky-200">
+                      Voice Matrix
+                    </span>
                   </div>
 
-                  <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700">
+                  {/* Standard Tier Cards Table */}
+                  <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
                     <table className="w-full text-center text-xs">
                       <thead>
                         <tr className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-black">
@@ -1995,56 +2140,244 @@ export default function AnnualEvaluationDashboard({
                           <th className="p-3">AHT</th>
                           <th className="p-3">Exam</th>
                           <th className="p-3">Productivity</th>
-                          <th className="p-3">Attendance</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700 font-semibold">
-                        <tr className="bg-emerald-50/40 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300">
+                        <tr className="bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
                           <td className="p-3 text-left font-black">5 ⭐ Outstanding</td>
-                          <td className="p-3 font-mono">99% - 100%</td>
-                          <td className="p-3 font-mono">&lt; 2:49</td>
-                          <td className="p-3 font-mono">99% - 100%</td>
-                          <td className="p-3 font-mono">&gt; 93%</td>
-                          <td className="p-3 font-mono">100%</td>
+                          <td className="p-3 font-mono font-bold">99% - 100%</td>
+                          <td className="p-3 font-mono font-bold">&lt; 2:54</td>
+                          <td className="p-3 font-mono font-bold">99% - 100%</td>
+                          <td className="p-3 font-mono font-bold">&gt; 93%</td>
                         </tr>
-                        <tr className="bg-blue-50/40 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300">
+                        <tr className="bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
                           <td className="p-3 text-left font-black">4 ⭐ Exceeds Expectations</td>
-                          <td className="p-3 font-mono">96% - 98%</td>
-                          <td className="p-3 font-mono">2:50 - 2:59</td>
-                          <td className="p-3 font-mono">96% - 98%</td>
-                          <td className="p-3 font-mono">91% - 92%</td>
-                          <td className="p-3 font-mono">98% - 99%</td>
+                          <td className="p-3 font-mono font-bold">96% - 98%</td>
+                          <td className="p-3 font-mono font-bold">2:55 - 2:59</td>
+                          <td className="p-3 font-mono font-bold">96% - 98%</td>
+                          <td className="p-3 font-mono font-bold">91% - 92%</td>
                         </tr>
                         <tr className="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-300">
                           <td className="p-3 text-left font-black">3 ⭐ Meets Expectations</td>
-                          <td className="p-3 font-mono">94% - 95%</td>
-                          <td className="p-3 font-mono">3:00 (3M)</td>
-                          <td className="p-3 font-mono">94% - 95%</td>
-                          <td className="p-3 font-mono">90%</td>
-                          <td className="p-3 font-mono">95% - 97%</td>
+                          <td className="p-3 font-mono font-bold">95%</td>
+                          <td className="p-3 font-mono font-bold">3:00 - 3:10</td>
+                          <td className="p-3 font-mono font-bold">95%</td>
+                          <td className="p-3 font-mono font-bold">90%</td>
                         </tr>
-                        <tr className="bg-amber-50/40 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
+                        <tr className="bg-amber-50/50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-300">
                           <td className="p-3 text-left font-black">2 ⭐ Developing</td>
-                          <td className="p-3 font-mono">90% - 93%</td>
-                          <td className="p-3 font-mono">3:01 - 3:10</td>
-                          <td className="p-3 font-mono">90% - 93%</td>
-                          <td className="p-3 font-mono">88% - 89%</td>
-                          <td className="p-3 font-mono">90% - 94%</td>
+                          <td className="p-3 font-mono font-bold">90% - 94%</td>
+                          <td className="p-3 font-mono font-bold">3:11 - 3:30</td>
+                          <td className="p-3 font-mono font-bold">90% - 94%</td>
+                          <td className="p-3 font-mono font-bold">88% - 89%</td>
                         </tr>
-                        <tr className="bg-rose-50/40 dark:bg-rose-950/20 text-rose-800 dark:text-rose-300">
+                        <tr className="bg-rose-50/50 dark:bg-rose-950/20 text-rose-900 dark:text-rose-300">
                           <td className="p-3 text-left font-black">1 ⭐ Needs Improvement</td>
-                          <td className="p-3 font-mono">&lt; 89%</td>
-                          <td className="p-3 font-mono">&gt; 3:11</td>
-                          <td className="p-3 font-mono">&lt; 89%</td>
-                          <td className="p-3 font-mono">&lt; 87%</td>
-                          <td className="p-3 font-mono">&lt; 90%</td>
+                          <td className="p-3 font-mono font-bold">&lt; 89%</td>
+                          <td className="p-3 font-mono font-bold">&gt; 3:31</td>
+                          <td className="p-3 font-mono font-bold">&lt; 89%</td>
+                          <td className="p-3 font-mono font-bold">&lt; 87%</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Excel Matrix Grid (Exact Image 4 Replica) */}
+                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700">
+                    <h5 className="text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2.5 flex items-center gap-1.5">
+                      <span>Excel Matrix Reference (Calls)</span>
+                    </h5>
+                    <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                      <table className="w-full text-center text-xs">
+                        <thead>
+                          <tr className="bg-[#1C6B53] text-white font-black text-xs">
+                            <th className="p-2.5 text-left border-r border-[#155340]">Rate</th>
+                            <th className="p-2.5 border-r border-[#155340]">5</th>
+                            <th className="p-2.5 border-r border-[#155340]">4</th>
+                            <th className="p-2.5 border-r border-[#155340]">3</th>
+                            <th className="p-2.5 border-r border-[#155340]">2</th>
+                            <th className="p-2.5">1</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-800 font-medium">
+                          <tr>
+                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">QA</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">99-100</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">96-98</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">95</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">90-94</td>
+                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 89</td>
+                          </tr>
+                          <tr>
+                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">AHT</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800 text-emerald-600 dark:text-emerald-400">Less than 2:54</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">2:55-2:59</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3:00-3:10</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3:11-3:30</td>
+                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Greater than 3:31</td>
+                          </tr>
+                          <tr>
+                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">Exam</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">99-100</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">96-98</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">95</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">90-94</td>
+                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 89</td>
+                          </tr>
+                          <tr>
+                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">Productivity</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800 text-emerald-600 dark:text-emerald-400">Greater than 93</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">91-92</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">90</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">88-89</td>
+                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 87</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
               )}
 
+              {/* Chat Benchmarks (Mohammed Dlshad Team) */}
+              {benchmarkGuideTab === "chat" && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare size={16} className="text-emerald-600 dark:text-emerald-400" />
+                      <span className="text-xs font-black text-emerald-950 dark:text-emerald-200">
+                        Chat Performance Rating Benchmarks (Mohammed Dlshad Team)
+                      </span>
+                    </div>
+                    <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-200/80 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200">
+                      Digital Chat Matrix
+                    </span>
+                  </div>
+
+                  {/* Standard Tier Cards Table */}
+                  <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
+                    <table className="w-full text-center text-xs">
+                      <thead>
+                        <tr className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-black">
+                          <th className="p-3 text-left">Rating Tier</th>
+                          <th className="p-3">Exam</th>
+                          <th className="p-3">QA</th>
+                          <th className="p-3">AHT</th>
+                          <th className="p-3">ART</th>
+                          <th className="p-3">Productivity</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700 font-semibold">
+                        <tr className="bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
+                          <td className="p-3 text-left font-black">5 ⭐ Outstanding</td>
+                          <td className="p-3 font-mono font-bold">99% - 100%</td>
+                          <td className="p-3 font-mono font-bold">99% - 100%</td>
+                          <td className="p-3 font-mono font-bold">3:00 - 3:30</td>
+                          <td className="p-3 font-mono font-bold">&lt; 1:15</td>
+                          <td className="p-3 font-mono font-bold">&gt; 13</td>
+                        </tr>
+                        <tr className="bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
+                          <td className="p-3 text-left font-black">4 ⭐ Exceeds Expectations</td>
+                          <td className="p-3 font-mono font-bold">96% - 98%</td>
+                          <td className="p-3 font-mono font-bold">96% - 98%</td>
+                          <td className="p-3 font-mono font-bold">3:31 - 4:00</td>
+                          <td className="p-3 font-mono font-bold">1:16 - 1:30</td>
+                          <td className="p-3 font-mono font-bold">11 - 12.99</td>
+                        </tr>
+                        <tr className="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-300">
+                          <td className="p-3 text-left font-black">3 ⭐ Meets Expectations</td>
+                          <td className="p-3 font-mono font-bold">95%</td>
+                          <td className="p-3 font-mono font-bold">95%</td>
+                          <td className="p-3 font-mono font-bold">4:01 - 4:59</td>
+                          <td className="p-3 font-mono font-bold">1:31 - 2:30</td>
+                          <td className="p-3 font-mono font-bold">8.50 - 10.99</td>
+                        </tr>
+                        <tr className="bg-amber-50/50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-300">
+                          <td className="p-3 text-left font-black">2 ⭐ Developing</td>
+                          <td className="p-3 font-mono font-bold">90% - 94%</td>
+                          <td className="p-3 font-mono font-bold">90% - 94%</td>
+                          <td className="p-3 font-mono font-bold">5:00 - 5:59</td>
+                          <td className="p-3 font-mono font-bold">2:31 - 3:00</td>
+                          <td className="p-3 font-mono font-bold">7.50 - 8.49</td>
+                        </tr>
+                        <tr className="bg-rose-50/50 dark:bg-rose-950/20 text-rose-900 dark:text-rose-300">
+                          <td className="p-3 text-left font-black">1 ⭐ Needs Improvement</td>
+                          <td className="p-3 font-mono font-bold">&lt; 89%</td>
+                          <td className="p-3 font-mono font-bold">&lt; 89%</td>
+                          <td className="p-3 font-mono font-bold">&gt; 6:00</td>
+                          <td className="p-3 font-mono font-bold">&gt; 3:01</td>
+                          <td className="p-3 font-mono font-bold">&lt; 7.50</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Excel Matrix Grid (Exact Image 4 Replica) */}
+                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700">
+                    <h5 className="text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2.5 flex items-center gap-1.5">
+                      <span>Excel Matrix Reference (Chat)</span>
+                    </h5>
+                    <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                      <table className="w-full text-center text-xs">
+                        <thead>
+                          <tr className="bg-[#1C6B53] text-white font-black text-xs">
+                            <th className="p-2.5 text-left border-r border-[#155340]">Rate</th>
+                            <th className="p-2.5 border-r border-[#155340]">5</th>
+                            <th className="p-2.5 border-r border-[#155340]">4</th>
+                            <th className="p-2.5 border-r border-[#155340]">3</th>
+                            <th className="p-2.5 border-r border-[#155340]">2</th>
+                            <th className="p-2.5">1</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-800 font-medium">
+                          <tr>
+                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">Exam</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">99-100</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">96-98</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">95</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">90-94</td>
+                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 89</td>
+                          </tr>
+                          <tr>
+                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">QA</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">99-100</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">96-98</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">95</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">90-94</td>
+                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 89</td>
+                          </tr>
+                          <tr>
+                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">AHT</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3-3:30</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3:31-4:00</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">4:01-4:59</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">5:00-5:59</td>
+                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Greater than 6:00</td>
+                          </tr>
+                          <tr>
+                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">ART</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800 text-emerald-600 dark:text-emerald-400">Less than 1:15</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">1:16-1:30</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">1:31-2:30</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">2:31-3:00</td>
+                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Greater than 3:01</td>
+                          </tr>
+                          <tr>
+                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">Productivity</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800 text-emerald-600 dark:text-emerald-400">Greater than 13</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">11-12.99</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">8.5-10.99</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">7.50-8.49</td>
+                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 7.50</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Competency Descriptions */}
               {benchmarkGuideTab === "competencies" && (
                 <div className="space-y-3">
                   {COMPETENCIES_LIST.map((c, idx) => (

@@ -5067,11 +5067,9 @@ export default function QualityDashboard({
           </div>
 
           {/* Lock Banner when moving to a new month without syncing the completed previous month */}
-          {/* Lock Banner when moving to a new month without syncing the completed previous month */}
           {unsyncedPreviousMonth && (
             <div 
-              dir="rtl"
-              className="mx-4 mt-3 mb-2 p-3.5 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-700 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-right"
+              className="mx-4 mt-3 mb-2 p-3.5 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-700 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-left"
             >
               <div className="flex items-center sm:items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
@@ -5080,14 +5078,14 @@ export default function QualityDashboard({
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="text-xs sm:text-sm font-black text-amber-950 dark:text-amber-200">
-                      إدخال البيانات مقفل لشهر {MONTH_NAMES[activeTableMonthIdx]} {selectedYear}
+                      Data Entry Locked for {MONTH_NAMES[activeTableMonthIdx]} {selectedYear}
                     </h4>
                     <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
-                      مطلوب المزامنة أولاً
+                      Sync Required First
                     </span>
                   </div>
                   <p className="text-xs text-amber-900/90 dark:text-amber-300/90 mt-1 font-medium leading-relaxed">
-                    تم إكمال جميع أسابيع شهر <strong>{unsyncedPreviousMonth.monthName} {selectedYear}</strong> ({Object.keys(unsyncedPreviousMonth.agentScores).length} موظفاً). يرجى مزامنة البيانات لعكس الدرجات في لوحات التيم ليدر والوكلاء لإتاحة إدخال بيانات شهر <strong>{MONTH_NAMES[activeTableMonthIdx]}</strong>.
+                    Evaluations for <strong>{unsyncedPreviousMonth.monthName} {selectedYear}</strong> are completed ({Object.keys(unsyncedPreviousMonth.agentScores).length} agents). Please sync to the Team Leader & Agent dashboards before entering <strong>{MONTH_NAMES[activeTableMonthIdx]}</strong>.
                   </p>
                 </div>
               </div>
@@ -5102,7 +5100,7 @@ export default function QualityDashboard({
                   }}
                   className="px-3.5 py-2 rounded-xl text-xs font-bold text-amber-900 dark:text-amber-200 bg-amber-200/80 hover:bg-amber-300 dark:bg-amber-900/60 dark:hover:bg-amber-800 transition cursor-pointer"
                 >
-                  مراجعة {unsyncedPreviousMonth.monthName}
+                  Review {unsyncedPreviousMonth.monthName}
                 </button>
                 <button
                   type="button"
@@ -5111,7 +5109,7 @@ export default function QualityDashboard({
                   className="px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-xs flex items-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
                 >
                   <RefreshCw size={13} className={syncingMetrics ? "animate-spin" : ""} />
-                  <span>{syncingMetrics ? "جارٍ المزامنة..." : `مزامنة ${unsyncedPreviousMonth.monthName} الآن`}</span>
+                  <span>{syncingMetrics ? "Syncing..." : `Sync ${unsyncedPreviousMonth.monthName} Now`}</span>
                 </button>
               </div>
             </div>
@@ -7237,10 +7235,9 @@ export default function QualityDashboard({
       )}
 
       {/* Mandatory Sync Reminder Modal when trying to enter a new month before syncing a completed previous month */}
-      {/* Mandatory Sync Reminder Modal when trying to enter a new month before syncing a completed previous month */}
       {syncReminderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200" dir="rtl">
-          <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800/80 overflow-hidden text-right">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800/80 overflow-hidden text-left">
             <div className="p-6 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border-b border-amber-100 dark:border-amber-900/50 flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shrink-0">
@@ -7248,10 +7245,10 @@ export default function QualityDashboard({
                 </div>
                 <div>
                   <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300/60 dark:border-amber-700/60 mb-1">
-                    تنبيه المزامنة • مطلوب أولاً
+                    Sync Required First
                   </span>
                   <h3 className="text-base font-black text-gray-900 dark:text-white">
-                    مزامنة شهر {syncReminderModal.monthName} {selectedYear}
+                    Sync {syncReminderModal.monthName} {selectedYear}
                   </h3>
                 </div>
               </div>
@@ -7266,7 +7263,7 @@ export default function QualityDashboard({
 
             <div className="p-6 space-y-4">
               <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 text-xs sm:text-sm text-amber-950 dark:text-amber-200 font-medium leading-relaxed">
-                لقد أكملت إدخال جميع أسابيع شهر <strong>{syncReminderModal.monthName} {selectedYear}</strong> بالكامل لـ ({Object.keys(syncReminderModal.agentScores).length} موظفاً). يرجى الضغط على زر المزامنة لعكس درجات الموظفين في لوحات التيم ليدر والوكلاء أولاً لإتاحة إدخال بيانات الشهر الجديد (<strong>{MONTH_NAMES[activeTableMonthIdx]}</strong>).
+                You have completed evaluations for <strong>{syncReminderModal.monthName} {selectedYear}</strong> ({Object.keys(syncReminderModal.agentScores).length} agents). Please sync scores to the Team Leader & Agent dashboards first before entering data for <strong>{MONTH_NAMES[activeTableMonthIdx]}</strong>.
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
@@ -7279,8 +7276,8 @@ export default function QualityDashboard({
                   <RefreshCw size={14} className={syncingMetrics ? "animate-spin" : ""} />
                   <span>
                     {syncingMetrics
-                      ? `جارٍ المزامنة...`
-                      : `مزامنة ${syncReminderModal.monthName} وفتح ${MONTH_NAMES[activeTableMonthIdx]}`}
+                      ? `Syncing...`
+                      : `Sync ${syncReminderModal.monthName} & Unlock`}
                   </span>
                 </button>
                 <button
@@ -7294,7 +7291,7 @@ export default function QualityDashboard({
                   }}
                   className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition cursor-pointer"
                 >
-                  الرجوع إلى {syncReminderModal.monthName}
+                  Return to {syncReminderModal.monthName}
                 </button>
               </div>
             </div>
