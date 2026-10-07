@@ -154,6 +154,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { Camera } from "lucide-react";
 import dynamic from "next/dynamic";
 import { compressImageFile } from "@/lib/imageUtils";
+import { BASELINE_QUALITY_EVALUATIONS } from "@/lib/baselineQualityData";
 
 const QualityDashboard = dynamic(() => import("@/components/QualityDashboard"), {
   loading: () => (
@@ -1967,7 +1968,7 @@ export default function Dashboard() {
 
   // In-memory cache for instant switching between months and teams (<5ms)
   const teamDataCacheRef = useRef<Record<string, { roster: any[]; allYearData: any[] }>>({});
-  const qaCacheRef = useRef<Record<string, any>>({});
+  const qaCacheRef = useRef<Record<string, any>>({ ...BASELINE_QUALITY_EVALUATIONS });
   const selectedMonthRef = useRef(selectedMonth);
   const selectedTeamRef = useRef(selectedTeam);
   const selectedYearRef = useRef(selectedYear);
@@ -2831,8 +2832,9 @@ export default function Dashboard() {
 
       snaps.forEach((snap, idx) => {
         const { docId, month, member } = toFetch[idx];
-        if (snap && snap.exists()) {
-          const data = snap.data();
+        const baseDoc = BASELINE_QUALITY_EVALUATIONS[docId];
+        const data = (snap && snap.exists()) ? snap.data() : (baseDoc || null);
+        if (data) {
           qaCacheRef.current[docId] = data;
           hasNewData = true;
 
