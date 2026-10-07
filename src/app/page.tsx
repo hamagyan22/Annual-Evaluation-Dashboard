@@ -2200,17 +2200,31 @@ export default function Dashboard() {
     return () => unsub();
   }, []);
 
-  // Real-time team members sync across all accounts
+  // Real-time team members sync across all accounts (reactive to session authentication)
   useEffect(() => {
+    if (!session) return;
     const unsub = onSnapshot(collection(db, 'team_members'), (snap) => {
-      const members = snap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
-      members.sort((a, b) => (a.agent_name > b.agent_name ? 1 : -1));
+      const members = snap.docs.map(d => {
+        const data = d.data();
+        const name = (data.agent_name || data.name || data.display_name || "").trim();
+        return {
+          id: d.id,
+          ...data,
+          agent_name: name,
+          name: name
+        };
+      }).filter(m => Boolean(m.agent_name));
+      members.sort((a, b) => a.agent_name.localeCompare(b.agent_name));
       setAllMembers(members);
     }, (err) => {
       console.error("Members listener error:", err);
     });
+
+    // Also trigger direct fetch in case snapshot is delayed
+    fetchAllMembers();
+
     return () => unsub();
-  }, []);
+  }, [session]);
 
   const months = [
     "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
@@ -2276,8 +2290,17 @@ export default function Dashboard() {
   const fetchAllMembers = async () => {
     try {
       const snap = await getDocs(collection(db, 'team_members'));
-      const members = snap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
-      members.sort((a, b) => (a.agent_name > b.agent_name ? 1 : -1));
+      const members = snap.docs.map(d => {
+        const data = d.data();
+        const name = (data.agent_name || data.name || data.display_name || "").trim();
+        return {
+          id: d.id,
+          ...data,
+          agent_name: name,
+          name: name
+        };
+      }).filter(m => Boolean(m.agent_name));
+      members.sort((a, b) => a.agent_name.localeCompare(b.agent_name));
       setAllMembers(members);
     } catch(e) {
       console.error(e);

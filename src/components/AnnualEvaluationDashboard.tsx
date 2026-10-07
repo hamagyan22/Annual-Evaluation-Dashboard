@@ -214,9 +214,209 @@ export default function AnnualEvaluationDashboard({
   // Real actual metrics fetched for the period to assist evaluation
   const [actualMetricsSummary, setActualMetricsSummary] = useState<any | null>(null);
 
+  // Internal loaded members list (live Firestore sync + multi-source fallback)
+  const [internalMembers, setInternalMembers] = useState<any[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(true);
+
+  // 1. Live real-time listener on team_members collection
+  useEffect(() => {
+    let isMounted = true;
+    const unsub = onSnapshot(collection(db, 'team_members'), (snap) => {
+      if (!isMounted) return;
+      const members = snap.docs.map(d => {
+        const data = d.data();
+        const name = (data.agent_name || data.name || data.display_name || "").trim();
+        return {
+          id: d.id,
+          ...data,
+          agent_name: name,
+          name: name,
+          team: data.team || "Contact Center"
+        };
+      }).filter(m => Boolean(m.agent_name));
+
+      if (members.length > 0) {
+        setInternalMembers(members);
+        setIsLoadingMembers(false);
+      }
+    }, (err) => {
+      console.warn("Annual eval team_members live listener warning:", err);
+    });
+
+    return () => {
+      isMounted = false;
+      unsub();
+    };
+  }, []);
+
+  // 2. Direct fetch & comprehensive multi-collection fallback to guarantee ALL employees across all teams are present
+  useEffect(() => {
+    let isMounted = true;
+    const fetchAllCompanyEmployees = async () => {
+      try {
+        const membersMap = new Map<string, any>();
+
+        // A. Add members from props
+        (allMembers || []).forEach(m => {
+          const name = (m.agent_name || m.name || m.display_name || "").trim();
+          if (name) {
+            membersMap.set(name.toLowerCase(), {
+              id: m.id || name,
+              ...m,
+              agent_name: name,
+              name: name,
+              team: m.team || "Contact Center"
+            });
+          }
+        });
+
+        // B. Add from team_members direct getDocs
+        try {
+          const tmSnap = await getDocs(collection(db, 'team_members'));
+          tmSnap.forEach(d => {
+            const data = d.data();
+            const name = (data.agent_name || data.name || data.display_name || "").trim();
+            if (name) {
+              membersMap.set(name.toLowerCase(), {
+                id: d.id,
+                ...data,
+                agent_name: name,
+                name: name,
+                team: data.team || "Contact Center"
+              });
+            }
+          });
+        } catch (e) {
+          console.warn("team_members getDocs warning:", e);
+        }
+
+        // C. Fallback: also pull unique active agents from all three team metrics tables to ensure no one is missed
+        try {
+          const [ymSnap, amSnap, mmSnap] = await Promise.all([
+            getDocs(query(collection(db, 'younis_metrics'), where('year', '==', selectedYear))),
+            getDocs(query(collection(db, 'ankido_metrics'), where('year', '==', selectedYear))),
+            getDocs(query(collection(db, 'mohammed_metrics'), where('year', '==', selectedYear)))
+          ]);
+
+          ymSnap.forEach(d => {
+            const data = d.data();
+            const name = (data.agent_name || data.agent || data.name || "").trim();
+            if (name && !membersMap.has(name.toLowerCase())) {
+              membersMap.set(name.toLowerCase(), {
+                id: d.id,
+                agent_name: name,
+                name: name,
+                team: "Younis Kamal Team"
+              });
+            }
+          });
+
+          amSnap.forEach(d => {
+            const data = d.data();
+            const name = (data.agent_name || data.agent || data.name || "").trim();
+            if (name && !membersMap.has(name.toLowerCase())) {
+              membersMap.set(name.toLowerCase(), {
+                id: d.id,
+                agent_name: name,
+                name: name,
+                team: "Ankido Buya Team"
+              });
+            }
+          });
+
+          mmSnap.forEach(d => {
+            const data = d.data();
+            const name = (data.agent_name || data.agent || data.name || "").trim();
+            if (name && !membersMap.has(name.toLowerCase())) {
+              membersMap.set(name.toLowerCase(), {
+                id: d.id,
+                agent_name: name,
+                name: name,
+                team: "Mohammed Dlshad Team"
+              });
+            }
+          });
+        } catch (e) {
+          console.warn("Metrics agents extraction warning:", e);
+        }
+
+        // D. Also check users collection for agents
+        try {
+          const usersSnap = await getDocs(collection(db, 'users'));
+          usersSnap.forEach(d => {
+            const data = d.data();
+            const name = (data.name || data.agent_name || data.display_name || "").trim();
+            if (name && !membersMap.has(name.toLowerCase()) && (data.role === 'agent' || data.team)) {
+              membersMap.set(name.toLowerCase(), {
+                id: d.id,
+                agent_name: name,
+                name: name,
+                team: data.team || "Contact Center"
+              });
+            }
+          });
+        } catch (e) {
+          console.warn("Users agents extraction warning:", e);
+        }
+
+        if (isMounted && membersMap.size > 0) {
+          const finalMembersList = Array.from(membersMap.values()).sort((a, b) => 
+            a.agent_name.localeCompare(b.agent_name)
+          );
+          setInternalMembers(finalMembersList);
+          setIsLoadingMembers(false);
+        }
+      } catch (err) {
+        console.error("Error ensuring all company employees:", err);
+      } finally {
+        if (isMounted) setIsLoadingMembers(false);
+      }
+    };
+
+    fetchAllCompanyEmployees();
+    return () => { isMounted = false; };
+  }, [allMembers, selectedYear]);
+
+  // Combined master members list
+  const effectiveAllMembers = useMemo(() => {
+    const map = new Map<string, any>();
+    
+    // First from props
+    (allMembers || []).forEach(m => {
+      const name = (m.agent_name || m.name || m.display_name || "").trim();
+      if (name) {
+        map.set(name.toLowerCase(), {
+          id: m.id || name,
+          ...m,
+          agent_name: name,
+          name: name,
+          team: m.team || "Contact Center"
+        });
+      }
+    });
+
+    // Then from internal loaded members (live Firestore sync)
+    (internalMembers || []).forEach(m => {
+      const name = (m.agent_name || m.name || m.display_name || "").trim();
+      if (name) {
+        const existing = map.get(name.toLowerCase());
+        map.set(name.toLowerCase(), {
+          id: m.id || name,
+          ...existing,
+          ...m,
+          agent_name: name,
+          name: name,
+          team: m.team || existing?.team || "Contact Center"
+        });
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
+  }, [allMembers, internalMembers]);
+
   // Filtered members list: All employees across all teams as requested ("خلي جميع الموظفين")
   const filteredMembers = useMemo(() => {
-    let list = [...allMembers];
+    let list = [...effectiveAllMembers];
     
     if (isAgent) {
       const myName = (userProfile?.name || userProfile?.agent_name || "").toLowerCase().trim();
@@ -232,18 +432,20 @@ export default function AnnualEvaluationDashboard({
       );
     }
     return list.sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
-  }, [allMembers, employeeSearchTerm, isAgent, userProfile]);
+  }, [effectiveAllMembers, employeeSearchTerm, isAgent, userProfile]);
 
   // Current selected member object
   const currentMember = useMemo(() => {
-    return allMembers.find(m => (m.agent_name || "").toLowerCase().trim() === (selectedEmployeeName || "").toLowerCase().trim()) || null;
-  }, [allMembers, selectedEmployeeName]);
+    return effectiveAllMembers.find(m => (m.agent_name || "").toLowerCase().trim() === (selectedEmployeeName || "").toLowerCase().trim()) || null;
+  }, [effectiveAllMembers, selectedEmployeeName]);
 
   // Initialize selected employee on load
   useEffect(() => {
     if (isAgent) {
       const agentName = userProfile?.agent_name || userProfile?.name || "";
-      setSelectedEmployeeName(agentName);
+      if (agentName && selectedEmployeeName !== agentName) {
+        setSelectedEmployeeName(agentName);
+      }
     } else if (!selectedEmployeeName && filteredMembers.length > 0) {
       setSelectedEmployeeName(filteredMembers[0].agent_name);
     }
@@ -807,38 +1009,54 @@ export default function AnnualEvaluationDashboard({
                           />
                         </div>
                         <div className="overflow-y-auto space-y-1 flex-1 pr-1 overscroll-contain">
-                          {filteredMembers.map(m => {
-                            const isSelected = m.agent_name === selectedEmployeeName;
-                            return (
-                              <button
-                                key={m.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedEmployeeName(m.agent_name);
-                                  setEmployeeDropdownOpen(false);
-                                  setEmployeeSearchTerm("");
-                                }}
-                                className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition cursor-pointer ${
-                                  isSelected
-                                    ? 'bg-[#1C6B53]/10 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-bold'
-                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium'
-                                }`}
-                              >
-                                <div className="flex items-center gap-2 truncate">
-                                  <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[10px] font-bold text-gray-600 dark:text-gray-300 shrink-0">
-                                    {m.agent_name?.charAt(0).toUpperCase()}
+                          {filteredMembers.length === 0 ? (
+                            <div className="py-6 px-3 text-center text-xs text-gray-400 dark:text-gray-500 font-medium flex flex-col items-center gap-2">
+                              {isLoadingMembers ? (
+                                <>
+                                  <div className="w-5 h-5 border-2 border-[#1C6B53] border-t-transparent rounded-full animate-spin" />
+                                  <span>Loading employees list...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Users size={20} className="text-gray-300 dark:text-gray-600" />
+                                  <span>{employeeSearchTerm.trim() ? `No employees matching "${employeeSearchTerm}"` : "No employees found"}</span>
+                                </>
+                              )}
+                            </div>
+                          ) : (
+                            filteredMembers.map(m => {
+                              const isSelected = m.agent_name === selectedEmployeeName;
+                              return (
+                                <button
+                                  key={m.id || m.agent_name}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedEmployeeName(m.agent_name);
+                                    setEmployeeDropdownOpen(false);
+                                    setEmployeeSearchTerm("");
+                                  }}
+                                  className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-[#1C6B53]/10 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-bold'
+                                      : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2 truncate">
+                                    <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[10px] font-bold text-gray-600 dark:text-gray-300 shrink-0">
+                                      {m.agent_name?.charAt(0).toUpperCase()}
+                                    </div>
+                                    <span className="truncate">{toTitleCase(m.agent_name)}</span>
                                   </div>
-                                  <span className="truncate">{toTitleCase(m.agent_name)}</span>
-                                </div>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                                    {m.team?.replace(' Team', '') || 'Team'}
-                                  </span>
-                                  {isSelected && <Check size={13} className="text-[#1C6B53] dark:text-emerald-400" />}
-                                </div>
-                              </button>
-                            );
-                          })}
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                                      {m.team?.replace(' Team', '') || 'Team'}
+                                    </span>
+                                    {isSelected && <Check size={13} className="text-[#1C6B53] dark:text-emerald-400" />}
+                                  </div>
+                                </button>
+                              );
+                            })
+                          )}
                         </div>
                       </div>
                     </>
