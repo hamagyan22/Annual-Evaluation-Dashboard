@@ -134,6 +134,54 @@ export const COMPETENCIES_LIST = [
   }
 ];
 
+// Full official company roster for Contact Center teams (38 agents across all 3 teams)
+// Guarantees immediate zero-delay rendering so employees are always present
+export const DEFAULT_COMPANY_EMPLOYEES = [
+  // Younis Kamal Team (12 agents)
+  { id: "ahmed_jalil", agent_name: "Ahmed Jalil", name: "Ahmed Jalil", team: "Younis Kamal Team" },
+  { id: "amar_hussein_salih", agent_name: "Amar Hussein Salih", name: "Amar Hussein Salih", team: "Younis Kamal Team" },
+  { id: "azad_muhammad", agent_name: "Azad Muhammad", name: "Azad Muhammad", team: "Younis Kamal Team" },
+  { id: "haseeb_adeeb", agent_name: "Haseeb Adeeb", name: "Haseeb Adeeb", team: "Younis Kamal Team" },
+  { id: "hewr_adnan", agent_name: "Hewr Adnan", name: "Hewr Adnan", team: "Younis Kamal Team" },
+  { id: "kazhvan_wirya", agent_name: "Kazhvan Wirya", name: "Kazhvan Wirya", team: "Younis Kamal Team" },
+  { id: "laveen_khaleel", agent_name: "Laveen Khaleel", name: "Laveen Khaleel", team: "Younis Kamal Team" },
+  { id: "mokhalad_ali", agent_name: "Mokhalad Ali", name: "Mokhalad Ali", team: "Younis Kamal Team" },
+  { id: "rabar_mohammed", agent_name: "Rabar Mohammed", name: "Rabar Mohammed", team: "Younis Kamal Team" },
+  { id: "salam_sadam_muhammad", agent_name: "Salam Sadam Muhammad", name: "Salam Sadam Muhammad", team: "Younis Kamal Team" },
+  { id: "sarbaz_namiq_hasan", agent_name: "Sarbaz Namiq Hasan", name: "Sarbaz Namiq Hasan", team: "Younis Kamal Team" },
+  { id: "shahab_ahmed_muhammed", agent_name: "Shahab Ahmed Muhammed", name: "Shahab Ahmed Muhammed", team: "Younis Kamal Team" },
+
+  // Ankido Buya Team (13 agents)
+  { id: "alla_satar", agent_name: "Alla Satar", name: "Alla Satar", team: "Ankido Buya Team" },
+  { id: "aya_yasin", agent_name: "Aya Yasin", name: "Aya Yasin", team: "Ankido Buya Team" },
+  { id: "frmesk_younis", agent_name: "Frmesk Younis", name: "Frmesk Younis", team: "Ankido Buya Team" },
+  { id: "haneen_abd_al_kareem", agent_name: "Haneen Abd-Al Kareem", name: "Haneen Abd-Al Kareem", team: "Ankido Buya Team" },
+  { id: "kani_sami", agent_name: "Kani Sami", name: "Kani Sami", team: "Ankido Buya Team" },
+  { id: "lana_halmat_rafeeq", agent_name: "Lana Halmat Rafeeq", name: "Lana Halmat Rafeeq", team: "Ankido Buya Team" },
+  { id: "marwa_khalil", agent_name: "Marwa Khalil", name: "Marwa Khalil", team: "Ankido Buya Team" },
+  { id: "muzhda_omar_ali", agent_name: "Muzhda Omar Ali", name: "Muzhda Omar Ali", team: "Ankido Buya Team" },
+  { id: "saja_bashar_anwar", agent_name: "Saja Bashar Anwar", name: "Saja Bashar Anwar", team: "Ankido Buya Team" },
+  { id: "taban_sirwan", agent_name: "Taban Sirwan", name: "Taban Sirwan", team: "Ankido Buya Team" },
+  { id: "zainab_khalid_rasheed", agent_name: "Zainab Khalid Rasheed", name: "Zainab Khalid Rasheed", team: "Ankido Buya Team" },
+  { id: "zhalla_salam", agent_name: "Zhalla Salam", name: "Zhalla Salam", team: "Ankido Buya Team" },
+  { id: "zhalla_sherzad", agent_name: "Zhalla Sherzad", name: "Zhalla Sherzad", team: "Ankido Buya Team" },
+
+  // Mohammed Dlshad Team (13 agents)
+  { id: "ahmed_rustam", agent_name: "Ahmed Rustam", name: "Ahmed Rustam", team: "Mohammed Dlshad Team" },
+  { id: "akar_omer", agent_name: "Akar Omer", name: "Akar Omer", team: "Mohammed Dlshad Team" },
+  { id: "bana_ahmed", agent_name: "Bana Ahmed", name: "Bana Ahmed", team: "Mohammed Dlshad Team" },
+  { id: "dhuha_khanjer", agent_name: "Dhuha Khanjer", name: "Dhuha Khanjer", team: "Mohammed Dlshad Team" },
+  { id: "ismail_ahmed", agent_name: "Ismail Ahmed", name: "Ismail Ahmed", team: "Mohammed Dlshad Team" },
+  { id: "nawen_maadh", agent_name: "Nawen Maadh", name: "Nawen Maadh", team: "Mohammed Dlshad Team" },
+  { id: "ossama_saadi", agent_name: "Ossama Saadi", name: "Ossama Saadi", team: "Mohammed Dlshad Team" },
+  { id: "rassan_ismail", agent_name: "Rassan Ismail", name: "Rassan Ismail", team: "Mohammed Dlshad Team" },
+  { id: "sana_dler", agent_name: "Sana Dler", name: "Sana Dler", team: "Mohammed Dlshad Team" },
+  { id: "sawen", agent_name: "Sawen", name: "Sawen", team: "Mohammed Dlshad Team" },
+  { id: "soma_sherko", agent_name: "Soma Sherko", name: "Soma Sherko", team: "Mohammed Dlshad Team" },
+  { id: "yousif_rashid", agent_name: "Yousif Rashid", name: "Yousif Rashid", team: "Mohammed Dlshad Team" },
+  { id: "zahra_yousif", agent_name: "Zahra Yousif", name: "Zahra Yousif", team: "Mohammed Dlshad Team" },
+];
+
 const AVAILABLE_YEARS = ["2026", "2027", "2028", "2029", "2030"];
 
 export default function AnnualEvaluationDashboard({
@@ -159,6 +207,7 @@ export default function AnnualEvaluationDashboard({
   const [selectedEmployeeName, setSelectedEmployeeName] = useState<string>("");
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState<string>("");
   const [employeeDropdownOpen, setEmployeeDropdownOpen] = useState<boolean>(false);
+  const [teamTabFilter, setTeamTabFilter] = useState<string>("All");
 
   // Guide Modal State
   const [showBenchmarkGuideModal, setShowBenchmarkGuideModal] = useState<boolean>(false);
@@ -214,9 +263,9 @@ export default function AnnualEvaluationDashboard({
   // Real actual metrics fetched for the period to assist evaluation
   const [actualMetricsSummary, setActualMetricsSummary] = useState<any | null>(null);
 
-  // Internal loaded members list (live Firestore sync + multi-source fallback)
-  const [internalMembers, setInternalMembers] = useState<any[]>([]);
-  const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(true);
+  // Internal loaded members list (initialized with full official roster + live Firestore sync)
+  const [internalMembers, setInternalMembers] = useState<any[]>(DEFAULT_COMPANY_EMPLOYEES);
+  const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(false);
 
   // 1. Live real-time listener on team_members collection
   useEffect(() => {
@@ -236,8 +285,17 @@ export default function AnnualEvaluationDashboard({
       }).filter(m => Boolean(m.agent_name));
 
       if (members.length > 0) {
-        setInternalMembers(members);
-        setIsLoadingMembers(false);
+        setInternalMembers(prev => {
+          const map = new Map<string, any>();
+          DEFAULT_COMPANY_EMPLOYEES.forEach(m => map.set(m.agent_name.toLowerCase(), { ...m }));
+          prev.forEach(m => map.set((m.agent_name || m.name || "").toLowerCase(), { ...m }));
+          members.forEach(m => {
+            const k = (m.agent_name || m.name || "").toLowerCase();
+            const existing = map.get(k);
+            map.set(k, { ...existing, ...m });
+          });
+          return Array.from(map.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
+        });
       }
     }, (err) => {
       console.warn("Annual eval team_members live listener warning:", err);
@@ -249,40 +307,51 @@ export default function AnnualEvaluationDashboard({
     };
   }, []);
 
-  // 2. Direct fetch & comprehensive multi-collection fallback to guarantee ALL employees across all teams are present
+  // 2. Direct fetch & comprehensive multi-collection sync to guarantee ALL employees across all teams are present
   useEffect(() => {
     let isMounted = true;
     const fetchAllCompanyEmployees = async () => {
       try {
         const membersMap = new Map<string, any>();
 
-        // A. Add members from props
+        // A. Start with default official roster (all 38 Contact Center employees)
+        DEFAULT_COMPANY_EMPLOYEES.forEach(m => {
+          membersMap.set(m.agent_name.toLowerCase().trim(), { ...m });
+        });
+
+        // B. Add members from props
         (allMembers || []).forEach(m => {
           const name = (m.agent_name || m.name || m.display_name || "").trim();
           if (name) {
-            membersMap.set(name.toLowerCase(), {
-              id: m.id || name,
+            const key = name.toLowerCase().trim();
+            const existing = membersMap.get(key);
+            membersMap.set(key, {
+              id: m.id || existing?.id || name,
+              ...existing,
               ...m,
               agent_name: name,
               name: name,
-              team: m.team || "Contact Center"
+              team: m.team || existing?.team || "Contact Center"
             });
           }
         });
 
-        // B. Add from team_members direct getDocs
+        // C. Add from team_members direct getDocs
         try {
           const tmSnap = await getDocs(collection(db, 'team_members'));
           tmSnap.forEach(d => {
             const data = d.data();
             const name = (data.agent_name || data.name || data.display_name || "").trim();
             if (name) {
-              membersMap.set(name.toLowerCase(), {
+              const key = name.toLowerCase().trim();
+              const existing = membersMap.get(key);
+              membersMap.set(key, {
                 id: d.id,
+                ...existing,
                 ...data,
                 agent_name: name,
                 name: name,
-                team: data.team || "Contact Center"
+                team: data.team || existing?.team || "Contact Center"
               });
             }
           });
@@ -290,19 +359,14 @@ export default function AnnualEvaluationDashboard({
           console.warn("team_members getDocs warning:", e);
         }
 
-        // C. Fallback: also pull unique active agents from all three team metrics tables to ensure no one is missed
+        // D. Metrics agents extraction (individual try-catch to avoid single point of failure)
         try {
-          const [ymSnap, amSnap, mmSnap] = await Promise.all([
-            getDocs(query(collection(db, 'younis_metrics'), where('year', '==', selectedYear))),
-            getDocs(query(collection(db, 'ankido_metrics'), where('year', '==', selectedYear))),
-            getDocs(query(collection(db, 'mohammed_metrics'), where('year', '==', selectedYear)))
-          ]);
-
+          const ymSnap = await getDocs(query(collection(db, 'younis_metrics'), where('year', '==', selectedYear)));
           ymSnap.forEach(d => {
             const data = d.data();
             const name = (data.agent_name || data.agent || data.name || "").trim();
-            if (name && !membersMap.has(name.toLowerCase())) {
-              membersMap.set(name.toLowerCase(), {
+            if (name && !membersMap.has(name.toLowerCase().trim())) {
+              membersMap.set(name.toLowerCase().trim(), {
                 id: d.id,
                 agent_name: name,
                 name: name,
@@ -310,12 +374,15 @@ export default function AnnualEvaluationDashboard({
               });
             }
           });
+        } catch (e) {}
 
+        try {
+          const amSnap = await getDocs(query(collection(db, 'ankido_metrics'), where('year', '==', selectedYear)));
           amSnap.forEach(d => {
             const data = d.data();
             const name = (data.agent_name || data.agent || data.name || "").trim();
-            if (name && !membersMap.has(name.toLowerCase())) {
-              membersMap.set(name.toLowerCase(), {
+            if (name && !membersMap.has(name.toLowerCase().trim())) {
+              membersMap.set(name.toLowerCase().trim(), {
                 id: d.id,
                 agent_name: name,
                 name: name,
@@ -323,12 +390,15 @@ export default function AnnualEvaluationDashboard({
               });
             }
           });
+        } catch (e) {}
 
+        try {
+          const mmSnap = await getDocs(query(collection(db, 'mohammed_metrics'), where('year', '==', selectedYear)));
           mmSnap.forEach(d => {
             const data = d.data();
             const name = (data.agent_name || data.agent || data.name || "").trim();
-            if (name && !membersMap.has(name.toLowerCase())) {
-              membersMap.set(name.toLowerCase(), {
+            if (name && !membersMap.has(name.toLowerCase().trim())) {
+              membersMap.set(name.toLowerCase().trim(), {
                 id: d.id,
                 agent_name: name,
                 name: name,
@@ -336,35 +406,33 @@ export default function AnnualEvaluationDashboard({
               });
             }
           });
-        } catch (e) {
-          console.warn("Metrics agents extraction warning:", e);
-        }
+        } catch (e) {}
 
-        // D. Also check users collection for agents
+        // E. Users collection
         try {
           const usersSnap = await getDocs(collection(db, 'users'));
           usersSnap.forEach(d => {
             const data = d.data();
             const name = (data.name || data.agent_name || data.display_name || "").trim();
-            if (name && !membersMap.has(name.toLowerCase()) && (data.role === 'agent' || data.team)) {
-              membersMap.set(name.toLowerCase(), {
+            if (name && (data.role === 'agent' || data.team)) {
+              const key = name.toLowerCase().trim();
+              const existing = membersMap.get(key);
+              membersMap.set(key, {
                 id: d.id,
+                ...existing,
                 agent_name: name,
                 name: name,
-                team: data.team || "Contact Center"
+                team: data.team || existing?.team || "Contact Center"
               });
             }
           });
-        } catch (e) {
-          console.warn("Users agents extraction warning:", e);
-        }
+        } catch (e) {}
 
         if (isMounted && membersMap.size > 0) {
           const finalMembersList = Array.from(membersMap.values()).sort((a, b) => 
             a.agent_name.localeCompare(b.agent_name)
           );
           setInternalMembers(finalMembersList);
-          setIsLoadingMembers(false);
         }
       } catch (err) {
         console.error("Error ensuring all company employees:", err);
@@ -377,31 +445,40 @@ export default function AnnualEvaluationDashboard({
     return () => { isMounted = false; };
   }, [allMembers, selectedYear]);
 
-  // Combined master members list
+  // Combined master members list across all sources
   const effectiveAllMembers = useMemo(() => {
     const map = new Map<string, any>();
     
-    // First from props
+    // 1. Initial base: All 38 Company employees
+    DEFAULT_COMPANY_EMPLOYEES.forEach(m => {
+      map.set(m.agent_name.toLowerCase().trim(), { ...m });
+    });
+
+    // 2. Props from parent
     (allMembers || []).forEach(m => {
       const name = (m.agent_name || m.name || m.display_name || "").trim();
       if (name) {
-        map.set(name.toLowerCase(), {
-          id: m.id || name,
+        const key = name.toLowerCase().trim();
+        const existing = map.get(key);
+        map.set(key, {
+          id: m.id || existing?.id || name,
+          ...existing,
           ...m,
           agent_name: name,
           name: name,
-          team: m.team || "Contact Center"
+          team: m.team || existing?.team || "Contact Center"
         });
       }
     });
 
-    // Then from internal loaded members (live Firestore sync)
+    // 3. Internal loaded members (live Firestore sync)
     (internalMembers || []).forEach(m => {
       const name = (m.agent_name || m.name || m.display_name || "").trim();
       if (name) {
-        const existing = map.get(name.toLowerCase());
-        map.set(name.toLowerCase(), {
-          id: m.id || name,
+        const key = name.toLowerCase().trim();
+        const existing = map.get(key);
+        map.set(key, {
+          id: m.id || existing?.id || name,
           ...existing,
           ...m,
           agent_name: name,
@@ -420,10 +497,27 @@ export default function AnnualEvaluationDashboard({
     
     if (isAgent) {
       const myName = (userProfile?.name || userProfile?.agent_name || "").toLowerCase().trim();
-      const me = list.filter(m => (m.agent_name || "").toLowerCase().trim() === myName);
+      const me = list.filter(m => {
+        const aName = (m.agent_name || "").toLowerCase().trim();
+        return aName === myName || aName.includes(myName) || myName.includes(aName);
+      });
       if (me.length > 0) return me;
+      if (myName) {
+        return [{
+          id: userProfile?.uid || myName,
+          agent_name: userProfile?.name || userProfile?.agent_name || myName,
+          name: userProfile?.name || userProfile?.agent_name || myName,
+          team: userProfile?.team || "Contact Center"
+        }];
+      }
+    }
+
+    // Team Tab Filter
+    if (teamTabFilter !== "All") {
+      list = list.filter(m => (m.team || "").toLowerCase().includes(teamTabFilter.toLowerCase()));
     }
     
+    // Search Term Filter
     if (employeeSearchTerm.trim()) {
       const term = employeeSearchTerm.toLowerCase().trim();
       list = list.filter(m => 
@@ -432,7 +526,7 @@ export default function AnnualEvaluationDashboard({
       );
     }
     return list.sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
-  }, [effectiveAllMembers, employeeSearchTerm, isAgent, userProfile]);
+  }, [effectiveAllMembers, employeeSearchTerm, teamTabFilter, isAgent, userProfile]);
 
   // Current selected member object
   const currentMember = useMemo(() => {
@@ -527,20 +621,47 @@ export default function AnnualEvaluationDashboard({
                                (targetTeam.includes('Mohammed') || targetTeam.includes('Dlshad')) ? 'mohammed_metrics' :
                                'younis_metrics';
 
-        const q = query(
-          collection(db, collectionName),
-          where("year", "==", selectedYear)
-        );
-        const snap = await getDocs(q);
+        let snap: any = null;
+        try {
+          const q = query(
+            collection(db, collectionName),
+            where("year", "==", selectedYear)
+          );
+          snap = await getDocs(q);
+        } catch (e) {
+          console.warn("Metrics string year query error:", e);
+        }
+
+        // Fallback: If no documents found, try querying numeric year
+        if (!snap || snap.empty) {
+          try {
+            const numYear = parseInt(selectedYear, 10);
+            if (!isNaN(numYear)) {
+              const qNum = query(
+                collection(db, collectionName),
+                where("year", "==", numYear)
+              );
+              snap = await getDocs(qNum);
+            }
+          } catch (e2) {}
+        }
         
         const periodMonths = selectedPeriod === 'Semi-Annual'
           ? ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"] // Semi-Annual IS H1
           : ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]; // Annual is Full Year
 
         const targetLower = selectedEmployeeName.toLowerCase().trim();
-        const rows = snap.docs
-          .map(d => d.data())
-          .filter(r => (r.agent_name || "").toLowerCase().trim() === targetLower && periodMonths.includes(r.month));
+        const targetClean = targetLower.replace(/[^a-z0-9]/g, '');
+
+        const rows = (snap?.docs || [])
+          .map((d: any) => d.data())
+          .filter((r: any) => {
+            const rName = (r.agent_name || r.agent || r.name || "").toLowerCase().trim();
+            const rClean = rName.replace(/[^a-z0-9]/g, '');
+            const isMatch = rName === targetLower || rClean === targetClean || 
+                           (rClean.length >= 4 && targetClean.length >= 4 && (rClean.includes(targetClean) || targetClean.includes(rClean)));
+            return isMatch && periodMonths.includes(r.month);
+          });
 
         if (rows.length === 0) {
           if (isMounted) setActualMetricsSummary(null);
@@ -563,7 +684,7 @@ export default function AnnualEvaluationDashboard({
           return parseFloat(s) || 0;
         };
 
-        rows.forEach(r => {
+        rows.forEach((r: any) => {
           if (r.quality != null && r.quality !== "") { totalQA += parseFloat(r.quality) || 0; countQA++; }
           if (r.exam != null && r.exam !== "") { totalExam += parseFloat(r.exam) || 0; countExam++; }
           if (r.productivity != null && r.productivity !== "") { totalProd += parseFloat(r.productivity) || 0; countProd++; }
@@ -996,18 +1117,51 @@ export default function AnnualEvaluationDashboard({
                   {employeeDropdownOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setEmployeeDropdownOpen(false)} />
-                      <div className="absolute right-0 top-full mt-2 w-full sm:w-80 bg-white/95 dark:bg-gray-900/95 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-2 z-50 max-h-80 flex flex-col animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md ring-1 ring-black/5">
+                      <div className="absolute right-0 top-full mt-2 w-full sm:w-96 bg-white/98 dark:bg-gray-900/98 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-2.5 z-50 max-h-96 flex flex-col animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md ring-1 ring-black/5">
+                        
+                        {/* Search Input */}
                         <div className="relative mb-2">
                           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                           <input
                             type="text"
-                            placeholder="Search all employees..."
+                            placeholder="Search employee or team..."
                             value={employeeSearchTerm}
                             onChange={(e) => setEmployeeSearchTerm(e.target.value)}
                             className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 font-medium"
                             autoFocus
                           />
                         </div>
+
+                        {/* Team Filter Pills: All, Younis Kamal, Ankido Buya, Mohammed Dlshad */}
+                        <div className="flex items-center gap-1 p-1 bg-gray-100/90 dark:bg-gray-800/90 rounded-xl mb-2 overflow-x-auto shrink-0">
+                          {[
+                            { id: "All", label: "All" },
+                            { id: "Younis", label: "Younis Kamal" },
+                            { id: "Ankido", label: "Ankido Buya" },
+                            { id: "Mohammed", label: "Mohammed Dlshad" },
+                          ].map(tab => (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => setTeamTabFilter(tab.id)}
+                              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition cursor-pointer ${
+                                teamTabFilter === tab.id
+                                  ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-400 shadow-2xs font-black'
+                                  : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                              }`}
+                            >
+                              {tab.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Roster Count Summary */}
+                        <div className="px-1.5 py-1 text-[10px] font-bold text-gray-400 dark:text-gray-500 flex items-center justify-between border-b border-gray-100 dark:border-gray-800/60 mb-1">
+                          <span>{filteredMembers.length} Employees</span>
+                          <span className="text-[9px] uppercase tracking-wider text-[#1C6B53] dark:text-emerald-400 font-extrabold">All Contact Center Teams</span>
+                        </div>
+
+                        {/* Scrollable Members List */}
                         <div className="overflow-y-auto space-y-1 flex-1 pr-1 overscroll-contain">
                           {filteredMembers.length === 0 ? (
                             <div className="py-6 px-3 text-center text-xs text-gray-400 dark:text-gray-500 font-medium flex flex-col items-center gap-2">
@@ -1026,6 +1180,19 @@ export default function AnnualEvaluationDashboard({
                           ) : (
                             filteredMembers.map(m => {
                               const isSelected = m.agent_name === selectedEmployeeName;
+                              const teamStr = m.team || "Contact Center";
+                              const isYounis = teamStr.includes("Younis");
+                              const isAnkido = teamStr.includes("Ankido");
+                              const isDlshad = teamStr.includes("Mohammed") || teamStr.includes("Dlshad");
+                              
+                              const teamBadgeClass = isYounis
+                                ? "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
+                                : isAnkido
+                                ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                                : isDlshad
+                                ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700";
+
                               return (
                                 <button
                                   key={m.id || m.agent_name}
@@ -1048,8 +1215,8 @@ export default function AnnualEvaluationDashboard({
                                     <span className="truncate">{toTitleCase(m.agent_name)}</span>
                                   </div>
                                   <div className="flex items-center gap-2 shrink-0">
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                                      {m.team?.replace(' Team', '') || 'Team'}
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md border font-semibold ${teamBadgeClass}`}>
+                                      {teamStr.replace(' Team', '')}
                                     </span>
                                     {isSelected && <Check size={13} className="text-[#1C6B53] dark:text-emerald-400" />}
                                   </div>
