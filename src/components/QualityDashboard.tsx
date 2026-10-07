@@ -12,6 +12,7 @@ import {
   CheckCircle2, AlertCircle, Activity, Clock, Lock, ClipboardCheck
 } from "lucide-react";
 import { compressImageFile } from "@/lib/imageUtils";
+import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 
 interface QualityDashboardProps {
   userProfile: any;
@@ -512,7 +513,7 @@ export default function QualityDashboard({
 
   // Raw data from Firestore
   const [evalData, setEvalData] = useState<Record<string, any>>({});
-  const [rosterMembers, setRosterMembers] = useState<any[]>([]);
+  const [rosterMembers, setRosterMembers] = useState<any[]>(DEFAULT_COMPANY_EMPLOYEES);
   const [memberPhotos, setMemberPhotos] = useState<Record<string, string>>({});
 
   const saveTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
@@ -712,7 +713,28 @@ export default function QualityDashboard({
     }
     return "training";
   });
-  const [callMonRoster, setCallMonRoster] = useState<string[]>([]);
+  const defaultCallAgents = useMemo(() => {
+    return DEFAULT_COMPANY_EMPLOYEES
+      .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
+      .map(m => m.agent_name)
+      .sort((a, b) => a.localeCompare(b));
+  }, []);
+
+  const [callMonRoster, setCallMonRoster] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const savedLocal = localStorage.getItem("call_mon_roster");
+      if (savedLocal) {
+        try {
+          const parsed = JSON.parse(savedLocal);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (e) {}
+      }
+    }
+    return DEFAULT_COMPANY_EMPLOYEES
+      .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
+      .map(m => m.agent_name)
+      .sort((a, b) => a.localeCompare(b));
+  });
   const [showAddCallMonModal, setShowAddCallMonModal] = useState(false);
   const [callMonSearchTerm, setCallMonSearchTerm] = useState("");
 
@@ -726,14 +748,14 @@ export default function QualityDashboard({
     if (savedLocal) {
       try {
         const parsed = JSON.parse(savedLocal);
-        if (Array.isArray(parsed)) setCallMonRoster(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) setCallMonRoster(parsed);
       } catch (e) {}
     }
 
     const unsubCallMon = onSnapshot(doc(db, "quality_evaluations", "config_call_mon_roster"), (snap) => {
       if (snap.exists()) {
         const data = snap.data();
-        if (Array.isArray(data?.agents)) {
+        if (Array.isArray(data?.agents) && data.agents.length > 0) {
           setCallMonRoster(data.agents);
           localStorage.setItem("call_mon_roster", JSON.stringify(data.agents));
         }
@@ -747,7 +769,7 @@ export default function QualityDashboard({
 
   // All agents from both Younis Kamal Team AND Ankido Buya Team (for Call Mon modal)
   const allCallTeamMembers = useMemo(() => {
-    return rosterMembers
+    const list = rosterMembers
       .filter(m => {
         const t = (m.team || "").trim();
         return (
@@ -756,8 +778,15 @@ export default function QualityDashboard({
         );
       })
       .map(m => ({ name: (m.agent_name || m.name || "").trim(), team: (m.team || "").trim() }))
-      .filter(m => Boolean(m.name))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .filter(m => Boolean(m.name));
+
+    if (list.length === 0) {
+      return DEFAULT_COMPANY_EMPLOYEES
+        .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
+        .map(m => ({ name: m.agent_name, team: m.team }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return list.sort((a, b) => a.name.localeCompare(b.name));
   }, [rosterMembers]);
 
   const handleAddCallMonAgent = async (agentName: string) => {
@@ -888,7 +917,15 @@ export default function QualityDashboard({
           photos[name] = data.photo_url;
         }
       });
-      setRosterMembers(members);
+      setRosterMembers(prev => {
+        const map = new Map<string, any>();
+        DEFAULT_COMPANY_EMPLOYEES.forEach(m => map.set((m.agent_name || m.name).toLowerCase().trim(), { ...m }));
+        members.forEach(m => {
+          const k = (m.agent_name || m.name || "").toLowerCase().trim();
+          if (k) map.set(k, { ...map.get(k), ...m });
+        });
+        return Array.from(map.values()).sort((a, b) => (a.agent_name || a.name || "").localeCompare(b.agent_name || b.name || ""));
+      });
       setMemberPhotos(prev => ({ ...prev, ...photos }));
     }, (err) => {
       console.error("Failed to fetch team members for QA:", err);
@@ -1117,11 +1154,23 @@ export default function QualityDashboard({
           .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
           .map(m => getCanonicalAgentName((m.agent_name || m.name || "").trim()))
           .filter(isValidAgentName);
+        if (teamAgents.length === 0) {
+          teamAgents = DEFAULT_COMPANY_EMPLOYEES
+            .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
+            .map(m => getCanonicalAgentName(m.agent_name))
+            .filter(isValidAgentName);
+        }
       } else {
         teamAgents = rosterMembers
           .filter(m => m.team === sec.team)
           .map(m => getCanonicalAgentName((m.agent_name || m.name || "").trim()))
           .filter(isValidAgentName);
+        if (teamAgents.length === 0) {
+          teamAgents = DEFAULT_COMPANY_EMPLOYEES
+            .filter(m => m.team === sec.team)
+            .map(m => getCanonicalAgentName(m.agent_name))
+            .filter(isValidAgentName);
+        }
       }
 
       // Also include any agents who have evalData for this section in current year/quarter

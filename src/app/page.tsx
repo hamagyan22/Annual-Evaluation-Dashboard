@@ -6,6 +6,7 @@ import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
 import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal, BarChart3, ClipboardCheck } from "lucide-react";
 import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesAndSeconds, getTopStarMotivationalQuote } from "@/lib/topStarUtils";
+import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
 const TEAMS: TeamName[] = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team'];
@@ -2137,7 +2138,7 @@ export default function Dashboard() {
 
   // Manage members modal
   const [showManageMembers, setShowManageMembers] = useState(false);
-  const [allMembers, setAllMembers] = useState<any[]>([]);
+  const [allMembers, setAllMembers] = useState<any[]>(DEFAULT_COMPANY_EMPLOYEES);
   
   const [newMemberName, setNewMemberName] = useState("");
   const [newMemberTeam, setNewMemberTeam] = useState<TeamName>('Younis Kamal Team');
@@ -2204,18 +2205,19 @@ export default function Dashboard() {
   useEffect(() => {
     if (!session) return;
     const unsub = onSnapshot(collection(db, 'team_members'), (snap) => {
-      const members = snap.docs.map(d => {
-        const data = d.data();
-        const name = (data.agent_name || data.name || data.display_name || "").trim();
-        return {
-          id: d.id,
-          ...data,
-          agent_name: name,
-          name: name
-        };
-      }).filter(m => Boolean(m.agent_name));
-      members.sort((a, b) => a.agent_name.localeCompare(b.agent_name));
-      setAllMembers(members);
+      setAllMembers(prev => {
+        const map = new Map<string, any>();
+        DEFAULT_COMPANY_EMPLOYEES.forEach(m => map.set(m.agent_name.toLowerCase().trim(), { ...m }));
+        snap.docs.forEach(d => {
+          const data = d.data();
+          const name = (data.agent_name || data.name || data.display_name || "").trim();
+          if (name) {
+            const k = name.toLowerCase().trim();
+            map.set(k, { id: d.id, ...map.get(k), ...data, agent_name: name, name });
+          }
+        });
+        return Array.from(map.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
+      });
     }, (err) => {
       console.error("Members listener error:", err);
     });
@@ -2290,18 +2292,19 @@ export default function Dashboard() {
   const fetchAllMembers = async () => {
     try {
       const snap = await getDocs(collection(db, 'team_members'));
-      const members = snap.docs.map(d => {
-        const data = d.data();
-        const name = (data.agent_name || data.name || data.display_name || "").trim();
-        return {
-          id: d.id,
-          ...data,
-          agent_name: name,
-          name: name
-        };
-      }).filter(m => Boolean(m.agent_name));
-      members.sort((a, b) => a.agent_name.localeCompare(b.agent_name));
-      setAllMembers(members);
+      setAllMembers(prev => {
+        const map = new Map<string, any>();
+        DEFAULT_COMPANY_EMPLOYEES.forEach(m => map.set(m.agent_name.toLowerCase().trim(), { ...m }));
+        snap.docs.forEach(d => {
+          const data = d.data();
+          const name = (data.agent_name || data.name || data.display_name || "").trim();
+          if (name) {
+            const k = name.toLowerCase().trim();
+            map.set(k, { id: d.id, ...map.get(k), ...data, agent_name: name, name });
+          }
+        });
+        return Array.from(map.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
+      });
     } catch(e) {
       console.error(e);
     }
@@ -2472,20 +2475,15 @@ export default function Dashboard() {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
-      const primaryEmail =
-        cleanEmail === 'younis.kamal@agent.com'
-          ? 'younis.kamal.tl@agent.com'
-          : cleanEmail === 'mohammed.jihad@agent.com'
-          ? 'mohammed.jihad.qa@agent.com'
-          : cleanEmail === 'mohammed.azad@agent.com'
-          ? 'mohammed.azad.qa@agent.com'
-          : cleanEmail;
-
       try {
-        await signInWithEmailAndPassword(auth, primaryEmail, password);
+        await signInWithEmailAndPassword(auth, cleanEmail, password);
       } catch (firstErr: any) {
-        if (primaryEmail !== cleanEmail) {
-          await signInWithEmailAndPassword(auth, cleanEmail, password);
+        if (cleanEmail === 'younis.kamal@agent.com') {
+          await signInWithEmailAndPassword(auth, 'younis.kamal.tl@agent.com', password);
+        } else if (cleanEmail === 'mohammed.jihad@agent.com') {
+          await signInWithEmailAndPassword(auth, 'mohammed.jihad.qa@agent.com', password);
+        } else if (cleanEmail === 'mohammed.azad@agent.com') {
+          await signInWithEmailAndPassword(auth, 'mohammed.azad.qa@agent.com', password);
         } else {
           throw firstErr;
         }
