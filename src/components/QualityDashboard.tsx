@@ -5067,25 +5067,31 @@ export default function QualityDashboard({
           </div>
 
           {/* Lock Banner when moving to a new month without syncing the completed previous month */}
+          {/* Lock Banner when moving to a new month without syncing the completed previous month */}
           {unsyncedPreviousMonth && (
-            <div className="mx-4 mt-3 mb-1 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/70 border-2 border-amber-400 dark:border-amber-700 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-start gap-3">
+            <div 
+              dir="rtl"
+              className="mx-4 mt-3 mb-2 p-3.5 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-700 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-right"
+            >
+              <div className="flex items-center sm:items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
                   <Lock size={20} />
                 </div>
                 <div>
-                  <h4 className="text-xs sm:text-sm font-black text-amber-950 dark:text-amber-200 flex items-center gap-2 flex-wrap">
-                    <span>Data Entry Locked for {MONTH_NAMES[activeTableMonthIdx]} {selectedYear}</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200">
-                      Sync Required • يرجى عمل Sync أولاً
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-xs sm:text-sm font-black text-amber-950 dark:text-amber-200">
+                      إدخال البيانات مقفل لشهر {MONTH_NAMES[activeTableMonthIdx]} {selectedYear}
+                    </h4>
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+                      مطلوب المزامنة أولاً
                     </span>
-                  </h4>
-                  <p className="text-xs text-amber-800 dark:text-amber-300/90 mt-0.5 font-medium leading-relaxed">
-                    You have completed all 4 weeks of <strong>{unsyncedPreviousMonth.monthName} {selectedYear}</strong> ({Object.keys(unsyncedPreviousMonth.agentScores).length} agents), but haven&apos;t synced it yet. Please sync <strong>{unsyncedPreviousMonth.monthName}</strong> to the Team Leader &amp; Agent Dashboards to unlock data entry for <strong>{MONTH_NAMES[activeTableMonthIdx]}</strong>.
+                  </div>
+                  <p className="text-xs text-amber-900/90 dark:text-amber-300/90 mt-1 font-medium leading-relaxed">
+                    تم إكمال جميع أسابيع شهر <strong>{unsyncedPreviousMonth.monthName} {selectedYear}</strong> ({Object.keys(unsyncedPreviousMonth.agentScores).length} موظفاً). يرجى مزامنة البيانات لعكس الدرجات في لوحات التيم ليدر والوكلاء لإتاحة إدخال بيانات شهر <strong>{MONTH_NAMES[activeTableMonthIdx]}</strong>.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+              <div className="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end pt-1 md:pt-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -5094,18 +5100,18 @@ export default function QualityDashboard({
                     setSelectedWeek(weekStart);
                     setSelectedMonthFilter(null);
                   }}
-                  className="px-3 py-2 rounded-xl text-xs font-bold text-amber-900 dark:text-amber-200 bg-amber-200/70 hover:bg-amber-200 dark:bg-amber-900/60 dark:hover:bg-amber-900 transition cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-amber-900 dark:text-amber-200 bg-amber-200/80 hover:bg-amber-300 dark:bg-amber-900/60 dark:hover:bg-amber-800 transition cursor-pointer"
                 >
-                  Review {unsyncedPreviousMonth.monthName}
+                  مراجعة {unsyncedPreviousMonth.monthName}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleSyncToMetrics(unsyncedPreviousMonth.monthIdx)}
                   disabled={syncingMetrics}
-                  className="px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-sm flex items-center gap-1.5 transition cursor-pointer active:scale-95 disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-xs flex items-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
                 >
                   <RefreshCw size={13} className={syncingMetrics ? "animate-spin" : ""} />
-                  <span>{syncingMetrics ? "Syncing..." : `Sync ${unsyncedPreviousMonth.monthName} Now`}</span>
+                  <span>{syncingMetrics ? "جارٍ المزامنة..." : `مزامنة ${unsyncedPreviousMonth.monthName} الآن`}</span>
                 </button>
               </div>
             </div>
@@ -5113,21 +5119,24 @@ export default function QualityDashboard({
 
           {/* Ready-to-Sync Banner when current viewed month has all 4 weeks completed but is not synced yet */}
           {!unsyncedPreviousMonth && currentMonthSyncStatus.isSyncEligible && currentMonthSyncStatus.isMonthComplete && !currentMonthSyncStatus.isSynced && (
-            <div className="mx-4 mt-3 mb-1 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div 
+              dir="rtl"
+              className="mx-4 mt-3 mb-2 p-3 sm:p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-right"
+            >
               <div className="flex items-center gap-2.5">
                 <CheckCircle2 size={18} className="text-[#1C6B53] dark:text-emerald-400 shrink-0" />
                 <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
-                  All 4 weeks of <strong>{currentMonthSyncStatus.monthName} {selectedYear}</strong> are 100% completed! Click <strong>Sync to Dashboards</strong> before moving to the next month.
+                  جميع أسابيع شهر <strong>{currentMonthSyncStatus.monthName} {selectedYear}</strong> مكتملة 100%! يرجى الضغط على <strong>مزامنة البيانات</strong> لاعتمادها في اللوحات قبل الانتقال للشهر القادم.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => handleSyncToMetrics(currentMonthSyncStatus.monthIdx)}
                 disabled={syncingMetrics}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-xs flex items-center gap-1.5 transition cursor-pointer shrink-0"
+                className="px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-xs flex items-center gap-2 transition cursor-pointer shrink-0 w-full md:w-auto justify-center"
               >
                 <RefreshCw size={12} className={syncingMetrics ? "animate-spin" : ""} />
-                <span>{syncingMetrics ? "Syncing..." : `Sync ${currentMonthSyncStatus.monthName} Now`}</span>
+                <span>{syncingMetrics ? "جارٍ المزامنة..." : `مزامنة ${currentMonthSyncStatus.monthName} الآن`}</span>
               </button>
             </div>
           )}
@@ -7228,9 +7237,10 @@ export default function QualityDashboard({
       )}
 
       {/* Mandatory Sync Reminder Modal when trying to enter a new month before syncing a completed previous month */}
+      {/* Mandatory Sync Reminder Modal when trying to enter a new month before syncing a completed previous month */}
       {syncReminderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800/80 overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200" dir="rtl">
+          <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800/80 overflow-hidden text-right">
             <div className="p-6 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border-b border-amber-100 dark:border-amber-900/50 flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shrink-0">
@@ -7238,10 +7248,10 @@ export default function QualityDashboard({
                 </div>
                 <div>
                   <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300/60 dark:border-amber-700/60 mb-1">
-                    Sync Required First • تنبيه المزامنة
+                    تنبيه المزامنة • مطلوب أولاً
                   </span>
                   <h3 className="text-base font-black text-gray-900 dark:text-white">
-                    Sync {syncReminderModal.monthName} {selectedYear} Before Continuing
+                    مزامنة شهر {syncReminderModal.monthName} {selectedYear}
                   </h3>
                 </div>
               </div>
@@ -7255,16 +7265,24 @@ export default function QualityDashboard({
             </div>
 
             <div className="p-6 space-y-4">
-              <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
-                You have completed all 4 weeks of evaluations for{" "}
-                <strong className="text-gray-900 dark:text-white">{syncReminderModal.monthName} {selectedYear}</strong>{" "}
-                ({Object.keys(syncReminderModal.agentScores).length} employees), but you have not synced the month to the Team Leader &amp; Agent Dashboards yet.
-              </p>
-              <div className="p-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 text-xs text-amber-900 dark:text-amber-200 font-bold leading-relaxed" dir="rtl">
-                لقد أكملت إدخال جميع أسابيع شهر <strong>{syncReminderModal.monthName} {selectedYear}</strong> بالكامل. يرجى الضغط على زر المزامنة (Sync) لعكس درجات الموظفين في داشبورد التيم ليدر والأيجنت أولاً قبل البدء بإدخال بيانات الشهر الجديد (<strong>{MONTH_NAMES[activeTableMonthIdx]}</strong>).
+              <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 text-xs sm:text-sm text-amber-950 dark:text-amber-200 font-medium leading-relaxed">
+                لقد أكملت إدخال جميع أسابيع شهر <strong>{syncReminderModal.monthName} {selectedYear}</strong> بالكامل لـ ({Object.keys(syncReminderModal.agentScores).length} موظفاً). يرجى الضغط على زر المزامنة لعكس درجات الموظفين في لوحات التيم ليدر والوكلاء أولاً لإتاحة إدخال بيانات الشهر الجديد (<strong>{MONTH_NAMES[activeTableMonthIdx]}</strong>).
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleSyncToMetrics(syncReminderModal.monthIdx)}
+                  disabled={syncingMetrics}
+                  className="w-full sm:flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-md flex items-center justify-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={syncingMetrics ? "animate-spin" : ""} />
+                  <span>
+                    {syncingMetrics
+                      ? `جارٍ المزامنة...`
+                      : `مزامنة ${syncReminderModal.monthName} وفتح ${MONTH_NAMES[activeTableMonthIdx]}`}
+                  </span>
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -7276,20 +7294,7 @@ export default function QualityDashboard({
                   }}
                   className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition cursor-pointer"
                 >
-                  Go Back to {syncReminderModal.monthName}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSyncToMetrics(syncReminderModal.monthIdx)}
-                  disabled={syncingMetrics}
-                  className="w-full sm:flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-md flex items-center justify-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
-                >
-                  <RefreshCw size={14} className={syncingMetrics ? "animate-spin" : ""} />
-                  <span>
-                    {syncingMetrics
-                      ? `Syncing ${syncReminderModal.monthName}...`
-                      : `Sync ${syncReminderModal.monthName} Now & Unlock ${MONTH_NAMES[activeTableMonthIdx]}`}
-                  </span>
+                  الرجوع إلى {syncReminderModal.monthName}
                 </button>
               </div>
             </div>
