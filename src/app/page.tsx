@@ -161,7 +161,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { Camera } from "lucide-react";
 import dynamic from "next/dynamic";
 import { compressImageFile } from "@/lib/imageUtils";
-import { BASELINE_QUALITY_EVALUATIONS } from "@/lib/baselineQualityData";
+import { BASELINE_QUALITY_EVALUATIONS, getQualityEvalDoc } from "@/lib/baselineQualityData";
 
 const QualityDashboard = dynamic(() => import("@/components/QualityDashboard"), {
   loading: () => (
@@ -2851,7 +2851,7 @@ export default function Dashboard() {
 
       snaps.forEach((snap, idx) => {
         const { docId, month, member } = toFetch[idx];
-        const baseDoc = BASELINE_QUALITY_EVALUATIONS[docId];
+        const baseDoc = BASELINE_QUALITY_EVALUATIONS[docId] || getQualityEvalDoc(BASELINE_QUALITY_EVALUATIONS, docId);
         const data = (snap && snap.exists()) ? snap.data() : (baseDoc || null);
         if (data) {
           qaCacheRef.current[docId] = data;

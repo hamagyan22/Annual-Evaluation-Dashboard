@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { compressImageFile } from "@/lib/imageUtils";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
-import { BASELINE_QUALITY_EVALUATIONS } from "@/lib/baselineQualityData";
+import { BASELINE_QUALITY_EVALUATIONS, expandQualityDocAliases, getQualityEvalDoc } from "@/lib/baselineQualityData";
 
 interface QualityDashboardProps {
   userProfile: any;
@@ -84,6 +84,10 @@ const QUARTERS = [
 const YEARS = ["2026", "2027", "2028", "2029", "2030"];
 
 const CANONICAL_AGENT_NAMES: Record<string, string> = {
+  "amar hussein": "Amar Hussein Salih",
+  "amar hussein salih": "Amar Hussein Salih",
+  "salam sadam": "Salam Sadam Muhammad",
+  "salam sadam muhammad": "Salam Sadam Muhammad",
   "shahab ahmed": "Shahab Ahmed Muhammed",
   "shahab ahmed muhammed": "Shahab Ahmed Muhammed",
   "zhala sherzad": "Zhalla Sherzad",
@@ -987,11 +991,14 @@ export default function QualityDashboard({
       snapshot.forEach(d => {
         dataMap[d.id] = { ...dataMap[d.id], id: d.id, ...d.data() };
       });
+      expandQualityDocAliases(dataMap);
       setEvalData(dataMap);
       setLoading(false);
     }, (err) => {
       console.warn("Firestore QA snapshot error (retaining verified baseline evaluation data):", err);
-      setEvalData(prev => Object.keys(prev).length > 0 ? prev : { ...BASELINE_QUALITY_EVALUATIONS });
+      const fallbackMap = { ...BASELINE_QUALITY_EVALUATIONS };
+      expandQualityDocAliases(fallbackMap);
+      setEvalData(prev => Object.keys(prev).length > 0 ? prev : fallbackMap);
       setLoading(false);
     });
 
@@ -1762,7 +1769,7 @@ export default function QualityDashboard({
     const getAgentWeekStat = (csrName: string, w: number) => {
       const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
       const docId = `${selectedYear}_${quarter}_${mainSectionSlug}_${slug}`;
-      const docData = evalData[docId];
+      const docData = evalData[docId] || getQualityEvalDoc(evalData, docId);
       const scores = docData?.scores || {};
       const timestamps = docData?.cell_timestamps || {};
       const wCfg = getWeekColumnsConfig(isChatTeam, selectedYear, quarter, w);
@@ -5323,7 +5330,7 @@ export default function QualityDashboard({
                     const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
                     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
                     const docId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
-                    const currentDoc = evalData[docId] || {};
+                    const currentDoc = evalData[docId] || getQualityEvalDoc(evalData, docId) || {};
                     const currentScores = currentDoc.scores || {};
                     const currentNotes = currentDoc.notes || {};
                     const currentLinks = currentDoc.links || {};

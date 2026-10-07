@@ -1116,19 +1116,19 @@ export default function AnnualEvaluationDashboard({
                   {employeeDropdownOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setEmployeeDropdownOpen(false)} />
-                      <div className="absolute right-0 top-full mt-2 w-full sm:w-[420px] bg-white/98 dark:bg-gray-900/98 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-2xl p-3 z-50 max-h-[460px] flex flex-col animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md ring-1 ring-black/5">
+                      <div className="absolute right-0 top-full mt-2 w-full sm:w-[420px] bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-3xl shadow-2xl p-3 z-50 max-h-[460px] flex flex-col animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/10">
                         
                         {/* Header */}
-                        <div className="px-2 pt-1 pb-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
+                        <div className="px-2 pt-1 pb-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
                           <div>
                             <h4 className="text-xs font-black text-gray-900 dark:text-white">
                               Select Employee
                             </h4>
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
                               38 Official Contact Center Agents
                             </p>
                           </div>
-                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                             {filteredMembers.length} Available
                           </span>
                         </div>
@@ -1141,7 +1141,7 @@ export default function AnnualEvaluationDashboard({
                             placeholder="Search employee across all teams..."
                             value={employeeSearchTerm}
                             onChange={(e) => setEmployeeSearchTerm(e.target.value)}
-                            className="w-full pl-8 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 font-medium"
+                            className="w-full pl-8 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1C6B53] text-gray-900 dark:text-gray-100 font-medium shadow-xs"
                             autoFocus
                           />
                           {employeeSearchTerm && (
@@ -1156,7 +1156,7 @@ export default function AnnualEvaluationDashboard({
                         </div>
 
                         {/* Team Filter Pills: Younis Kamal, Ankido Buya, Mohammed Dlshad (Strictly 3 tabs, No "All") */}
-                        <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100/90 dark:bg-gray-800/90 rounded-2xl mb-2 shrink-0">
+                        <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0">
                           {[
                             { id: "Younis", label: "Younis Kamal", count: teamCounts.Younis, icon: PhoneCall },
                             { id: "Ankido", label: "Ankido Buya", count: teamCounts.Ankido, icon: PhoneCall },
@@ -1191,7 +1191,7 @@ export default function AnnualEvaluationDashboard({
                         </div>
 
                         {/* Roster Count Summary */}
-                        <div className="px-2 py-1 text-[10px] font-bold text-gray-400 dark:text-gray-500 flex items-center justify-between border-b border-gray-100 dark:border-gray-800/60 mb-1.5">
+                        <div className="px-2 py-1 text-[10px] font-bold text-gray-500 dark:text-gray-400 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 mb-1.5">
                           <span>
                             {employeeSearchTerm.trim() 
                               ? `${filteredMembers.length} Matching Search` 
