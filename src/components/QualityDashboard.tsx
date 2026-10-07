@@ -2770,6 +2770,7 @@ export default function QualityDashboard({
       if (auth.currentUser) {
         await updatePassword(auth.currentUser, forceNewPassword);
         const isJihad = auth.currentUser.email?.toLowerCase().includes("mohammed.jihad");
+        const isAzad = auth.currentUser.email?.toLowerCase().includes("mohammed.azad");
         const docUpdates: any = {
           mustChangePassword: false,
           passwordUpdated: true,
@@ -2781,12 +2782,20 @@ export default function QualityDashboard({
           docUpdates.evaluator = "Mohammed Jihad";
           docUpdates.team = "Younis Kamal Team";
           docUpdates.role = "qa";
+        } else if (isAzad) {
+          docUpdates.email = "mohammed.azad@agent.com";
+          docUpdates.name = "Mohammed Azad";
+          docUpdates.evaluator = "Mohammed Azad";
+          docUpdates.team = "All Call Teams";
+          docUpdates.role = "trainer";
         }
         await setDoc(doc(db, "users", auth.currentUser.uid), docUpdates, { merge: true });
 
         if (userProfile) {
           if (isJihad) {
             userProfile.email = "mohammed.jihad@agent.com";
+          } else if (isAzad) {
+            userProfile.email = "mohammed.azad@agent.com";
           }
           userProfile.mustChangePassword = false;
           userProfile.passwordUpdated = true;

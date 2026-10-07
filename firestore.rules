@@ -97,7 +97,9 @@ service cloud.firestore {
         request.auth.token.email == 'ankido.buya@agent.com' ||
         request.auth.token.email == 'lara.qa@agent.com' ||
         request.auth.token.email == 'mohammed.jihad@agent.com' ||
-        request.auth.token.email == 'mohammed.azad@agent.com'
+        request.auth.token.email == 'mohammed.jihad.qa@agent.com' ||
+        request.auth.token.email == 'mohammed.azad@agent.com' ||
+        request.auth.token.email == 'mohammed.azad.qa@agent.com'
       );
     }
 

@@ -2318,7 +2318,7 @@ export default function Dashboard() {
         const isAnkido = emailLower === 'ankido.buya@agent.com';
         const isLara = emailLower === 'lara.kamil@agent.com';
         const isMohammedJihad = emailLower === 'mohammed.jihad@agent.com' || emailLower === 'mohammed.jihad.qa@agent.com' || emailLower.includes('mohammed.jihad');
-        const isMohammedAzad = emailLower === 'mohammed.azad@agent.com';
+        const isMohammedAzad = emailLower === 'mohammed.azad@agent.com' || emailLower === 'mohammed.azad.qa@agent.com' || emailLower.includes('mohammed.azad');
         const isAgent = emailLower.endsWith('@agent.com');
 
         // Instant optimistic role identification: Mohammed Dlshad (The Admin) is EXEMPT
@@ -2392,6 +2392,8 @@ export default function Dashboard() {
             ? 'mohammed.jihad@agent.com'
             : isYounis
             ? 'younis.kamal@agent.com'
+            : isMohammedAzad
+            ? 'mohammed.azad@agent.com'
             : user.email;
 
           const updatedProfile = {
@@ -2425,7 +2427,7 @@ export default function Dashboard() {
             role: fallbackRole,
             name: isJalal ? 'Jalal Burghol' : (isYounis ? 'Younis Kamal' : (isAnkido ? 'Ankido Buya' : (isLara ? 'Lara Kamil' : (isMohammedJihad ? 'Mohammed Jihad' : (isMohammedAzad ? 'Mohammed Azad' : user.email?.split('@')[0]))))),
             team: isYounis ? 'Younis Kamal Team' : (isAnkido ? 'Ankido Buya Team' : (isLara ? 'Ankido Buya Team' : (isMohammedJihad ? 'Younis Kamal Team' : (isMohammedAzad ? 'All Call Teams' : (isJalal ? 'All' : undefined))))),
-            email: isMohammedJihad ? 'mohammed.jihad@agent.com' : (isYounis ? 'younis.kamal@agent.com' : user.email),
+            email: isMohammedJihad ? 'mohammed.jihad@agent.com' : (isYounis ? 'younis.kamal@agent.com' : (isMohammedAzad ? 'mohammed.azad@agent.com' : user.email)),
             isAdmin: false,
             passwordUpdated: false,
             mustChangePassword: true,
@@ -2475,6 +2477,8 @@ export default function Dashboard() {
           ? 'younis.kamal.tl@agent.com'
           : cleanEmail === 'mohammed.jihad@agent.com'
           ? 'mohammed.jihad.qa@agent.com'
+          : cleanEmail === 'mohammed.azad@agent.com'
+          ? 'mohammed.azad.qa@agent.com'
           : cleanEmail;
 
       try {
