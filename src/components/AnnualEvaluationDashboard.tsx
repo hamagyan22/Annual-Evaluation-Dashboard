@@ -419,6 +419,11 @@ export default function AnnualEvaluationDashboard({
     return t.includes("mohammed") || t.includes("dlshad");
   }, [currentMember]);
 
+  // Chat Semi-Annual 2026 exception: Productivity is removed ONLY for year 2026 Semi-Annual Chat team
+  const isChatSemi2026 = useMemo(() => {
+    return isSelectedEmployeeChat && selectedPeriod === "Semi-Annual" && String(selectedYear) === "2026";
+  }, [isSelectedEmployeeChat, selectedPeriod, selectedYear]);
+
   // Open Benchmark Guide modal with auto-selected tab based on employee
   const openBenchmarkGuide = () => {
     setBenchmarkGuideTab(isSelectedEmployeeChat ? "chat" : "calls");
@@ -662,7 +667,7 @@ export default function AnnualEvaluationDashboard({
             else suggestions.art = 1;
           }
           // Productivity: >13 (5), 11-12.99 (4), 8.5-10.99 (3), 7.50-8.49 (2), <7.50 (1)
-          if (avgProd !== null) {
+          if (!isChatSemi2026 && avgProd !== null) {
             if (avgProd > 13) suggestions.productivity = 5;
             else if (avgProd >= 11) suggestions.productivity = 4;
             else if (avgProd >= 8.5) suggestions.productivity = 3;
@@ -711,7 +716,7 @@ export default function AnnualEvaluationDashboard({
             monthsCount: rows.length,
             qa: avgQA !== null ? `${avgQA.toFixed(1)}%` : null,
             exam: avgExam !== null ? `${avgExam.toFixed(1)}%` : null,
-            productivity: avgProd !== null ? (isChat ? avgProd.toFixed(2) : `${avgProd.toFixed(1)}%`) : null,
+            productivity: (!isChatSemi2026 && avgProd !== null) ? (isChat ? avgProd.toFixed(2) : `${avgProd.toFixed(1)}%`) : null,
             aht: formatTime(avgAhtSec),
             art: formatTime(avgArtSec),
             suggestions
@@ -724,19 +729,22 @@ export default function AnnualEvaluationDashboard({
 
     fetchActuals();
     return () => { isMounted = false; };
-  }, [selectedEmployeeName, selectedYear, selectedPeriod, currentMember?.team]);
+  }, [selectedEmployeeName, selectedYear, selectedPeriod, currentMember?.team, isChatSemi2026]);
 
   // Operational KPIs for Contact Center (Chat vs Calls channel dynamic definitions)
   const kpiDefinitions = useMemo(() => {
     if (isSelectedEmployeeChat) {
-      return [
+      const list = [
         { id: "exam", name: "Knowledge & Exam", actual: actualMetricsSummary?.exam },
         { id: "qa", name: "Quality Assurance (QA)", actual: actualMetricsSummary?.qa },
         { id: "aht", name: "Average Handling Time (AHT)", actual: actualMetricsSummary?.aht },
         { id: "art", name: "Average Response Time (ART)", actual: actualMetricsSummary?.art },
-        { id: "productivity", name: "Productivity", actual: actualMetricsSummary?.productivity },
-        { id: "attendance", name: "Attendance & Punctuality", actual: null },
       ];
+      if (!isChatSemi2026) {
+        list.push({ id: "productivity", name: "Productivity", actual: actualMetricsSummary?.productivity });
+      }
+      list.push({ id: "attendance", name: "Attendance & Punctuality", actual: null });
+      return list;
     }
     return [
       { id: "qa", name: "Quality Assurance (QA)", actual: actualMetricsSummary?.qa },
@@ -745,7 +753,7 @@ export default function AnnualEvaluationDashboard({
       { id: "aht", name: "Average Handling Time (AHT)", actual: actualMetricsSummary?.aht },
       { id: "knowledge", name: "Knowledge & Exam", actual: actualMetricsSummary?.exam },
     ];
-  }, [actualMetricsSummary, isSelectedEmployeeChat]);
+  }, [actualMetricsSummary, isSelectedEmployeeChat, isChatSemi2026]);
 
   // Helper to reliably read KPI score whether keyed by 'exam' or 'knowledge'
   const getKpiScore = (kpisMap: Record<string, number>, id: string) => {
@@ -840,6 +848,13 @@ export default function AnnualEvaluationDashboard({
     const autoDate = evaluationDate || getSubmissionFormattedDate();
 
     try {
+      const cleanSelfKpis = { ...selfKpis };
+      const cleanManagerKpis = { ...managerKpis };
+      if (isChatSemi2026) {
+        delete cleanSelfKpis.productivity;
+        delete cleanManagerKpis.productivity;
+      }
+
       const payload: any = {
         year: selectedYear,
         period: selectedPeriod,
@@ -852,14 +867,14 @@ export default function AnnualEvaluationDashboard({
         team_leader: teamLeader || resolveTeamLeader(currentMember?.team),
         channel_type: isSelectedEmployeeChat ? "chat" : "calls",
         
-        self_kpis: selfKpis,
+        self_kpis: cleanSelfKpis,
         self_competencies: selfCompetencies,
         self_kpi_avg: selfKpiAvg,
         self_competency_avg: selfCompAvg,
         self_overall_score: selfOverall,
         self_comments: employeeComments,
 
-        manager_kpis: managerKpis,
+        manager_kpis: cleanManagerKpis,
         manager_competencies: managerCompetencies,
         manager_kpi_avg: managerKpiAvg,
         manager_competency_avg: managerCompAvg,
@@ -2267,7 +2282,7 @@ export default function AnnualEvaluationDashboard({
                           <th className="p-3">QA</th>
                           <th className="p-3">AHT</th>
                           <th className="p-3">ART</th>
-                          <th className="p-3">Productivity</th>
+                          {!isChatSemi2026 && <th className="p-3">Productivity</th>}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700 font-semibold">
@@ -2277,7 +2292,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono font-bold">99% - 100%</td>
                           <td className="p-3 font-mono font-bold">3:00 - 3:30</td>
                           <td className="p-3 font-mono font-bold">&lt; 1:30</td>
-                          <td className="p-3 font-mono font-bold">&gt; 13</td>
+                          {!isChatSemi2026 && <td className="p-3 font-mono font-bold">&gt; 13</td>}
                         </tr>
                         <tr className="bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
                           <td className="p-3 text-left font-black">4 ⭐ Exceeds Expectations</td>
@@ -2285,7 +2300,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono font-bold">96% - 98%</td>
                           <td className="p-3 font-mono font-bold">3:31 - 4:00</td>
                           <td className="p-3 font-mono font-bold">1:31 - 1:59</td>
-                          <td className="p-3 font-mono font-bold">11 - 12.99</td>
+                          {!isChatSemi2026 && <td className="p-3 font-mono font-bold">11 - 12.99</td>}
                         </tr>
                         <tr className="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-300">
                           <td className="p-3 text-left font-black">3 ⭐ Meets Expectations</td>
@@ -2293,7 +2308,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono font-bold">95%</td>
                           <td className="p-3 font-mono font-bold">4:01 - 4:59</td>
                           <td className="p-3 font-mono font-bold">2:00 - 2:59</td>
-                          <td className="p-3 font-mono font-bold">8.50 - 10.99</td>
+                          {!isChatSemi2026 && <td className="p-3 font-mono font-bold">8.50 - 10.99</td>}
                         </tr>
                         <tr className="bg-amber-50/50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-300">
                           <td className="p-3 text-left font-black">2 ⭐ Developing</td>
@@ -2301,7 +2316,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono font-bold">90% - 94%</td>
                           <td className="p-3 font-mono font-bold">5:00 - 5:59</td>
                           <td className="p-3 font-mono font-bold">3:00 - 3:30</td>
-                          <td className="p-3 font-mono font-bold">7.50 - 8.49</td>
+                          {!isChatSemi2026 && <td className="p-3 font-mono font-bold">7.50 - 8.49</td>}
                         </tr>
                         <tr className="bg-rose-50/50 dark:bg-rose-950/20 text-rose-900 dark:text-rose-300">
                           <td className="p-3 text-left font-black">1 ⭐ Needs Improvement</td>
@@ -2309,7 +2324,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono font-bold">&lt; 89%</td>
                           <td className="p-3 font-mono font-bold">&gt; 6:00</td>
                           <td className="p-3 font-mono font-bold">&gt; 3:31</td>
-                          <td className="p-3 font-mono font-bold">&lt; 7.50</td>
+                          {!isChatSemi2026 && <td className="p-3 font-mono font-bold">&lt; 7.50</td>}
                         </tr>
                       </tbody>
                     </table>
@@ -2365,14 +2380,16 @@ export default function AnnualEvaluationDashboard({
                             <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3:00-3:30</td>
                             <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Greater than 3:31</td>
                           </tr>
-                          <tr>
-                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">Productivity</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800 text-emerald-600 dark:text-emerald-400">Greater than 13</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">11-12.99</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">8.5-10.99</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">7.50-8.49</td>
-                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 7.50</td>
-                          </tr>
+                          {!isChatSemi2026 && (
+                            <tr>
+                              <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">Productivity</td>
+                              <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800 text-emerald-600 dark:text-emerald-400">Greater than 13</td>
+                              <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">11-12.99</td>
+                              <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">8.5-10.99</td>
+                              <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">7.50-8.49</td>
+                              <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 7.50</td>
+                            </tr>
+                          )}
                         </tbody>
                       </table>
                     </div>

@@ -809,10 +809,12 @@ function AgentDashboard({
     }
   };
 
+  const months = MONTHS;
   const teamCols = getEffectiveColumns(currentAgent?.team || '', selectedMonth, selectedYear, columnsMap[currentAgent?.team] || []);
+  const teamLower = (currentAgent?.team || '').toLowerCase();
   const tableName =
-    currentAgent?.team === 'Younis Kamal Team' ? 'younis_metrics' :
-    currentAgent?.team === 'Ankido Buya Team' ? 'ankido_metrics' :
+    teamLower.includes('younis') ? 'younis_metrics' :
+    teamLower.includes('ankido') ? 'ankido_metrics' :
     'mohammed_metrics';
 
   useEffect(() => {
@@ -831,24 +833,115 @@ function AgentDashboard({
     if (!targetName) return;
     setLoading(true);
 
-    let rawMetricsDocs: any[] = [];
-    let syncedRegistry: Record<string, any> | null = null;
+    const isChatT = teamLower.includes('mohammed') || teamLower.includes('dlshad');
     const sectionSlug = getQaSectionSlug(currentAgent?.team || "");
+    const canonicalTarget = getCanonicalAgentName(targetName);
+
+    let rawFirestoreDocs: any[] = [];
+    const qaLiveMap = new Map<string, any>();
+    let syncedRegistry: Record<string, any> | null = null;
 
     const applyAgentMetrics = () => {
-      const filtered = rawMetricsDocs
-        .filter(d => isSameAgent(d.agent_name || d.name || "", targetName))
-        .map(d => {
-          const row = { ...d, agent_name: getCanonicalAgentName(d.agent_name || d.name || targetName) };
-          if (isQualitySyncEnabled(selectedYear, row.month) && syncedRegistry) {
-            const syncKey = `${selectedYear}_${(row.month || "").toUpperCase()}_${sectionSlug}`;
-            if (!syncedRegistry[syncKey]) {
-              row.quality = "";
+      // 1. Get baseline rows specifically for this agent & year
+      const baseDocs = BASELINE_TEAM_METRICS.filter(
+        m => isSameAgent(m.agent_name || m.name || "", targetName) && String(m.year) === String(selectedYear)
+      );
+
+      const metricsMap = new Map<string, any>();
+
+      // Populate from baseline
+      baseDocs.forEach(d => {
+        const mKey = (d.month || "").toUpperCase();
+        if (mKey) {
+          metricsMap.set(mKey, {
+            ...d,
+            month: mKey,
+            agent_name: canonicalTarget,
+            _fromBaseline: true,
+          });
+        }
+      });
+
+      // Overlay live Firestore metrics for this agent
+      rawFirestoreDocs.forEach(d => {
+        if (isSameAgent(d.agent_name || d.name || "", targetName)) {
+          const mKey = (d.month || "").toUpperCase();
+          if (mKey) {
+            const existing = metricsMap.get(mKey) || {};
+            metricsMap.set(mKey, {
+              ...existing,
+              ...d,
+              id: d.id,
+              month: mKey,
+              agent_name: canonicalTarget,
+              _fromFirestore: true,
+            });
+          }
+        }
+      });
+
+      // Ensure every month JAN - DEC has a row structure
+      months.forEach(mKey => {
+        if (!metricsMap.has(mKey)) {
+          metricsMap.set(mKey, {
+            agent_name: canonicalTarget,
+            team: currentAgent?.team || "",
+            year: selectedYear,
+            month: mKey,
+          });
+        }
+      });
+
+      // Process Quality for all 12 months
+      const finalRows = months.map(mKey => {
+        const row = { ...(metricsMap.get(mKey) || {}) };
+        row.month = mKey;
+        row.agent_name = canonicalTarget;
+
+        // If quality sync is enabled for this month (SEP 2026 onwards)
+        if (isQualitySyncEnabled(selectedYear, mKey) && syncedRegistry) {
+          const syncKey = `${selectedYear}_${mKey}_${sectionSlug}`;
+          if (syncedRegistry[syncKey] === false) {
+            row.quality = "";
+          }
+        }
+
+        // If quality is empty/missing/dash, attempt to populate from QA evaluations
+        if (!row.quality || row.quality === "" || row.quality === "-") {
+          const wr = getQualityWeekRange(mKey);
+          if (wr) {
+            const targetSlugs = getAllAgentSlugs(targetName);
+            let qaDoc: any = null;
+            for (const s of targetSlugs) {
+              const docId = `${selectedYear}_${wr.quarter}_${sectionSlug}_${s}`;
+              if (qaLiveMap.has(docId)) {
+                qaDoc = qaLiveMap.get(docId);
+                break;
+              }
+              if (BASELINE_QUALITY_EVALUATIONS[docId]) {
+                qaDoc = BASELINE_QUALITY_EVALUATIONS[docId];
+                break;
+              }
+              const found = getQualityEvalDoc(BASELINE_QUALITY_EVALUATIONS, docId);
+              if (found) {
+                qaDoc = found;
+                break;
+              }
+            }
+
+            if (qaDoc && qaDoc.scores) {
+              const { isComplete, qualityAvg } = computeVerifiedMonthlyQuality(qaDoc.scores, wr, isChatT, selectedYear);
+              if (isComplete && qualityAvg && qualityAvg !== "V") {
+                row.quality = qualityAvg;
+              }
             }
           }
-          return row;
-        });
-      setMetrics(filtered);
+        }
+
+        return row;
+      });
+
+      setMetrics(finalRows);
       setLoading(false);
     };
 
@@ -857,34 +950,23 @@ function AgentDashboard({
       where('year', '==', selectedYear)
     );
     const unsubMetrics = onSnapshot(q, (snap) => {
-      const baseDocs = BASELINE_TEAM_METRICS.filter(
-        m => m.team === currentAgent.team && m.year === selectedYear
-      );
-      const metricsMap = new Map<string, any>();
-      baseDocs.forEach(d => {
-        const mKey = (d.month || "").toUpperCase();
-        if (mKey) metricsMap.set(mKey, { ...d, _fromBaseline: true });
-      });
-
-      // Live Firestore documents strictly overwrite and overlay onto baseline
-      snap.docs.forEach(d => {
-        const data = d.data();
-        const mKey = (data.month || "").toUpperCase();
-        if (mKey) {
-          const existing = metricsMap.get(mKey) || {};
-          metricsMap.set(mKey, { ...existing, ...data, id: d.id, _fromFirestore: true });
-        }
-      });
-
-      rawMetricsDocs = Array.from(metricsMap.values());
+      rawFirestoreDocs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
       applyAgentMetrics();
     }, (err) => {
       console.error(err);
-      rawMetricsDocs = BASELINE_TEAM_METRICS.filter(
-        m => m.team === currentAgent.team && m.year === selectedYear
-      );
       applyAgentMetrics();
     });
+
+    const qaQ = query(
+      collection(db, 'quality_evaluations'),
+      where('year', '==', selectedYear)
+    );
+    const unsubQA = onSnapshot(qaQ, (qSnap) => {
+      qSnap.docs.forEach(d => {
+        qaLiveMap.set(d.id, d.data());
+      });
+      applyAgentMetrics();
+    }, () => {});
 
     const unsubSync = onSnapshot(doc(db, 'quality_evaluations', 'config_sync_status'), (snap) => {
       if (snap.exists()) {
@@ -919,10 +1001,11 @@ function AgentDashboard({
 
     return () => {
       unsubMetrics();
+      unsubQA();
       unsubSync();
       unsubMember();
     };
-  }, [selectedYear, currentAgent, tableName]);
+  }, [selectedYear, currentAgent, tableName, teamLower]);
 
   const handleSaveProfile = async () => {
     if(!memberDoc) return;
@@ -953,8 +1036,6 @@ function AgentDashboard({
     }
   };
 
-  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-
   // Top Star Leaderboard & Personal Rank state
   const [topStarData, setTopStarData] = useState<{
     rankedChat: any[];
@@ -977,7 +1058,7 @@ function AgentDashboard({
   useEffect(() => {
     let isMounted = true;
     const loadTopStar = async () => {
-      const m = months.includes(selectedMonth) ? selectedMonth : "SEP";
+      const m = months.includes((selectedMonth || '').toUpperCase()) ? (selectedMonth || '').toUpperCase() : "SEP";
       try {
         setTopStarLoading(true);
         const crit = await fetchTopStarCriteria();
@@ -1041,7 +1122,7 @@ function AgentDashboard({
   };
 
   const chartData = months.map(m => {
-    const row = metrics.find(r => r.month === m);
+    const row = metrics.find(r => (r.month || '').toUpperCase() === m.toUpperCase());
     const dataObj: any = { month: m };
     teamCols.forEach((col: any) => { dataObj[col.id] = parseVal(col, row); });
     return dataObj;
@@ -1051,7 +1132,7 @@ function AgentDashboard({
   const avgCols = (monthList: string[], col: any) => {
     const rowsWithVals = monthList
       .map(m => {
-        const r = metrics.find(row => row.month === m);
+        const r = metrics.find(row => (row.month || '').toUpperCase() === m.toUpperCase());
         const val = getRowValForCol(r, col.id);
         return { r, val };
       })
@@ -1095,9 +1176,9 @@ function AgentDashboard({
   ];
 
   // selectedPeriod: either a month name or a period label
-  const isMonthSelected = months.includes(selectedMonth);
+  const isMonthSelected = months.includes((selectedMonth || '').toUpperCase());
   const selectedMonthData: any = isMonthSelected
-    ? (metrics.find(r => r.month === selectedMonth) || {})
+    ? (metrics.find(r => (r.month || '').toUpperCase() === (selectedMonth || '').toUpperCase()) || {})
     : {};
 
   const getDisplayVal = (col: any) => {
@@ -4819,13 +4900,13 @@ export default function Dashboard() {
         )}
 
         {/* Month Tabs & Controls Bar */}
-        <div className="flex items-center gap-1.5 sm:gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-1.5 sm:p-2 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 w-full overflow-x-auto scrollbar-hide shadow-sm mb-4 sm:mb-5">
+        <div className="flex items-center gap-1 sm:gap-1.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-1.5 sm:p-2 pr-3 sm:pr-4 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 w-full overflow-x-auto scrollbar-hide shadow-sm mb-4 sm:mb-5">
           {/* Year selector */}
           <div className="relative flex-shrink-0">
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
-              className="appearance-none pl-3 pr-7 py-1.5 rounded-xl text-xs font-bold bg-[#1C6B53] text-white shadow-sm outline-none cursor-pointer border-0"
+              className="appearance-none pl-2.5 pr-6 py-1 rounded-lg text-xs font-bold bg-[#1C6B53] text-white shadow-sm outline-none cursor-pointer border-0"
             >
               <option value="2026">2026</option>
               <option value="2027">2027</option>
@@ -4833,63 +4914,63 @@ export default function Dashboard() {
               <option value="2029">2029</option>
               <option value="2030">2030</option>
             </select>
-            <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white/80" />
+            <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-white/80" />
           </div>
 
           {/* Search Agent Input & Count next to Year */}
           <div className="relative flex-shrink-0">
-            <Search size={12} className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Search size={11} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-7 pr-2.5 py-1.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/80 dark:bg-gray-900/60 focus:outline-none focus:border-[#1C6B53] dark:focus:border-emerald-500 text-xs w-28 sm:w-44 transition dark:text-gray-200 font-medium"
+              className="pl-5.5 pr-2 py-1 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/80 dark:bg-gray-900/60 focus:outline-none focus:border-[#1C6B53] dark:focus:border-emerald-500 text-[11px] sm:text-xs w-20 sm:w-28 transition dark:text-gray-200 font-medium"
             />
           </div>
-          <span className="text-gray-500 dark:text-gray-400 text-[11px] sm:text-xs font-semibold whitespace-nowrap px-1 flex-shrink-0">
+          <span className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-[11px] font-semibold whitespace-nowrap px-0.5 flex-shrink-0">
             {filteredRows.length} Agents
           </span>
 
           {/* Selection Action Toolbar */}
           {isMultiCellSelected && (
-            <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-emerald-100/90 dark:bg-emerald-950/90 border border-[#1C6B53]/30 dark:border-emerald-600/40 rounded-xl text-xs text-[#1C6B53] dark:text-emerald-300 font-bold shadow-xs flex-shrink-0 animate-fadeIn">
-              <span className="tabular-nums">{selectedCellCount} selected</span>
-              <div className="h-3.5 w-px bg-emerald-300 dark:bg-emerald-700" />
+            <div className="flex items-center gap-1.5 sm:gap-2 px-2 py-0.5 bg-emerald-100/90 dark:bg-emerald-950/90 border border-[#1C6B53]/30 dark:border-emerald-600/40 rounded-lg text-xs text-[#1C6B53] dark:text-emerald-300 font-bold shadow-xs flex-shrink-0 animate-fadeIn">
+              <span className="tabular-nums text-[11px]">{selectedCellCount} selected</span>
+              <div className="h-3 w-px bg-emerald-300 dark:bg-emerald-700" />
               <button 
                 onClick={handleCopySelection}
-                className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-emerald-200/60 dark:hover:bg-emerald-900/60 transition"
+                className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-emerald-200/60 dark:hover:bg-emerald-900/60 transition text-[11px]"
                 title="Copy selected cells (Ctrl+C)"
               >
-                <Copy size={12} />
+                <Copy size={11} />
                 <span>Copy</span>
               </button>
               {!isAggregate && (
                 <>
-                  <div className="h-3.5 w-px bg-emerald-300 dark:bg-emerald-700" />
+                  <div className="h-3 w-px bg-emerald-300 dark:bg-emerald-700" />
                   <button 
                     onClick={handleClearSelectedCells}
-                    className="flex items-center gap-1 px-1.5 py-0.5 rounded text-red-600 dark:text-red-400 hover:bg-red-100/60 dark:hover:bg-red-950/60 transition"
+                    className="flex items-center gap-1 px-1 py-0.5 rounded text-red-600 dark:text-red-400 hover:bg-red-100/60 dark:hover:bg-red-950/60 transition text-[11px]"
                     title="Clear selected cells (Delete / Backspace)"
                   >
-                    <Trash2 size={12} />
+                    <Trash2 size={11} />
                     <span>Clear</span>
                   </button>
                 </>
               )}
-              <div className="h-3.5 w-px bg-emerald-300 dark:bg-emerald-700" />
+              <div className="h-3 w-px bg-emerald-300 dark:bg-emerald-700" />
               <button 
                 onClick={() => updateSelection(null, null)}
                 className="p-0.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
                 title="Deselect (Esc)"
               >
-                <X size={13} />
+                <X size={12} />
               </button>
             </div>
           )}
 
           {/* Separator */}
-          <div className="h-5 w-[1.5px] bg-gray-300 dark:bg-gray-600 mx-0.5 sm:mx-1 flex-shrink-0" />
+          <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5 flex-shrink-0" />
 
           {/* Months (Jan - Dec) */}
           {months.map(m => {
@@ -4899,7 +4980,7 @@ export default function Dashboard() {
               <button
                 key={m}
                 onClick={() => setSelectedMonth(m)}
-                className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition flex-shrink-0 ${
+                className={`px-1.5 sm:px-2 py-1 rounded-lg text-xs font-bold transition flex-shrink-0 ${
                   isSel
                     ? 'bg-[#1C6B53] text-white shadow-md shadow-[#1C6B53]/25'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60'
@@ -4911,7 +4992,7 @@ export default function Dashboard() {
           })}
 
           {/* Separator */}
-          <div className="h-5 w-[1.5px] bg-gray-300 dark:bg-gray-600 mx-0.5 sm:mx-1 flex-shrink-0" />
+          <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5 flex-shrink-0" />
 
           {/* Quarters & Halves */}
           {periods.map(p => {
@@ -4920,7 +5001,7 @@ export default function Dashboard() {
               <button
                 key={p}
                 onClick={() => setSelectedMonth(p)}
-                className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-extrabold transition flex-shrink-0 ${
+                className={`px-1.5 sm:px-2 py-1 rounded-lg text-xs font-extrabold transition flex-shrink-0 ${
                   isSel
                     ? 'bg-[#00A991] text-white shadow-md shadow-[#00A991]/30'
                     : 'text-emerald-700 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
@@ -4932,20 +5013,20 @@ export default function Dashboard() {
           })}
 
           {/* Separator */}
-          <div className="h-5 w-[1.5px] bg-gray-300 dark:bg-gray-600 mx-0.5 sm:mx-1 flex-shrink-0" />
+          <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5 flex-shrink-0" />
 
           {/* Button next to H1 / H2: Younis + Ankido Combined Data (Compact & Brief) */}
           <button
             type="button"
             onClick={() => setIsCombinedCallCenter(prev => !prev)}
-            className={`px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg text-xs font-black transition-all flex-shrink-0 flex items-center gap-1 border cursor-pointer whitespace-nowrap ${
+            className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg text-[11px] font-black transition-all flex-shrink-0 flex items-center gap-1 border cursor-pointer whitespace-nowrap ${
               isCombinedCallCenter
                 ? 'bg-gradient-to-r from-[#1C6B53] to-[#155a45] text-white border-transparent shadow-md shadow-[#1C6B53]/30 ring-2 ring-[#1C6B53]/50'
                 : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
             }`}
             title="عرض داتا تيم يونس وتيم انكيدو معاً (Call Center Combined: Younis + Ankido)"
           >
-            <Users size={12} className={isCombinedCallCenter ? 'text-amber-300 animate-pulse' : 'text-emerald-600 dark:text-emerald-400'} />
+            <Users size={11} className={isCombinedCallCenter ? 'text-amber-300 animate-pulse' : 'text-emerald-600 dark:text-emerald-400'} />
             <span>CC (Y+A)</span>
           </button>
         </div>
