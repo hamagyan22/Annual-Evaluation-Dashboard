@@ -2285,6 +2285,13 @@ export default function Dashboard() {
     const currentMonthIdx = MONTHS.indexOf(upperMonth);
     if (currentMonthIdx <= 0) return null; // First month (JAN) or aggregate periods are not locked
 
+    const yearNum = parseInt(selectedYear || "2026", 10);
+    // Lock rule only applies from this month (OCT 2026) and for future months (NOV, DEC, 2027+)
+    const octMonthIdx = MONTHS.indexOf("OCT"); // 9
+    if (yearNum < 2026 || (yearNum === 2026 && currentMonthIdx < octMonthIdx)) {
+      return null;
+    }
+
     const prevMonth = MONTHS[currentMonthIdx - 1];
     const targetTeams = isCombinedCallCenter 
       ? ['Younis Kamal Team', 'Ankido Buya Team'] 
@@ -4959,14 +4966,14 @@ export default function Dashboard() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-black text-amber-900 dark:text-amber-300">
-                    إدخال بيانات شهر {selectedMonth} مقفل
+                    Data Entry for {selectedMonth} is Locked
                   </span>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-200/70 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200 border border-amber-300/60 dark:border-amber-700/60">
-                    Data Entry Locked
+                    Locked
                   </span>
                 </div>
                 <p className="text-[11px] sm:text-xs text-amber-800 dark:text-amber-300/90 mt-0.5 font-medium">
-                  يجب إكمال جميع بيانات ومؤشرات شهر <strong>{prevMonthIncompleteInfo.prevMonth} {prevMonthIncompleteInfo.prevYear}</strong> أولاً ({prevMonthIncompleteInfo.incompleteAgents.length} موظف بحاجة لإكمال بياناتهم) قبل البدء في تعبئة شهر <strong>{selectedMonth}</strong>.
+                  Please complete all data and KPIs for <strong>{prevMonthIncompleteInfo.prevMonth} {prevMonthIncompleteInfo.prevYear}</strong> first ({prevMonthIncompleteInfo.incompleteAgents.length} team members pending) before filling <strong>{selectedMonth}</strong>.
                 </p>
               </div>
             </div>
@@ -4974,17 +4981,17 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setSelectedMonth(prevMonthIncompleteInfo.prevMonth)}
-                className="px-3.5 py-2 rounded-xl text-xs font-black text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500 transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2 rounded-xl text-xs font-black text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500 transition shadow-sm flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
                 <ArrowLeft size={13} />
-                <span>العودة إلى شهر {prevMonthIncompleteInfo.prevMonth}</span>
+                <span>Back to {prevMonthIncompleteInfo.prevMonth}</span>
               </button>
               <button
                 type="button"
                 onClick={() => setShowMonthLockModal(true)}
-                className="px-3 py-2 rounded-xl text-xs font-bold text-amber-900 dark:text-amber-200 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/50 dark:hover:bg-amber-900/80 transition cursor-pointer"
+                className="px-3 py-2 rounded-xl text-xs font-bold text-amber-900 dark:text-amber-200 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/50 dark:hover:bg-amber-900/80 transition cursor-pointer whitespace-nowrap"
               >
-                عرض التفاصيل
+                View Details
               </button>
             </div>
           </div>
@@ -5693,7 +5700,7 @@ export default function Dashboard() {
                     Previous Month Required
                   </span>
                   <h3 className="text-base font-black text-gray-900 dark:text-white">
-                    إكمال بيانات {prevMonthIncompleteInfo.prevMonth} {prevMonthIncompleteInfo.prevYear} أولاً
+                    Complete {prevMonthIncompleteInfo.prevMonth} {prevMonthIncompleteInfo.prevYear} First
                   </h3>
                 </div>
               </div>
@@ -5708,12 +5715,12 @@ export default function Dashboard() {
 
             <div className="p-6 space-y-4">
               <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 text-xs sm:text-sm text-amber-950 dark:text-amber-200 font-medium leading-relaxed">
-                لا يمكنك تعبئة أو تعديل بيانات شهر <strong>{selectedMonth}</strong> حتى تنتهي من تعبئة كافة بيانات ومؤشرات شهر <strong>{prevMonthIncompleteInfo.prevMonth} {prevMonthIncompleteInfo.prevYear}</strong> لجميع أعضاء الفريق.
+                You cannot fill or edit data for <strong>{selectedMonth}</strong> until you finish entering all metrics and KPIs for <strong>{prevMonthIncompleteInfo.prevMonth} {prevMonthIncompleteInfo.prevYear}</strong> for all team members.
               </div>
 
               <div>
                 <div className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center justify-between">
-                  <span>الموظفون الذين لم تكتمل بياناتهم:</span>
+                  <span>Team members with pending data:</span>
                   <span className="text-[11px] font-black text-amber-600 dark:text-amber-400">
                     {prevMonthIncompleteInfo.incompleteAgents.length} / {prevMonthIncompleteInfo.totalAgents}
                   </span>
@@ -5749,14 +5756,14 @@ export default function Dashboard() {
                   className="w-full sm:flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-md flex items-center justify-center gap-2 transition cursor-pointer active:scale-95"
                 >
                   <ArrowLeft size={14} />
-                  <span>الذهاب إلى شهر {prevMonthIncompleteInfo.prevMonth} لإكمال البيانات</span>
+                  <span>Go to {prevMonthIncompleteInfo.prevMonth} to Complete Data</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowMonthLockModal(false)}
                   className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition cursor-pointer"
                 >
-                  إغلاق
+                  Close
                 </button>
               </div>
 
@@ -5770,7 +5777,7 @@ export default function Dashboard() {
                     }}
                     className="text-[11px] text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 underline font-medium transition cursor-pointer"
                   >
-                    تجاوز القفل كمسؤول (Admin Override)
+                    Bypass lock (Admin Override)
                   </button>
                 </div>
               )}
