@@ -8,6 +8,7 @@ import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings
 import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesAndSeconds, getTopStarMotivationalQuote } from "@/lib/topStarUtils";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
+import { getCanonicalAgentName, getCanonicalAgent, getCanonicalSlug, getAllAgentSlugs, isSameAgent } from "@/lib/canonicalAgents";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
 const TEAMS: TeamName[] = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team'];
@@ -776,11 +777,10 @@ function AgentDashboard({
     const sectionSlug = getQaSectionSlug(currentAgent?.team || "");
 
     const applyAgentMetrics = () => {
-      const targetLower = targetName.toLowerCase();
       const filtered = rawMetricsDocs
-        .filter(d => (d.agent_name || "").trim().toLowerCase() === targetLower)
+        .filter(d => isSameAgent(d.agent_name || d.name || "", targetName))
         .map(d => {
-          const row = { ...d };
+          const row = { ...d, agent_name: getCanonicalAgentName(d.agent_name || d.name || targetName) };
           if (isQualitySyncEnabled(selectedYear, row.month) && syncedRegistry) {
             const syncKey = `${selectedYear}_${(row.month || "").toUpperCase()}_${sectionSlug}`;
             if (!syncedRegistry[syncKey]) {
@@ -829,9 +829,8 @@ function AgentDashboard({
       where('team', '==', currentAgent.team)
     );
     const unsubMember = onSnapshot(mQ, (mSnap) => {
-      const targetLower = targetName.toLowerCase();
       const matchedDoc = mSnap.docs.find(
-        d => (d.data().agent_name || "").trim().toLowerCase() === targetLower
+        d => isSameAgent(d.data().agent_name || d.data().name || "", targetName)
       );
       if (matchedDoc) {
         const mData: any = { id: matchedDoc.id, ...matchedDoc.data() };
@@ -2226,13 +2225,17 @@ export default function Dashboard() {
     const unsub = onSnapshot(collection(db, 'team_members'), (snap) => {
       setAllMembers(prev => {
         const map = new Map<string, any>();
-        DEFAULT_COMPANY_EMPLOYEES.forEach(m => map.set(m.agent_name.toLowerCase().trim(), { ...m }));
+        DEFAULT_COMPANY_EMPLOYEES.forEach(m => {
+          const canon = getCanonicalAgentName(m.agent_name);
+          map.set(canon.toLowerCase().trim(), { ...m, agent_name: canon, name: canon });
+        });
         snap.docs.forEach(d => {
           const data = d.data();
-          const name = (data.agent_name || data.name || data.display_name || "").trim();
-          if (name) {
-            const k = name.toLowerCase().trim();
-            map.set(k, { id: d.id, ...map.get(k), ...data, agent_name: name, name });
+          const rawName = (data.agent_name || data.name || data.display_name || "").trim();
+          if (rawName) {
+            const canonName = getCanonicalAgentName(rawName);
+            const k = canonName.toLowerCase().trim();
+            map.set(k, { id: d.id, ...map.get(k), ...data, agent_name: canonName, name: canonName });
           }
         });
         return Array.from(map.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
@@ -2314,13 +2317,17 @@ export default function Dashboard() {
       const snap = await getDocs(collection(db, 'team_members'));
       setAllMembers(prev => {
         const map = new Map<string, any>();
-        DEFAULT_COMPANY_EMPLOYEES.forEach(m => map.set(m.agent_name.toLowerCase().trim(), { ...m }));
+        DEFAULT_COMPANY_EMPLOYEES.forEach(m => {
+          const canon = getCanonicalAgentName(m.agent_name);
+          map.set(canon.toLowerCase().trim(), { ...m, agent_name: canon, name: canon });
+        });
         snap.docs.forEach(d => {
           const data = d.data();
-          const name = (data.agent_name || data.name || data.display_name || "").trim();
-          if (name) {
-            const k = name.toLowerCase().trim();
-            map.set(k, { id: d.id, ...map.get(k), ...data, agent_name: name, name });
+          const rawName = (data.agent_name || data.name || data.display_name || "").trim();
+          if (rawName) {
+            const canonName = getCanonicalAgentName(rawName);
+            const k = canonName.toLowerCase().trim();
+            map.set(k, { id: d.id, ...map.get(k), ...data, agent_name: canonName, name: canonName });
           }
         });
         return Array.from(map.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
@@ -2562,6 +2569,7 @@ export default function Dashboard() {
   };
 
   // Helper to keep in-memory cache synchronized when editing cells
+  // Helper to keep in-memory cache synchronized when editing cells
   const updateCachedMetric = (payload: any, docId?: string) => {
     const cacheKeys = isCombinedCallCenter 
       ? [`Combined_CallCenter_${selectedYear}`, `${payload.team || selectedTeam}_${selectedYear}`]
@@ -2570,11 +2578,10 @@ export default function Dashboard() {
     cacheKeys.forEach(cacheKey => {
       const cached = teamDataCacheRef.current[cacheKey];
       if (!cached) return;
-      const pAgentLower = (payload.agent_name || "").trim().toLowerCase();
       const pMonthUpper = (payload.month || "").trim().toUpperCase();
       const idx = cached.allYearData.findIndex((m: any) =>
         (docId && m.id === docId) ||
-        ((m.agent_name || "").trim().toLowerCase() === pAgentLower && (m.month || "").trim().toUpperCase() === pMonthUpper)
+        (isSameAgent(m.agent_name || "", payload.agent_name || "") && (m.month || "").trim().toUpperCase() === pMonthUpper)
       );
       if (idx >= 0) {
         cached.allYearData[idx] = { ...cached.allYearData[idx], ...payload, ...(docId ? { id: docId } : {}) };
@@ -2605,19 +2612,19 @@ export default function Dashboard() {
       const metrics = allYearData.filter(m => monthsInPeriod.includes((m.month || "").toUpperCase()));
       const agentGroups: Record<string, any[]> = {};
       metrics.forEach(row => {
-        const key = (row.agent_name || "").trim().toLowerCase();
+        const key = getCanonicalAgentName(row.agent_name || "");
         if (!agentGroups[key]) agentGroups[key] = [];
         agentGroups[key].push(row);
       });
 
       const aggregatedRows = roster.map(member => {
-        const memberKey = (member.agent_name || "").trim().toLowerCase();
+        const memberKey = getCanonicalAgentName(member.agent_name || "");
         const agentRows = agentGroups[memberKey] || [];
         const avgRow: any = {
           _memberId: member.id,
-          agent_name: member.agent_name,
+          agent_name: memberKey,
           photo_url: member.photo_url || "",
-          display_name: member.display_name || member.agent_name,
+          display_name: member.display_name || memberKey,
           team: member.team || team,
           _readonly: true
         };
@@ -2646,8 +2653,8 @@ export default function Dashboard() {
           const sectionSlug = getQaSectionSlug(rowTeam);
           const isChatT = rowTeam === 'Mohammed Dlshad Team';
           const agentName = row.agent_name;
-          const agentKey = (agentName || "").trim().toLowerCase();
-          const slug = agentName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+          const agentKey = getCanonicalAgentName(agentName);
+          const slugs = getAllAgentSlugs(agentName);
           let sumQ = 0;
           let cntQ = 0;
 
@@ -2672,8 +2679,14 @@ export default function Dashboard() {
 
             const wr = getQualityWeekRange(m);
             if (!wr) continue;
-            const docId = `${year}_${wr.quarter}_${sectionSlug}_${slug}`;
-            const cachedQa = qaCache[docId];
+            let cachedQa = null;
+            for (const s of slugs) {
+              const docId = `${year}_${wr.quarter}_${sectionSlug}_${s}`;
+              if (qaCache[docId]) {
+                cachedQa = qaCache[docId];
+                break;
+              }
+            }
             if (cachedQa && cachedQa.scores) {
               const { isComplete, qualityAvg } = computeVerifiedMonthlyQuality(cachedQa.scores, wr, isChatT, year);
               if (isComplete && qualityAvg && qualityAvg !== 'V') {
@@ -2711,9 +2724,9 @@ export default function Dashboard() {
       const metrics = allYearData.filter(m => (m.month || "").toUpperCase() === targetUpper);
       const metricsByAgent: Record<string, any> = {};
       metrics.forEach(row => {
-        const key = (row.agent_name || "").trim().toLowerCase();
+        const key = getCanonicalAgentName(row.agent_name || "");
         if (!metricsByAgent[key]) {
-          metricsByAgent[key] = { ...row };
+          metricsByAgent[key] = { ...row, agent_name: key };
         } else {
           // Merge non-empty values so an empty duplicate document never overwrites saved metrics
           const current = metricsByAgent[key];
@@ -2726,15 +2739,15 @@ export default function Dashboard() {
       });
 
       const mergedRows = roster.map(member => {
-        const memberKey = (member.agent_name || "").trim().toLowerCase();
+        const memberKey = getCanonicalAgentName(member.agent_name || "");
         const existing = metricsByAgent[memberKey];
         if (existing) {
           const rowData = {
             ...existing,
-            agent_name: member.agent_name,
+            agent_name: memberKey,
             _memberId: member.id,
             photo_url: member.photo_url || "",
-            display_name: member.display_name || member.agent_name,
+            display_name: member.display_name || memberKey,
             team: member.team || team
           };
           if (teamCols.some(c => c.id === 'call_handled') && (rowData.call_handled === undefined || rowData.call_handled === '')) {
@@ -2747,9 +2760,9 @@ export default function Dashboard() {
         }
         const empty: any = {
           _memberId: member.id,
-          agent_name: member.agent_name,
+          agent_name: memberKey,
           photo_url: member.photo_url || "",
-          display_name: member.display_name || member.agent_name,
+          display_name: member.display_name || memberKey,
           team: member.team || team
         };
         teamCols.forEach(col => empty[col.id] = "");
@@ -2775,9 +2788,15 @@ export default function Dashboard() {
               continue;
             }
             const agentName = row.agent_name;
-            const slug = agentName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-            const docId = `${year}_${wr.quarter}_${sectionSlug}_${slug}`;
-            const cachedQa = qaCache[docId];
+            const slugs = getAllAgentSlugs(agentName);
+            let cachedQa = null;
+            for (const s of slugs) {
+              const docId = `${year}_${wr.quarter}_${sectionSlug}_${s}`;
+              if (qaCache[docId]) {
+                cachedQa = qaCache[docId];
+                break;
+              }
+            }
             if (cachedQa && cachedQa.scores) {
               const { isComplete, qualityAvg } = computeVerifiedMonthlyQuality(cachedQa.scores, wr, isChatT, year);
               if (isComplete && qualityAvg) {
@@ -2812,7 +2831,7 @@ export default function Dashboard() {
 
     const sectionSlug = getQaSectionSlug(team);
     const isChatT = team === 'Mohammed Dlshad Team';
-    const toFetch: { docId: string; month: string; member: any }[] = [];
+    const toFetch: { docId: string; allDocIds?: string[]; month: string; member: any }[] = [];
 
     if (qaCacheRef.current['config_sync_status'] === undefined) {
       qaCacheRef.current['config_sync_status'] = null;
@@ -2828,10 +2847,15 @@ export default function Dashboard() {
       const wr = getQualityWeekRange(m);
       if (!wr) continue;
       for (const member of roster) {
-        const slug = member.agent_name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-        const docId = `${year}_${wr.quarter}_${sectionSlug}_${slug}`;
-        if (qaCacheRef.current[docId] === undefined) {
-          toFetch.push({ docId, month: m, member });
+        const slugs = getAllAgentSlugs(member.agent_name);
+        const alreadyCached = slugs.some(s => qaCacheRef.current[`${year}_${wr.quarter}_${sectionSlug}_${s}`] !== undefined);
+        if (!alreadyCached) {
+          toFetch.push({ 
+            docId: `${year}_${wr.quarter}_${sectionSlug}_${slugs[0]}`,
+            allDocIds: slugs.map(s => `${year}_${wr.quarter}_${sectionSlug}_${s}`),
+            month: m, 
+            member 
+          });
         }
       }
     }
@@ -2839,22 +2863,49 @@ export default function Dashboard() {
     if (toFetch.length === 0) return;
 
     // Mark pending to avoid duplicate in-flight requests
-    toFetch.forEach(item => { qaCacheRef.current[item.docId] = null; });
+    toFetch.forEach(item => {
+      (item as any).allDocIds?.forEach((id: string) => {
+        qaCacheRef.current[id] = null;
+      });
+    });
 
     try {
       const snaps = await Promise.all(
-        toFetch.map(item => getDoc(doc(db, 'quality_evaluations', item.docId)).catch(() => null))
+        toFetch.map(async (item: any) => {
+          // Try primary docId first
+          try {
+            const snap = await getDoc(doc(db, 'quality_evaluations', item.docId));
+            if (snap.exists()) return snap.data();
+          } catch {}
+          // Try alternate alias docIds if primary doesn't exist
+          if (item.allDocIds) {
+            for (let i = 1; i < item.allDocIds.length; i++) {
+              try {
+                const altSnap = await getDoc(doc(db, 'quality_evaluations', item.allDocIds[i]));
+                if (altSnap.exists()) return altSnap.data();
+              } catch {}
+            }
+          }
+          // Fallback to baseline
+          const idsToCheck = item.allDocIds || [item.docId];
+          for (const dId of idsToCheck) {
+            const baseDoc = BASELINE_QUALITY_EVALUATIONS[dId] || getQualityEvalDoc(BASELINE_QUALITY_EVALUATIONS, dId);
+            if (baseDoc) return baseDoc;
+          }
+          return null;
+        })
       );
 
       let hasNewData = false;
       const syncedMonthsMap = qaCacheRef.current['config_sync_status']?.synced_months || null;
 
-      snaps.forEach((snap, idx) => {
-        const { docId, month, member } = toFetch[idx];
-        const baseDoc = BASELINE_QUALITY_EVALUATIONS[docId] || getQualityEvalDoc(BASELINE_QUALITY_EVALUATIONS, docId);
-        const data = (snap && snap.exists()) ? snap.data() : (baseDoc || null);
+      snaps.forEach((data, idx) => {
+        const { docId, allDocIds, month, member } = toFetch[idx] as any;
+        const targetIds = allDocIds || [docId];
         if (data) {
-          qaCacheRef.current[docId] = data;
+          targetIds.forEach((id: string) => {
+            qaCacheRef.current[id] = data;
+          });
           hasNewData = true;
 
           // If this is for a sync-enabled month (SEP 2026+) that has been synced and quality is complete, keep metric table in sync
@@ -2866,9 +2917,8 @@ export default function Dashboard() {
             if (isComplete && qualityAvg) {
               const cacheKey = `${team}_${year}`;
               const cached = teamDataCacheRef.current[cacheKey];
-              const memberLower = (member.agent_name || "").trim().toLowerCase();
               const existingMetric = cached?.allYearData.find(
-                (r: any) => (r.agent_name || "").trim().toLowerCase() === memberLower && r.month === month
+                (r: any) => isSameAgent(r.agent_name, member.agent_name) && r.month === month
               );
               if (existingMetric && existingMetric.quality !== qualityAvg) {
                 existingMetric.quality = qualityAvg;
@@ -2879,7 +2929,9 @@ export default function Dashboard() {
             }
           }
         } else {
-          qaCacheRef.current[docId] = {};
+          targetIds.forEach((id: string) => {
+            qaCacheRef.current[id] = {};
+          });
         }
       });
 
@@ -2955,26 +3007,42 @@ export default function Dashboard() {
         ]);
 
         const younisRoster = (younisMembersSnap && younisMembersSnap.docs.length > 0)
-          ? (younisMembersSnap.docs.map(d => ({ id: d.id, ...d.data(), team: 'Younis Kamal Team' })) as any[])
+          ? (younisMembersSnap.docs.map(d => {
+              const data = d.data();
+              const canon = getCanonicalAgentName(data.agent_name || data.name || "");
+              return { id: d.id, ...data, agent_name: canon, name: canon, team: 'Younis Kamal Team' };
+            }) as any[])
           : (defaultYounis as any[]);
         const ankidoRoster = (ankidoMembersSnap && ankidoMembersSnap.docs.length > 0)
-          ? (ankidoMembersSnap.docs.map(d => ({ id: d.id, ...d.data(), team: 'Ankido Buya Team' })) as any[])
+          ? (ankidoMembersSnap.docs.map(d => {
+              const data = d.data();
+              const canon = getCanonicalAgentName(data.agent_name || data.name || "");
+              return { id: d.id, ...data, agent_name: canon, name: canon, team: 'Ankido Buya Team' };
+            }) as any[])
           : (defaultAnkido as any[]);
         const roster = [...younisRoster, ...ankidoRoster].sort((a: any, b: any) => (a.agent_name > b.agent_name ? 1 : -1));
 
-        const younisNames = new Set(younisRoster.map((d: any) => (d.agent_name || "").trim().toLowerCase()));
-        const ankidoNames = new Set(ankidoRoster.map((d: any) => (d.agent_name || "").trim().toLowerCase()));
+        const younisNames = new Set(younisRoster.map((d: any) => getCanonicalAgentName(d.agent_name || "")));
+        const ankidoNames = new Set(ankidoRoster.map((d: any) => getCanonicalAgentName(d.agent_name || "")));
 
         const younisData = younisMetricsSnap
           ? (younisMetricsSnap.docs
-              .map(d => ({ id: d.id, ...d.data(), team: 'Younis Kamal Team' })) as any[])
-              .filter((d: any) => younisNames.has((d.agent_name || "").trim().toLowerCase()))
+              .map(d => {
+                const data = d.data();
+                const canon = getCanonicalAgentName(data.agent_name || "");
+                return { id: d.id, ...data, agent_name: canon || data.agent_name, team: 'Younis Kamal Team' };
+              }) as any[])
+              .filter((d: any) => younisNames.has(getCanonicalAgentName(d.agent_name || "")))
           : defaultBaselineMetrics.filter(m => m.team === 'Younis Kamal Team');
 
         const ankidoData = ankidoMetricsSnap
           ? (ankidoMetricsSnap.docs
-              .map(d => ({ id: d.id, ...d.data(), team: 'Ankido Buya Team' })) as any[])
-              .filter((d: any) => ankidoNames.has((d.agent_name || "").trim().toLowerCase()))
+              .map(d => {
+                const data = d.data();
+                const canon = getCanonicalAgentName(data.agent_name || "");
+                return { id: d.id, ...data, agent_name: canon || data.agent_name, team: 'Ankido Buya Team' };
+              }) as any[])
+              .filter((d: any) => ankidoNames.has(getCanonicalAgentName(d.agent_name || "")))
           : defaultBaselineMetrics.filter(m => m.team === 'Ankido Buya Team');
 
         let allYearData = [...younisData, ...ankidoData];
@@ -3063,14 +3131,22 @@ export default function Dashboard() {
       ]);
 
       const roster = (membersSnap && membersSnap.docs.length > 0)
-        ? (membersSnap.docs.map(d => ({ id: d.id, ...d.data() })) as any[]).sort((a, b) => (a.agent_name > b.agent_name ? 1 : -1))
+        ? (membersSnap.docs.map(d => {
+            const data = d.data();
+            const canon = getCanonicalAgentName(data.agent_name || data.name || "");
+            return { id: d.id, ...data, agent_name: canon, name: canon };
+          }) as any[]).sort((a, b) => (a.agent_name > b.agent_name ? 1 : -1))
         : defaultRoster;
 
-      const rosterNames = new Set(roster.map(d => (d.agent_name || "").trim().toLowerCase()));
+      const rosterNames = new Set(roster.map(d => getCanonicalAgentName(d.agent_name || "")));
       let allYearData = (metricsSnap && metricsSnap.docs.length > 0)
         ? (metricsSnap.docs
-            .map(d => ({ id: d.id, ...d.data() }))
-            .filter((d: any) => rosterNames.has((d.agent_name || "").trim().toLowerCase())) as any[])
+            .map(d => {
+              const data = d.data();
+              const canon = getCanonicalAgentName(data.agent_name || "");
+              return { id: d.id, ...data, agent_name: canon || data.agent_name };
+            })
+            .filter((d: any) => rosterNames.has(getCanonicalAgentName(d.agent_name || ""))) as any[])
         : defaultMetrics;
 
       if (allYearData.length === 0 && defaultMetrics.length > 0) {

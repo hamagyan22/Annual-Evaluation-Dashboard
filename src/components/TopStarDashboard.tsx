@@ -13,6 +13,7 @@ import {
 import { formatDuration, checkTeamCompleteness, fetchTopStarSyncStatus, invalidateTopStarCache } from "@/lib/topStarUtils";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
+import { getCanonicalAgentName } from "@/lib/canonicalAgents";
 import TopStarCelebrationVideoModal from "./TopStarCelebrationVideoModal";
 
 interface TopStarDashboardProps {
@@ -26,70 +27,6 @@ interface TopStarDashboardProps {
   toggleDarkMode?: () => void;
 }
 
-const CANONICAL_NAMES: Record<string, string> = {
-  "dhuha khanjer noori": "Dhuha Khanjer",
-  "dhuha khanjer": "Dhuha Khanjer",
-  "rasan ismail musa": "Rassan Ismail",
-  "rasan ismail": "Rassan Ismail",
-  "rassan ismail": "Rassan Ismail",
-  "sawin sartib": "Sawen",
-  "sawen sartib": "Sawen",
-  "sawen": "Sawen",
-  "soma muhammed": "Soma Sherko",
-  "soma sherko": "Soma Sherko",
-  "yousif rashid darwesh": "Yousif Rashid",
-  "yousif rashid": "Yousif Rashid",
-  "ahmed rustam": "Ahmed Rustam",
-  "akar omer": "Akar Omer",
-  "bana ahmed": "Bana Ahmed",
-  "ismail ahmed": "Ismail Ahmed",
-  "nawen maadh": "Nawen Maadh",
-  "ossama saadi": "Ossama Saadi",
-  "sana dler": "Sana Dler",
-  "zahra yousif": "Zahra Yousif",
-
-  // Call Team
-  "shahab ahmed": "Shahab Ahmed",
-  "shahab ahmed muhammed": "Shahab Ahmed",
-  "zhalla sherzad": "Zhalla Sherzad",
-  "zhala sherzad": "Zhalla Sherzad",
-  "marwa khaleel": "Marwa Khaleel",
-  "marwa khalil": "Marwa Khaleel",
-  "haneen abd-al kareem": "Haneen Abd-Al Kareem",
-  "haneen abdulkarim": "Haneen Abd-Al Kareem",
-  "hannen iskandar": "Haneen Abd-Al Kareem",
-  "azad muhammad abdullah": "Azad muhammad abdullah",
-  "azad muhammad": "Azad muhammad abdullah",
-  "alla satar": "Alla Satar",
-  "alla sattar": "Alla Satar",
-  "amar hussein salih": "Amar Hussein Salih",
-  "amar hussein": "Amar Hussein Salih",
-  "kazhvan wirya": "Kazhvan Wirya",
-  "kani sami": "Kani Sami",
-  "lana halmat rafeeq": "Lana Halmat Rafeeq",
-  "lana halmat": "Lana Halmat Rafeeq",
-  "laveen khaleel": "Laveen Khaleel",
-  "mokhalad ali": "Mokhalad Ali",
-  "muzhda omar ali": "Muzhda Omar Ali",
-  "muzhda omar": "Muzhda Omar Ali",
-  "rabar mohammed": "Rabar Mohammed",
-  "saja bashar anwar": "Saja Bashar Anwar",
-  "saja bashar": "Saja Bashar Anwar",
-  "salam sadam muhammad": "Salam Sadam Muhammad",
-  "salam sadam": "Salam Sadam Muhammad",
-  "sarbaz namiq hasan": "Sarbaz Namiq Hasan",
-  "sarbaz namiq": "Sarbaz Namiq Hasan",
-  "taban sirwan": "Taban Sirwan",
-  "zainab khalid rasheed": "Zainab Khalid Rasheed",
-  "zainab khalid": "Zainab Khalid Rasheed",
-  "zhalla salam": "Zhalla Salam",
-  "frmesk younis": "Frmesk Younis",
-  "haseeb adeeb": "Haseeb Adeeb",
-  "hewr adnan": "Hewr Adnan",
-  "aya yasin": "Aya Yasin",
-  "ahmed jalil": "Ahmed Jalil"
-};
-
 const DEFAULT_CHAT_AGENTS = [
   "Ahmed Rustam", "Akar Omer", "Bana Ahmed", "Dhuha Khanjer", "Ismail Ahmed",
   "Nawen Maadh", "Ossama Saadi", "Rassan Ismail", "Sana Dler", "Sawen",
@@ -97,18 +34,17 @@ const DEFAULT_CHAT_AGENTS = [
 ];
 
 const DEFAULT_CALL_AGENTS = [
-  "Ahmed Jalil", "Alla Satar", "Amar Hussein Salih", "Aya Yasin", "Azad muhammad abdullah",
+  "Ahmed Jalil", "Alla Satar", "Amar Hussein Salih", "Aya Yasin", "Azad Muhammad",
   "Frmesk Younis", "Haneen Abd-Al Kareem", "Haseeb Adeeb", "Hewr Adnan", "Kani Sami",
-  "Kazhvan Wirya", "Lana Halmat Rafeeq", "Laveen Khaleel", "Marwa Khaleel", "Mokhalad Ali",
+  "Kazhvan Wirya", "Lana Halmat Rafeeq", "Laveen Khaleel", "Marwa Khalil", "Mokhalad Ali",
   "Muzhda Omar Ali", "Rabar Mohammed", "Saja Bashar Anwar", "Salam Sadam Muhammad",
-  "Sarbaz Namiq Hasan", "Shahab Ahmed", "Taban Sirwan", "Zainab Khalid Rasheed",
+  "Sarbaz Namiq Hasan", "Shahab Ahmed Muhammed", "Taban Sirwan", "Zainab Khalid Rasheed",
   "Zhalla Sherzad", "Zhalla Salam"
 ];
 
 function normalizeName(name: string): string {
   if (!name) return "";
-  const key = name.trim().toLowerCase();
-  return CANONICAL_NAMES[key] || name.trim();
+  return getCanonicalAgentName(name);
 }
 
 const MONTHS = [

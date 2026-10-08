@@ -11,6 +11,7 @@ import {
   PhoneCall, ShieldCheck, CheckCircle, Calendar,
   Clock, Eye, Lock, MessageSquare
 } from "lucide-react";
+import { getCanonicalAgentName } from "@/lib/canonicalAgents";
 
 export interface AnnualEvaluationDashboardProps {
   userProfile: any;
@@ -29,7 +30,9 @@ export function toTitleCase(str: string) {
 }
 
 export function normalizeAgentName(raw: string): string {
-  return (raw || "")
+  if (!raw) return "";
+  const canonical = getCanonicalAgentName(raw);
+  return (canonical || raw)
     .toLowerCase()
     .replace(/[\._\-]/g, ' ')
     .replace(/\s+/g, ' ')

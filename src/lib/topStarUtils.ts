@@ -1,5 +1,6 @@
 import { db } from "@/lib/firebaseClient";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { getCanonicalAgentName } from "@/lib/canonicalAgents";
 
 export const CANONICAL_NAMES: Record<string, string> = {
   // Chat Team
@@ -73,18 +74,17 @@ export const DEFAULT_CHAT_AGENTS = [
 ];
 
 export const DEFAULT_CALL_AGENTS = [
-  "Ahmed Jalil", "Alla Satar", "Amar Hussein Salih", "Aya Yasin", "Azad muhammad abdullah",
+  "Ahmed Jalil", "Alla Satar", "Amar Hussein Salih", "Aya Yasin", "Azad Muhammad",
   "Frmesk Younis", "Haneen Abd-Al Kareem", "Haseeb Adeeb", "Hewr Adnan", "Kani Sami",
-  "Kazhvan Wirya", "Lana Halmat Rafeeq", "Laveen Khaleel", "Marwa Khaleel", "Mokhalad Ali",
+  "Kazhvan Wirya", "Lana Halmat Rafeeq", "Laveen Khaleel", "Marwa Khalil", "Mokhalad Ali",
   "Muzhda Omar Ali", "Rabar Mohammed", "Saja Bashar Anwar", "Salam Sadam Muhammad",
-  "Sarbaz Namiq Hasan", "Shahab Ahmed", "Taban Sirwan", "Zainab Khalid Rasheed",
+  "Sarbaz Namiq Hasan", "Shahab Ahmed Muhammed", "Taban Sirwan", "Zainab Khalid Rasheed",
   "Zhalla Sherzad", "Zhalla Salam"
 ];
 
 export function normalizeName(name: string): string {
   if (!name) return "";
-  const key = name.trim().toLowerCase();
-  return CANONICAL_NAMES[key] || name.trim();
+  return getCanonicalAgentName(name);
 }
 
 export const num = (v: any): number | null => {

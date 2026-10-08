@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { compressImageFile } from "@/lib/imageUtils";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
-import { BASELINE_QUALITY_EVALUATIONS, expandQualityDocAliases, getQualityEvalDoc } from "@/lib/baselineQualityData";
+import { BASELINE_QUALITY_EVALUATIONS, expandQualityDocAliases, getQualityEvalDoc, SLUG_ALIASES } from "@/lib/baselineQualityData";
+import { getCanonicalAgentName as getCanonicalNameAuthority } from "@/lib/canonicalAgents";
 
 interface QualityDashboardProps {
   userProfile: any;
@@ -119,6 +120,8 @@ const REMOVED_QA_AGENTS = new Set([
 
 function getCanonicalAgentName(name: string): string {
   const trimmed = (name || "").trim();
+  const authority = getCanonicalNameAuthority(trimmed);
+  if (authority) return authority;
   const lower = trimmed.toLowerCase();
   return CANONICAL_AGENT_NAMES[lower] || trimmed;
 }
@@ -1130,7 +1133,7 @@ export default function QualityDashboard({
         delete mergedTimestamps[key];
         if (altKey) delete mergedTimestamps[altKey];
       }
-      return {
+      const nextMap = {
         ...prev,
         [docId]: {
           ...currentDoc,
@@ -1143,6 +1146,8 @@ export default function QualityDashboard({
           updated_at: nowIso
         }
       };
+      expandQualityDocAliases(nextMap);
+      return nextMap;
     });
 
     setSaveStatus("saving");
@@ -1152,7 +1157,7 @@ export default function QualityDashboard({
 
     saveTimeoutRef.current[docId] = setTimeout(async () => {
       try {
-        await setDoc(doc(db, "quality_evaluations", docId), {
+        const payload = {
           year: selectedYear,
           quarter: effectiveQuarter,
           evaluator: section.evaluator,
@@ -1162,7 +1167,14 @@ export default function QualityDashboard({
           cell_timestamps: nextTimestamps,
           _arch: getSystemAuthor(),
           updated_at: nowIso
-        }, { merge: true });
+        };
+        await setDoc(doc(db, "quality_evaluations", docId), payload, { merge: true });
+        for (const [regex, replacement] of SLUG_ALIASES) {
+          if (regex.test(docId)) {
+            const aliasKey = docId.replace(regex, replacement);
+            setDoc(doc(db, "quality_evaluations", aliasKey), payload, { merge: true }).catch(() => {});
+          }
+        }
         setSaveStatus("saved");
         setTimeout(() => setSaveStatus("idle"), 1500);
       } catch (e) {
@@ -3078,7 +3090,7 @@ export default function QualityDashboard({
           links: {},
           cell_timestamps: {}
         };
-        return {
+        const nextMap = {
           ...prev,
           [docId]: {
             ...currentDoc,
@@ -3088,9 +3100,17 @@ export default function QualityDashboard({
             updated_at: nowIso
           }
         };
+        expandQualityDocAliases(nextMap);
+        return nextMap;
       });
 
       await setDoc(doc(db, "quality_evaluations", docId), firestorePayload, { merge: true });
+      for (const [regex, replacement] of SLUG_ALIASES) {
+        if (regex.test(docId)) {
+          const aliasKey = docId.replace(regex, replacement);
+          setDoc(doc(db, "quality_evaluations", aliasKey), firestorePayload, { merge: true }).catch(() => {});
+        }
+      }
 
       setActiveNoteModal(null);
     } catch (e: any) {
@@ -3125,7 +3145,7 @@ export default function QualityDashboard({
           delete updatedNotes[k];
           delete updatedLinks[k];
         });
-        return {
+        const nextMap = {
           ...prev,
           [docId]: {
             ...currentDoc,
@@ -3134,6 +3154,8 @@ export default function QualityDashboard({
             updated_at: nowIso
           }
         };
+        expandQualityDocAliases(nextMap);
+        return nextMap;
       });
 
       // 2. Prepare payload using deleteField() for all candidate keys
@@ -3145,11 +3167,17 @@ export default function QualityDashboard({
         deletePayload[`links.${k}`] = deleteField();
       });
 
-      // 3. Persist to Firestore
+      // 3. Persist to Firestore (both canonical and alias doc)
       try {
         await updateDoc(doc(db, "quality_evaluations", docId), deletePayload);
       } catch (upErr) {
         await setDoc(doc(db, "quality_evaluations", docId), deletePayload, { merge: true });
+      }
+      for (const [regex, replacement] of SLUG_ALIASES) {
+        if (regex.test(docId)) {
+          const aliasKey = docId.replace(regex, replacement);
+          updateDoc(doc(db, "quality_evaluations", aliasKey), deletePayload).catch(() => {});
+        }
       }
 
       // 4. Close modal
