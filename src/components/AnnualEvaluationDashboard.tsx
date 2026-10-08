@@ -627,13 +627,13 @@ export default function AnnualEvaluationDashboard({
         const suggestions: Record<string, number> = {};
 
         if (isChat) {
-          // Chat Rating Benchmarks (Image 4)
-          // Exam: 99-100 (5), 96-98 (4), 95 (3), 90-94 (2), <89 (1)
+          // Chat Rating Benchmarks (Exact Image Table Replica)
+          // Exam: 99-100 (5), 96-98 (4), 90-95 (3), 85-89 (2), <85 (1)
           if (avgExam !== null) {
             if (avgExam >= 99) suggestions.exam = 5;
             else if (avgExam >= 96) suggestions.exam = 4;
-            else if (avgExam >= 95) suggestions.exam = 3;
-            else if (avgExam >= 90) suggestions.exam = 2;
+            else if (avgExam >= 90) suggestions.exam = 3;
+            else if (avgExam >= 85) suggestions.exam = 2;
             else suggestions.exam = 1;
             suggestions.knowledge = suggestions.exam;
           }
@@ -653,12 +653,12 @@ export default function AnnualEvaluationDashboard({
             else if (avgAhtSec <= 359) suggestions.aht = 2;
             else suggestions.aht = 1;
           }
-          // ART: Less than 1:15 (<75s -> 5), 1:16-1:30 (76-90s -> 4), 1:31-2:30 (91-150s -> 3), 2:31-3:00 (151-180s -> 2), >3:01 (>181s -> 1)
+          // ART: Less than 1:30 (<=90s -> 5), 1:31-1:59 (91-119s -> 4), 2:00-2:59 (120-179s -> 3), 3:00-3:30 (180-210s -> 2), >3:31 (>210s -> 1)
           if (avgArtSec !== null) {
-            if (avgArtSec <= 75) suggestions.art = 5;
-            else if (avgArtSec <= 90) suggestions.art = 4;
-            else if (avgArtSec <= 150) suggestions.art = 3;
-            else if (avgArtSec <= 180) suggestions.art = 2;
+            if (avgArtSec <= 90) suggestions.art = 5;
+            else if (avgArtSec <= 119) suggestions.art = 4;
+            else if (avgArtSec <= 179) suggestions.art = 3;
+            else if (avgArtSec <= 210) suggestions.art = 2;
             else suggestions.art = 1;
           }
           // Productivity: >13 (5), 11-12.99 (4), 8.5-10.99 (3), 7.50-8.49 (2), <7.50 (1)
@@ -670,7 +670,7 @@ export default function AnnualEvaluationDashboard({
             else suggestions.productivity = 1;
           }
         } else {
-          // Calls Rating Benchmarks (Image 4)
+          // Calls Rating Benchmarks (Exact Image Table Replica)
           // QA: 99-100 (5), 96-98 (4), 95 (3), 90-94 (2), <89 (1)
           if (avgQA !== null) {
             if (avgQA >= 99) suggestions.qa = 5;
@@ -679,20 +679,20 @@ export default function AnnualEvaluationDashboard({
             else if (avgQA >= 90) suggestions.qa = 2;
             else suggestions.qa = 1;
           }
-          // AHT: Less than 2:54 (<174s -> 5), 2:55-2:59 (175-179s -> 4), 3:00-3:10 (180-190s -> 3), 3:11-3:30 (191-210s -> 2), >3:31 (>211s -> 1)
+          // AHT: Less than 2:44 (<=164s -> 5), 2:45-2:59 (165-179s -> 4), 3:00-3:10 (180-190s -> 3), 3:11-3:30 (191-210s -> 2), >3:31 (>210s -> 1)
           if (avgAhtSec !== null) {
-            if (avgAhtSec < 174) suggestions.aht = 5;
+            if (avgAhtSec <= 164) suggestions.aht = 5;
             else if (avgAhtSec <= 179) suggestions.aht = 4;
             else if (avgAhtSec <= 190) suggestions.aht = 3;
             else if (avgAhtSec <= 210) suggestions.aht = 2;
             else suggestions.aht = 1;
           }
-          // Exam / Knowledge: 99-100 (5), 96-98 (4), 95 (3), 90-94 (2), <89 (1)
+          // Exam / Knowledge: 99-100 (5), 96-98 (4), 90-95 (3), 85-89 (2), <85 (1)
           if (avgExam !== null) {
             if (avgExam >= 99) suggestions.knowledge = 5;
             else if (avgExam >= 96) suggestions.knowledge = 4;
-            else if (avgExam >= 95) suggestions.knowledge = 3;
-            else if (avgExam >= 90) suggestions.knowledge = 2;
+            else if (avgExam >= 90) suggestions.knowledge = 3;
+            else if (avgExam >= 85) suggestions.knowledge = 2;
             else suggestions.knowledge = 1;
             suggestions.exam = suggestions.knowledge;
           }
@@ -2149,14 +2149,14 @@ export default function AnnualEvaluationDashboard({
                         <tr className="bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
                           <td className="p-3 text-left font-black">5 ⭐ Outstanding</td>
                           <td className="p-3 font-mono font-bold">99% - 100%</td>
-                          <td className="p-3 font-mono font-bold">&lt; 2:54</td>
+                          <td className="p-3 font-mono font-bold">&lt; 2:44</td>
                           <td className="p-3 font-mono font-bold">99% - 100%</td>
                           <td className="p-3 font-mono font-bold">&gt; 93%</td>
                         </tr>
                         <tr className="bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
                           <td className="p-3 text-left font-black">4 ⭐ Exceeds Expectations</td>
                           <td className="p-3 font-mono font-bold">96% - 98%</td>
-                          <td className="p-3 font-mono font-bold">2:55 - 2:59</td>
+                          <td className="p-3 font-mono font-bold">2:45 - 2:59</td>
                           <td className="p-3 font-mono font-bold">96% - 98%</td>
                           <td className="p-3 font-mono font-bold">91% - 92%</td>
                         </tr>
@@ -2164,28 +2164,28 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 text-left font-black">3 ⭐ Meets Expectations</td>
                           <td className="p-3 font-mono font-bold">95%</td>
                           <td className="p-3 font-mono font-bold">3:00 - 3:10</td>
-                          <td className="p-3 font-mono font-bold">95%</td>
+                          <td className="p-3 font-mono font-bold">90% - 95%</td>
                           <td className="p-3 font-mono font-bold">90%</td>
                         </tr>
                         <tr className="bg-amber-50/50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-300">
                           <td className="p-3 text-left font-black">2 ⭐ Developing</td>
                           <td className="p-3 font-mono font-bold">90% - 94%</td>
                           <td className="p-3 font-mono font-bold">3:11 - 3:30</td>
-                          <td className="p-3 font-mono font-bold">90% - 94%</td>
+                          <td className="p-3 font-mono font-bold">85% - 89%</td>
                           <td className="p-3 font-mono font-bold">88% - 89%</td>
                         </tr>
                         <tr className="bg-rose-50/50 dark:bg-rose-950/20 text-rose-900 dark:text-rose-300">
                           <td className="p-3 text-left font-black">1 ⭐ Needs Improvement</td>
                           <td className="p-3 font-mono font-bold">&lt; 89%</td>
                           <td className="p-3 font-mono font-bold">&gt; 3:31</td>
-                          <td className="p-3 font-mono font-bold">&lt; 89%</td>
+                          <td className="p-3 font-mono font-bold">&lt; 85%</td>
                           <td className="p-3 font-mono font-bold">&lt; 87%</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
 
-                  {/* Excel Matrix Grid (Exact Image 4 Replica) */}
+                  {/* Excel Matrix Grid (Exact Image Table Replica) */}
                   <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700">
                     <h5 className="text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2.5 flex items-center gap-1.5">
                       <span>Excel Matrix Reference (Calls)</span>
@@ -2213,8 +2213,8 @@ export default function AnnualEvaluationDashboard({
                           </tr>
                           <tr>
                             <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">AHT</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800 text-emerald-600 dark:text-emerald-400">Less than 2:54</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">2:55-2:59</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800 text-emerald-600 dark:text-emerald-400">Less than 2:44</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">2:45-2:59</td>
                             <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3:00-3:10</td>
                             <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3:11-3:30</td>
                             <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Greater than 3:31</td>
@@ -2223,9 +2223,9 @@ export default function AnnualEvaluationDashboard({
                             <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">Exam</td>
                             <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">99-100</td>
                             <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">96-98</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">95</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">90-94</td>
-                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 89</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">90-95</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">85-89</td>
+                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 85</td>
                           </tr>
                           <tr>
                             <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">Productivity</td>
@@ -2276,7 +2276,7 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono font-bold">99% - 100%</td>
                           <td className="p-3 font-mono font-bold">99% - 100%</td>
                           <td className="p-3 font-mono font-bold">3:00 - 3:30</td>
-                          <td className="p-3 font-mono font-bold">&lt; 1:15</td>
+                          <td className="p-3 font-mono font-bold">&lt; 1:30</td>
                           <td className="p-3 font-mono font-bold">&gt; 13</td>
                         </tr>
                         <tr className="bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
@@ -2284,38 +2284,38 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono font-bold">96% - 98%</td>
                           <td className="p-3 font-mono font-bold">96% - 98%</td>
                           <td className="p-3 font-mono font-bold">3:31 - 4:00</td>
-                          <td className="p-3 font-mono font-bold">1:16 - 1:30</td>
+                          <td className="p-3 font-mono font-bold">1:31 - 1:59</td>
                           <td className="p-3 font-mono font-bold">11 - 12.99</td>
                         </tr>
                         <tr className="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-300">
                           <td className="p-3 text-left font-black">3 ⭐ Meets Expectations</td>
-                          <td className="p-3 font-mono font-bold">95%</td>
+                          <td className="p-3 font-mono font-bold">90% - 95%</td>
                           <td className="p-3 font-mono font-bold">95%</td>
                           <td className="p-3 font-mono font-bold">4:01 - 4:59</td>
-                          <td className="p-3 font-mono font-bold">1:31 - 2:30</td>
+                          <td className="p-3 font-mono font-bold">2:00 - 2:59</td>
                           <td className="p-3 font-mono font-bold">8.50 - 10.99</td>
                         </tr>
                         <tr className="bg-amber-50/50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-300">
                           <td className="p-3 text-left font-black">2 ⭐ Developing</td>
-                          <td className="p-3 font-mono font-bold">90% - 94%</td>
+                          <td className="p-3 font-mono font-bold">85% - 89%</td>
                           <td className="p-3 font-mono font-bold">90% - 94%</td>
                           <td className="p-3 font-mono font-bold">5:00 - 5:59</td>
-                          <td className="p-3 font-mono font-bold">2:31 - 3:00</td>
+                          <td className="p-3 font-mono font-bold">3:00 - 3:30</td>
                           <td className="p-3 font-mono font-bold">7.50 - 8.49</td>
                         </tr>
                         <tr className="bg-rose-50/50 dark:bg-rose-950/20 text-rose-900 dark:text-rose-300">
                           <td className="p-3 text-left font-black">1 ⭐ Needs Improvement</td>
-                          <td className="p-3 font-mono font-bold">&lt; 89%</td>
+                          <td className="p-3 font-mono font-bold">&lt; 85%</td>
                           <td className="p-3 font-mono font-bold">&lt; 89%</td>
                           <td className="p-3 font-mono font-bold">&gt; 6:00</td>
-                          <td className="p-3 font-mono font-bold">&gt; 3:01</td>
+                          <td className="p-3 font-mono font-bold">&gt; 3:31</td>
                           <td className="p-3 font-mono font-bold">&lt; 7.50</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
 
-                  {/* Excel Matrix Grid (Exact Image 4 Replica) */}
+                  {/* Excel Matrix Grid (Exact Image Table Replica) */}
                   <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700">
                     <h5 className="text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2.5 flex items-center gap-1.5">
                       <span>Excel Matrix Reference (Chat)</span>
@@ -2337,9 +2337,9 @@ export default function AnnualEvaluationDashboard({
                             <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">Exam</td>
                             <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">99-100</td>
                             <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">96-98</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">95</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">90-94</td>
-                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 89</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">90-95</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">85-89</td>
+                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 85</td>
                           </tr>
                           <tr>
                             <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">QA</td>
@@ -2351,7 +2351,7 @@ export default function AnnualEvaluationDashboard({
                           </tr>
                           <tr>
                             <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">AHT</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3-3:30</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3:00-3:30</td>
                             <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3:31-4:00</td>
                             <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">4:01-4:59</td>
                             <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">5:00-5:59</td>
@@ -2359,11 +2359,11 @@ export default function AnnualEvaluationDashboard({
                           </tr>
                           <tr>
                             <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">ART</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800 text-emerald-600 dark:text-emerald-400">Less than 1:15</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">1:16-1:30</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">1:31-2:30</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">2:31-3:00</td>
-                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Greater than 3:01</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800 text-emerald-600 dark:text-emerald-400">Less than 1:30</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">1:31-1:59</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">2:00-2:59</td>
+                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3:00-3:30</td>
+                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Greater than 3:31</td>
                           </tr>
                           <tr>
                             <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">Productivity</td>

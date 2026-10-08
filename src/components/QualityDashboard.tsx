@@ -134,6 +134,32 @@ function isValidAgentName(name: string): boolean {
   return true;
 }
 
+const QA_MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
+function isMemberActiveInQa(
+  member: any,
+  year: string,
+  activeMonthIdx: number
+): boolean {
+  if (!member) return false;
+  if (!member.resigned_month || !member.resigned_year) {
+    if (member.is_deleted === true || member.is_active === false) {
+      return false;
+    }
+    return true;
+  }
+  const pYear = parseInt(String(year), 10);
+  const rYear = parseInt(String(member.resigned_year), 10);
+  if (isNaN(pYear) || isNaN(rYear)) return true;
+  if (pYear < rYear) return true;
+  if (pYear > rYear) return false;
+
+  const rMonthIdx = QA_MONTHS.indexOf(member.resigned_month.toUpperCase());
+  if (rMonthIdx === -1) return true;
+
+  return activeMonthIdx < rMonthIdx;
+}
+
 // Helper to determine current year, quarter, and week dynamically
 function getCurrentPeriod(): { year: string; quarter: string; week: number } {
   const now = new Date();
@@ -1184,6 +1210,15 @@ export default function QualityDashboard({
     }, 450);
   }, [selectedYear, selectedQuarter, trainerMonth, evalData, isCShift, isCallMon, isBonus, getActiveSectionSlug, callShift, dlshadShift]);
 
+  // Determine the active calendar month index (0..11) currently displayed in the main table
+  const activeTableMonthIdx = useMemo(() => {
+    if (selectedMonthFilter !== null) return selectedMonthFilter;
+    const qIdx = ["Q1", "Q2", "Q3", "Q4"].indexOf(selectedQuarter);
+    const baseMonth = (qIdx >= 0 ? qIdx : 0) * 3;
+    const monthInQuarter = Math.min(2, Math.floor((selectedWeek - 1) / 4));
+    return baseMonth + monthInQuarter;
+  }, [selectedMonthFilter, selectedQuarter, selectedWeek]);
+
   // Section CSRs strictly pulled and deduplicated from live team_members
   const sectionCSRs = useMemo(() => {
     const result: Record<string, string[]> = {};
@@ -1192,23 +1227,23 @@ export default function QualityDashboard({
       let teamAgents: string[] = [];
       if (sec.id === "mohammed_azad") {
         teamAgents = rosterMembers
-          .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
+          .filter(m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && isMemberActiveInQa(m, selectedYear, activeTableMonthIdx))
           .map(m => getCanonicalAgentName((m.agent_name || m.name || "").trim()))
           .filter(isValidAgentName);
         if (teamAgents.length === 0) {
           teamAgents = DEFAULT_COMPANY_EMPLOYEES
-            .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
+            .filter(m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && isMemberActiveInQa(m, selectedYear, activeTableMonthIdx))
             .map(m => getCanonicalAgentName(m.agent_name))
             .filter(isValidAgentName);
         }
       } else {
         teamAgents = rosterMembers
-          .filter(m => m.team === sec.team)
+          .filter(m => m.team === sec.team && isMemberActiveInQa(m, selectedYear, activeTableMonthIdx))
           .map(m => getCanonicalAgentName((m.agent_name || m.name || "").trim()))
           .filter(isValidAgentName);
         if (teamAgents.length === 0) {
           teamAgents = DEFAULT_COMPANY_EMPLOYEES
-            .filter(m => m.team === sec.team)
+            .filter(m => m.team === sec.team && isMemberActiveInQa(m, selectedYear, activeTableMonthIdx))
             .map(m => getCanonicalAgentName(m.agent_name))
             .filter(isValidAgentName);
         }
@@ -1225,12 +1260,16 @@ export default function QualityDashboard({
         if (docId.startsWith(prefix) && docData?.csr_name) {
           const cName = getCanonicalAgentName(docData.csr_name.trim());
           if (isValidAgentName(cName)) {
-            // Strictly exclude any agent belonging to another team in rosterMembers (unless sec is mohammed_azad)
+            // Strictly exclude any agent belonging to another team or resigned in current period
             const isFromOtherTeam = sec.id !== "mohammed_azad" && rosterMembers.some(m => {
               const mName = getCanonicalAgentName((m.agent_name || m.name || "").trim()).toLowerCase();
               return mName === cName.toLowerCase() && m.team && m.team !== sec.team;
             });
-            if (!isFromOtherTeam) {
+            const isResignedInPeriod = rosterMembers.some(m => {
+              const mName = getCanonicalAgentName((m.agent_name || m.name || "").trim()).toLowerCase();
+              return mName === cName.toLowerCase() && !isMemberActiveInQa(m, selectedYear, activeTableMonthIdx);
+            });
+            if (!isFromOtherTeam && !isResignedInPeriod) {
               teamAgents.push(cName);
             }
           }
@@ -1246,7 +1285,7 @@ export default function QualityDashboard({
     });
 
     return result;
-  }, [rosterMembers, evalData, selectedYear, selectedQuarter]);
+  }, [rosterMembers, evalData, selectedYear, selectedQuarter, activeTableMonthIdx]);
 
   // Month names for dropdown
   const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -1663,11 +1702,11 @@ export default function QualityDashboard({
       // In Bonus shift: show Mohammed Dlshad Team for chat team, or combined call teams for call evaluators
       const combined: string[] = isChatTeam
         ? rosterMembers
-            .filter(m => m.team === "Mohammed Dlshad Team")
+            .filter(m => m.team === "Mohammed Dlshad Team" && isMemberActiveInQa(m, selectedYear, activeTableMonthIdx))
             .map(m => getCanonicalAgentName((m.agent_name || m.name || "").trim()))
             .filter(isValidAgentName)
         : rosterMembers
-            .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
+            .filter(m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && isMemberActiveInQa(m, selectedYear, activeTableMonthIdx))
             .map(m => getCanonicalAgentName((m.agent_name || m.name || "").trim()))
             .filter(isValidAgentName);
 
@@ -1678,7 +1717,13 @@ export default function QualityDashboard({
         if (docId.startsWith(prefix) && docData?.csr_name) {
           const cName = getCanonicalAgentName(docData.csr_name.trim());
           if (isValidAgentName(cName)) {
-            combined.push(cName);
+            const isResignedInPeriod = rosterMembers.some(m => {
+              const mName = getCanonicalAgentName((m.agent_name || m.name || "").trim()).toLowerCase();
+              return mName === cName.toLowerCase() && !isMemberActiveInQa(m, selectedYear, activeTableMonthIdx);
+            });
+            if (!isResignedInPeriod) {
+              combined.push(cName);
+            }
           }
         }
       });
@@ -1696,7 +1741,7 @@ export default function QualityDashboard({
     return list.filter(name => name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [
     sectionCSRs, currentSection, searchTerm, isCShift, isCallMon, isBonus, rosterMembers, callMonRoster,
-    selectedMonthFilter, selectedWeek, selectedYear, selectedQuarter, evalData, cShiftWeeklyAdded, getActiveSectionSlug
+    selectedMonthFilter, selectedWeek, selectedYear, selectedQuarter, evalData, cShiftWeeklyAdded, getActiveSectionSlug, activeTableMonthIdx
   ]);
 
   // Compute full completion & sync status for any calendar month index (0..11) in selectedYear
@@ -1736,7 +1781,7 @@ export default function QualityDashboard({
 
     // Build canonical list of agents for this section & quarter
     const teamAgents: string[] = rosterMembers
-      .filter(m => m.team === currentSection.team)
+      .filter(m => m.team === currentSection.team && isMemberActiveInQa(m, selectedYear, mIdx))
       .map(m => getCanonicalAgentName((m.agent_name || m.name || "").trim()))
       .filter(isValidAgentName);
 
@@ -1750,7 +1795,11 @@ export default function QualityDashboard({
             const mName = getCanonicalAgentName((m.agent_name || m.name || "").trim()).toLowerCase();
             return mName === cName.toLowerCase() && m.team && m.team !== currentSection.team;
           });
-          if (!isFromOtherTeam) teamAgents.push(cName);
+          const isResignedInPeriod = rosterMembers.some(m => {
+            const mName = getCanonicalAgentName((m.agent_name || m.name || "").trim()).toLowerCase();
+            return mName === cName.toLowerCase() && !isMemberActiveInQa(m, selectedYear, mIdx);
+          });
+          if (!isFromOtherTeam && !isResignedInPeriod) teamAgents.push(cName);
         }
       }
     });
@@ -1949,14 +1998,6 @@ export default function QualityDashboard({
     syncedMonthsRegistry
   ]);
 
-  // Determine the active calendar month index (0..11) currently displayed in the main table
-  const activeTableMonthIdx = useMemo(() => {
-    if (selectedMonthFilter !== null) return selectedMonthFilter;
-    const qIdx = ["Q1", "Q2", "Q3", "Q4"].indexOf(selectedQuarter);
-    const baseMonth = (qIdx >= 0 ? qIdx : 0) * 3;
-    const monthInQuarter = Math.min(2, Math.floor((selectedWeek - 1) / 4));
-    return baseMonth + monthInQuarter;
-  }, [selectedMonthFilter, selectedQuarter, selectedWeek]);
 
   const currentMonthSyncStatus = useMemo(() => {
     return computeMonthSyncStatus(activeTableMonthIdx);

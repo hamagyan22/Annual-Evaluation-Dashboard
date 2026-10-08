@@ -79,21 +79,22 @@ const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 // Default Criteria Configuration
 const DEFAULT_CRITERIA = {
   chat: {
-    qaMax: 30, qaTarget: 100,
+    qaMax: 30, qaTarget: 99,
     prodMax: 15, prodTarget: 13,
     ahtMax: 15, ahtTarget: 210,
-    artMax: 20, artTarget: 89,
-    examMax: 20, examTarget: 100,
+    artMax: 20, artTarget: 90,
+    examMax: 20, examTarget: 99,
   },
   call: {
-    qaMax: 30, qaTarget: 100,
-    prodMax: 20, prodTarget: 100,
-    ahtMax: 20, ahtTarget: 169,
-    examMax: 20, examTarget: 100,
+    qaMax: 30, qaTarget: 99,
+    prodMax: 20, prodTarget: 93,
+    ahtMax: 20, ahtTarget: 164,
+    examMax: 20, examTarget: 99,
     wrapupMax: 5,
-    holdMax: 5, holdTarget: 45,
+    holdMax: 5, holdTarget: 30,
   }
 };
+
 
 export default function TopStarDashboard({
   userProfile,
@@ -150,20 +151,30 @@ export default function TopStarDashboard({
     });
   };
 
-  // Active rosters
+  // Active rosters (strictly excluding deleted / resigned agents)
   const chatRoster = useMemo(() => {
+    const inactiveSet = new Set(
+      membersList
+        .filter(m => m.is_deleted === true || m.is_active === false || m.resigned_month)
+        .map(m => normalizeName(m.agent_name || m.name))
+    );
     const fromProps = membersList
-      .filter(m => m.team === "Mohammed Dlshad Team")
+      .filter(m => m.team === "Mohammed Dlshad Team" && m.is_deleted !== true && m.is_active !== false && !m.resigned_month)
       .map(m => normalizeName(m.agent_name || m.name));
-    const combined = Array.from(new Set([...fromProps, ...DEFAULT_CHAT_AGENTS]));
+    const combined = Array.from(new Set([...fromProps, ...DEFAULT_CHAT_AGENTS])).filter(n => !inactiveSet.has(n));
     return combined.sort((a, b) => a.localeCompare(b));
   }, [membersList]);
 
   const callRoster = useMemo(() => {
+    const inactiveSet = new Set(
+      membersList
+        .filter(m => m.is_deleted === true || m.is_active === false || m.resigned_month)
+        .map(m => normalizeName(m.agent_name || m.name))
+    );
     const fromProps = membersList
-      .filter(m => m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team")
+      .filter(m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && m.is_deleted !== true && m.is_active !== false && !m.resigned_month)
       .map(m => normalizeName(m.agent_name || m.name));
-    const combined = Array.from(new Set([...fromProps, ...DEFAULT_CALL_AGENTS]));
+    const combined = Array.from(new Set([...fromProps, ...DEFAULT_CALL_AGENTS])).filter(n => !inactiveSet.has(n));
     return combined.sort((a, b) => a.localeCompare(b));
   }, [membersList]);
 
@@ -209,10 +220,16 @@ export default function TopStarDashboard({
     else setLoading(true);
 
     try {
+      const monthVariants = Array.from(new Set([
+        selectedMonth.toUpperCase(),
+        selectedMonth.toLowerCase(),
+        selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1).toLowerCase()
+      ])).filter(Boolean);
+
       const [mohammedSnap, younisSnap, ankidoSnap, statusSnap] = await Promise.all([
-        getDocs(query(collection(db, "mohammed_metrics"), where("year", "==", selectedYear), where("month", "==", selectedMonth))).catch(() => null),
-        getDocs(query(collection(db, "younis_metrics"), where("year", "==", selectedYear), where("month", "==", selectedMonth))).catch(() => null),
-        getDocs(query(collection(db, "ankido_metrics"), where("year", "==", selectedYear), where("month", "==", selectedMonth))).catch(() => null),
+        getDocs(query(collection(db, "mohammed_metrics"), where("year", "==", selectedYear), where("month", "in", monthVariants))).catch(() => null),
+        getDocs(query(collection(db, "younis_metrics"), where("year", "==", selectedYear), where("month", "in", monthVariants))).catch(() => null),
+        getDocs(query(collection(db, "ankido_metrics"), where("year", "==", selectedYear), where("month", "in", monthVariants))).catch(() => null),
         getDoc(doc(db, "settings", "top_star_status")).catch(() => null)
       ]);
 

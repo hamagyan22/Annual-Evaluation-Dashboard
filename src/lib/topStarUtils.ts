@@ -1,6 +1,7 @@
 import { db } from "@/lib/firebaseClient";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { getCanonicalAgentName } from "@/lib/canonicalAgents";
+import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
 
 export const CANONICAL_NAMES: Record<string, string> = {
   // Chat Team
@@ -237,19 +238,19 @@ export interface TopStarCriteria {
 
 export const DEFAULT_CRITERIA: TopStarCriteria = {
   chat: {
-    qaMax: 30, qaTarget: 100,
+    qaMax: 30, qaTarget: 99,
     prodMax: 15, prodTarget: 13,
     ahtMax: 15, ahtTarget: 210,
-    artMax: 20, artTarget: 89,
-    examMax: 20, examTarget: 100,
+    artMax: 20, artTarget: 90,
+    examMax: 20, examTarget: 99,
   },
   call: {
-    qaMax: 30, qaTarget: 100,
-    prodMax: 20, prodTarget: 100,
-    ahtMax: 20, ahtTarget: 169,
-    examMax: 20, examTarget: 100,
+    qaMax: 30, qaTarget: 99,
+    prodMax: 20, prodTarget: 93,
+    ahtMax: 20, ahtTarget: 164,
+    examMax: 20, examTarget: 99,
     wrapupMax: 5,
-    holdMax: 5, holdTarget: 45,
+    holdMax: 5, holdTarget: 30,
   }
 };
 
@@ -510,29 +511,63 @@ export async function fetchTopStarData(
     }
   }
 
-  const [mohammedSnap, younisSnap, ankidoSnap, syncStatus] = await Promise.all([
-    getDocs(query(collection(db, "mohammed_metrics"), where("year", "==", year), where("month", "==", month))),
-    getDocs(query(collection(db, "younis_metrics"), where("year", "==", year), where("month", "==", month))),
-    getDocs(query(collection(db, "ankido_metrics"), where("year", "==", year), where("month", "==", month))),
+  const monthUpper = (month || "").toUpperCase();
+  const monthVariants = Array.from(new Set([
+    monthUpper,
+    (month || "").toLowerCase(),
+    (month || "").charAt(0).toUpperCase() + (month || "").slice(1).toLowerCase()
+  ])).filter(Boolean);
+
+  const [mohammedSnap, younisSnap, ankidoSnap, membersSnap, syncStatus] = await Promise.all([
+    getDocs(query(collection(db, "mohammed_metrics"), where("year", "==", year), where("month", "in", monthVariants))).catch(() => null),
+    getDocs(query(collection(db, "younis_metrics"), where("year", "==", year), where("month", "in", monthVariants))).catch(() => null),
+    getDocs(query(collection(db, "ankido_metrics"), where("year", "==", year), where("month", "in", monthVariants))).catch(() => null),
+    getDocs(collection(db, "team_members")).catch(() => null),
     fetchTopStarSyncStatus()
   ]);
 
+  // Exclude inactive / resigned agents from Top Star
+  const inactiveSet = new Set<string>();
+  membersSnap?.docs.forEach(d => {
+    const data = d.data();
+    if (data.is_deleted === true || data.is_active === false || data.resigned_month) {
+      inactiveSet.add(normalizeName(data.agent_name || data.name || ""));
+    }
+  });
+
+  const activeChatAgents = DEFAULT_CHAT_AGENTS.filter(name => !inactiveSet.has(normalizeName(name)));
+  const activeCallAgents = DEFAULT_CALL_AGENTS.filter(name => !inactiveSet.has(normalizeName(name)));
+
   const chatMap: Record<string, any> = {};
-  mohammedSnap.docs.forEach(docSnap => {
-    const d = docSnap.data();
+  const baselineChat = BASELINE_TEAM_METRICS.filter(
+    m => m.team === "Mohammed Dlshad Team" && m.year === year && m.month.toLowerCase() === (month || "").toLowerCase()
+  );
+  baselineChat.forEach(d => {
     const cName = normalizeName(d.agent_name || "");
     if (cName) chatMap[cName] = d;
   });
+  mohammedSnap?.docs.forEach(docSnap => {
+    const d = docSnap.data();
+    const cName = normalizeName(d.agent_name || "");
+    if (cName) chatMap[cName] = { ...chatMap[cName], ...d };
+  });
 
   const callMap: Record<string, any> = {};
-  [...younisSnap.docs, ...ankidoSnap.docs].forEach(docSnap => {
-    const d = docSnap.data();
+  const baselineCall = BASELINE_TEAM_METRICS.filter(
+    m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && m.year === year && m.month.toLowerCase() === (month || "").toLowerCase()
+  );
+  baselineCall.forEach(d => {
     const cName = normalizeName(d.agent_name || "");
     if (cName) callMap[cName] = d;
   });
+  [...(younisSnap?.docs || []), ...(ankidoSnap?.docs || [])].forEach(docSnap => {
+    const d = docSnap.data();
+    const cName = normalizeName(d.agent_name || "");
+    if (cName) callMap[cName] = { ...callMap[cName], ...d };
+  });
 
   const finalChat: Record<string, any> = {};
-  DEFAULT_CHAT_AGENTS.forEach(name => {
+  activeChatAgents.forEach(name => {
     const raw = chatMap[name] || {};
     finalChat[name] = {
       qa: raw.quality ?? null,
@@ -544,7 +579,7 @@ export async function fetchTopStarData(
   });
 
   const finalCall: Record<string, any> = {};
-  DEFAULT_CALL_AGENTS.forEach(name => {
+  activeCallAgents.forEach(name => {
     const raw = callMap[name] || {};
     finalCall[name] = {
       qa: raw.quality ?? null,
@@ -556,11 +591,11 @@ export async function fetchTopStarData(
     };
   });
 
-  const chatCompleteness = checkTeamCompleteness("chat", finalChat, DEFAULT_CHAT_AGENTS);
-  const callCompleteness = checkTeamCompleteness("call", finalCall, DEFAULT_CALL_AGENTS);
+  const chatCompleteness = checkTeamCompleteness("chat", finalChat, activeChatAgents);
+  const callCompleteness = checkTeamCompleteness("call", finalCall, activeCallAgents);
 
-  const rankedChat = computeTeamRanks("chat", finalChat, DEFAULT_CHAT_AGENTS, criteria);
-  const rankedCall = computeTeamRanks("call", finalCall, DEFAULT_CALL_AGENTS, criteria);
+  const rankedChat = computeTeamRanks("chat", finalChat, activeChatAgents, criteria);
+  const rankedCall = computeTeamRanks("call", finalCall, activeCallAgents, criteria);
 
   const top3Chat = rankedChat.filter(r => r.rank != null && r.rank <= 3).slice(0, 3);
   const top3Call = rankedCall.filter(r => r.rank != null && r.rank <= 3).slice(0, 3);
@@ -580,3 +615,4 @@ export async function fetchTopStarData(
   topStarDataCache.set(cacheKey, { timestamp: now, data: result });
   return result;
 }
+

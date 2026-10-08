@@ -231,6 +231,61 @@ function validatePasswordSecurity(password: string): { isValid: boolean; error: 
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
+const AGGREGATE_MAP: Record<string, string[]> = {
+  "Q1": ["JAN", "FEB", "MAR"],
+  "Q2": ["APR", "MAY", "JUN"],
+  "Q3": ["JUL", "AUG", "SEP"],
+  "Q4": ["OCT", "NOV", "DEC"],
+  "H1": ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"],
+  "H2": ["JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
+  "Q1 - AVG": ["JAN", "FEB", "MAR"],
+  "Q2 - AVG": ["APR", "MAY", "JUN"],
+  "Q3 - AVG": ["JUL", "AUG", "SEP"],
+  "Q4 - AVG": ["OCT", "NOV", "DEC"],
+  "H1 - AVG": ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"],
+  "H2 - AVG": ["JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
+  "YEAR - AVG": ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+};
+
+// Determines if an employee was active in a given period (preserves historical data for resigned employees)
+function isMemberActiveInPeriod(
+  member: any,
+  periodMonth: string,
+  periodYear: string
+): boolean {
+  if (!member) return false;
+  if (!member.resigned_month || !member.resigned_year) {
+    if (member.is_deleted === true || member.is_active === false) {
+      return false;
+    }
+    return true;
+  }
+
+  const pYear = parseInt(String(periodYear), 10);
+  const rYear = parseInt(String(member.resigned_year), 10);
+  if (isNaN(pYear) || isNaN(rYear)) return true;
+
+  if (pYear < rYear) return true; // Prior year: definitely active
+  if (pYear > rYear) return false; // Subsequent year: resigned
+
+  const rMonthIdx = MONTHS.indexOf(member.resigned_month.toUpperCase());
+  if (rMonthIdx === -1) return true;
+
+  const pMonthUpper = (periodMonth || "").toUpperCase();
+  const aggMonths = AGGREGATE_MAP[pMonthUpper];
+  if (aggMonths) {
+    return aggMonths.some(m => {
+      const idx = MONTHS.indexOf(m.toUpperCase());
+      return idx < rMonthIdx;
+    });
+  }
+
+  const pMonthIdx = MONTHS.indexOf(pMonthUpper);
+  if (pMonthIdx === -1) return true;
+
+  return pMonthIdx < rMonthIdx;
+}
+
 // Maps a month abbreviation to its quarter and week range within that quarter
 // Each quarter has 3 months each spanning 4 weeks (month1→w1-4, month2→w5-8, month3→w9-12)
 function getQualityWeekRange(month: string): { quarter: string; weekStart: number; weekEnd: number } | null {
@@ -686,8 +741,12 @@ function AgentDashboard({
 }) {
   const defaultPeriod = getPreviousMonthAndYear();
 
-  const initialAgent = (previewMode && allMembers && allMembers.length > 0)
-    ? allMembers[0]
+  const activeMembersList = useMemo(() => {
+    return (allMembers || []).filter(m => !m.is_deleted && m.is_active !== false && !m.resigned_month);
+  }, [allMembers]);
+
+  const initialAgent = (previewMode && activeMembersList && activeMembersList.length > 0)
+    ? activeMembersList[0]
     : userProfile;
   const [currentAgent, setCurrentAgent] = useState<any>(initialAgent);
   const [loading, setLoading] = useState(true);
@@ -709,12 +768,12 @@ function AgentDashboard({
   const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
-    if (previewMode && allMembers && allMembers.length > 0 && !currentAgent?.agent_name) {
-      setCurrentAgent(allMembers[0]);
+    if (previewMode && activeMembersList && activeMembersList.length > 0 && (!currentAgent?.agent_name || !activeMembersList.some(m => m.agent_name === currentAgent?.agent_name))) {
+      setCurrentAgent(activeMembersList[0]);
     } else if (userProfile && !previewMode) {
       setCurrentAgent(userProfile);
     }
-  }, [userProfile, previewMode, allMembers]);
+  }, [userProfile, previewMode, activeMembersList]);
 
   const handleChangePassword = async (e: any) => {
     e.preventDefault();
@@ -1107,7 +1166,7 @@ function AgentDashboard({
                         />
                       </div>
                       <div className="overflow-y-auto space-y-1 flex-1 pr-1 overscroll-contain">
-                        {allMembers
+                        {activeMembersList
                           .filter(m => 
                             (m.agent_name || "").toLowerCase().includes(agentSearchTerm.toLowerCase()) ||
                             (m.team || "").toLowerCase().includes(agentSearchTerm.toLowerCase())
@@ -2178,10 +2237,101 @@ export default function Dashboard() {
   const [editColAgg, setEditColAgg] = useState<'sum'|'average'>('average');
 
   const [yearMetrics, setYearMetrics] = useState<any[]>([]);
+  const [showMonthLockModal, setShowMonthLockModal] = useState(false);
+  const [adminBypassMonthLock, setAdminBypassMonthLock] = useState(false);
+
+  // Compute if previous month is incomplete for team leader data entry lock
+  const prevMonthIncompleteInfo = useMemo(() => {
+    const upperMonth = (selectedMonth || "").toUpperCase();
+    const currentMonthIdx = MONTHS.indexOf(upperMonth);
+    if (currentMonthIdx <= 0) return null; // First month (JAN) or aggregate periods are not locked
+
+    const prevMonth = MONTHS[currentMonthIdx - 1];
+    const targetTeams = isCombinedCallCenter 
+      ? ['Younis Kamal Team', 'Ankido Buya Team'] 
+      : [selectedTeam];
+
+    const prevMonthMembers = allMembers.filter(m => 
+      targetTeams.includes(m.team) && 
+      isMemberActiveInPeriod(m, prevMonth, selectedYear)
+    );
+
+    if (prevMonthMembers.length === 0) return null;
+
+    const incompleteAgents: { name: string; missingFields: string[] }[] = [];
+
+    const isFilled = (v: any) => {
+      if (v === undefined || v === null) return false;
+      const s = String(v).trim();
+      return s !== "" && s !== "-" && s !== "–";
+    };
+
+    prevMonthMembers.forEach(member => {
+      const memberTeam = member.team || selectedTeam;
+      const isChat = memberTeam === 'Mohammed Dlshad Team';
+      const memberKey = getCanonicalAgentName(member.agent_name || member.name || "");
+
+      // Find member's metrics in yearMetrics for prevMonth
+      const mRow = yearMetrics.find(r => 
+        (r.month || "").toUpperCase() === prevMonth && 
+        (r.team === memberTeam || !r.team || isCombinedCallCenter) &&
+        isSameAgent(r.agent_name || "", memberKey)
+      );
+
+      const missing: string[] = [];
+
+      if (!mRow) {
+        if (isChat) {
+          missing.push("Chat Handled", "Exam", "AHT", "ART", "Prod");
+        } else {
+          missing.push("Exam", "Prod", "AHT", "Hold", "Wrapup", "Handled");
+        }
+      } else {
+        if (isChat) {
+          if (!isFilled(mRow.chat_handled)) missing.push("Chat Handled");
+          if (!isFilled(mRow.exam)) missing.push("Exam");
+          if (!isFilled(mRow.aht)) missing.push("AHT");
+          if (!isFilled(mRow.art)) missing.push("ART");
+          if (!isFilled(mRow.productivity ?? mRow.prod)) missing.push("Prod");
+        } else {
+          if (!isFilled(mRow.exam)) missing.push("Exam");
+          if (!isFilled(mRow.productivity ?? mRow.prod)) missing.push("Prod");
+          if (!isFilled(mRow.aht)) missing.push("AHT");
+          if (!isFilled(mRow.hold)) missing.push("Hold");
+          if (!isFilled(mRow.wrapup)) missing.push("Wrapup");
+          const handledVal = getRowValForCol(mRow, 'handled') || getRowValForCol(mRow, 'call_handled');
+          if (!isFilled(handledVal)) missing.push("Handled");
+          if (!isQualitySyncEnabled(selectedYear, prevMonth) && !isFilled(mRow.quality)) {
+            missing.push("Quality");
+          }
+        }
+      }
+
+      if (missing.length > 0) {
+        incompleteAgents.push({
+          name: member.display_name || member.agent_name || memberKey,
+          missingFields: missing
+        });
+      }
+    });
+
+    if (incompleteAgents.length > 0) {
+      return {
+        prevMonth,
+        prevYear: selectedYear,
+        totalAgents: prevMonthMembers.length,
+        incompleteAgents
+      };
+    }
+
+    return null;
+  }, [selectedMonth, selectedYear, selectedTeam, isCombinedCallCenter, allMembers, yearMetrics]);
+
+  const isCurrentMonthLocked = Boolean(prevMonthIncompleteInfo && !adminBypassMonthLock);
 
   // Prevent background scroll when modal is open
   useEffect(() => {
-    if (showManageMembers || showProfileModal || deleteTarget || showForgotModal) {
+    if (showManageMembers || showProfileModal || deleteTarget || showForgotModal || showMonthLockModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -2189,7 +2339,7 @@ export default function Dashboard() {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [showManageMembers, showProfileModal, deleteTarget, showForgotModal]);
+  }, [showManageMembers, showProfileModal, deleteTarget, showForgotModal, showMonthLockModal]);
 
   // Real-time columns synchronization across all teams, TLs, and Agents
   useEffect(() => {
@@ -2256,21 +2406,7 @@ export default function Dashboard() {
   ];
   const periods = ["Q1", "Q2", "Q3", "Q4", "H1", "H2"];
 
-  const aggregateMap: Record<string, string[]> = {
-    "Q1": ["JAN", "FEB", "MAR"],
-    "Q2": ["APR", "MAY", "JUN"],
-    "Q3": ["JUL", "AUG", "SEP"],
-    "Q4": ["OCT", "NOV", "DEC"],
-    "H1": ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"],
-    "H2": ["JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
-    "Q1 - AVG": ["JAN", "FEB", "MAR"],
-    "Q2 - AVG": ["APR", "MAY", "JUN"],
-    "Q3 - AVG": ["JUL", "AUG", "SEP"],
-    "Q4 - AVG": ["OCT", "NOV", "DEC"],
-    "H1 - AVG": ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"],
-    "H2 - AVG": ["JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
-    "YEAR - AVG": ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-  };
+  const aggregateMap = AGGREGATE_MAP;
 
   const isAggregate = Object.keys(aggregateMap).includes(selectedMonth);
 
@@ -2607,6 +2743,8 @@ export default function Dashboard() {
     team: TeamName,
     year: string
   ) => {
+    const activeRoster = roster.filter(member => isMemberActiveInPeriod(member, targetMonth, year));
+
     if (isAgg) {
       const monthsInPeriod = (aggregateMap[targetMonth] || []).map(m => m.toUpperCase());
       const metrics = allYearData.filter(m => monthsInPeriod.includes((m.month || "").toUpperCase()));
@@ -2617,7 +2755,7 @@ export default function Dashboard() {
         agentGroups[key].push(row);
       });
 
-      const aggregatedRows = roster.map(member => {
+      const aggregatedRows = activeRoster.map(member => {
         const memberKey = getCanonicalAgentName(member.agent_name || "");
         const agentRows = agentGroups[memberKey] || [];
         const avgRow: any = {
@@ -2738,7 +2876,7 @@ export default function Dashboard() {
         }
       });
 
-      const mergedRows = roster.map(member => {
+      const mergedRows = activeRoster.map(member => {
         const memberKey = getCanonicalAgentName(member.agent_name || "");
         const existing = metricsByAgent[memberKey];
         if (existing) {
@@ -3195,6 +3333,10 @@ export default function Dashboard() {
   useEffect(() => { fetchData(); }, [selectedMonth, selectedTeam, selectedYear, session, columnsMap, isCombinedCallCenter]);
 
   const handleChange = (index: number, field: string, value: string) => {
+    if (isCurrentMonthLocked) {
+      setShowMonthLockModal(true);
+      return;
+    }
     const teamCols = isCombinedCallCenter
       ? getEffectiveColumns('Ankido Buya Team', selectedMonth, selectedYear, columnsMap['Ankido Buya Team'] || DEFAULT_OTHER_COLUMNS)
       : getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
@@ -3224,7 +3366,7 @@ export default function Dashboard() {
   };
 
   const handleBlur = async (index: number) => {
-    if (isAggregate) return;
+    if (isAggregate || isCurrentMonthLocked) return;
     const row = rows[index];
     if (!row || !row.agent_name) return;
 
@@ -3321,15 +3463,61 @@ export default function Dashboard() {
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     try {
-      await deleteDoc(doc(db, 'team_members', deleteTarget.memberId));
-      
+      const resMonth = MONTHS.includes((selectedMonth || "").toUpperCase())
+        ? selectedMonth.toUpperCase()
+        : MONTHS[new Date().getMonth()];
+      const resYear = selectedYear || String(new Date().getFullYear());
+      const nowIso = new Date().toISOString();
+
+      // Soft delete in team_members: marks resigned from resMonth/resYear onwards
+      await updateDoc(doc(db, 'team_members', deleteTarget.memberId), {
+        is_active: false,
+        is_deleted: true,
+        resigned_month: resMonth,
+        resigned_year: resYear,
+        deleted_at: nowIso
+      });
+
+      // Deactivate agent in users collection if present
+      try {
+        const usersSnap = await getDocs(collection(db, 'users'));
+        for (const uDoc of usersSnap.docs) {
+          const uData = uDoc.data();
+          const uName = (uData.name || "").trim().toLowerCase();
+          const targetName = deleteTarget.name.trim().toLowerCase();
+          if (uName === targetName || isSameAgent(uName, targetName)) {
+            await updateDoc(uDoc.ref, {
+              is_active: false,
+              is_deleted: true,
+              resigned_month: resMonth,
+              resigned_year: resYear
+            });
+          }
+        }
+      } catch (userErr) {
+        console.warn("Could not deactivate user account:", userErr);
+      }
+
+      // Purge metrics only for resMonth and future months; keep all prior months intact
       const tName = deleteTarget.team === 'Younis Kamal Team' ? 'younis_metrics' :
                     deleteTarget.team === 'Ankido Buya Team' ? 'ankido_metrics' :
                     'mohammed_metrics';
-      const q = query(collection(db, tName), where('agent_name', '==', deleteTarget.name));
+      const q = query(collection(db, tName));
       const snap = await getDocs(q);
-      snap.forEach(d => deleteDoc(d.ref));
-      
+      const resMonthIdx = MONTHS.indexOf(resMonth);
+      const resYearNum = parseInt(resYear, 10);
+
+      snap.forEach(d => {
+        const dData = d.data();
+        if (isSameAgent(dData.agent_name || "", deleteTarget.name)) {
+          const dYear = parseInt(dData.year || resYear, 10);
+          const mIdx = MONTHS.indexOf((dData.month || "").toUpperCase());
+          if (dYear > resYearNum || (dYear === resYearNum && mIdx >= resMonthIdx)) {
+            deleteDoc(d.ref).catch(console.error);
+          }
+        }
+      });
+
       teamDataCacheRef.current = {};
       fetchAllMembers();
       fetchData(true);
@@ -3543,7 +3731,10 @@ export default function Dashboard() {
   }, []);
 
   const handleClearSelectedCells = async () => {
-    if (isAggregate) return;
+    if (isAggregate || isCurrentMonthLocked) {
+      if (isCurrentMonthLocked) setShowMonthLockModal(true);
+      return;
+    }
     const bounds = getSelectionBounds();
     if (!bounds) return;
 
@@ -3634,7 +3825,10 @@ export default function Dashboard() {
   };
 
   const handleTablePaste = async (e: React.ClipboardEvent) => {
-    if (isAggregate) return;
+    if (isAggregate || isCurrentMonthLocked) {
+      if (isCurrentMonthLocked) setShowMonthLockModal(true);
+      return;
+    }
     const clipboardData = e.clipboardData.getData('text/plain');
     if (!clipboardData) return;
 
@@ -4677,6 +4871,47 @@ export default function Dashboard() {
           <span>{activeCols.length} KPIs</span>
         </div>
 
+        {/* Month Entry Lock Warning Banner */}
+        {isCurrentMonthLocked && prevMonthIncompleteInfo && (
+          <div className="mb-4 p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/70 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shrink-0">
+                <Lock size={18} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-amber-900 dark:text-amber-300">
+                    إدخال بيانات شهر {selectedMonth} مقفل
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-200/70 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200 border border-amber-300/60 dark:border-amber-700/60">
+                    Data Entry Locked
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-amber-800 dark:text-amber-300/90 mt-0.5 font-medium">
+                  يجب إكمال جميع بيانات ومؤشرات شهر <strong>{prevMonthIncompleteInfo.prevMonth} {prevMonthIncompleteInfo.prevYear}</strong> أولاً ({prevMonthIncompleteInfo.incompleteAgents.length} موظف بحاجة لإكمال بياناتهم) قبل البدء في تعبئة شهر <strong>{selectedMonth}</strong>.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedMonth(prevMonthIncompleteInfo.prevMonth)}
+                className="px-3.5 py-2 rounded-xl text-xs font-black text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500 transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                <ArrowLeft size={13} />
+                <span>العودة إلى شهر {prevMonthIncompleteInfo.prevMonth}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowMonthLockModal(true)}
+                className="px-3 py-2 rounded-xl text-xs font-bold text-amber-900 dark:text-amber-200 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/50 dark:hover:bg-amber-900/80 transition cursor-pointer"
+              >
+                عرض التفاصيل
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Data Table */}
         <div 
           onPaste={handleTablePaste}
@@ -4760,9 +4995,12 @@ export default function Dashboard() {
                           >
                             <input 
                               id={`cell-${index}-${colIndex}`}
-                              disabled={disabled}
+                              disabled={disabled || isCurrentMonthLocked}
                               type="text"
                               onDragStart={(e) => e.preventDefault()}
+                              onClick={() => {
+                                if (isCurrentMonthLocked) setShowMonthLockModal(true);
+                              }}
                               placeholder={
                                 (col.id === 'wrapup' || col.id?.toLowerCase().includes('wrapup') || col.label?.toLowerCase().includes('wrapup'))
                                   ? '#'
@@ -4774,7 +5012,7 @@ export default function Dashboard() {
                               onChange={(e) => handleChange(actualIndex, col.id, e.target.value)}
                               onBlur={() => handleBlur(actualIndex)}
                               onKeyDown={(e) => handleCellKeyDown(e, index, colIndex)}
-                              className={`w-full max-w-[85px] sm:max-w-[100px] text-center rounded-xl px-2.5 py-1.5 text-xs sm:text-[13px] font-bold outline-none transition-all shadow-xs tabular-nums disabled:bg-gray-100/60 dark:disabled:bg-gray-800/40 disabled:border-transparent disabled:text-gray-500 dark:disabled:text-gray-400 cursor-text ${
+                              className={`w-full max-w-[85px] sm:max-w-[100px] text-center rounded-xl px-2.5 py-1.5 text-xs sm:text-[13px] font-bold outline-none transition-all shadow-xs tabular-nums disabled:bg-gray-100/60 dark:disabled:bg-gray-800/40 disabled:border-transparent disabled:text-gray-500 dark:disabled:text-gray-400 ${isCurrentMonthLocked ? 'cursor-not-allowed' : 'cursor-text'} ${
                                 isSelected && isMultiCellSelected
                                   ? 'bg-transparent border-transparent text-[#1C6B53] dark:text-emerald-300 font-black'
                                   : isSelected
@@ -5341,9 +5579,9 @@ export default function Dashboard() {
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/30 mx-auto mb-4">
               <Trash2 size={22} className="text-red-500 dark:text-red-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white text-center mb-2">Remove Member</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
-              Are you sure you want to remove <span className="font-semibold text-gray-700 dark:text-gray-200">{deleteTarget.name}</span> from the roster? All their metric data for this team will also be deleted.
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white text-center mb-2">Remove / Resign Member</h3>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center mb-6 leading-relaxed">
+              Are you sure you want to remove <span className="font-semibold text-gray-700 dark:text-gray-200">{deleteTarget.name}</span>? They will be removed from Top Star and Agent Dashboard. Historical data for previous months will be preserved in Team Leader and Quality dashboards, starting deletion from <strong>{selectedMonth} {selectedYear}</strong> onwards.
             </p>
             <div className="flex gap-3">
               <button
@@ -5358,6 +5596,106 @@ export default function Dashboard() {
               >
                 Remove
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Previous Month Incomplete Lock Modal */}
+      {showMonthLockModal && prevMonthIncompleteInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800/80 overflow-hidden text-left">
+            <div className="p-6 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border-b border-amber-100 dark:border-amber-900/50 flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shrink-0">
+                  <Lock size={22} />
+                </div>
+                <div>
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300/60 dark:border-amber-700/60 mb-1">
+                    Previous Month Required
+                  </span>
+                  <h3 className="text-base font-black text-gray-900 dark:text-white">
+                    إكمال بيانات {prevMonthIncompleteInfo.prevMonth} {prevMonthIncompleteInfo.prevYear} أولاً
+                  </h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMonthLockModal(false)}
+                className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 text-xs sm:text-sm text-amber-950 dark:text-amber-200 font-medium leading-relaxed">
+                لا يمكنك تعبئة أو تعديل بيانات شهر <strong>{selectedMonth}</strong> حتى تنتهي من تعبئة كافة بيانات ومؤشرات شهر <strong>{prevMonthIncompleteInfo.prevMonth} {prevMonthIncompleteInfo.prevYear}</strong> لجميع أعضاء الفريق.
+              </div>
+
+              <div>
+                <div className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center justify-between">
+                  <span>الموظفون الذين لم تكتمل بياناتهم:</span>
+                  <span className="text-[11px] font-black text-amber-600 dark:text-amber-400">
+                    {prevMonthIncompleteInfo.incompleteAgents.length} / {prevMonthIncompleteInfo.totalAgents}
+                  </span>
+                </div>
+                <div className="max-h-48 overflow-y-auto space-y-1.5 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800">
+                  {prevMonthIncompleteInfo.incompleteAgents.map((ag, i) => (
+                    <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-gray-800 text-xs shadow-xs">
+                      <span className="font-bold text-gray-800 dark:text-gray-200 truncate max-w-[170px]">{ag.name}</span>
+                      <div className="flex flex-wrap gap-1 justify-end max-w-[180px]">
+                        {ag.missingFields.slice(0, 3).map((f, j) => (
+                          <span key={j} className="text-[10px] px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-300 font-semibold border border-red-200/60 dark:border-red-800/60">
+                            {f}
+                          </span>
+                        ))}
+                        {ag.missingFields.length > 3 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 font-semibold">
+                            +{ag.missingFields.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedMonth(prevMonthIncompleteInfo.prevMonth);
+                    setShowMonthLockModal(false);
+                  }}
+                  className="w-full sm:flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-md flex items-center justify-center gap-2 transition cursor-pointer active:scale-95"
+                >
+                  <ArrowLeft size={14} />
+                  <span>الذهاب إلى شهر {prevMonthIncompleteInfo.prevMonth} لإكمال البيانات</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMonthLockModal(false)}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition cursor-pointer"
+                >
+                  إغلاق
+                </button>
+              </div>
+
+              {isAdmin && (
+                <div className="pt-2 border-t border-gray-100 dark:border-gray-800 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdminBypassMonthLock(true);
+                      setShowMonthLockModal(false);
+                    }}
+                    className="text-[11px] text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 underline font-medium transition cursor-pointer"
+                  >
+                    تجاوز القفل كمسؤول (Admin Override)
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
