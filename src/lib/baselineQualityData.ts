@@ -45,13 +45,29 @@ export function expandQualityDocAliases(dataMap: Record<string, any>): void {
     for (const [regex, replacement, canonicalName] of SLUG_ALIASES) {
       if (regex.test(key)) {
         const aliasKey = key.replace(regex, replacement);
-        if (!dataMap[aliasKey]) {
-          dataMap[aliasKey] = {
-            ...val,
-            id: aliasKey,
-            csr_name: canonicalName || val.csr_name,
-          };
-        }
+        const existing = dataMap[aliasKey];
+        dataMap[aliasKey] = {
+          ...existing,
+          ...val,
+          id: aliasKey,
+          csr_name: canonicalName || val.csr_name || existing?.csr_name,
+          scores: {
+            ...(existing?.scores || {}),
+            ...(val.scores || {}),
+          },
+          notes: {
+            ...(existing?.notes || {}),
+            ...(val.notes || {}),
+          },
+          links: {
+            ...(existing?.links || {}),
+            ...(val.links || {}),
+          },
+          cell_timestamps: {
+            ...(existing?.cell_timestamps || {}),
+            ...(val.cell_timestamps || {}),
+          },
+        };
       }
     }
   }
