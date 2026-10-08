@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { compressImageFile } from "@/lib/imageUtils";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
-import { BASELINE_QUALITY_EVALUATIONS, expandQualityDocAliases, getQualityEvalDoc, SLUG_ALIASES } from "@/lib/baselineQualityData";
+import { BASELINE_QUALITY_EVALUATIONS, expandQualityDocAliases, getQualityEvalDoc, mergeQualityDocs, SLUG_ALIASES } from "@/lib/baselineQualityData";
 import { getCanonicalAgentName as getCanonicalNameAuthority } from "@/lib/canonicalAgents";
 
 interface QualityDashboardProps {
@@ -1016,11 +1016,26 @@ export default function QualityDashboard({
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const dataMap: Record<string, any> = { ...BASELINE_QUALITY_EVALUATIONS };
+      // 1. Gather all live Firestore documents with explicit _fromFirestore flag
+      const firestoreDocs: Record<string, any> = {};
       snapshot.forEach(d => {
-        dataMap[d.id] = { ...dataMap[d.id], id: d.id, ...d.data() };
+        firestoreDocs[d.id] = { id: d.id, ...d.data(), _fromFirestore: true };
       });
+
+      // 2. Expand aliases within Firestore docs so live updates apply to canonical and alias slugs
+      expandQualityDocAliases(firestoreDocs);
+
+      // 3. Start with baseline evaluations as fallback
+      const dataMap: Record<string, any> = { ...BASELINE_QUALITY_EVALUATIONS };
+
+      // 4. Cleanly overlay every Firestore document on top of baseline
+      for (const [id, fDoc] of Object.entries(firestoreDocs)) {
+        dataMap[id] = mergeQualityDocs(dataMap[id] || { id }, fDoc);
+      }
+
+      // 5. Expand aliases across full map safely (Firestore scores never overwritten by baseline)
       expandQualityDocAliases(dataMap);
+
       setEvalData(dataMap);
       setLoading(false);
     }, (err) => {
@@ -1163,8 +1178,9 @@ export default function QualityDashboard({
         ...prev,
         [docId]: {
           ...currentDoc,
+          _fromFirestore: true,
           scores: {
-            ...(currentDoc.scores || {}),
+            ...(currentDoc?.scores || {}),
             [key]: val,
             ...(altKey ? { [altKey]: val } : {})
           },

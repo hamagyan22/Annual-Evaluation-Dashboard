@@ -162,7 +162,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { Camera } from "lucide-react";
 import dynamic from "next/dynamic";
 import { compressImageFile } from "@/lib/imageUtils";
-import { BASELINE_QUALITY_EVALUATIONS, getQualityEvalDoc } from "@/lib/baselineQualityData";
+import { BASELINE_QUALITY_EVALUATIONS, getQualityEvalDoc, mergeQualityDocs, expandQualityDocAliases } from "@/lib/baselineQualityData";
 
 const QualityDashboard = dynamic(() => import("@/components/QualityDashboard"), {
   loading: () => (
@@ -857,14 +857,26 @@ function AgentDashboard({
       where('year', '==', selectedYear)
     );
     const unsubMetrics = onSnapshot(q, (snap) => {
-      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (docs.length > 0) {
-        rawMetricsDocs = docs;
-      } else {
-        rawMetricsDocs = BASELINE_TEAM_METRICS.filter(
-          m => m.team === currentAgent.team && m.year === selectedYear
-        );
-      }
+      const baseDocs = BASELINE_TEAM_METRICS.filter(
+        m => m.team === currentAgent.team && m.year === selectedYear
+      );
+      const metricsMap = new Map<string, any>();
+      baseDocs.forEach(d => {
+        const mKey = (d.month || "").toUpperCase();
+        if (mKey) metricsMap.set(mKey, { ...d, _fromBaseline: true });
+      });
+
+      // Live Firestore documents strictly overwrite and overlay onto baseline
+      snap.docs.forEach(d => {
+        const data = d.data();
+        const mKey = (data.month || "").toUpperCase();
+        if (mKey) {
+          const existing = metricsMap.get(mKey) || {};
+          metricsMap.set(mKey, { ...existing, ...data, id: d.id, _fromFirestore: true });
+        }
+      });
+
+      rawMetricsDocs = Array.from(metricsMap.values());
       applyAgentMetrics();
     }, (err) => {
       console.error(err);
@@ -2052,6 +2064,33 @@ export default function Dashboard() {
   useEffect(() => { selectedTeamRef.current = selectedTeam; }, [selectedTeam]);
   useEffect(() => { selectedYearRef.current = selectedYear; }, [selectedYear]);
 
+  // Real-time listener for quality evaluations: ensures live QA edits stream directly into qaCacheRef
+  useEffect(() => {
+    const numYear = Number(selectedYear);
+    const yearList = !isNaN(numYear) ? [selectedYear, numYear] : [selectedYear];
+    const q = query(
+      collection(db, "quality_evaluations"),
+      where("year", "in", yearList)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const firestoreDocs: Record<string, any> = {};
+      snapshot.forEach(d => {
+        firestoreDocs[d.id] = { id: d.id, ...d.data(), _fromFirestore: true };
+      });
+      expandQualityDocAliases(firestoreDocs);
+
+      for (const [id, fDoc] of Object.entries(firestoreDocs)) {
+        qaCacheRef.current[id] = mergeQualityDocs(qaCacheRef.current[id] || { id }, fDoc);
+      }
+      expandQualityDocAliases(qaCacheRef.current);
+    }, (err) => {
+      console.warn("Firestore QA evaluations listener in page.tsx:", err);
+    });
+
+    return () => unsubscribe();
+  }, [selectedYear]);
+
   const [columnsMap, setColumnsMap] = useState<Record<string, ColumnConfig[]>>(DEFAULT_COLUMNS_MAP);
 
   // TL & Manager Profile Modal State
@@ -2986,8 +3025,8 @@ export default function Dashboard() {
       if (!wr) continue;
       for (const member of roster) {
         const slugs = getAllAgentSlugs(member.agent_name);
-        const alreadyCached = slugs.some(s => qaCacheRef.current[`${year}_${wr.quarter}_${sectionSlug}_${s}`] !== undefined);
-        if (!alreadyCached) {
+        const alreadyVerified = slugs.some(s => qaCacheRef.current[`${year}_${wr.quarter}_${sectionSlug}_${s}`]?._fromFirestore);
+        if (!alreadyVerified) {
           toFetch.push({ 
             docId: `${year}_${wr.quarter}_${sectionSlug}_${slugs[0]}`,
             allDocIds: slugs.map(s => `${year}_${wr.quarter}_${sectionSlug}_${s}`),
@@ -3000,10 +3039,12 @@ export default function Dashboard() {
 
     if (toFetch.length === 0) return;
 
-    // Mark pending to avoid duplicate in-flight requests
+    // Mark pending with null placeholder only if not already having baseline data
     toFetch.forEach(item => {
       (item as any).allDocIds?.forEach((id: string) => {
-        qaCacheRef.current[id] = null;
+        if (!qaCacheRef.current[id]) {
+          qaCacheRef.current[id] = null;
+        }
       });
     });
 
@@ -3013,14 +3054,14 @@ export default function Dashboard() {
           // Try primary docId first
           try {
             const snap = await getDoc(doc(db, 'quality_evaluations', item.docId));
-            if (snap.exists()) return snap.data();
+            if (snap.exists()) return { ...snap.data(), _fromFirestore: true };
           } catch {}
           // Try alternate alias docIds if primary doesn't exist
           if (item.allDocIds) {
             for (let i = 1; i < item.allDocIds.length; i++) {
               try {
                 const altSnap = await getDoc(doc(db, 'quality_evaluations', item.allDocIds[i]));
-                if (altSnap.exists()) return altSnap.data();
+                if (altSnap.exists()) return { ...altSnap.data(), _fromFirestore: true };
               } catch {}
             }
           }
@@ -3042,8 +3083,9 @@ export default function Dashboard() {
         const targetIds = allDocIds || [docId];
         if (data) {
           targetIds.forEach((id: string) => {
-            qaCacheRef.current[id] = data;
+            qaCacheRef.current[id] = mergeQualityDocs(qaCacheRef.current[id] || { id }, data);
           });
+          expandQualityDocAliases(qaCacheRef.current);
           hasNewData = true;
 
           // If this is for a sync-enabled month (SEP 2026+) that has been synced and quality is complete, keep metric table in sync
@@ -3163,25 +3205,51 @@ export default function Dashboard() {
         const younisNames = new Set(younisRoster.map((d: any) => getCanonicalAgentName(d.agent_name || "")));
         const ankidoNames = new Set(ankidoRoster.map((d: any) => getCanonicalAgentName(d.agent_name || "")));
 
-        const younisData = younisMetricsSnap
-          ? (younisMetricsSnap.docs
-              .map(d => {
-                const data = d.data();
-                const canon = getCanonicalAgentName(data.agent_name || "");
-                return { id: d.id, ...data, agent_name: canon || data.agent_name, team: 'Younis Kamal Team' };
-              }) as any[])
-              .filter((d: any) => younisNames.has(getCanonicalAgentName(d.agent_name || "")))
-          : defaultBaselineMetrics.filter(m => m.team === 'Younis Kamal Team');
+        // Younis metrics: baseline fallback + live Firestore overlay (live edits strictly take precedence)
+        const younisMap = new Map<string, any>();
+        defaultBaselineMetrics
+          .filter(m => m.team === 'Younis Kamal Team' && younisNames.has(getCanonicalAgentName(m.agent_name || "")))
+          .forEach(d => {
+            const canon = getCanonicalAgentName(d.agent_name || "");
+            const m = (d.month || "").toUpperCase();
+            if (canon && m) younisMap.set(`${canon}_${m}`, { ...d, team: 'Younis Kamal Team', _fromBaseline: true });
+          });
+        if (younisMetricsSnap && younisMetricsSnap.docs.length > 0) {
+          younisMetricsSnap.docs.forEach(d => {
+            const data = d.data();
+            const canon = getCanonicalAgentName(data.agent_name || "");
+            if (canon && younisNames.has(canon)) {
+              const m = (data.month || "").toUpperCase();
+              const key = `${canon}_${m}`;
+              const existing = younisMap.get(key) || {};
+              younisMap.set(key, { ...existing, ...data, id: d.id, agent_name: canon, team: 'Younis Kamal Team', _fromFirestore: true });
+            }
+          });
+        }
+        const younisData = Array.from(younisMap.values());
 
-        const ankidoData = ankidoMetricsSnap
-          ? (ankidoMetricsSnap.docs
-              .map(d => {
-                const data = d.data();
-                const canon = getCanonicalAgentName(data.agent_name || "");
-                return { id: d.id, ...data, agent_name: canon || data.agent_name, team: 'Ankido Buya Team' };
-              }) as any[])
-              .filter((d: any) => ankidoNames.has(getCanonicalAgentName(d.agent_name || "")))
-          : defaultBaselineMetrics.filter(m => m.team === 'Ankido Buya Team');
+        // Ankido metrics: baseline fallback + live Firestore overlay (live edits strictly take precedence)
+        const ankidoMap = new Map<string, any>();
+        defaultBaselineMetrics
+          .filter(m => m.team === 'Ankido Buya Team' && ankidoNames.has(getCanonicalAgentName(m.agent_name || "")))
+          .forEach(d => {
+            const canon = getCanonicalAgentName(d.agent_name || "");
+            const m = (d.month || "").toUpperCase();
+            if (canon && m) ankidoMap.set(`${canon}_${m}`, { ...d, team: 'Ankido Buya Team', _fromBaseline: true });
+          });
+        if (ankidoMetricsSnap && ankidoMetricsSnap.docs.length > 0) {
+          ankidoMetricsSnap.docs.forEach(d => {
+            const data = d.data();
+            const canon = getCanonicalAgentName(data.agent_name || "");
+            if (canon && ankidoNames.has(canon)) {
+              const m = (data.month || "").toUpperCase();
+              const key = `${canon}_${m}`;
+              const existing = ankidoMap.get(key) || {};
+              ankidoMap.set(key, { ...existing, ...data, id: d.id, agent_name: canon, team: 'Ankido Buya Team', _fromFirestore: true });
+            }
+          });
+        }
+        const ankidoData = Array.from(ankidoMap.values());
 
         let allYearData = [...younisData, ...ankidoData];
         if (allYearData.length === 0 && defaultBaselineMetrics.length > 0) {
@@ -3277,16 +3345,31 @@ export default function Dashboard() {
         : defaultRoster;
 
       const rosterNames = new Set(roster.map(d => getCanonicalAgentName(d.agent_name || "")));
-      let allYearData = (metricsSnap && metricsSnap.docs.length > 0)
-        ? (metricsSnap.docs
-            .map(d => {
-              const data = d.data();
-              const canon = getCanonicalAgentName(data.agent_name || "");
-              return { id: d.id, ...data, agent_name: canon || data.agent_name };
-            })
-            .filter((d: any) => rosterNames.has(getCanonicalAgentName(d.agent_name || ""))) as any[])
-        : defaultMetrics;
+      const metricsMap = new Map<string, any>();
+      defaultMetrics
+        .filter((d: any) => rosterNames.has(getCanonicalAgentName(d.agent_name || "")))
+        .forEach((d: any) => {
+          const canon = getCanonicalAgentName(d.agent_name || "");
+          const m = (d.month || "").toUpperCase();
+          if (canon && m) {
+            metricsMap.set(`${canon}_${m}`, { ...d, _fromBaseline: true });
+          }
+        });
 
+      if (metricsSnap && metricsSnap.docs.length > 0) {
+        metricsSnap.docs.forEach(d => {
+          const data = d.data();
+          const canon = getCanonicalAgentName(data.agent_name || "");
+          if (canon && rosterNames.has(canon)) {
+            const m = (data.month || "").toUpperCase();
+            const key = `${canon}_${m}`;
+            const existing = metricsMap.get(key) || {};
+            metricsMap.set(key, { ...existing, ...data, id: d.id, agent_name: canon, _fromFirestore: true });
+          }
+        });
+      }
+
+      let allYearData = Array.from(metricsMap.values());
       if (allYearData.length === 0 && defaultMetrics.length > 0) {
         allYearData = defaultMetrics;
       }
@@ -4844,24 +4927,19 @@ export default function Dashboard() {
           {/* Separator */}
           <div className="h-5 w-[1.5px] bg-gray-300 dark:bg-gray-600 mx-0.5 sm:mx-1 flex-shrink-0" />
 
-          {/* Button next to H1 / H2: Younis + Ankido Combined Data */}
+          {/* Button next to H1 / H2: Younis + Ankido Combined Data (Compact & Brief) */}
           <button
             type="button"
             onClick={() => setIsCombinedCallCenter(prev => !prev)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex-shrink-0 flex items-center gap-1.5 border cursor-pointer ${
+            className={`px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg text-xs font-black transition-all flex-shrink-0 flex items-center gap-1 border cursor-pointer whitespace-nowrap ${
               isCombinedCallCenter
-                ? 'bg-gradient-to-r from-[#1C6B53] to-[#155a45] text-white border-transparent shadow-md shadow-[#1C6B53]/30 ring-2 ring-[#1C6B53]/50 scale-[1.02]'
-                : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 hover:shadow-xs'
+                ? 'bg-gradient-to-r from-[#1C6B53] to-[#155a45] text-white border-transparent shadow-md shadow-[#1C6B53]/30 ring-2 ring-[#1C6B53]/50'
+                : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
             }`}
-            title="عرض داتا تيم يونس وتيم انكيدو ويه بعض (Call Center Combined Data)"
+            title="عرض داتا تيم يونس وتيم انكيدو معاً (Call Center Combined: Younis + Ankido)"
           >
-            <Users size={13} className={isCombinedCallCenter ? 'text-amber-300 animate-pulse' : 'text-emerald-600 dark:text-emerald-400'} />
-            <span>Younis + Ankido</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-              isCombinedCallCenter ? 'bg-white/20 text-white' : 'bg-emerald-200/60 dark:bg-emerald-800/60 text-emerald-900 dark:text-emerald-200'
-            }`}>
-              CC
-            </span>
+            <Users size={12} className={isCombinedCallCenter ? 'text-amber-300 animate-pulse' : 'text-emerald-600 dark:text-emerald-400'} />
+            <span>CC (Y+A)</span>
           </button>
         </div>
 

@@ -68,6 +68,86 @@ export const SLUG_ALIASES: [RegExp, string, string][] = [
   [/_zainab_khalid_rasheed$/, "_zainab_khalid", "Zainab Khalid Rasheed"],
 ];
 
+/**
+ * Merges two quality documents safely, ensuring:
+ * 1. Live Firestore data (_fromFirestore or presence of updated_at/cell_timestamps) strictly takes precedence over static baseline.
+ * 2. When two versions have a score for the same cell, the one with the latest timestamp or Firestore status strictly wins.
+ * 3. Notes and links are preserved without losing evaluator notes.
+ */
+export function mergeQualityDocs(targetDoc: any, sourceDoc: any): any {
+  if (!targetDoc && !sourceDoc) return {};
+  if (!targetDoc) return { ...sourceDoc };
+  if (!sourceDoc) return { ...targetDoc };
+
+  const targetFromFs = Boolean(targetDoc._fromFirestore);
+  const sourceFromFs = Boolean(sourceDoc._fromFirestore);
+
+  const mergedScores: Record<string, any> = { ...(targetDoc.scores || {}) };
+  const mergedTimestamps: Record<string, string> = { ...(targetDoc.cell_timestamps || {}) };
+  const mergedNotes: Record<string, any> = { ...(targetDoc.notes || {}) };
+  const mergedLinks: Record<string, any> = { ...(targetDoc.links || {}) };
+
+  const sourceScores = sourceDoc.scores || {};
+  for (const [col, sVal] of Object.entries(sourceScores)) {
+    const tVal = mergedScores[col];
+    // If target has no value, source takes it
+    if (tVal === undefined || tVal === "") {
+      mergedScores[col] = sVal;
+      if (sourceDoc.cell_timestamps?.[col]) {
+        mergedTimestamps[col] = sourceDoc.cell_timestamps[col];
+      }
+      continue;
+    }
+
+    // Both have values: determine which wins
+    if (sourceFromFs && !targetFromFs) {
+      // Source is Firestore, target is baseline -> source wins!
+      mergedScores[col] = sVal;
+      if (sourceDoc.cell_timestamps?.[col]) {
+        mergedTimestamps[col] = sourceDoc.cell_timestamps[col];
+      }
+    } else if (!sourceFromFs && targetFromFs) {
+      // Target is Firestore, source is baseline -> target stays!
+      continue;
+    } else {
+      // Both from Firestore or both baseline: compare cell timestamps or doc updated_at
+      const sTs = sourceDoc.cell_timestamps?.[col] || sourceDoc.updated_at || "";
+      const tTs = targetDoc.cell_timestamps?.[col] || targetDoc.updated_at || "";
+      if (sTs && (!tTs || sTs >= tTs)) {
+        mergedScores[col] = sVal;
+        mergedTimestamps[col] = sTs;
+      }
+    }
+  }
+
+  // Merge notes
+  for (const [col, nVal] of Object.entries(sourceDoc.notes || {})) {
+    if (nVal && (!mergedNotes[col] || sourceFromFs)) {
+      mergedNotes[col] = nVal;
+    }
+  }
+
+  // Merge links
+  for (const [col, lVal] of Object.entries(sourceDoc.links || {})) {
+    if (lVal && (!mergedLinks[col] || sourceFromFs)) {
+      mergedLinks[col] = lVal;
+    }
+  }
+
+  return {
+    ...targetDoc,
+    ...sourceDoc,
+    scores: mergedScores,
+    cell_timestamps: mergedTimestamps,
+    notes: mergedNotes,
+    links: mergedLinks,
+    _fromFirestore: Boolean(targetFromFs || sourceFromFs),
+    updated_at: (sourceDoc.updated_at && (!targetDoc.updated_at || sourceDoc.updated_at >= targetDoc.updated_at))
+      ? sourceDoc.updated_at
+      : targetDoc.updated_at
+  };
+}
+
 export function expandQualityDocAliases(dataMap: Record<string, any>): void {
   const entries = Object.entries(dataMap);
   for (const [key, val] of entries) {
@@ -76,27 +156,11 @@ export function expandQualityDocAliases(dataMap: Record<string, any>): void {
       if (regex.test(key)) {
         const aliasKey = key.replace(regex, replacement);
         const existing = dataMap[aliasKey];
+        const merged = mergeQualityDocs(existing, val);
         dataMap[aliasKey] = {
-          ...existing,
-          ...val,
+          ...merged,
           id: aliasKey,
-          csr_name: canonicalName || val.csr_name || existing?.csr_name,
-          scores: {
-            ...(existing?.scores || {}),
-            ...(val.scores || {}),
-          },
-          notes: {
-            ...(existing?.notes || {}),
-            ...(val.notes || {}),
-          },
-          links: {
-            ...(existing?.links || {}),
-            ...(val.links || {}),
-          },
-          cell_timestamps: {
-            ...(existing?.cell_timestamps || {}),
-            ...(val.cell_timestamps || {}),
-          },
+          csr_name: canonicalName || val.csr_name || existing?.csr_name
         };
       }
     }
