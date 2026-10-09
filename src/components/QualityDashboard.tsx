@@ -3228,11 +3228,19 @@ export default function QualityDashboard({
         firestorePayload[`cell_timestamps.${k}`] = deleteField();
       });
 
-      await setDoc(doc(db, "quality_evaluations", docId), firestorePayload, { merge: true });
+      try {
+        await updateDoc(doc(db, "quality_evaluations", docId), firestorePayload);
+      } catch {
+        await setDoc(doc(db, "quality_evaluations", docId), firestorePayload, { merge: true });
+      }
       for (const [regex, replacement] of SLUG_ALIASES) {
         if (regex.test(docId)) {
           const aliasKey = docId.replace(regex, replacement);
-          setDoc(doc(db, "quality_evaluations", aliasKey), firestorePayload, { merge: true }).catch(() => {});
+          try {
+            await updateDoc(doc(db, "quality_evaluations", aliasKey), firestorePayload);
+          } catch {
+            await setDoc(doc(db, "quality_evaluations", aliasKey), firestorePayload, { merge: true }).catch(() => {});
+          }
         }
       }
 
@@ -3282,7 +3290,19 @@ export default function QualityDashboard({
             updated_at: nowIso
           }
         };
-        expandQualityDocAliases(nextMap);
+        for (const [regex, replacement] of SLUG_ALIASES) {
+          if (regex.test(docId)) {
+            const aliasKey = docId.replace(regex, replacement);
+            if (nextMap[aliasKey]) {
+              nextMap[aliasKey] = {
+                ...nextMap[aliasKey],
+                notes: updatedNotes,
+                links: updatedLinks,
+                updated_at: nowIso
+              };
+            }
+          }
+        }
         return nextMap;
       });
 
@@ -3297,12 +3317,20 @@ export default function QualityDashboard({
         deletePayload[`links.${k}`] = deleteField();
       });
 
-      // 3. Persist to Firestore (both canonical and alias doc)
-      await setDoc(doc(db, "quality_evaluations", docId), deletePayload, { merge: true });
+      // 3. Persist to Firestore: use updateDoc so the notes map is replaced without deep-merging deleted keys
+      try {
+        await updateDoc(doc(db, "quality_evaluations", docId), deletePayload);
+      } catch {
+        await setDoc(doc(db, "quality_evaluations", docId), deletePayload, { merge: true });
+      }
       for (const [regex, replacement] of SLUG_ALIASES) {
         if (regex.test(docId)) {
           const aliasKey = docId.replace(regex, replacement);
-          setDoc(doc(db, "quality_evaluations", aliasKey), deletePayload, { merge: true }).catch(() => {});
+          try {
+            await updateDoc(doc(db, "quality_evaluations", aliasKey), deletePayload);
+          } catch {
+            await setDoc(doc(db, "quality_evaluations", aliasKey), deletePayload, { merge: true }).catch(() => {});
+          }
         }
       }
 

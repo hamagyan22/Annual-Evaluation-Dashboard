@@ -84,17 +84,20 @@ export function mergeQualityDocs(targetDoc: any, sourceDoc: any): any {
 
   const mergedScores: Record<string, any> = { ...(targetDoc.scores || {}) };
   const mergedTimestamps: Record<string, string> = { ...(targetDoc.cell_timestamps || {}) };
-  const mergedNotes: Record<string, any> = { ...(targetDoc.notes || {}) };
-  const mergedLinks: Record<string, any> = { ...(targetDoc.links || {}) };
+
+  const targetNotes: Record<string, any> = { ...(targetDoc.notes || {}) };
+  const targetLinks: Record<string, any> = { ...(targetDoc.links || {}) };
+  const sourceNotes: Record<string, any> = { ...(sourceDoc.notes || {}) };
+  const sourceLinks: Record<string, any> = { ...(sourceDoc.links || {}) };
 
   // Unflatten any legacy dot keys from targetDoc
   Object.keys(targetDoc).forEach(k => {
     if (k.startsWith("notes.")) {
       const sub = k.slice(6);
-      if (targetDoc[k]) mergedNotes[sub] = targetDoc[k];
+      if (targetDoc[k]) targetNotes[sub] = targetDoc[k];
     } else if (k.startsWith("links.")) {
       const sub = k.slice(6);
-      if (targetDoc[k]) mergedLinks[sub] = targetDoc[k];
+      if (targetDoc[k]) targetLinks[sub] = targetDoc[k];
     } else if (k.startsWith("cell_timestamps.")) {
       const sub = k.slice(16);
       if (targetDoc[k]) mergedTimestamps[sub] = targetDoc[k];
@@ -105,10 +108,10 @@ export function mergeQualityDocs(targetDoc: any, sourceDoc: any): any {
   Object.keys(sourceDoc).forEach(k => {
     if (k.startsWith("notes.")) {
       const sub = k.slice(6);
-      if (sourceDoc[k]) mergedNotes[sub] = sourceDoc[k];
+      if (sourceDoc[k]) sourceNotes[sub] = sourceDoc[k];
     } else if (k.startsWith("links.")) {
       const sub = k.slice(6);
-      if (sourceDoc[k]) mergedLinks[sub] = sourceDoc[k];
+      if (sourceDoc[k]) sourceLinks[sub] = sourceDoc[k];
     } else if (k.startsWith("cell_timestamps.")) {
       const sub = k.slice(16);
       if (sourceDoc[k]) mergedTimestamps[sub] = sourceDoc[k];
@@ -148,18 +151,29 @@ export function mergeQualityDocs(targetDoc: any, sourceDoc: any): any {
     }
   }
 
-  // Merge notes
-  for (const [col, nVal] of Object.entries(sourceDoc.notes || {})) {
-    if (nVal && (!mergedNotes[col] || sourceFromFs)) {
-      mergedNotes[col] = nVal;
-    }
-  }
+  // Merge notes & links: live Firestore doc takes absolute precedence so deleted notes are not revived
+  let mergedNotes: Record<string, any>;
+  let mergedLinks: Record<string, any>;
 
-  // Merge links
-  for (const [col, lVal] of Object.entries(sourceDoc.links || {})) {
-    if (lVal && (!mergedLinks[col] || sourceFromFs)) {
-      mergedLinks[col] = lVal;
+  if (sourceFromFs && !targetFromFs) {
+    mergedNotes = { ...sourceNotes };
+    mergedLinks = { ...sourceLinks };
+  } else if (!sourceFromFs && targetFromFs) {
+    mergedNotes = { ...targetNotes };
+    mergedLinks = { ...targetLinks };
+  } else if (sourceFromFs && targetFromFs) {
+    const sUp = sourceDoc.updated_at || "";
+    const tUp = targetDoc.updated_at || "";
+    if (sUp && (!tUp || sUp >= tUp)) {
+      mergedNotes = { ...sourceNotes };
+      mergedLinks = { ...sourceLinks };
+    } else {
+      mergedNotes = { ...targetNotes };
+      mergedLinks = { ...targetLinks };
     }
+  } else {
+    mergedNotes = { ...targetNotes, ...sourceNotes };
+    mergedLinks = { ...targetLinks, ...sourceLinks };
   }
 
   return {
