@@ -1019,7 +1019,39 @@ export default function QualityDashboard({
       // 1. Gather all live Firestore documents with explicit _fromFirestore flag
       const firestoreDocs: Record<string, any> = {};
       snapshot.forEach(d => {
-        firestoreDocs[d.id] = { id: d.id, ...d.data(), _fromFirestore: true };
+        const raw = d.data();
+        const normalizedNotes: Record<string, any> = { ...(raw.notes || {}) };
+        const normalizedLinks: Record<string, any> = { ...(raw.links || {}) };
+        const normalizedTimestamps: Record<string, any> = { ...(raw.cell_timestamps || {}) };
+
+        // Unflatten any legacy dot-keys (notes.xxx, links.xxx, cell_timestamps.xxx)
+        Object.keys(raw).forEach(k => {
+          if (k.startsWith("notes.")) {
+            const subKey = k.slice(6);
+            if (raw[k] !== undefined && raw[k] !== null && raw[k] !== "") {
+              normalizedNotes[subKey] = raw[k];
+            }
+          } else if (k.startsWith("links.")) {
+            const subKey = k.slice(6);
+            if (raw[k] !== undefined && raw[k] !== null && raw[k] !== "") {
+              normalizedLinks[subKey] = raw[k];
+            }
+          } else if (k.startsWith("cell_timestamps.")) {
+            const subKey = k.slice(16);
+            if (raw[k]) {
+              normalizedTimestamps[subKey] = raw[k];
+            }
+          }
+        });
+
+        firestoreDocs[d.id] = {
+          ...raw,
+          id: d.id,
+          notes: normalizedNotes,
+          links: normalizedLinks,
+          cell_timestamps: normalizedTimestamps,
+          _fromFirestore: true
+        };
       });
 
       // 2. Expand aliases within Firestore docs so live updates apply to canonical and alias slugs
@@ -3007,6 +3039,28 @@ export default function QualityDashboard({
     return Array.from(keys);
   }, []);
 
+  // Helper to resolve cell note with candidate key fallbacks
+  const getCellNote = useCallback((notes: Record<string, any> | undefined, cellKey: string, week: number, isChat: boolean): string => {
+    if (!notes) return "";
+    if (notes[cellKey] && String(notes[cellKey]).trim()) return String(notes[cellKey]);
+    const candidateKeys = getAllCellKeys(cellKey, week, isChat);
+    for (const k of candidateKeys) {
+      if (notes[k] && String(notes[k]).trim()) return String(notes[k]);
+    }
+    return "";
+  }, [getAllCellKeys]);
+
+  // Helper to resolve cell link with candidate key fallbacks
+  const getCellLink = useCallback((links: Record<string, any> | undefined, cellKey: string, week: number, isChat: boolean): string => {
+    if (!links) return "";
+    if (links[cellKey] && String(links[cellKey]).trim()) return String(links[cellKey]);
+    const candidateKeys = getAllCellKeys(cellKey, week, isChat);
+    for (const k of candidateKeys) {
+      if (links[k] && String(links[k]).trim()) return String(links[k]);
+    }
+    return "";
+  }, [getAllCellKeys]);
+
   // Open note modal for a specific cell
   const handleOpenNote = (csrName: string, key: string, callLabel: string) => {
     if (!isTrainer && !isCallMon && !isBonus && !isCShift && unsyncedPreviousMonthRef.current) {
@@ -3016,28 +3070,34 @@ export default function QualityDashboard({
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
     const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
-    const docId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
+    const defaultDocId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
+    const targetDoc = evalData[defaultDocId] || getQualityEvalDoc(evalData, defaultDocId) || {};
+    const docId = targetDoc.id || defaultDocId;
 
     const candidateKeys = getAllCellKeys(key, selectedWeek, isChatTeam);
-    let existingNote = (evalData[docId]?.notes || {})[key] || "";
-    let existingLink = (evalData[docId]?.links || {})[key] || "";
-    let scoreVal = (evalData[docId]?.scores || {})[key] || "";
+    const notesMap = targetDoc.notes || {};
+    const linksMap = targetDoc.links || {};
+    const scoresMap = targetDoc.scores || {};
+
+    let existingNote = notesMap[key] || targetDoc[`notes.${key}`] || "";
+    let existingLink = linksMap[key] || targetDoc[`links.${key}`] || "";
+    let scoreVal = scoresMap[key] !== undefined && scoresMap[key] !== null ? String(scoresMap[key]) : "";
 
     if (!existingNote) {
       for (const k of candidateKeys) {
-        const n = (evalData[docId]?.notes || {})[k];
+        const n = notesMap[k] || targetDoc[`notes.${k}`];
         if (n && String(n).trim()) { existingNote = String(n); break; }
       }
     }
     if (!existingLink) {
       for (const k of candidateKeys) {
-        const l = (evalData[docId]?.links || {})[k];
+        const l = linksMap[k] || targetDoc[`links.${k}`];
         if (l && String(l).trim()) { existingLink = String(l); break; }
       }
     }
     if (!scoreVal) {
       for (const k of candidateKeys) {
-        const s = (evalData[docId]?.scores || {})[k];
+        const s = scoresMap[k];
         if (s !== undefined && s !== null && s !== "") { scoreVal = String(s); break; }
       }
     }
@@ -3070,73 +3130,58 @@ export default function QualityDashboard({
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
     const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
-    const docId = modalDocId || `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
+    const defaultDocId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
+    const docId = modalDocId || defaultDocId;
 
     const candidateKeys = getAllCellKeys(key, selectedWeek, isChatTeam);
     const nowIso = new Date().toISOString();
 
     try {
+      const targetDoc = evalData[docId] || getQualityEvalDoc(evalData, docId) || {};
       const updatedNotes = {
-        ...((evalData[docId]?.notes) || {})
+        ...(targetDoc.notes || {})
       };
       const updatedLinks = {
-        ...((evalData[docId]?.links) || {})
+        ...(targetDoc.links || {})
       };
       const updatedTimestamps = {
-        ...((evalData[docId]?.cell_timestamps) || {})
-      };
-
-      const firestorePayload: Record<string, any> = {
-        year: selectedYear,
-        quarter: effectiveQuarter,
-        evaluator: currentSection.evaluator,
-        team: currentSection.team,
-        csr_name: csrName,
-        _arch: getSystemAuthor(),
-        updated_at: nowIso
+        ...(targetDoc.cell_timestamps || {})
       };
 
       if (noteText.trim()) {
         updatedNotes[key] = noteText.trim();
-        firestorePayload[`notes.${key}`] = noteText.trim();
-        if (isBonus) {
-          candidateKeys.forEach(k => {
-            updatedNotes[k] = noteText.trim();
-            firestorePayload[`notes.${k}`] = noteText.trim();
-          });
-        }
+        candidateKeys.forEach(k => {
+          updatedNotes[k] = noteText.trim();
+        });
       } else {
-        // If note text is empty, deleteField() all candidate key variations
+        delete updatedNotes[key];
         candidateKeys.forEach(k => {
           delete updatedNotes[k];
-          firestorePayload[`notes.${k}`] = deleteField();
         });
       }
 
       if (linkUrl.trim()) {
         updatedLinks[key] = linkUrl.trim();
-        firestorePayload[`links.${key}`] = linkUrl.trim();
-        if (isBonus) {
-          candidateKeys.forEach(k => {
-            updatedLinks[k] = linkUrl.trim();
-            firestorePayload[`links.${k}`] = linkUrl.trim();
-          });
-        }
+        candidateKeys.forEach(k => {
+          updatedLinks[k] = linkUrl.trim();
+        });
       } else {
-        // If link URL is empty, deleteField() all candidate key variations
+        delete updatedLinks[key];
         candidateKeys.forEach(k => {
           delete updatedLinks[k];
-          firestorePayload[`links.${k}`] = deleteField();
         });
       }
 
-      if (noteText.trim() || linkUrl.trim() || evalData[docId]?.scores?.[key] !== undefined) {
+      if (noteText.trim() || linkUrl.trim() || targetDoc.scores?.[key] !== undefined) {
         updatedTimestamps[key] = nowIso;
-        firestorePayload[`cell_timestamps.${key}`] = nowIso;
+        candidateKeys.forEach(k => {
+          updatedTimestamps[k] = nowIso;
+        });
       }
 
+      // Optimistically update local evalData state
       setEvalData(prev => {
-        const currentDoc = prev[docId] || {
+        const currentDoc = prev[docId] || targetDoc || {
           year: selectedYear,
           quarter: effectiveQuarter,
           evaluator: currentSection.evaluator,
@@ -3154,11 +3199,33 @@ export default function QualityDashboard({
             notes: updatedNotes,
             links: updatedLinks,
             cell_timestamps: updatedTimestamps,
+            _fromFirestore: true,
             updated_at: nowIso
           }
         };
         expandQualityDocAliases(nextMap);
         return nextMap;
+      });
+
+      // Prepare Firestore payload: writes proper nested objects notes, links, cell_timestamps
+      const firestorePayload: Record<string, any> = {
+        year: selectedYear,
+        quarter: effectiveQuarter,
+        evaluator: currentSection.evaluator,
+        team: currentSection.team,
+        csr_name: csrName,
+        notes: updatedNotes,
+        links: updatedLinks,
+        cell_timestamps: updatedTimestamps,
+        _arch: getSystemAuthor(),
+        updated_at: nowIso
+      };
+
+      // Also clean up any legacy dot-keys with deleteField()
+      candidateKeys.forEach(k => {
+        firestorePayload[`notes.${k}`] = deleteField();
+        firestorePayload[`links.${k}`] = deleteField();
+        firestorePayload[`cell_timestamps.${k}`] = deleteField();
       });
 
       await setDoc(doc(db, "quality_evaluations", docId), firestorePayload, { merge: true });
@@ -3186,22 +3253,26 @@ export default function QualityDashboard({
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
     const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
-    const docId = modalDocId || `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
+    const defaultDocId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
+    const docId = modalDocId || defaultDocId;
 
     const candidateKeys = getAllCellKeys(key, selectedWeek, isChatTeam);
     const nowIso = new Date().toISOString();
 
     try {
-      // 1. Optimistically update local evalData state so the red mark and note disappear immediately
+      const targetDoc = evalData[docId] || getQualityEvalDoc(evalData, docId) || {};
+      const updatedNotes = { ...(targetDoc.notes || {}) };
+      const updatedLinks = { ...(targetDoc.links || {}) };
+      delete updatedNotes[key];
+      delete updatedLinks[key];
+      candidateKeys.forEach(k => {
+        delete updatedNotes[k];
+        delete updatedLinks[k];
+      });
+
+      // 1. Optimistically update local evalData state
       setEvalData(prev => {
-        const currentDoc = prev[docId];
-        if (!currentDoc) return prev;
-        const updatedNotes = { ...(currentDoc.notes || {}) };
-        const updatedLinks = { ...(currentDoc.links || {}) };
-        candidateKeys.forEach(k => {
-          delete updatedNotes[k];
-          delete updatedLinks[k];
-        });
+        const currentDoc = prev[docId] || targetDoc;
         const nextMap = {
           ...prev,
           [docId]: {
@@ -3215,8 +3286,10 @@ export default function QualityDashboard({
         return nextMap;
       });
 
-      // 2. Prepare payload using deleteField() for all candidate keys
+      // 2. Prepare payload with updated notes & links maps, plus deleteField() on legacy dot-keys
       const deletePayload: Record<string, any> = {
+        notes: updatedNotes,
+        links: updatedLinks,
         updated_at: nowIso
       };
       candidateKeys.forEach(k => {
@@ -3225,15 +3298,11 @@ export default function QualityDashboard({
       });
 
       // 3. Persist to Firestore (both canonical and alias doc)
-      try {
-        await updateDoc(doc(db, "quality_evaluations", docId), deletePayload);
-      } catch (upErr) {
-        await setDoc(doc(db, "quality_evaluations", docId), deletePayload, { merge: true });
-      }
+      await setDoc(doc(db, "quality_evaluations", docId), deletePayload, { merge: true });
       for (const [regex, replacement] of SLUG_ALIASES) {
         if (regex.test(docId)) {
           const aliasKey = docId.replace(regex, replacement);
-          updateDoc(doc(db, "quality_evaluations", aliasKey), deletePayload).catch(() => {});
+          setDoc(doc(db, "quality_evaluations", aliasKey), deletePayload, { merge: true }).catch(() => {});
         }
       }
 
@@ -5459,8 +5528,8 @@ export default function QualityDashboard({
                             const key = `m${trainerMonth}_eval_${cNum}`;
                             const rawVal = currentScores[key] ?? "";
                             const val = String(rawVal);
-                            const note = currentNotes[key] ?? "";
-                            const link = currentLinks[key] ?? "";
+                            const note = getCellNote(currentNotes, key, 1, false);
+                            const link = getCellLink(currentLinks, key, 1, false);
                             const hasNote = Boolean(note.trim());
                             const hasLink = Boolean(link.trim());
                             const isV = val.toUpperCase() === "V";
@@ -5603,8 +5672,8 @@ export default function QualityDashboard({
                             const key = `m${trainerMonth}_eval_${cNum}`;
                             const rawVal = currentScores[key] ?? "";
                             const val = String(rawVal);
-                            const note = currentNotes[key] ?? "";
-                            const link = currentLinks[key] ?? "";
+                            const note = getCellNote(currentNotes, key, 1, false);
+                            const link = getCellLink(currentLinks, key, 1, false);
                             const hasNote = Boolean(note.trim());
                             const hasLink = Boolean(link.trim());
                             const isV = val.toUpperCase() === "V";
@@ -5724,8 +5793,8 @@ export default function QualityDashboard({
                             const key = `w${selectedWeek}_chat_${cNum}`;
                             const rawVal = currentScores[key] ?? "";
                             const val = String(rawVal || "");
-                            const note = currentNotes[key] ?? "";
-                            const link = currentLinks[key] ?? "";
+                            const note = getCellNote(currentNotes, key, selectedWeek, true);
+                            const link = getCellLink(currentLinks, key, selectedWeek, true);
                             const hasNote = Boolean(note.trim());
                             const hasLink = Boolean(link.trim());
                             const isV = val.toUpperCase() === "V";
@@ -5866,8 +5935,8 @@ export default function QualityDashboard({
                             const wKey = `w${Math.floor((cNum - 1) / 6) + 1}_${isChatTeam ? "chat" : "call"}_${cNum}`;
                             const rawVal = currentScores[key] ?? currentScores[`call_${cNum}`] ?? currentScores[`chat_${cNum}`] ?? currentScores[wKey] ?? "";
                             const val = String(rawVal);
-                            const note = currentNotes[key] ?? currentNotes[`call_${cNum}`] ?? currentNotes[`chat_${cNum}`] ?? currentNotes[wKey] ?? "";
-                            const link = currentLinks[key] ?? currentLinks[`call_${cNum}`] ?? currentLinks[`chat_${cNum}`] ?? currentLinks[wKey] ?? "";
+                            const note = getCellNote(currentNotes, key, Math.floor((cNum - 1) / 6) + 1, isChatTeam) || (currentNotes[wKey] ?? "");
+                            const link = getCellLink(currentLinks, key, Math.floor((cNum - 1) / 6) + 1, isChatTeam) || (currentLinks[wKey] ?? "");
                             const hasNote = Boolean(note.trim());
                             const hasLink = Boolean(link.trim());
                             const isV = val.toUpperCase() === "V";
@@ -5988,8 +6057,8 @@ export default function QualityDashboard({
                           const key = isChatTeam ? `w${selectedWeek}_chat_${cNum}` : `w${selectedWeek}_call_${callIndex}`;
                           const rawVal = currentScores[key] ?? (isChatTeam ? (currentScores[`w${selectedWeek}_call_${cNum}`] ?? currentScores[`w${selectedWeek}_call_${callIndex}`] ?? (cNum === 7 && !showOutbound ? currentScores[`w${selectedWeek}_outbound`] : undefined) ?? "") : "");
                           const val = String(rawVal || "");
-                          const note = currentNotes[key] ?? (isChatTeam ? (currentNotes[`w${selectedWeek}_call_${cNum}`] ?? currentNotes[`w${selectedWeek}_call_${callIndex}`] ?? (cNum === 7 && !showOutbound ? currentNotes[`w${selectedWeek}_outbound`] : undefined) ?? "") : "");
-                          const link = currentLinks[key] ?? (isChatTeam ? (currentLinks[`w${selectedWeek}_call_${cNum}`] ?? currentLinks[`w${selectedWeek}_call_${callIndex}`] ?? (cNum === 7 && !showOutbound ? currentLinks[`w${selectedWeek}_outbound`] : undefined) ?? "") : "");
+                          const note = getCellNote(currentNotes, key, selectedWeek, isChatTeam) || (isChatTeam ? (currentNotes[`w${selectedWeek}_call_${cNum}`] ?? currentNotes[`w${selectedWeek}_call_${callIndex}`] ?? (cNum === 7 && !showOutbound ? currentNotes[`w${selectedWeek}_outbound`] : undefined) ?? "") : "");
+                          const link = getCellLink(currentLinks, key, selectedWeek, isChatTeam) || (isChatTeam ? (currentLinks[`w${selectedWeek}_call_${cNum}`] ?? currentLinks[`w${selectedWeek}_call_${callIndex}`] ?? (cNum === 7 && !showOutbound ? currentLinks[`w${selectedWeek}_outbound`] : undefined) ?? "") : "");
                           const hasNote = Boolean(note.trim());
                           const hasLink = Boolean(link.trim());
                           const isV = val.toUpperCase() === "V";
@@ -6087,8 +6156,8 @@ export default function QualityDashboard({
                               const key = `w${selectedWeek}_outbound`;
                               const rawVal = currentScores[key];
                               const val = String(rawVal ?? "");
-                              const note = currentNotes[key] ?? "";
-                              const link = currentLinks[key] ?? "";
+                              const note = getCellNote(currentNotes, key, selectedWeek, isChatTeam);
+                              const link = getCellLink(currentLinks, key, selectedWeek, isChatTeam);
                               const hasNote = Boolean(note.trim());
                               const hasLink = Boolean(link.trim());
                               const isV = val.toUpperCase() === "V";

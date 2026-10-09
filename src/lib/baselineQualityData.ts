@@ -87,6 +87,34 @@ export function mergeQualityDocs(targetDoc: any, sourceDoc: any): any {
   const mergedNotes: Record<string, any> = { ...(targetDoc.notes || {}) };
   const mergedLinks: Record<string, any> = { ...(targetDoc.links || {}) };
 
+  // Unflatten any legacy dot keys from targetDoc
+  Object.keys(targetDoc).forEach(k => {
+    if (k.startsWith("notes.")) {
+      const sub = k.slice(6);
+      if (targetDoc[k]) mergedNotes[sub] = targetDoc[k];
+    } else if (k.startsWith("links.")) {
+      const sub = k.slice(6);
+      if (targetDoc[k]) mergedLinks[sub] = targetDoc[k];
+    } else if (k.startsWith("cell_timestamps.")) {
+      const sub = k.slice(16);
+      if (targetDoc[k]) mergedTimestamps[sub] = targetDoc[k];
+    }
+  });
+
+  // Unflatten any legacy dot keys from sourceDoc
+  Object.keys(sourceDoc).forEach(k => {
+    if (k.startsWith("notes.")) {
+      const sub = k.slice(6);
+      if (sourceDoc[k]) mergedNotes[sub] = sourceDoc[k];
+    } else if (k.startsWith("links.")) {
+      const sub = k.slice(6);
+      if (sourceDoc[k]) mergedLinks[sub] = sourceDoc[k];
+    } else if (k.startsWith("cell_timestamps.")) {
+      const sub = k.slice(16);
+      if (sourceDoc[k]) mergedTimestamps[sub] = sourceDoc[k];
+    }
+  });
+
   const sourceScores = sourceDoc.scores || {};
   for (const [col, sVal] of Object.entries(sourceScores)) {
     const tVal = mergedScores[col];
