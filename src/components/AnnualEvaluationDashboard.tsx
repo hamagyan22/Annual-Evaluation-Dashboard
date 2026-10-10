@@ -1157,22 +1157,23 @@ export default function AnnualEvaluationDashboard({
                           </span>
                         </div>
 
-                        {/* Search Input */}
+                        {/* Search Input - Modern & Calm */}
                         <div className="relative mt-2.5 mb-2">
-                          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
                           <input
                             type="text"
                             placeholder="Search employee across all teams..."
                             value={employeeSearchTerm}
                             onChange={(e) => setEmployeeSearchTerm(e.target.value)}
-                            className="w-full pl-8 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1C6B53] text-gray-900 dark:text-gray-100 font-medium shadow-xs"
+                            className="w-full pl-9 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200/90 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-[#1C6B53]/20 focus:border-[#1C6B53] dark:focus:border-emerald-500 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 font-medium shadow-xs transition"
                             autoFocus
                           />
                           {employeeSearchTerm && (
                             <button
                               type="button"
                               onClick={() => setEmployeeSearchTerm("")}
-                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5"
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 rounded-md transition"
+                              title="Clear search"
                             >
                               <X size={12} />
                             </button>

@@ -39,7 +39,7 @@ const DEFAULT_CALL_AGENTS = [
   "Ahmed Jalil", "Alla Satar", "Amar Hussein Salih", "Aya Yasin", "Azad Muhammad",
   "Frmesk Younis", "Haneen Abd-Al Kareem", "Haseeb Adeeb", "Hewr Adnan", "Kani Sami",
   "Kazhvan Wirya", "Lana Halmat Rafeeq", "Laveen Khaleel", "Marwa Khalil", "Mokhalad Ali",
-  "Muzhda Omar Ali", "Rabar Mohammed", "Saja Bashar Anwar", "Salam Sadam Muhammad",
+  "Mohammed Salem", "Muzhda Omar Ali", "Rabar Mohammed", "Saja Bashar Anwar", "Salam Sadam Muhammad",
   "Sarbaz Namiq Hasan", "Shahab Ahmed Muhammed", "Taban Sirwan", "Zainab Khalid Rasheed",
   "Zhalla Sherzad", "Zhalla Salam"
 ];
@@ -285,7 +285,7 @@ export default function TopStarDashboard({
 
       const finalCall: Record<string, Record<string, any>> = {};
       callRoster.forEach(name => {
-        const raw = callMap[name] || {};
+        const raw = callMap[name] || callMap[normalizeName(name)] || {};
         finalCall[name] = {
           qa: raw.quality ?? null,
           prod: raw.productivity ?? null,
@@ -1076,16 +1076,16 @@ export default function TopStarDashboard({
             
             {/* Far Left: Search Input */}
             <div className="relative w-full sm:w-56">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search agent..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full text-xs pl-8 pr-3 py-1.5 rounded-xl border outline-none font-medium transition ${
+                className={`w-full text-xs pl-9 pr-3 py-1.5 rounded-xl border outline-none font-medium transition shadow-xs ${
                   isDarkMode 
-                    ? "bg-gray-900/60 border-gray-700 text-white placeholder-gray-500 focus:border-emerald-500" 
-                    : "bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-400 focus:border-emerald-600"
+                    ? "bg-gray-900/60 border-gray-700 text-white placeholder-gray-500 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" 
+                    : "bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-[#1C6B53]/20 focus:border-[#1C6B53]"
                 }`}
               />
             </div>

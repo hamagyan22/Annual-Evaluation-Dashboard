@@ -65,7 +65,12 @@ export const CANONICAL_NAMES: Record<string, string> = {
   "haseeb adeeb": "Haseeb Adeeb",
   "hewr adnan": "Hewr Adnan",
   "aya yasin": "Aya Yasin",
-  "ahmed jalil": "Ahmed Jalil"
+  "ahmed jalil": "Ahmed Jalil",
+  "mohammed saleem": "Mohammed Salem",
+  "mohammed salem": "Mohammed Salem",
+  "mohammad saleem": "Mohammed Salem",
+  "mohammad salem": "Mohammed Salem",
+  "mohammed saman": "Mohammed Salem"
 };
 
 export const DEFAULT_CHAT_AGENTS = [
@@ -78,7 +83,7 @@ export const DEFAULT_CALL_AGENTS = [
   "Ahmed Jalil", "Alla Satar", "Amar Hussein Salih", "Aya Yasin", "Azad Muhammad",
   "Frmesk Younis", "Haneen Abd-Al Kareem", "Haseeb Adeeb", "Hewr Adnan", "Kani Sami",
   "Kazhvan Wirya", "Lana Halmat Rafeeq", "Laveen Khaleel", "Marwa Khalil", "Mokhalad Ali",
-  "Muzhda Omar Ali", "Rabar Mohammed", "Saja Bashar Anwar", "Salam Sadam Muhammad",
+  "Mohammed Salem", "Muzhda Omar Ali", "Rabar Mohammed", "Saja Bashar Anwar", "Salam Sadam Muhammad",
   "Sarbaz Namiq Hasan", "Shahab Ahmed Muhammed", "Taban Sirwan", "Zainab Khalid Rasheed",
   "Zhalla Sherzad", "Zhalla Salam"
 ];
@@ -408,7 +413,7 @@ export function checkTeamCompleteness(
         name: agentName,
         missingFields: team === "chat" 
           ? ["Qa", "Prod", "Aht", "Art", "Exam"] 
-          : ["Qa", "Prod", "Aht", "Exam", "Wrapup", "Hold"]
+          : ["Qa", "Prod", "Aht", "Exam"]
       });
       return;
     }
@@ -421,9 +426,6 @@ export function checkTeamCompleteness(
 
     if (team === "chat") {
       if (!isFieldFilled(raw.art)) missing.push("Art");
-    } else {
-      if (!isFieldFilled(raw.wrapup)) missing.push("Wrapup");
-      if (!isFieldFilled(raw.hold)) missing.push("Hold");
     }
 
     const anyFilled = isFieldFilled(raw.qa ?? raw.quality) || 
@@ -578,9 +580,13 @@ export async function fetchTopStarData(
     };
   });
 
+  const discoveredCallAgents = Object.keys(callMap);
+  const allCallAgentsList = Array.from(new Set([...activeCallAgents, ...discoveredCallAgents]))
+    .filter(name => !inactiveSet.has(normalizeName(name)));
+
   const finalCall: Record<string, any> = {};
-  activeCallAgents.forEach(name => {
-    const raw = callMap[name] || {};
+  allCallAgentsList.forEach(name => {
+    const raw = callMap[name] || callMap[normalizeName(name)] || {};
     finalCall[name] = {
       qa: raw.quality ?? null,
       prod: raw.productivity ?? null,
@@ -592,10 +598,10 @@ export async function fetchTopStarData(
   });
 
   const chatCompleteness = checkTeamCompleteness("chat", finalChat, activeChatAgents);
-  const callCompleteness = checkTeamCompleteness("call", finalCall, activeCallAgents);
+  const callCompleteness = checkTeamCompleteness("call", finalCall, allCallAgentsList);
 
   const rankedChat = computeTeamRanks("chat", finalChat, activeChatAgents, criteria);
-  const rankedCall = computeTeamRanks("call", finalCall, activeCallAgents, criteria);
+  const rankedCall = computeTeamRanks("call", finalCall, allCallAgentsList, criteria);
 
   const top3Chat = rankedChat.filter(r => r.rank != null && r.rank <= 3).slice(0, 3);
   const top3Call = rankedCall.filter(r => r.rank != null && r.rank <= 3).slice(0, 3);

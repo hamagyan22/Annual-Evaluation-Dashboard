@@ -21,6 +21,7 @@ export const DEFAULT_COMPANY_EMPLOYEES: CompanyEmployee[] = [
   { id: "salam_sadam_muhammad", agent_name: "Salam Sadam Muhammad", name: "Salam Sadam Muhammad", team: "Younis Kamal Team" },
   { id: "sarbaz_namiq_hasan", agent_name: "Sarbaz Namiq Hasan", name: "Sarbaz Namiq Hasan", team: "Younis Kamal Team" },
   { id: "shahab_ahmed_muhammed", agent_name: "Shahab Ahmed Muhammed", name: "Shahab Ahmed Muhammed", team: "Younis Kamal Team" },
+  { id: "mohammed_salem", agent_name: "Mohammed Salem", name: "Mohammed Salem", team: "Younis Kamal Team" },
 
   // Ankido Buya Team (13 agents)
   { id: "alla_satar", agent_name: "Alla Satar", name: "Alla Satar", team: "Ankido Buya Team" },

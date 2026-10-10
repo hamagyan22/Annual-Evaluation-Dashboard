@@ -1123,6 +1123,7 @@ function AgentDashboard({
   }, [selectedYear, selectedMonth]);
 
   const isChatTeam = currentAgent?.team === 'Mohammed Dlshad Team';
+  const rawAgentName = (currentAgent?.agent_name || currentAgent?.name || "").toLowerCase().trim();
   const currentAgentCanonicalName = normalizeName(currentAgent?.agent_name || currentAgent?.name || "");
 
   const monthIndex = MONTHS.indexOf((selectedMonth || "").toUpperCase());
@@ -1138,14 +1139,21 @@ function AgentDashboard({
   const isPodiumComplete = activePodiumCompleteness?.isComplete === true;
 
   const agentRankInfo = useMemo(() => {
-    if (!topStarData || !isMonthComplete) return null;
+    if (!topStarData) return null;
     const teamList = isChatTeam ? topStarData.rankedChat : topStarData.rankedCall;
-    return teamList.find((r: any) => normalizeName(r.name) === currentAgentCanonicalName) || null;
-  }, [topStarData, isChatTeam, currentAgentCanonicalName, isMonthComplete]);
+    return teamList.find((r: any) => {
+      const rNorm = normalizeName(r.name);
+      const rLower = (r.name || "").toLowerCase().trim();
+      return rNorm === currentAgentCanonicalName || 
+             rLower === rawAgentName || 
+             (rawAgentName.includes("saleem") && rLower.includes("salem")) ||
+             (rawAgentName.includes("salem") && rLower.includes("saleem"));
+    }) || null;
+  }, [topStarData, isChatTeam, currentAgentCanonicalName, rawAgentName]);
 
-  const myRank = isMonthComplete ? (agentRankInfo?.rank ?? null) : null;
-  const myScore = isMonthComplete ? (agentRankInfo?.scoreStr ?? null) : null;
-  const isTop3 = isMonthComplete && isSepOrLater && myRank !== null && myRank <= 3;
+  const myRank = agentRankInfo?.rank ?? null;
+  const myScore = agentRankInfo?.scoreStr ?? null;
+  const isTop3 = isSepOrLater && myRank !== null && myRank <= 3;
 
   const currentTop3 = useMemo(() => {
     if (!topStarData || !isPodiumComplete) return [];
@@ -1277,20 +1285,20 @@ function AgentDashboard({
                 <button
                   type="button"
                   onClick={() => setAgentDropdownOpen(!agentDropdownOpen)}
-                  className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 transition shadow-xs cursor-pointer"
+                  className="w-full sm:w-auto flex items-center justify-between gap-2.5 px-3 py-1.5 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200/90 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 transition shadow-xs cursor-pointer"
                 >
-                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-[#1C6B53] dark:text-emerald-300 flex items-center justify-center text-[11px] font-black shrink-0">
+                  <div className="w-6 h-6 rounded-lg bg-[#1C6B53]/15 text-[#1C6B53] dark:text-emerald-300 flex items-center justify-center text-[11px] font-black shrink-0">
                     {currentAgent?.agent_name ? currentAgent.agent_name.charAt(0).toUpperCase() : <Users size={12} />}
                   </div>
-                  <div className="flex flex-col text-left">
-                    <span className="truncate max-w-[95px] sm:max-w-[150px] font-black leading-tight text-gray-900 dark:text-white">
+                  <div className="flex flex-col text-left truncate">
+                    <span className="truncate max-w-[110px] sm:max-w-[160px] font-black leading-tight text-gray-900 dark:text-white">
                       {toTitleCase(currentAgent?.agent_name || "Select Agent")}
                     </span>
-                    <span className="text-[9px] text-gray-500 dark:text-gray-400 font-medium leading-none">
-                      {currentAgent?.team || 'Contact Center'}
+                    <span className="text-[9px] text-gray-500 dark:text-gray-400 font-semibold leading-none mt-0.5 truncate">
+                      {currentAgent?.team?.replace(' Team', '') || 'Contact Center'}
                     </span>
                   </div>
-                  <ChevronDown size={13} className={`text-gray-400 dark:text-gray-400 transition-transform duration-200 ml-1 ${agentDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={13} className={`text-gray-400 dark:text-gray-400 transition-transform duration-200 shrink-0 ml-0.5 ${agentDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {agentDropdownOpen && (
@@ -1313,22 +1321,23 @@ function AgentDashboard({
                         </span>
                       </div>
 
-                      {/* Search Input */}
+                      {/* Search Input - Modern & Calm */}
                       <div className="relative mt-2.5 mb-2">
-                        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
                         <input
                           type="text"
                           placeholder="Search employee across all teams..."
                           value={agentSearchTerm}
                           onChange={(e) => setAgentSearchTerm(e.target.value)}
-                          className="w-full pl-8 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1C6B53] text-gray-900 dark:text-gray-100 font-medium shadow-xs"
+                          className="w-full pl-9 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200/90 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-[#1C6B53]/20 focus:border-[#1C6B53] dark:focus:border-emerald-500 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 font-medium shadow-xs transition"
                           autoFocus
                         />
                         {agentSearchTerm && (
                           <button
                             type="button"
                             onClick={() => setAgentSearchTerm("")}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 rounded-md transition"
+                            title="Clear search"
                           >
                             <X size={12} />
                           </button>
@@ -1861,7 +1870,10 @@ function AgentDashboard({
                   </div>
                 ) : (
                   currentTop3.map((agent: any) => {
-                    const isMe = normalizeName(agent.name) === currentAgentCanonicalName;
+                    const isMe = normalizeName(agent.name) === currentAgentCanonicalName ||
+                                 (agent.name || "").toLowerCase().trim() === rawAgentName ||
+                                 (rawAgentName.includes("saleem") && (agent.name || "").toLowerCase().includes("salem")) ||
+                                 (rawAgentName.includes("salem") && (agent.name || "").toLowerCase().includes("saleem"));
                     return (
                       <div
                         key={agent.name}

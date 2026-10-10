@@ -43,6 +43,12 @@ const EXACT_ALIASES: Record<string, string> = {
   "sarbaz namiq hasan": "Sarbaz Namiq Hasan",
   "sarbaz namiql": "Sarbaz Namiq Hasan",
 
+  "mohammed saleem": "Mohammed Salem",
+  "mohammed salem": "Mohammed Salem",
+  "mohammad saleem": "Mohammed Salem",
+  "mohammad salem": "Mohammed Salem",
+  "mohammed saman": "Mohammed Salem",
+
   // --- Ankido Buya Team ---
   "alla satar": "Alla Satar",
   "alla sattar": "Alla Satar",
