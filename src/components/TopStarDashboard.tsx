@@ -831,7 +831,7 @@ export default function TopStarDashboard({
       <div className="max-w-[1400px] mx-auto">
         
         {/* Top Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-6 gap-3 pb-4 border-b border-gray-200/70 dark:border-gray-800">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-6 gap-3 pb-4 border-b border-gray-200/70 dark:border-gray-800 relative z-30">
           
           <div className="flex items-center gap-3 sm:gap-4">
             <img src="/logo.webp" alt="FIB Logo" className="h-9 sm:h-11 w-auto object-contain" />
@@ -850,22 +850,25 @@ export default function TopStarDashboard({
             </div>
           </div>
 
-          {/* Right Header Navigation: Back, Criteria button, Dark Mode */}
+          {/* Right Header Navigation: Back, Palette, Criteria, Celebration Video, Dark Mode */}
           <div className="flex items-center gap-1.5 p-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-xs self-stretch sm:self-auto justify-between sm:justify-end">
             
             {/* Back Button */}
             <button
               onClick={onBack}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 transition cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 transition cursor-pointer shrink-0"
               title="Return to Main Dashboard"
             >
               <ArrowLeft size={14} />
               <span>Back</span>
             </button>
 
+            {/* Theme Selector right beside Back */}
+            <ThemeSelectorModal />
+
             <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
 
-            {/* Criteria & Targets Button placed right next to Back button as requested */}
+            {/* Criteria & Targets Button */}
             <button
               onClick={() => setShowCriteriaModal(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50/90 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 border border-amber-200/80 dark:border-amber-800/60 transition cursor-pointer"
@@ -887,20 +890,18 @@ export default function TopStarDashboard({
               <span>Celebration Video</span>
             </button>
 
-            <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
-
-            {/* Theme Selector */}
-            <ThemeSelectorModal />
-
             {/* Dark Mode Toggle */}
             {toggleDarkMode && (
-              <button
-                onClick={toggleDarkMode}
-                className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors cursor-pointer"
-                title="Toggle Dark Mode"
-              >
-                {isDarkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
-              </button>
+              <>
+                <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
+                <button
+                  onClick={toggleDarkMode}
+                  className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors cursor-pointer"
+                  title="Toggle Dark Mode"
+                >
+                  {isDarkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
+                </button>
+              </>
             )}
           </div>
         </div>

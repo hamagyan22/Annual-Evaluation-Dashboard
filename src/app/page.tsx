@@ -1468,6 +1468,25 @@ function AgentDashboard({
               </div>
             )}
 
+            {/* Back to Dashboard Button in Preview Mode (Unified at the beginning across all pages) */}
+            {previewMode && onExitPreview && (
+              <button
+                onClick={onExitPreview}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 transition active:scale-95 cursor-pointer shrink-0"
+                title="Return to Main Dashboard"
+              >
+                <ArrowLeft size={14} />
+                <span>Back</span>
+              </button>
+            )}
+
+            {/* Theme Selector Modal right beside Back */}
+            <ThemeSelectorModal />
+
+            {(onOpenAnnualEval || toggleDarkMode) && (
+              <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
+            )}
+
             {/* Annual & Semi-Annual Evaluation Button */}
             {onOpenAnnualEval && (
               <button
@@ -1481,32 +1500,14 @@ function AgentDashboard({
               </button>
             )}
 
-            {/* Back to Dashboard Button in Preview Mode */}
-            {previewMode && onExitPreview && (
-              <button
-                onClick={onExitPreview}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100/70 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 border border-emerald-200/60 dark:border-emerald-800/60 shadow-xs transition active:scale-95 shrink-0"
-              >
-                <ArrowLeft size={13} />
-                <span>Back</span>
-              </button>
-            )}
-
-            {(previewMode || toggleDarkMode) && (
-              <div className="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
-            )}
-
-            {/* Theme Selector Modal */}
-            <ThemeSelectorModal />
-
             {/* Dark Mode Toggle */}
             {toggleDarkMode && (
               <button 
                 onClick={toggleDarkMode} 
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors shrink-0 cursor-pointer"
+                className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors shrink-0 cursor-pointer"
                 title="Toggle Dark Mode"
               >
-                {isDarkMode ? <Sun size={16} className="text-amber-500" /> : <Moon size={16} />}
+                {isDarkMode ? <Sun size={15} className="text-amber-500" /> : <Moon size={15} />}
               </button>
             )}
 
@@ -4769,7 +4770,7 @@ export default function Dashboard() {
       <div className="min-h-screen p-3.5 sm:p-6 md:p-10 font-sans transition-colors dark:bg-gray-900 dark:text-gray-100">
         <div className="max-w-[1400px] mx-auto">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-6 sm:mb-8 gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-gray-200/60 dark:border-gray-800">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-6 sm:mb-8 gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-gray-200/60 dark:border-gray-800 relative z-30">
             <div className="flex items-center gap-3 sm:gap-5 w-full sm:w-auto justify-between sm:justify-start">
               <div className="flex items-center gap-2.5 sm:gap-3">
                 <img src="/logo.webp" alt="FIB Logo" className="h-9 sm:h-12 w-auto object-contain" />

@@ -4433,7 +4433,7 @@ export default function QualityDashboard({
       <div className="max-w-[1700px] mx-auto space-y-6">
 
         {/* Top Header & Brand Bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 sm:pb-6 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 sm:pb-6 border-b border-gray-200 dark:border-gray-800 relative z-30">
           <div className="flex items-center gap-3.5">
             <img src="/logo.webp" alt="FIB Logo" className="h-10 sm:h-12 w-auto object-contain" />
             <div className="h-8 sm:h-10 w-[1.5px] bg-gray-200 dark:bg-gray-700" />
@@ -4482,21 +4482,24 @@ export default function QualityDashboard({
               <div className="flex items-center gap-1.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-1.5 rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-xs">
                 <button
                   onClick={onBack}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 transition cursor-pointer shrink-0"
                   title="Return to Main Dashboard"
                 >
                   <ArrowLeft size={14} /> <span>Back</span>
                 </button>
+
+                {/* Theme Selector right beside Back */}
+                <ThemeSelectorModal />
+
                 {toggleDarkMode && (
                   <>
                     <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
-                    <ThemeSelectorModal />
                     <button
                       onClick={toggleDarkMode}
-                      className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300 transition shrink-0 cursor-pointer"
+                      className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300 transition shrink-0 cursor-pointer"
                       title="Toggle Dark Mode"
                     >
-                      {isDarkMode ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} />}
+                      {isDarkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
                     </button>
                   </>
                 )}
