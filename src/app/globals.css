@@ -9,6 +9,83 @@
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
+
+  /* Brand Theme Variables (Default Emerald Luxe) */
+  --brand-primary: #1C6B53;
+  --brand-hover: #155a45;
+  --brand-accent: #00A991;
+  --brand-glow: rgba(28, 107, 83, 0.25);
+  --brand-bg-light: #ecfdf5;
+  --brand-text-light: #065f46;
+  --brand-dark-bg-light: rgba(6, 78, 59, 0.45);
+  --brand-dark-text-light: #6ee7b7;
+  --brand-border-light: #a7f3d0;
+  --brand-dark-border-light: #065f46;
+}
+
+[data-theme="indigo"] {
+  --brand-primary: #4338ca;
+  --brand-hover: #3730a3;
+  --brand-accent: #6366f1;
+  --brand-glow: rgba(67, 56, 202, 0.25);
+  --brand-bg-light: #eef2ff;
+  --brand-text-light: #3730a3;
+  --brand-dark-bg-light: rgba(49, 46, 129, 0.45);
+  --brand-dark-text-light: #a5b4fc;
+  --brand-border-light: #c7d2fe;
+  --brand-dark-border-light: #3730a3;
+}
+
+[data-theme="sapphire"] {
+  --brand-primary: #1e40af;
+  --brand-hover: #1e3a8a;
+  --brand-accent: #3b82f6;
+  --brand-glow: rgba(30, 64, 175, 0.25);
+  --brand-bg-light: #eff6ff;
+  --brand-text-light: #1e3a8a;
+  --brand-dark-bg-light: rgba(30, 58, 138, 0.45);
+  --brand-dark-text-light: #93c5fd;
+  --brand-border-light: #bfdbfe;
+  --brand-dark-border-light: #1e3a8a;
+}
+
+[data-theme="teal"] {
+  --brand-primary: #0f766e;
+  --brand-hover: #115e59;
+  --brand-accent: #14b8a6;
+  --brand-glow: rgba(15, 118, 110, 0.25);
+  --brand-bg-light: #f0fdfa;
+  --brand-text-light: #115e59;
+  --brand-dark-bg-light: rgba(19, 78, 74, 0.45);
+  --brand-dark-text-light: #5eead4;
+  --brand-border-light: #99f6e4;
+  --brand-dark-border-light: #134e4a;
+}
+
+[data-theme="rose"] {
+  --brand-primary: #9f1239;
+  --brand-hover: #881337;
+  --brand-accent: #f43f5e;
+  --brand-glow: rgba(159, 18, 57, 0.25);
+  --brand-bg-light: #fff1f2;
+  --brand-text-light: #881337;
+  --brand-dark-bg-light: rgba(136, 19, 55, 0.45);
+  --brand-dark-text-light: #fda4af;
+  --brand-border-light: #fecdd3;
+  --brand-dark-border-light: #4c0519;
+}
+
+[data-theme="amber"] {
+  --brand-primary: #b45309;
+  --brand-hover: #92400e;
+  --brand-accent: #f59e0b;
+  --brand-glow: rgba(180, 83, 9, 0.25);
+  --brand-bg-light: #fffbeb;
+  --brand-text-light: #92400e;
+  --brand-dark-bg-light: rgba(120, 53, 15, 0.45);
+  --brand-dark-text-light: #fde68a;
+  --brand-border-light: #fde68a;
+  --brand-dark-border-light: #78350f;
 }
 
 html {

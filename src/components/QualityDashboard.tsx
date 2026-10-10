@@ -15,6 +15,8 @@ import { compressImageFile } from "@/lib/imageUtils";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 import { BASELINE_QUALITY_EVALUATIONS, expandQualityDocAliases, getQualityEvalDoc, mergeQualityDocs, SLUG_ALIASES } from "@/lib/baselineQualityData";
 import { getCanonicalAgentName as getCanonicalNameAuthority } from "@/lib/canonicalAgents";
+import { ModernDropdown } from "@/components/ModernDropdown";
+import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 
 interface QualityDashboardProps {
   userProfile: any;
@@ -4488,6 +4490,7 @@ export default function QualityDashboard({
                 {toggleDarkMode && (
                   <>
                     <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
+                    <ThemeSelectorModal />
                     <button
                       onClick={toggleDarkMode}
                       className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300 transition shrink-0 cursor-pointer"
@@ -4511,6 +4514,9 @@ export default function QualityDashboard({
                     <span>Evaluation</span>
                   </button>
                 )}
+
+                {/* Theme Selector */}
+                <ThemeSelectorModal />
 
                 {/* Dark Mode Toggle */}
                 {toggleDarkMode && (
@@ -4742,18 +4748,16 @@ export default function QualityDashboard({
           
           {/* Static Left Controls: Year & Month */}
           <div className="flex items-center gap-2 shrink-0">
-            {/* Year Dropdown */}
-            <div className="relative shrink-0">
-              <select
+            {/* Year Dropdown - Modern Custom Dropdown */}
+            <div className="shrink-0">
+              <ModernDropdown
                 value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                className={`appearance-none pl-3 pr-7 py-2 text-xs font-black rounded-xl text-white shadow-xs outline-none cursor-pointer border-0 ${
-                  isTrainer ? "bg-[#0d9488]" : "bg-[#1C6B53]"
-                }`}
-              >
-                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-              <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white/80" />
+                onChange={(val) => setSelectedYear(val)}
+                options={YEARS}
+                variant="solid-green"
+                size="md"
+                ariaLabel="Select Year"
+              />
             </div>
 
             {/* Modern Month Dropdown (For Regular QA: filters month) */}

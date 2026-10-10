@@ -9,6 +9,9 @@ import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesA
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
 import { getCanonicalAgentName, getCanonicalAgent, getCanonicalSlug, getAllAgentSlugs, isSameAgent } from "@/lib/canonicalAgents";
+import { ModernDropdown } from "@/components/ModernDropdown";
+import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
+import { useAppTheme } from "@/lib/themeManager";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
 const TEAMS: TeamName[] = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team'];
@@ -757,6 +760,49 @@ function AgentDashboard({
   const [memberDoc, setMemberDoc] = useState<any>(null);
   const [agentDropdownOpen, setAgentDropdownOpen] = useState(false);
   const [agentSearchTerm, setAgentSearchTerm] = useState("");
+  const [teamTabFilter, setTeamTabFilter] = useState<string>("Younis");
+
+  const teamCounts = useMemo(() => {
+    const counts = { Younis: 0, Ankido: 0, Mohammed: 0 };
+    (activeMembersList || []).forEach(m => {
+      const t = (m.team || "").toLowerCase();
+      if (t.includes("younis")) counts.Younis++;
+      else if (t.includes("ankido")) counts.Ankido++;
+      else if (t.includes("mohammed") || t.includes("dlshad")) counts.Mohammed++;
+    });
+    return counts;
+  }, [activeMembersList]);
+
+  const filteredAgentsList = useMemo(() => {
+    let list = activeMembersList || [];
+    if (teamTabFilter) {
+      list = list.filter(m => {
+        const t = (m.team || "").toLowerCase();
+        if (teamTabFilter === "Younis") return t.includes("younis");
+        if (teamTabFilter === "Ankido") return t.includes("ankido");
+        if (teamTabFilter === "Mohammed") return t.includes("mohammed") || t.includes("dlshad");
+        return true;
+      });
+    }
+    if (agentSearchTerm.trim()) {
+      const q = agentSearchTerm.toLowerCase();
+      list = (activeMembersList || []).filter(m => 
+        (m.agent_name || "").toLowerCase().includes(q) || 
+        (m.team || "").toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [activeMembersList, teamTabFilter, agentSearchTerm]);
+
+  useEffect(() => {
+    if (currentAgent?.team) {
+      const t = currentAgent.team.toLowerCase();
+      if (t.includes("ankido")) setTeamTabFilter("Ankido");
+      else if (t.includes("mohammed") || t.includes("dlshad")) setTeamTabFilter("Mohammed");
+      else if (t.includes("younis")) setTeamTabFilter("Younis");
+    }
+  }, [currentAgent]);
+
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editDisplayName, setEditDisplayName] = useState("");
   const [editPhotoUrl, setEditPhotoUrl] = useState("");
@@ -1231,44 +1277,137 @@ function AgentDashboard({
                 <button
                   type="button"
                   onClick={() => setAgentDropdownOpen(!agentDropdownOpen)}
-                  className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 px-2.5 sm:px-3 py-1.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/60 dark:hover:bg-gray-700 border border-gray-200/80 dark:border-gray-600/80 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 transition shadow-xs cursor-pointer"
+                  className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 transition shadow-xs cursor-pointer"
                 >
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-[#1C6B53] dark:text-emerald-300 flex items-center justify-center text-[10px] font-black shrink-0">
-                    {currentAgent?.agent_name ? currentAgent.agent_name.charAt(0).toUpperCase() : <Users size={11} />}
+                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-[#1C6B53] dark:text-emerald-300 flex items-center justify-center text-[11px] font-black shrink-0">
+                    {currentAgent?.agent_name ? currentAgent.agent_name.charAt(0).toUpperCase() : <Users size={12} />}
                   </div>
-                  <span className="truncate max-w-[90px] sm:max-w-[160px]">{currentAgent?.agent_name || "Select Agent"}</span>
-                  <span className="text-[9px] sm:text-[10px] font-semibold px-1.5 py-0.5 rounded bg-gray-200/70 dark:bg-gray-600 text-gray-600 dark:text-gray-300 shrink-0">
-                    {currentAgent?.team?.replace(' Team', '') || ''}
-                  </span>
-                  <ChevronDown size={12} className={`text-gray-400 dark:text-gray-400 transition-transform duration-200 ${agentDropdownOpen ? 'rotate-180' : ''}`} />
+                  <div className="flex flex-col text-left">
+                    <span className="truncate max-w-[95px] sm:max-w-[150px] font-black leading-tight text-gray-900 dark:text-white">
+                      {toTitleCase(currentAgent?.agent_name || "Select Agent")}
+                    </span>
+                    <span className="text-[9px] text-gray-500 dark:text-gray-400 font-medium leading-none">
+                      {currentAgent?.team || 'Contact Center'}
+                    </span>
+                  </div>
+                  <ChevronDown size={13} className={`text-gray-400 dark:text-gray-400 transition-transform duration-200 ml-1 ${agentDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {agentDropdownOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setAgentDropdownOpen(false)} />
-                    <div className="absolute right-0 top-full mt-2 w-[calc(100vw-32px)] sm:w-72 max-w-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-2 z-50 max-h-80 flex flex-col">
-                      <div className="relative mb-2">
+                    <div className="absolute right-0 top-full mt-2 w-[calc(100vw-32px)] sm:w-[420px] bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-3xl shadow-2xl p-3 z-50 max-h-[460px] flex flex-col animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/10">
+                      
+                      {/* Header */}
+                      <div className="px-2 pt-1 pb-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                        <div>
+                          <h4 className="text-xs font-black text-gray-900 dark:text-white">
+                            Select Employee
+                          </h4>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                            {activeMembersList.length} Official Contact Center Agents
+                          </p>
+                        </div>
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                          {filteredAgentsList.length} Available
+                        </span>
+                      </div>
+
+                      {/* Search Input */}
+                      <div className="relative mt-2.5 mb-2">
                         <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                           type="text"
-                          placeholder="Filter agents..."
+                          placeholder="Search employee across all teams..."
                           value={agentSearchTerm}
                           onChange={(e) => setAgentSearchTerm(e.target.value)}
-                          className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 font-medium"
+                          className="w-full pl-8 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1C6B53] text-gray-900 dark:text-gray-100 font-medium shadow-xs"
                           autoFocus
                         />
+                        {agentSearchTerm && (
+                          <button
+                            type="button"
+                            onClick={() => setAgentSearchTerm("")}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
                       </div>
-                      <div className="overflow-y-auto space-y-1 flex-1 pr-1 overscroll-contain">
-                        {activeMembersList
-                          .filter(m => 
-                            (m.agent_name || "").toLowerCase().includes(agentSearchTerm.toLowerCase()) ||
-                            (m.team || "").toLowerCase().includes(agentSearchTerm.toLowerCase())
-                          )
-                          .map(m => {
+
+                      {/* Team Filter Pills: Younis Kamal, Ankido Buya, Mohammed Dlshad (Strictly 3 tabs, No "All") */}
+                      <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0">
+                        {[
+                          { id: "Younis", label: "Younis Kamal", count: teamCounts.Younis, icon: PhoneCall },
+                          { id: "Ankido", label: "Ankido Buya", count: teamCounts.Ankido, icon: PhoneCall },
+                          { id: "Mohammed", label: "Mohammed Dlshad", count: teamCounts.Mohammed, icon: MessageSquare },
+                        ].map(tab => {
+                          const TabIcon = tab.icon;
+                          const isActive = teamTabFilter === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => {
+                                setTeamTabFilter(tab.id);
+                                setAgentSearchTerm("");
+                              }}
+                              className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-[10px] font-bold transition cursor-pointer ${
+                                isActive
+                                  ? 'bg-[#1C6B53] text-white shadow-xs font-black'
+                                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-750'
+                              }`}
+                            >
+                              <TabIcon size={11} className={isActive ? 'text-emerald-200' : 'text-gray-400'} />
+                              <span className="truncate">{tab.label.split(' ')[0]}</span>
+                              <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
+                                isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                              }`}>
+                                {tab.count}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Roster Count Summary */}
+                      <div className="px-2 py-1 text-[10px] font-bold text-gray-500 dark:text-gray-400 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 mb-1.5">
+                        <span>
+                          {agentSearchTerm.trim() 
+                            ? `${filteredAgentsList.length} Matching Search` 
+                            : `${filteredAgentsList.length} Agents in ${teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' : teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'}`}
+                        </span>
+                        <span className="text-[9px] font-bold text-[#1C6B53] dark:text-emerald-400">
+                          {teamTabFilter === 'Mohammed' ? 'Digital Chat' : 'Voice Calls'}
+                        </span>
+                      </div>
+
+                      {/* Scrollable Members List */}
+                      <div className="overflow-y-auto space-y-1.5 flex-1 pr-1 overscroll-contain max-h-64">
+                        {filteredAgentsList.length === 0 ? (
+                          <div className="py-8 px-3 text-center text-xs text-gray-400 dark:text-gray-500 font-medium flex flex-col items-center gap-2">
+                            <Users size={20} className="text-gray-300 dark:text-gray-600" />
+                            <span>{agentSearchTerm.trim() ? `No employees matching "${agentSearchTerm}"` : "No employees found"}</span>
+                          </div>
+                        ) : (
+                          filteredAgentsList.map(m => {
                             const isSelected = m.agent_name === currentAgent?.agent_name;
+                            const teamStr = m.team || "Contact Center";
+                            const isYounis = teamStr.includes("Younis");
+                            const isAnkido = teamStr.includes("Ankido");
+                            const isDlshad = teamStr.includes("Mohammed") || teamStr.includes("Dlshad");
+                            
+                            const teamBadgeClass = isYounis
+                              ? "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
+                              : isAnkido
+                              ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                              : isDlshad
+                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                              : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700";
+
                             return (
                               <button
-                                key={m.id}
+                                key={m.id || m.agent_name}
                                 type="button"
                                 onClick={() => {
                                   setCurrentAgent({
@@ -1281,27 +1420,47 @@ function AgentDashboard({
                                   setAgentDropdownOpen(false);
                                   setAgentSearchTerm("");
                                 }}
-                                className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition ${
+                                className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left text-xs transition-all cursor-pointer ${
                                   isSelected
-                                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-bold'
-                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium'
+                                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800'
+                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800/70 text-gray-700 dark:text-gray-200 font-medium'
                                 }`}
                               >
-                                <div className="flex items-center gap-2 truncate">
-                                  <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[10px] font-bold text-gray-600 dark:text-gray-300 shrink-0">
+                                <div className="flex items-center gap-2.5 truncate">
+                                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-black shrink-0 ${
+                                    isSelected
+                                      ? 'bg-[#1C6B53] text-white shadow-2xs'
+                                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                                  }`}>
                                     {m.agent_name?.charAt(0).toUpperCase()}
                                   </div>
-                                  <span className="truncate">{m.agent_name}</span>
+                                  <div className="truncate">
+                                    <div className="font-bold truncate text-gray-900 dark:text-gray-100">
+                                      {toTitleCase(m.agent_name)}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                      <span className={`text-[9px] px-1.5 py-0.2 rounded-md font-bold border ${teamBadgeClass}`}>
+                                        {teamStr.replace(' Team', '')}
+                                      </span>
+                                      <span className="text-[9px] font-semibold text-gray-400 dark:text-gray-500">
+                                        {isDlshad ? 'Chat' : 'Call'}
+                                      </span>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                                    {m.team?.replace(' Team', '')}
-                                  </span>
-                                  {isSelected && <Check size={13} className="text-[#1C6B53] dark:text-emerald-400" />}
+                                <div className="shrink-0 ml-2">
+                                  {isSelected ? (
+                                    <span className="w-5 h-5 rounded-full bg-[#1C6B53] text-white flex items-center justify-center shadow-2xs">
+                                      <Check size={11} strokeWidth={3} />
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] text-gray-400 group-hover:text-gray-600 font-medium">Select</span>
+                                  )}
                                 </div>
                               </button>
                             );
-                          })}
+                          })
+                        )}
                       </div>
                     </div>
                   </>
@@ -1337,11 +1496,14 @@ function AgentDashboard({
               <div className="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
             )}
 
+            {/* Theme Selector Modal */}
+            <ThemeSelectorModal />
+
             {/* Dark Mode Toggle */}
             {toggleDarkMode && (
               <button 
                 onClick={toggleDarkMode} 
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors shrink-0"
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors shrink-0 cursor-pointer"
                 title="Toggle Dark Mode"
               >
                 {isDarkMode ? <Sun size={16} className="text-amber-500" /> : <Moon size={16} />}
@@ -1560,19 +1722,15 @@ function AgentDashboard({
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200/80 dark:border-gray-700 shadow-sm p-1.5 sm:p-2">
               <div className="flex items-center px-1 overflow-x-auto scrollbar-hide gap-1 sm:gap-1.5">
                 {/* Modern Year Select Dropdown beside months */}
-                <div className="relative shrink-0 mr-0.5 sm:mr-1">
-                  <select
+                <div className="shrink-0 mr-0.5 sm:mr-1">
+                  <ModernDropdown
                     value={selectedYear}
-                    onChange={(e) => setSelectedYear(e.target.value)}
-                    className="appearance-none pl-3 pr-7 py-1.5 sm:pl-3.5 sm:pr-8 sm:py-2 text-[11px] sm:text-xs font-black rounded-xl bg-emerald-50 dark:bg-emerald-950/70 text-[#1C6B53] dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80 outline-none cursor-pointer shadow-xs hover:bg-emerald-100/60 transition-all"
-                  >
-                    <option value="2026">2026</option>
-                    <option value="2027">2027</option>
-                    <option value="2028">2028</option>
-                    <option value="2029">2029</option>
-                    <option value="2030">2030</option>
-                  </select>
-                  <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[#1C6B53] dark:text-emerald-400 font-bold" />
+                    onChange={(val) => setSelectedYear(val)}
+                    options={["2026", "2027", "2028", "2029", "2030"]}
+                    variant="tinted-green"
+                    size="sm"
+                    ariaLabel="Select Year"
+                  />
                 </div>
 
                 <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 sm:mx-1 shrink-0" />
@@ -4628,6 +4786,9 @@ export default function Dashboard() {
             </div>
             
             <div className="flex items-center gap-1 sm:gap-1.5 p-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-sm flex-wrap w-full sm:w-auto justify-between sm:justify-end">
+              {/* Theme Palette Selector */}
+              <ThemeSelectorModal />
+
               {/* Dark Mode Toggle */}
               <button 
                 onClick={toggleDarkMode} 
@@ -4901,36 +5062,44 @@ export default function Dashboard() {
 
         {/* Month Tabs & Controls Bar */}
         <div className="flex items-center gap-1 sm:gap-1.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-1.5 sm:p-2 pr-3 sm:pr-4 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 w-full overflow-x-auto scrollbar-hide shadow-sm mb-4 sm:mb-5">
-          {/* Year selector */}
-          <div className="relative flex-shrink-0">
-            <select
+          {/* Year selector - Sleek Modern Custom Dropdown */}
+          <div className="shrink-0">
+            <ModernDropdown
               value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="appearance-none pl-2.5 pr-6 py-1 rounded-lg text-xs font-bold bg-[#1C6B53] text-white shadow-sm outline-none cursor-pointer border-0"
-            >
-              <option value="2026">2026</option>
-              <option value="2027">2027</option>
-              <option value="2028">2028</option>
-              <option value="2029">2029</option>
-              <option value="2030">2030</option>
-            </select>
-            <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-white/80" />
-          </div>
-
-          {/* Search Agent Input & Count next to Year */}
-          <div className="relative flex-shrink-0">
-            <Search size={11} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-5.5 pr-2 py-1 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/80 dark:bg-gray-900/60 focus:outline-none focus:border-[#1C6B53] dark:focus:border-emerald-500 text-[11px] sm:text-xs w-20 sm:w-28 transition dark:text-gray-200 font-medium"
+              onChange={(val) => setSelectedYear(val)}
+              options={["2026", "2027", "2028", "2029", "2030"]}
+              variant="solid-green"
+              size="sm"
+              ariaLabel="Select Year"
             />
           </div>
-          <span className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-[11px] font-semibold whitespace-nowrap px-0.5 flex-shrink-0">
-            {filteredRows.length} Agents
-          </span>
+
+          {/* Search Agent Input & Count next to Year - Sleek, Spacious, and Modern */}
+          <div className="relative flex-shrink-0">
+            <Search size={13} className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search agent name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8 pr-7 py-1 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/90 hover:bg-white dark:bg-gray-900/70 dark:hover:bg-gray-900 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-[#1C6B53]/30 focus:border-[#1C6B53] dark:focus:border-emerald-500 text-[11px] sm:text-xs w-36 sm:w-48 md:w-56 transition-all dark:text-gray-100 font-semibold shadow-2xs"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 transition cursor-pointer"
+                title="Clear search"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-gray-100/90 dark:bg-gray-750/70 text-gray-600 dark:text-gray-300 text-[10px] sm:text-[11px] font-bold whitespace-nowrap flex-shrink-0 border border-gray-200/50 dark:border-gray-700/50 shadow-2xs">
+            <Users size={11} className="text-gray-400" />
+            <span>{filteredRows.length} Agents</span>
+          </div>
 
           {/* Selection Action Toolbar */}
           {isMultiCellSelected && (
@@ -5358,20 +5527,14 @@ export default function Dashboard() {
                 </div>
 
                 {(isAdmin || userProfile?.role === 'manager' || userProfile?.role === 'admin') && (
-                  <div className="relative mb-3">
-                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                       <Briefcase size={14} className="text-white" />
-                     </div>
-                     <select
-                       value={newMemberTeam}
-                       onChange={(e) => setNewMemberTeam(e.target.value as TeamName)}
-                       className="w-full pl-9 pr-8 py-2.5 bg-[#1C6B53] text-white text-xs sm:text-sm font-medium rounded-xl appearance-none cursor-pointer outline-none"
-                     >
-                       {activeTeams.map(t => <option key={t} value={t} className="bg-white text-gray-800">{t}</option>)}
-                     </select>
-                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                       <ChevronDown size={14} className="text-white" />
-                     </div>
+                  <div className="mb-3">
+                    <ModernDropdown
+                      value={newMemberTeam}
+                      onChange={(val) => setNewMemberTeam(val as TeamName)}
+                      options={activeTeams.map(t => ({ value: t, label: t, icon: Briefcase }))}
+                      variant="solid-green"
+                      className="w-full"
+                    />
                   </div>
                 )}
 
@@ -5438,17 +5601,18 @@ export default function Dashboard() {
                     <Columns size={18} className="text-gray-600 dark:text-gray-300" />
                     <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm sm:text-base">Table Columns & KPIs</h3>
                   </div>
-                  <div className="relative">
-                    <select 
-                      value={manageColsTeam} 
-                      onChange={(e: any) => setManageColsTeam(e.target.value)}
-                      className="appearance-none pl-2.5 pr-7 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-800 dark:text-gray-200 outline-none focus:border-[#1C6B53] font-semibold cursor-pointer shadow-xs"
-                    >
-                      <option value="ALL">🌐 All Teams</option>
-                      {activeTeams.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                    <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" />
-                  </div>
+                  <ModernDropdown 
+                    value={manageColsTeam} 
+                    onChange={(val) => setManageColsTeam(val)}
+                    options={[
+                      { value: "ALL", label: "🌐 All Teams" },
+                      ...activeTeams.map(t => ({ value: t, label: t }))
+                    ]}
+                    variant="white"
+                    size="sm"
+                    align="right"
+                    ariaLabel="Select Team for Columns"
+                  />
                 </div>
 
                 {manageColsTeam === 'ALL' && (

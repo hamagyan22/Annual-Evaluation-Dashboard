@@ -15,6 +15,8 @@ import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
 import { getCanonicalAgentName } from "@/lib/canonicalAgents";
 import TopStarCelebrationVideoModal from "./TopStarCelebrationVideoModal";
+import { ModernDropdown } from "@/components/ModernDropdown";
+import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 
 interface TopStarDashboardProps {
   userProfile: any;
@@ -887,6 +889,9 @@ export default function TopStarDashboard({
 
             <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
 
+            {/* Theme Selector */}
+            <ThemeSelectorModal />
+
             {/* Dark Mode Toggle */}
             {toggleDarkMode && (
               <button
@@ -1119,20 +1124,16 @@ export default function TopStarDashboard({
                 </button>
               </div>
 
-              {/* Year Selector Dropdown (Starts from 2026 to 2030 as requested) */}
-              <div className="relative">
-                <select
+              {/* Year Selector Dropdown - Modern Custom Dropdown */}
+              <div className="shrink-0">
+                <ModernDropdown
                   value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className="appearance-none pl-3 pr-7 py-1.5 rounded-xl text-xs font-bold bg-[#1C6B53] text-white shadow-xs outline-none cursor-pointer border-0"
-                >
-                  {YEARS.map(y => (
-                    <option key={y} value={y} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-                      {y}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white/90" />
+                  onChange={(val) => setSelectedYear(val)}
+                  options={YEARS}
+                  variant="solid-green"
+                  size="sm"
+                  ariaLabel="Select Year"
+                />
               </div>
 
               {/* Sync Button: Pulls live data from TL Dashboard with validation */}

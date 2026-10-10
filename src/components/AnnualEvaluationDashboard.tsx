@@ -12,6 +12,7 @@ import {
   Clock, Eye, Lock, MessageSquare
 } from "lucide-react";
 import { getCanonicalAgentName } from "@/lib/canonicalAgents";
+import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 
 export interface AnnualEvaluationDashboardProps {
   userProfile: any;
@@ -981,6 +982,9 @@ export default function AnnualEvaluationDashboard({
               <span className="hidden sm:inline">Print / PDF</span>
             </button>
 
+            {/* Theme Selector */}
+            <ThemeSelectorModal />
+
             {toggleDarkMode && (
               <button
                 onClick={toggleDarkMode}
@@ -995,7 +999,7 @@ export default function AnnualEvaluationDashboard({
 
             <button
               onClick={onBack}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 hover:text-[#1C6B53] dark:hover:text-emerald-400 transition active:scale-95 border border-gray-200/80 dark:border-gray-700 cursor-pointer shadow-2xs"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100/80 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 border border-emerald-200/70 dark:border-emerald-800/70 shadow-xs transition active:scale-95 cursor-pointer shrink-0"
               title="Return to Main Dashboard"
             >
               <ArrowLeft size={14} />
@@ -2135,264 +2139,365 @@ export default function AnnualEvaluationDashboard({
               
               {/* Calls Benchmarks (Younis & Ankido Teams) */}
               {benchmarkGuideTab === "calls" && (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800">
-                    <div className="flex items-center gap-2">
-                      <PhoneCall size={16} className="text-sky-600 dark:text-sky-400" />
-                      <span className="text-xs font-black text-sky-950 dark:text-sky-200">
-                        Calls Performance Rating Benchmarks (Younis Kamal & Ankido Buya Teams)
-                      </span>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-sky-500/20 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0">
+                        <PhoneCall size={15} />
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-sky-950 dark:text-sky-100 block">
+                          Calls Performance Rating Matrix
+                        </span>
+                        <span className="text-[10px] text-sky-700 dark:text-sky-300 font-medium">
+                          Younis Kamal & Ankido Buya Teams
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-sky-200/80 dark:bg-sky-900 text-sky-900 dark:text-sky-200">
-                      Voice Matrix
+                    <span className="text-[10px] px-2.5 py-1 rounded-full font-black bg-sky-200/80 dark:bg-sky-900 text-sky-900 dark:text-sky-200 border border-sky-300/60 dark:border-sky-700">
+                      Official Voice Matrix
                     </span>
                   </div>
 
-                  {/* Standard Tier Cards Table */}
-                  <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
+                  {/* Single Unified Modern Benchmark Table */}
+                  <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xs">
                     <table className="w-full text-center text-xs">
                       <thead>
-                        <tr className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-black">
-                          <th className="p-3 text-left">Rating Tier</th>
-                          <th className="p-3">QA</th>
-                          <th className="p-3">AHT</th>
-                          <th className="p-3">Exam</th>
-                          <th className="p-3">Productivity</th>
+                        <tr className="bg-gray-100/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-200 font-black border-b border-gray-200 dark:border-gray-700">
+                          <th className="p-3 text-left w-52">Rating Tier</th>
+                          <th className="p-3">
+                            <div className="font-black text-gray-900 dark:text-gray-100">QA</div>
+                            <div className="text-[10px] text-gray-400 font-medium">Quality Score</div>
+                          </th>
+                          <th className="p-3">
+                            <div className="font-black text-gray-900 dark:text-gray-100">AHT</div>
+                            <div className="text-[10px] text-gray-400 font-medium">Handle Time</div>
+                          </th>
+                          <th className="p-3">
+                            <div className="font-black text-gray-900 dark:text-gray-100">Exam</div>
+                            <div className="text-[10px] text-gray-400 font-medium">Knowledge Test</div>
+                          </th>
+                          <th className="p-3">
+                            <div className="font-black text-gray-900 dark:text-gray-100">Productivity</div>
+                            <div className="text-[10px] text-gray-400 font-medium">Target %</div>
+                          </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700 font-semibold">
-                        <tr className="bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
-                          <td className="p-3 text-left font-black">5 ⭐ Outstanding</td>
-                          <td className="p-3 font-mono font-bold">99% - 100%</td>
-                          <td className="p-3 font-mono font-bold">&lt; 2:44</td>
-                          <td className="p-3 font-mono font-bold">99% - 100%</td>
-                          <td className="p-3 font-mono font-bold">&gt; 93%</td>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {/* 5 Outstanding */}
+                        <tr className="bg-emerald-50/60 dark:bg-emerald-950/25 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">
+                              <span>5 ⭐</span>
+                              <span>Outstanding</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                            <span className="px-2 py-0.5 rounded-lg bg-emerald-100/80 dark:bg-emerald-900/50">99% - 100%</span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                            <span className="px-2 py-0.5 rounded-lg bg-emerald-100/80 dark:bg-emerald-900/50">&lt; 2:44</span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                            <span className="px-2 py-0.5 rounded-lg bg-emerald-100/80 dark:bg-emerald-900/50">99% - 100%</span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                            <span className="px-2 py-0.5 rounded-lg bg-emerald-100/80 dark:bg-emerald-900/50">&gt; 93%</span>
+                          </td>
                         </tr>
-                        <tr className="bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
-                          <td className="p-3 text-left font-black">4 ⭐ Exceeds Expectations</td>
-                          <td className="p-3 font-mono font-bold">96% - 98%</td>
-                          <td className="p-3 font-mono font-bold">2:45 - 2:59</td>
-                          <td className="p-3 font-mono font-bold">96% - 98%</td>
-                          <td className="p-3 font-mono font-bold">91% - 92%</td>
+
+                        {/* 4 Exceeds Expectations */}
+                        <tr className="bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200 border border-blue-300 dark:border-blue-700">
+                              <span>4 ⭐</span>
+                              <span>Exceeds Expectations</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-blue-900 dark:text-blue-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-blue-100/70 dark:bg-blue-900/40">96% - 98%</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-blue-900 dark:text-blue-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-blue-100/70 dark:bg-blue-900/40">2:45 - 2:59</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-blue-900 dark:text-blue-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-blue-100/70 dark:bg-blue-900/40">96% - 98%</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-blue-900 dark:text-blue-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-blue-100/70 dark:bg-blue-900/40">91% - 92%</span>
+                          </td>
                         </tr>
-                        <tr className="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-300">
-                          <td className="p-3 text-left font-black">3 ⭐ Meets Expectations</td>
-                          <td className="p-3 font-mono font-bold">95%</td>
-                          <td className="p-3 font-mono font-bold">3:00 - 3:10</td>
-                          <td className="p-3 font-mono font-bold">90% - 95%</td>
-                          <td className="p-3 font-mono font-bold">90%</td>
+
+                        {/* 3 Meets Expectations */}
+                        <tr className="bg-slate-50/70 dark:bg-slate-900/70 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-slate-200/80 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+                              <span>3 ⭐</span>
+                              <span>Meets Expectations</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800">95%</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800">3:00 - 3:10</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800">90% - 95%</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800">90%</span>
+                          </td>
                         </tr>
-                        <tr className="bg-amber-50/50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-300">
-                          <td className="p-3 text-left font-black">2 ⭐ Developing</td>
-                          <td className="p-3 font-mono font-bold">90% - 94%</td>
-                          <td className="p-3 font-mono font-bold">3:11 - 3:30</td>
-                          <td className="p-3 font-mono font-bold">85% - 89%</td>
-                          <td className="p-3 font-mono font-bold">88% - 89%</td>
+
+                        {/* 2 Developing */}
+                        <tr className="bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+                              <span>2 ⭐</span>
+                              <span>Developing</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">90% - 94%</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">3:11 - 3:30</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">85% - 89%</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">88% - 89%</span>
+                          </td>
                         </tr>
-                        <tr className="bg-rose-50/50 dark:bg-rose-950/20 text-rose-900 dark:text-rose-300">
-                          <td className="p-3 text-left font-black">1 ⭐ Needs Improvement</td>
-                          <td className="p-3 font-mono font-bold">&lt; 89%</td>
-                          <td className="p-3 font-mono font-bold">&gt; 3:31</td>
-                          <td className="p-3 font-mono font-bold">&lt; 85%</td>
-                          <td className="p-3 font-mono font-bold">&lt; 87%</td>
+
+                        {/* 1 Needs Improvement */}
+                        <tr className="bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200 border border-rose-300 dark:border-rose-700">
+                              <span>1 ⭐</span>
+                              <span>Needs Improvement</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
+                            <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&lt; 89%</span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
+                            <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&gt; 3:31</span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
+                            <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&lt; 85%</span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
+                            <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&lt; 87%</span>
+                          </td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
 
-                  {/* Excel Matrix Grid (Exact Image Table Replica) */}
-                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700">
-                    <h5 className="text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2.5 flex items-center gap-1.5">
-                      <span>Excel Matrix Reference (Calls)</span>
-                    </h5>
-                    <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-                      <table className="w-full text-center text-xs">
-                        <thead>
-                          <tr className="bg-[#1C6B53] text-white font-black text-xs">
-                            <th className="p-2.5 text-left border-r border-[#155340]">Rate</th>
-                            <th className="p-2.5 border-r border-[#155340]">5</th>
-                            <th className="p-2.5 border-r border-[#155340]">4</th>
-                            <th className="p-2.5 border-r border-[#155340]">3</th>
-                            <th className="p-2.5 border-r border-[#155340]">2</th>
-                            <th className="p-2.5">1</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-800 font-medium">
-                          <tr>
-                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">QA</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">99-100</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">96-98</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">95</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">90-94</td>
-                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 89</td>
-                          </tr>
-                          <tr>
-                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">AHT</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800 text-emerald-600 dark:text-emerald-400">Less than 2:44</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">2:45-2:59</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3:00-3:10</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3:11-3:30</td>
-                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Greater than 3:31</td>
-                          </tr>
-                          <tr>
-                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">Exam</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">99-100</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">96-98</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">90-95</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">85-89</td>
-                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 85</td>
-                          </tr>
-                          <tr>
-                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">Productivity</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800 text-emerald-600 dark:text-emerald-400">Greater than 93</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">91-92</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">90</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">88-89</td>
-                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 87</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
+                  <div className="p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+                    <span>Baseline standard requires Meets Expectations (Rating 3) across all core metrics.</span>
+                    <span className="font-bold text-[#1C6B53] dark:text-emerald-400">Calls Voice Standard</span>
                   </div>
                 </div>
               )}
 
               {/* Chat Benchmarks (Mohammed Dlshad Team) */}
               {benchmarkGuideTab === "chat" && (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare size={16} className="text-emerald-600 dark:text-emerald-400" />
-                      <span className="text-xs font-black text-emerald-950 dark:text-emerald-200">
-                        Chat Performance Rating Benchmarks (Mohammed Dlshad Team)
-                      </span>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                        <MessageSquare size={15} />
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-emerald-950 dark:text-emerald-100 block">
+                          Chat Performance Rating Matrix
+                        </span>
+                        <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-medium">
+                          Mohammed Dlshad Team
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-200/80 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200">
-                      Digital Chat Matrix
+                    <span className="text-[10px] px-2.5 py-1 rounded-full font-black bg-emerald-200/80 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200 border border-emerald-300/60 dark:border-emerald-700">
+                      Official Digital Matrix
                     </span>
                   </div>
 
-                  {/* Standard Tier Cards Table */}
-                  <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
+                  {/* Single Unified Modern Benchmark Table */}
+                  <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xs">
                     <table className="w-full text-center text-xs">
                       <thead>
-                        <tr className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-black">
-                          <th className="p-3 text-left">Rating Tier</th>
-                          <th className="p-3">Exam</th>
-                          <th className="p-3">QA</th>
-                          <th className="p-3">AHT</th>
-                          <th className="p-3">ART</th>
-                          {!isChatSemi2026 && <th className="p-3">Productivity</th>}
+                        <tr className="bg-gray-100/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-200 font-black border-b border-gray-200 dark:border-gray-700">
+                          <th className="p-3 text-left w-52">Rating Tier</th>
+                          <th className="p-3">
+                            <div className="font-black text-gray-900 dark:text-gray-100">Exam</div>
+                            <div className="text-[10px] text-gray-400 font-medium">Knowledge Test</div>
+                          </th>
+                          <th className="p-3">
+                            <div className="font-black text-gray-900 dark:text-gray-100">QA</div>
+                            <div className="text-[10px] text-gray-400 font-medium">Quality Score</div>
+                          </th>
+                          <th className="p-3">
+                            <div className="font-black text-gray-900 dark:text-gray-100">AHT</div>
+                            <div className="text-[10px] text-gray-400 font-medium">Handle Time</div>
+                          </th>
+                          <th className="p-3">
+                            <div className="font-black text-gray-900 dark:text-gray-100">ART</div>
+                            <div className="text-[10px] text-gray-400 font-medium">First Response</div>
+                          </th>
+                          {!isChatSemi2026 && (
+                            <th className="p-3">
+                              <div className="font-black text-gray-900 dark:text-gray-100">Productivity</div>
+                              <div className="text-[10px] text-gray-400 font-medium">Chats / Hour</div>
+                            </th>
+                          )}
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700 font-semibold">
-                        <tr className="bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
-                          <td className="p-3 text-left font-black">5 ⭐ Outstanding</td>
-                          <td className="p-3 font-mono font-bold">99% - 100%</td>
-                          <td className="p-3 font-mono font-bold">99% - 100%</td>
-                          <td className="p-3 font-mono font-bold">3:00 - 3:30</td>
-                          <td className="p-3 font-mono font-bold">&lt; 1:30</td>
-                          {!isChatSemi2026 && <td className="p-3 font-mono font-bold">&gt; 13</td>}
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {/* 5 Outstanding */}
+                        <tr className="bg-emerald-50/60 dark:bg-emerald-950/25 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">
+                              <span>5 ⭐</span>
+                              <span>Outstanding</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                            <span className="px-2 py-0.5 rounded-lg bg-emerald-100/80 dark:bg-emerald-900/50">99% - 100%</span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                            <span className="px-2 py-0.5 rounded-lg bg-emerald-100/80 dark:bg-emerald-900/50">99% - 100%</span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                            <span className="px-2 py-0.5 rounded-lg bg-emerald-100/80 dark:bg-emerald-900/50">3:00 - 3:30</span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                            <span className="px-2 py-0.5 rounded-lg bg-emerald-100/80 dark:bg-emerald-900/50">&lt; 1:30</span>
+                          </td>
+                          {!isChatSemi2026 && (
+                            <td className="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                              <span className="px-2 py-0.5 rounded-lg bg-emerald-100/80 dark:bg-emerald-900/50">&gt; 13</span>
+                            </td>
+                          )}
                         </tr>
-                        <tr className="bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
-                          <td className="p-3 text-left font-black">4 ⭐ Exceeds Expectations</td>
-                          <td className="p-3 font-mono font-bold">96% - 98%</td>
-                          <td className="p-3 font-mono font-bold">96% - 98%</td>
-                          <td className="p-3 font-mono font-bold">3:31 - 4:00</td>
-                          <td className="p-3 font-mono font-bold">1:31 - 1:59</td>
-                          {!isChatSemi2026 && <td className="p-3 font-mono font-bold">11 - 12.99</td>}
+
+                        {/* 4 Exceeds Expectations */}
+                        <tr className="bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200 border border-blue-300 dark:border-blue-700">
+                              <span>4 ⭐</span>
+                              <span>Exceeds Expectations</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-blue-900 dark:text-blue-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-blue-100/70 dark:bg-blue-900/40">96% - 98%</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-blue-900 dark:text-blue-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-blue-100/70 dark:bg-blue-900/40">96% - 98%</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-blue-900 dark:text-blue-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-blue-100/70 dark:bg-blue-900/40">3:31 - 4:00</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-blue-900 dark:text-blue-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-blue-100/70 dark:bg-blue-900/40">1:31 - 1:59</span>
+                          </td>
+                          {!isChatSemi2026 && (
+                            <td className="p-3 font-mono font-semibold text-blue-900 dark:text-blue-200">
+                              <span className="px-2 py-0.5 rounded-lg bg-blue-100/70 dark:bg-blue-900/40">11 - 12.99</span>
+                            </td>
+                          )}
                         </tr>
-                        <tr className="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-300">
-                          <td className="p-3 text-left font-black">3 ⭐ Meets Expectations</td>
-                          <td className="p-3 font-mono font-bold">90% - 95%</td>
-                          <td className="p-3 font-mono font-bold">95%</td>
-                          <td className="p-3 font-mono font-bold">4:01 - 4:59</td>
-                          <td className="p-3 font-mono font-bold">2:00 - 2:59</td>
-                          {!isChatSemi2026 && <td className="p-3 font-mono font-bold">8.50 - 10.99</td>}
+
+                        {/* 3 Meets Expectations */}
+                        <tr className="bg-slate-50/70 dark:bg-slate-900/70 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-slate-200/80 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+                              <span>3 ⭐</span>
+                              <span>Meets Expectations</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800">90% - 95%</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800">95%</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800">4:01 - 4:59</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800">2:00 - 2:59</span>
+                          </td>
+                          {!isChatSemi2026 && (
+                            <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">
+                              <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800">8.50 - 10.99</span>
+                            </td>
+                          )}
                         </tr>
-                        <tr className="bg-amber-50/50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-300">
-                          <td className="p-3 text-left font-black">2 ⭐ Developing</td>
-                          <td className="p-3 font-mono font-bold">85% - 89%</td>
-                          <td className="p-3 font-mono font-bold">90% - 94%</td>
-                          <td className="p-3 font-mono font-bold">5:00 - 5:59</td>
-                          <td className="p-3 font-mono font-bold">3:00 - 3:30</td>
-                          {!isChatSemi2026 && <td className="p-3 font-mono font-bold">7.50 - 8.49</td>}
+
+                        {/* 2 Developing */}
+                        <tr className="bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+                              <span>2 ⭐</span>
+                              <span>Developing</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">85% - 89%</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">90% - 94%</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">5:00 - 5:59</span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">3:00 - 3:30</span>
+                          </td>
+                          {!isChatSemi2026 && (
+                            <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
+                              <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">7.50 - 8.49</span>
+                            </td>
+                          )}
                         </tr>
-                        <tr className="bg-rose-50/50 dark:bg-rose-950/20 text-rose-900 dark:text-rose-300">
-                          <td className="p-3 text-left font-black">1 ⭐ Needs Improvement</td>
-                          <td className="p-3 font-mono font-bold">&lt; 85%</td>
-                          <td className="p-3 font-mono font-bold">&lt; 89%</td>
-                          <td className="p-3 font-mono font-bold">&gt; 6:00</td>
-                          <td className="p-3 font-mono font-bold">&gt; 3:31</td>
-                          {!isChatSemi2026 && <td className="p-3 font-mono font-bold">&lt; 7.50</td>}
+
+                        {/* 1 Needs Improvement */}
+                        <tr className="bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200 border border-rose-300 dark:border-rose-700">
+                              <span>1 ⭐</span>
+                              <span>Needs Improvement</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
+                            <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&lt; 85%</span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
+                            <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&lt; 89%</span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
+                            <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&gt; 6:00</span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
+                            <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&gt; 3:31</span>
+                          </td>
+                          {!isChatSemi2026 && (
+                            <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
+                              <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&lt; 7.50</span>
+                            </td>
+                          )}
                         </tr>
                       </tbody>
                     </table>
                   </div>
 
-                  {/* Excel Matrix Grid (Exact Image Table Replica) */}
-                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700">
-                    <h5 className="text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2.5 flex items-center gap-1.5">
-                      <span>Excel Matrix Reference (Chat)</span>
-                    </h5>
-                    <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-                      <table className="w-full text-center text-xs">
-                        <thead>
-                          <tr className="bg-[#1C6B53] text-white font-black text-xs">
-                            <th className="p-2.5 text-left border-r border-[#155340]">Rate</th>
-                            <th className="p-2.5 border-r border-[#155340]">5</th>
-                            <th className="p-2.5 border-r border-[#155340]">4</th>
-                            <th className="p-2.5 border-r border-[#155340]">3</th>
-                            <th className="p-2.5 border-r border-[#155340]">2</th>
-                            <th className="p-2.5">1</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-800 font-medium">
-                          <tr>
-                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">Exam</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">99-100</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">96-98</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">90-95</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">85-89</td>
-                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 85</td>
-                          </tr>
-                          <tr>
-                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">QA</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">99-100</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">96-98</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">95</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">90-94</td>
-                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 89</td>
-                          </tr>
-                          <tr>
-                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">AHT</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3:00-3:30</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3:31-4:00</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">4:01-4:59</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">5:00-5:59</td>
-                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Greater than 6:00</td>
-                          </tr>
-                          <tr>
-                            <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">ART</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800 text-emerald-600 dark:text-emerald-400">Less than 1:30</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">1:31-1:59</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">2:00-2:59</td>
-                            <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">3:00-3:30</td>
-                            <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Greater than 3:31</td>
-                          </tr>
-                          {!isChatSemi2026 && (
-                            <tr>
-                              <td className="p-2.5 text-left font-black bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-800">Productivity</td>
-                              <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800 text-emerald-600 dark:text-emerald-400">Greater than 13</td>
-                              <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">11-12.99</td>
-                              <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">8.5-10.99</td>
-                              <td className="p-2.5 font-bold border-r border-gray-100 dark:border-gray-800">7.50-8.49</td>
-                              <td className="p-2.5 font-bold text-rose-600 dark:text-rose-400">Less than 7.50</td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+                  <div className="p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+                    <span>Baseline standard requires Meets Expectations (Rating 3) across all core metrics.</span>
+                    <span className="font-bold text-[#1C6B53] dark:text-emerald-400">Chat Digital Standard</span>
                   </div>
                 </div>
               )}
