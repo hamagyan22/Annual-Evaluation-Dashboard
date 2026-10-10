@@ -5,7 +5,6 @@ import { useState, useEffect, useCallback } from "react";
 export interface ThemeConfig {
   id: string;
   name: string;
-  nameAr: string;
   subtitle: string;
   primary: string;         // Main color e.g. #1C6B53
   hover: string;           // Hover state e.g. #155a45
@@ -25,7 +24,6 @@ export const THEMES: ThemeConfig[] = [
   {
     id: "emerald",
     name: "Emerald Luxe",
-    nameAr: "الزمرد الكلاسيكي",
     subtitle: "Official Brand Forest Green",
     primary: "#1C6B53",
     hover: "#155a45",
@@ -43,7 +41,6 @@ export const THEMES: ThemeConfig[] = [
   {
     id: "indigo",
     name: "Royal Indigo",
-    nameAr: "النيلي الملكي",
     subtitle: "Executive Deep Violet & Slate",
     primary: "#4338ca",
     hover: "#3730a3",
@@ -61,7 +58,6 @@ export const THEMES: ThemeConfig[] = [
   {
     id: "sapphire",
     name: "Midnight Sapphire",
-    nameAr: "الياقوت الأزرق",
     subtitle: "Classic Deep Navy & Ocean Azure",
     primary: "#1e40af",
     hover: "#1e3a8a",
@@ -79,7 +75,6 @@ export const THEMES: ThemeConfig[] = [
   {
     id: "teal",
     name: "Ocean Teal",
-    nameAr: "التيل البحري",
     subtitle: "Nordic Sea & Vibrant Cyan",
     primary: "#0f766e",
     hover: "#115e59",
@@ -97,7 +92,6 @@ export const THEMES: ThemeConfig[] = [
   {
     id: "rose",
     name: "Rose Burgundy",
-    nameAr: "البرغندي المخملي",
     subtitle: "Luxury Velvet Wine & Rose Gold",
     primary: "#9f1239",
     hover: "#881337",
@@ -115,7 +109,6 @@ export const THEMES: ThemeConfig[] = [
   {
     id: "amber",
     name: "Prestige Amber",
-    nameAr: "العنبر الملكي",
     subtitle: "Warm Burnished Gold & Bronze",
     primary: "#b45309",
     hover: "#92400e",
