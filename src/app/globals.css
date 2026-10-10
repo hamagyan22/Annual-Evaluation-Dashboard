@@ -21,6 +21,27 @@
   --brand-dark-text-light: #6ee7b7;
   --brand-border-light: #a7f3d0;
   --brand-dark-border-light: #065f46;
+  --brand-from: #1C6B53;
+  --brand-via: #165a46;
+  --brand-to: #104334;
+  --brand-gradient: linear-gradient(135deg, #1C6B53 0%, #165a46 50%, #104334 100%);
+}
+
+[data-theme="emerald"] {
+  --brand-primary: #1C6B53;
+  --brand-hover: #155a45;
+  --brand-accent: #00A991;
+  --brand-glow: rgba(28, 107, 83, 0.25);
+  --brand-bg-light: #ecfdf5;
+  --brand-text-light: #065f46;
+  --brand-dark-bg-light: rgba(6, 78, 59, 0.45);
+  --brand-dark-text-light: #6ee7b7;
+  --brand-border-light: #a7f3d0;
+  --brand-dark-border-light: #065f46;
+  --brand-from: #1C6B53;
+  --brand-via: #165a46;
+  --brand-to: #104334;
+  --brand-gradient: linear-gradient(135deg, #1C6B53 0%, #165a46 50%, #104334 100%);
 }
 
 [data-theme="indigo"] {
@@ -34,6 +55,10 @@
   --brand-dark-text-light: #a5b4fc;
   --brand-border-light: #c7d2fe;
   --brand-dark-border-light: #3730a3;
+  --brand-from: #3730a3;
+  --brand-via: #4338ca;
+  --brand-to: #312e81;
+  --brand-gradient: linear-gradient(135deg, #3730a3 0%, #4338ca 50%, #312e81 100%);
 }
 
 [data-theme="sapphire"] {
@@ -47,6 +72,10 @@
   --brand-dark-text-light: #93c5fd;
   --brand-border-light: #bfdbfe;
   --brand-dark-border-light: #1e3a8a;
+  --brand-from: #1e3a8a;
+  --brand-via: #1e40af;
+  --brand-to: #172554;
+  --brand-gradient: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #172554 100%);
 }
 
 [data-theme="teal"] {
@@ -60,6 +89,10 @@
   --brand-dark-text-light: #5eead4;
   --brand-border-light: #99f6e4;
   --brand-dark-border-light: #134e4a;
+  --brand-from: #115e59;
+  --brand-via: #0f766e;
+  --brand-to: #042f2e;
+  --brand-gradient: linear-gradient(135deg, #115e59 0%, #0f766e 50%, #042f2e 100%);
 }
 
 [data-theme="rose"] {
@@ -73,6 +106,10 @@
   --brand-dark-text-light: #fda4af;
   --brand-border-light: #fecdd3;
   --brand-dark-border-light: #4c0519;
+  --brand-from: #881337;
+  --brand-via: #9f1239;
+  --brand-to: #4c0519;
+  --brand-gradient: linear-gradient(135deg, #881337 0%, #9f1239 50%, #4c0519 100%);
 }
 
 [data-theme="amber"] {
@@ -86,6 +123,146 @@
   --brand-dark-text-light: #fde68a;
   --brand-border-light: #fde68a;
   --brand-dark-border-light: #78350f;
+  --brand-from: #92400e;
+  --brand-via: #b45309;
+  --brand-to: #451a03;
+  --brand-gradient: linear-gradient(135deg, #92400e 0%, #b45309 50%, #451a03 100%);
+}
+
+/* =========================================================================
+   DYNAMIC BRAND THEME OVERRIDES
+   Ensures that when the user switches themes, all dashboards & cards react instantly!
+   ========================================================================= */
+
+/* Brand Primary Backgrounds */
+[data-theme] .bg-\[\#1C6B53\],
+[data-theme] [class*="bg-[#1C6B53]"] {
+  background-color: var(--brand-primary) !important;
+}
+
+/* Brand Primary Hover Backgrounds */
+[data-theme] .hover\:bg-\[\#1C6B53\]:hover,
+[data-theme] [class*="hover:bg-[#1C6B53]"]:hover,
+[data-theme] .hover\:bg-\[\#155a45\]:hover,
+[data-theme] [class*="hover:bg-[#155a45]"]:hover {
+  background-color: var(--brand-hover) !important;
+}
+
+/* Brand Text Colors */
+[data-theme] .text-\[\#1C6B53\],
+[data-theme] [class*="text-[#1C6B53]"] {
+  color: var(--brand-primary) !important;
+}
+
+[data-theme] .hover\:text-\[\#1C6B53\]:hover,
+[data-theme] [class*="hover:text-[#1C6B53]"]:hover {
+  color: var(--brand-primary) !important;
+}
+
+/* Brand Border Colors */
+[data-theme] .border-\[\#1C6B53\],
+[data-theme] [class*="border-[#1C6B53]"] {
+  border-color: var(--brand-primary) !important;
+}
+
+[data-theme] .focus\:border-\[\#1C6B53\]:focus {
+  border-color: var(--brand-primary) !important;
+}
+
+/* Ring & Shadow Glow */
+[data-theme] .ring-\[\#1C6B53\],
+[data-theme] [class*="ring-[#1C6B53]"] {
+  --tw-ring-color: var(--brand-primary) !important;
+}
+
+[data-theme] [class*="shadow-[#1C6B53]"] {
+  --tw-shadow-color: var(--brand-glow) !important;
+}
+
+/* Hero / Team Banner Gradient Overrides */
+[data-theme] .from-\[\#1C6B53\],
+[data-theme] [class*="from-[#1C6B53]"] {
+  --tw-gradient-from: var(--brand-from, var(--brand-primary)) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(0 0 0 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+[data-theme] .via-\[\#165a46\],
+[data-theme] [class*="via-[#165a46]"] {
+  --tw-gradient-to: rgb(0 0 0 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--brand-via, var(--brand-hover)) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+
+[data-theme] .to-\[\#104334\],
+[data-theme] [class*="to-[#104334]"] {
+  --tw-gradient-to: var(--brand-to, #104334) var(--tw-gradient-to-position) !important;
+}
+
+/* Brand Light Tint Backgrounds (e.g. Back button, badges, pills) */
+[data-theme] .bg-emerald-50,
+[data-theme] .bg-emerald-50\/90,
+[data-theme] .bg-emerald-50\/80,
+[data-theme] [class*="bg-emerald-50"] {
+  background-color: var(--brand-bg-light) !important;
+}
+
+[data-theme] .hover\:bg-emerald-100:hover,
+[data-theme] .hover\:bg-emerald-100\/80:hover,
+[data-theme] .hover\:bg-emerald-100\/70:hover,
+[data-theme] [class*="hover:bg-emerald-100"]:hover {
+  background-color: var(--brand-border-light) !important;
+}
+
+[data-theme] .border-emerald-200,
+[data-theme] .border-emerald-200\/60,
+[data-theme] .border-emerald-200\/70,
+[data-theme] .border-emerald-200\/80,
+[data-theme] .border-emerald-300,
+[data-theme] [class*="border-emerald-200"],
+[data-theme] [class*="border-emerald-300"] {
+  border-color: var(--brand-border-light) !important;
+}
+
+[data-theme] .border-emerald-500\/30,
+[data-theme] .border-emerald-500\/25,
+[data-theme] .border-emerald-500\/20 {
+  border-color: var(--brand-border-light) !important;
+}
+
+/* Dark Mode Tint Adaptations */
+.dark[data-theme] .dark\:bg-emerald-950\/60,
+.dark[data-theme] .dark\:bg-emerald-950\/40,
+.dark[data-theme] .dark\:bg-emerald-950\/50,
+.dark[data-theme] [class*="dark:bg-emerald-950/"],
+[data-theme] .dark .dark\:bg-emerald-950\/60,
+[data-theme] .dark .dark\:bg-emerald-950\/40,
+[data-theme] .dark .dark\:bg-emerald-950\/50,
+[data-theme] .dark [class*="dark:bg-emerald-950/"] {
+  background-color: var(--brand-dark-bg-light) !important;
+}
+
+.dark[data-theme] .dark\:border-emerald-800,
+.dark[data-theme] .dark\:border-emerald-800\/60,
+.dark[data-theme] .dark\:border-emerald-800\/70,
+.dark[data-theme] .dark\:border-emerald-700\/60,
+.dark[data-theme] [class*="dark:border-emerald-800"],
+[data-theme] .dark .dark\:border-emerald-800,
+[data-theme] .dark .dark\:border-emerald-800\/60,
+[data-theme] .dark .dark\:border-emerald-800\/70,
+[data-theme] .dark .dark\:border-emerald-700\/60,
+[data-theme] .dark [class*="dark:border-emerald-800"] {
+  border-color: var(--brand-dark-border-light) !important;
+}
+
+.dark[data-theme] .dark\:text-emerald-300,
+.dark[data-theme] .dark\:text-emerald-400,
+.dark[data-theme] [class*="dark:text-emerald-300"],
+.dark[data-theme] [class*="dark:text-emerald-400"],
+[data-theme] .dark .dark\:text-emerald-300,
+[data-theme] .dark .dark\:text-emerald-400,
+[data-theme] .dark [class*="dark:text-emerald-300"],
+[data-theme] .dark [class*="dark:text-emerald-400"] {
+  color: var(--brand-dark-text-light) !important;
 }
 
 html {
@@ -125,11 +302,11 @@ body.dark {
 /* Custom visible horizontal & vertical scrollbar */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #00A991 rgba(0, 0, 0, 0.08);
+  scrollbar-color: var(--brand-primary) rgba(0, 0, 0, 0.08);
 }
 
 body.dark .custom-scrollbar {
-  scrollbar-color: #00A991 rgba(255, 255, 255, 0.1);
+  scrollbar-color: var(--brand-primary) rgba(255, 255, 255, 0.1);
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -148,12 +325,12 @@ body.dark .custom-scrollbar::-webkit-scrollbar-track {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #00A991;
+  background: var(--brand-primary);
   border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #1C6B53;
+  background: var(--brand-hover);
 }
 
 /* Hide browser native password eye icon so only the custom eye icon is shown */
@@ -161,4 +338,3 @@ input::-ms-reveal,
 input::-ms-clear {
   display: none !important;
 }
-

@@ -1468,25 +1468,6 @@ function AgentDashboard({
               </div>
             )}
 
-            {/* Back to Dashboard Button in Preview Mode (Unified at the beginning across all pages) */}
-            {previewMode && onExitPreview && (
-              <button
-                onClick={onExitPreview}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 transition active:scale-95 cursor-pointer shrink-0"
-                title="Return to Main Dashboard"
-              >
-                <ArrowLeft size={14} />
-                <span>Back</span>
-              </button>
-            )}
-
-            {/* Theme Selector Modal right beside Back */}
-            <ThemeSelectorModal />
-
-            {(onOpenAnnualEval || toggleDarkMode) && (
-              <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
-            )}
-
             {/* Annual & Semi-Annual Evaluation Button */}
             {onOpenAnnualEval && (
               <button
@@ -1500,20 +1481,39 @@ function AgentDashboard({
               </button>
             )}
 
+            {(onOpenAnnualEval || toggleDarkMode) && (
+              <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
+            )}
+
             {/* Dark Mode Toggle */}
             {toggleDarkMode && (
               <button 
                 onClick={toggleDarkMode} 
-                className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors shrink-0 cursor-pointer"
+                className="w-8 sm:w-8.5 h-8 sm:h-8.5 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors shrink-0 cursor-pointer"
                 title="Toggle Dark Mode"
               >
                 {isDarkMode ? <Sun size={15} className="text-amber-500" /> : <Moon size={15} />}
               </button>
             )}
 
+            {/* Theme Selector Modal right beside Back */}
+            <ThemeSelectorModal />
+
+            {/* Back to Dashboard Button in Preview Mode (Always First on the Far Right) */}
+            {previewMode && onExitPreview && (
+              <button
+                onClick={onExitPreview}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 border border-emerald-200/80 dark:border-emerald-800/60 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
+                title="Return to Main Dashboard"
+              >
+                <ArrowLeft size={14} />
+                <span>Back</span>
+              </button>
+            )}
+
             {!previewMode && (
               <>
-                <div className="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
+                <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
                 <button 
                   onClick={onLogout} 
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition shrink-0"
@@ -4786,21 +4786,7 @@ export default function Dashboard() {
               </div>
             </div>
             
-            <div className="flex items-center gap-1 sm:gap-1.5 p-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-sm flex-wrap w-full sm:w-auto justify-between sm:justify-end">
-              {/* Theme Palette Selector */}
-              <ThemeSelectorModal />
-
-              {/* Dark Mode Toggle */}
-              <button 
-                onClick={toggleDarkMode} 
-                className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors cursor-pointer"
-                title="Toggle Dark Mode"
-              >
-                {isDarkMode ? <Sun size={15} className="text-amber-500" /> : <Moon size={15} />}
-              </button>
-
-              <div className="h-4 w-px bg-gray-200 dark:bg-gray-700/80 mx-0.5" />
-
+            <div className="flex items-center gap-1 sm:gap-1.5 p-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-sm flex-wrap w-full sm:w-auto justify-end">
               {/* Navigation Items (Agent View, Settings, Quality) */}
               <div className="flex items-center gap-1">
                 {isManager && (
@@ -4888,8 +4874,8 @@ export default function Dashboard() {
 
               <div className="h-4 w-px bg-gray-200 dark:bg-gray-700/80 mx-0.5" />
 
-              {/* Settings + Logout Group */}
-              <div className="flex items-center gap-1">
+              {/* Utility Controls & Exit: Settings, Dark Mode, Themes, Logout */}
+              <div className="flex items-center gap-1 sm:gap-1.5">
                 {isAdmin && (
                   <button
                     onClick={openManageModal}
@@ -4900,10 +4886,22 @@ export default function Dashboard() {
                   </button>
                 )}
 
-                {/* Logout Button */}
+                {/* Dark Mode Toggle */}
+                <button 
+                  onClick={toggleDarkMode} 
+                  className="w-8 sm:w-8.5 h-8 sm:h-8.5 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors cursor-pointer shrink-0"
+                  title="Toggle Dark Mode"
+                >
+                  {isDarkMode ? <Sun size={15} className="text-amber-500" /> : <Moon size={15} />}
+                </button>
+
+                {/* Theme Palette Selector (Beside Logout) */}
+                <ThemeSelectorModal />
+
+                {/* Logout Button (At the Far Right) */}
                 <button 
                   onClick={handleLogout} 
-                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/40 transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/40 transition-all cursor-pointer shrink-0"
                   title="Logout"
                 >
                   <LogOut size={14} />

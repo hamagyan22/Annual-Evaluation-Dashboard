@@ -17,6 +17,9 @@ export interface ThemeConfig {
   borderLight: string;     // Light border
   darkBorderLight: string; // Dark border
   colorDot: string;        // CSS color hex for swatch display
+  gradientFrom: string;    // Gradient start
+  gradientVia: string;     // Gradient middle
+  gradientTo: string;      // Gradient end
   gradientStyle: string;   // Linear gradient for banners
 }
 
@@ -36,6 +39,9 @@ export const THEMES: ThemeConfig[] = [
     borderLight: "#a7f3d0",
     darkBorderLight: "#065f46",
     colorDot: "#1C6B53",
+    gradientFrom: "#1C6B53",
+    gradientVia: "#165a46",
+    gradientTo: "#104334",
     gradientStyle: "linear-gradient(135deg, #1C6B53 0%, #165a46 50%, #104334 100%)",
   },
   {
@@ -53,6 +59,9 @@ export const THEMES: ThemeConfig[] = [
     borderLight: "#c7d2fe",
     darkBorderLight: "#3730a3",
     colorDot: "#4338ca",
+    gradientFrom: "#3730a3",
+    gradientVia: "#4338ca",
+    gradientTo: "#312e81",
     gradientStyle: "linear-gradient(135deg, #3730a3 0%, #4338ca 50%, #312e81 100%)",
   },
   {
@@ -70,6 +79,9 @@ export const THEMES: ThemeConfig[] = [
     borderLight: "#bfdbfe",
     darkBorderLight: "#1e3a8a",
     colorDot: "#1e40af",
+    gradientFrom: "#1e3a8a",
+    gradientVia: "#1e40af",
+    gradientTo: "#172554",
     gradientStyle: "linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #172554 100%)",
   },
   {
@@ -87,6 +99,9 @@ export const THEMES: ThemeConfig[] = [
     borderLight: "#99f6e4",
     darkBorderLight: "#134e4a",
     colorDot: "#0f766e",
+    gradientFrom: "#115e59",
+    gradientVia: "#0f766e",
+    gradientTo: "#042f2e",
     gradientStyle: "linear-gradient(135deg, #115e59 0%, #0f766e 50%, #042f2e 100%)",
   },
   {
@@ -104,6 +119,9 @@ export const THEMES: ThemeConfig[] = [
     borderLight: "#fecdd3",
     darkBorderLight: "#4c0519",
     colorDot: "#9f1239",
+    gradientFrom: "#881337",
+    gradientVia: "#9f1239",
+    gradientTo: "#4c0519",
     gradientStyle: "linear-gradient(135deg, #881337 0%, #9f1239 50%, #4c0519 100%)",
   },
   {
@@ -121,6 +139,9 @@ export const THEMES: ThemeConfig[] = [
     borderLight: "#fde68a",
     darkBorderLight: "#78350f",
     colorDot: "#b45309",
+    gradientFrom: "#92400e",
+    gradientVia: "#b45309",
+    gradientTo: "#451a03",
     gradientStyle: "linear-gradient(135deg, #92400e 0%, #b45309 50%, #451a03 100%)",
   },
 ];
@@ -147,6 +168,10 @@ export function applyThemeToDocument(themeId: string) {
   root.style.setProperty("--brand-dark-text-light", theme.darkTextLight);
   root.style.setProperty("--brand-border-light", theme.borderLight);
   root.style.setProperty("--brand-dark-border-light", theme.darkBorderLight);
+  root.style.setProperty("--brand-from", theme.gradientFrom);
+  root.style.setProperty("--brand-via", theme.gradientVia);
+  root.style.setProperty("--brand-to", theme.gradientTo);
+  root.style.setProperty("--brand-gradient", theme.gradientStyle);
 }
 
 export function getCurrentThemeId(): string {

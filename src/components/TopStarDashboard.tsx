@@ -850,35 +850,18 @@ export default function TopStarDashboard({
             </div>
           </div>
 
-          {/* Right Header Navigation: Back, Palette, Criteria, Celebration Video, Dark Mode */}
-          <div className="flex items-center gap-1.5 p-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-xs self-stretch sm:self-auto justify-between sm:justify-end">
+          {/* Right Header Navigation: Features, Divider, Dark Mode, Themes, Back (Far Right) */}
+          <div className="flex items-center gap-1.5 p-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-xs self-stretch sm:self-auto justify-end">
             
-            {/* Back Button */}
-            <button
-              onClick={onBack}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 transition cursor-pointer shrink-0"
-              title="Return to Main Dashboard"
-            >
-              <ArrowLeft size={14} />
-              <span>Back</span>
-            </button>
-
-            {/* Theme Selector right beside Back */}
-            <ThemeSelectorModal />
-
-            <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
-
             {/* Criteria & Targets Button */}
             <button
               onClick={() => setShowCriteriaModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50/90 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 border border-amber-200/80 dark:border-amber-800/60 transition cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50/90 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 border border-amber-200/80 dark:border-amber-800/60 transition active:scale-95 cursor-pointer shadow-2xs"
               title="View & Edit Evaluation Criteria"
             >
               <Award size={14} />
               <span>Criteria</span>
             </button>
-
-            <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
 
             {/* Celebration Video Button */}
             <button
@@ -890,19 +873,31 @@ export default function TopStarDashboard({
               <span>Celebration Video</span>
             </button>
 
+            <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
+
             {/* Dark Mode Toggle */}
             {toggleDarkMode && (
-              <>
-                <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
-                <button
-                  onClick={toggleDarkMode}
-                  className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors cursor-pointer"
-                  title="Toggle Dark Mode"
-                >
-                  {isDarkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
-                </button>
-              </>
+              <button
+                onClick={toggleDarkMode}
+                className="w-8 sm:w-8.5 h-8 sm:h-8.5 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition cursor-pointer shrink-0"
+                title="Toggle Dark Mode"
+              >
+                {isDarkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
+              </button>
             )}
+
+            {/* Theme Selector right beside Back */}
+            <ThemeSelectorModal />
+
+            {/* Back Button (Always First on the Far Right) */}
+            <button
+              onClick={onBack}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 border border-emerald-200/80 dark:border-emerald-800/60 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
+              title="Return to Main Dashboard"
+            >
+              <ArrowLeft size={14} />
+              <span>Back</span>
+            </button>
           </div>
         </div>
 

@@ -58,6 +58,11 @@ export default function RootLayout({
         <meta name="author" content="Mohammed Dlshad" />
         <meta name="copyright" content="Mohammed Dlshad" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('app_color_theme')||'emerald';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
+          }}
+        />
       </head>
       <body className="antialiased text-[#1F2937]">
         {children}
