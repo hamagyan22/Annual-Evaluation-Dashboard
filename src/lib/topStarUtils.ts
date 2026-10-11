@@ -2,6 +2,7 @@ import { db } from "@/lib/firebaseClient";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { getCanonicalAgentName } from "@/lib/canonicalAgents";
 import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
+import { isMemberActiveInPeriod } from "@/lib/companyRoster";
 
 export const CANONICAL_NAMES: Record<string, string> = {
   // Chat Team
@@ -528,11 +529,11 @@ export async function fetchTopStarData(
     fetchTopStarSyncStatus()
   ]);
 
-  // Exclude inactive / resigned agents from Top Star
+  // Exclude inactive / resigned agents from Top Star for the specific period
   const inactiveSet = new Set<string>();
   membersSnap?.docs.forEach(d => {
     const data = d.data();
-    if (data.is_deleted === true || data.is_active === false || data.resigned_month) {
+    if (!isMemberActiveInPeriod(data, month, year)) {
       inactiveSet.add(normalizeName(data.agent_name || data.name || ""));
     }
   });

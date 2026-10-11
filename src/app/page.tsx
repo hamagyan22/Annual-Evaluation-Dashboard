@@ -4,9 +4,9 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
-import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal, BarChart3, ClipboardCheck } from "lucide-react";
+import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal, BarChart3, ClipboardCheck, RefreshCw } from "lucide-react";
 import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesAndSeconds, getTopStarMotivationalQuote } from "@/lib/topStarUtils";
-import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
+import { DEFAULT_COMPANY_EMPLOYEES, isMemberActiveInPeriod, getNextMonthAndYear, getCurrentEffectiveMonth } from "@/lib/companyRoster";
 import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
 import { getCanonicalAgentName, getCanonicalAgent, getCanonicalSlug, getAllAgentSlugs, isSameAgent } from "@/lib/canonicalAgents";
 import { ModernDropdown } from "@/components/ModernDropdown";
@@ -250,44 +250,6 @@ const AGGREGATE_MAP: Record<string, string[]> = {
   "YEAR - AVG": ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 };
 
-// Determines if an employee was active in a given period (preserves historical data for resigned employees)
-function isMemberActiveInPeriod(
-  member: any,
-  periodMonth: string,
-  periodYear: string
-): boolean {
-  if (!member) return false;
-  if (!member.resigned_month || !member.resigned_year) {
-    if (member.is_deleted === true || member.is_active === false) {
-      return false;
-    }
-    return true;
-  }
-
-  const pYear = parseInt(String(periodYear), 10);
-  const rYear = parseInt(String(member.resigned_year), 10);
-  if (isNaN(pYear) || isNaN(rYear)) return true;
-
-  if (pYear < rYear) return true; // Prior year: definitely active
-  if (pYear > rYear) return false; // Subsequent year: resigned
-
-  const rMonthIdx = MONTHS.indexOf(member.resigned_month.toUpperCase());
-  if (rMonthIdx === -1) return true;
-
-  const pMonthUpper = (periodMonth || "").toUpperCase();
-  const aggMonths = AGGREGATE_MAP[pMonthUpper];
-  if (aggMonths) {
-    return aggMonths.some(m => {
-      const idx = MONTHS.indexOf(m.toUpperCase());
-      return idx < rMonthIdx;
-    });
-  }
-
-  const pMonthIdx = MONTHS.indexOf(pMonthUpper);
-  if (pMonthIdx === -1) return true;
-
-  return pMonthIdx < rMonthIdx;
-}
 
 // Maps a month abbreviation to its quarter and week range within that quarter
 // Each quarter has 3 months each spanning 4 weeks (month1→w1-4, month2→w5-8, month3→w9-12)
@@ -743,10 +705,12 @@ function AgentDashboard({
   onOpenAnnualEval?: () => void;
 }) {
   const defaultPeriod = getPreviousMonthAndYear();
+  const [selectedYear, setSelectedYear] = useState(defaultPeriod.year);
+  const [selectedMonth, setSelectedMonth] = useState(defaultPeriod.month);
 
   const activeMembersList = useMemo(() => {
-    return (allMembers || []).filter(m => !m.is_deleted && m.is_active !== false && !m.resigned_month);
-  }, [allMembers]);
+    return (allMembers || []).filter(m => isMemberActiveInPeriod(m, selectedMonth, selectedYear));
+  }, [allMembers, selectedMonth, selectedYear]);
 
   const initialAgent = (previewMode && activeMembersList && activeMembersList.length > 0)
     ? activeMembersList[0]
@@ -754,8 +718,6 @@ function AgentDashboard({
   const [currentAgent, setCurrentAgent] = useState<any>(initialAgent);
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<any[]>([]);
-  const [selectedYear, setSelectedYear] = useState(defaultPeriod.year);
-  const [selectedMonth, setSelectedMonth] = useState(defaultPeriod.month);
   
   const [memberDoc, setMemberDoc] = useState<any>(null);
   const [agentDropdownOpen, setAgentDropdownOpen] = useState(false);
@@ -2516,6 +2478,8 @@ export default function Dashboard() {
   const [newMemberName, setNewMemberName] = useState("");
   const [newMemberTeam, setNewMemberTeam] = useState<TeamName>('Younis Kamal Team');
   const [deleteTarget, setDeleteTarget] = useState<{ memberId: string; name: string; team: string } | null>(null);
+  const [deleteTiming, setDeleteTiming] = useState<"next" | "current">("next");
+  const [isDeletingMember, setIsDeletingMember] = useState(false);
 
   // Edit Agents
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
@@ -3810,11 +3774,13 @@ export default function Dashboard() {
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
+    setIsDeletingMember(true);
     try {
-      const resMonth = MONTHS.includes((selectedMonth || "").toUpperCase())
-        ? selectedMonth.toUpperCase()
-        : MONTHS[new Date().getMonth()];
-      const resYear = selectedYear || String(new Date().getFullYear());
+      const curEffective = getCurrentEffectiveMonth(selectedMonth, selectedYear);
+      const nextEffective = getNextMonthAndYear(curEffective.month, curEffective.year);
+
+      const resMonth = deleteTiming === "next" ? nextEffective.month : curEffective.month;
+      const resYear = deleteTiming === "next" ? nextEffective.year : curEffective.year;
       const nowIso = new Date().toISOString();
 
       // Soft delete in team_members: marks resigned from resMonth/resYear onwards
@@ -3846,7 +3812,7 @@ export default function Dashboard() {
         console.warn("Could not deactivate user account:", userErr);
       }
 
-      // Purge metrics only for resMonth and future months; keep all prior months intact
+      // Purge metrics ONLY for resMonth and future months; keep all prior months intact
       const tName = deleteTarget.team === 'Younis Kamal Team' ? 'younis_metrics' :
                     deleteTarget.team === 'Ankido Buya Team' ? 'ankido_metrics' :
                     'mohammed_metrics';
@@ -3871,8 +3837,10 @@ export default function Dashboard() {
       fetchData(true);
     } catch (err: any) {
       setErrorMsg(`Failed to remove: ${err.message}`);
+    } finally {
+      setIsDeletingMember(false);
+      setDeleteTarget(null);
     }
-    setDeleteTarget(null);
   };
 
   const handleAddColumn = async () => {
@@ -5918,35 +5886,162 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {deleteTarget && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDeleteTarget(null)} />
-          <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-sm w-full mx-4 border border-transparent dark:border-gray-700">
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/30 mx-auto mb-4">
-              <Trash2 size={22} className="text-red-500 dark:text-red-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white text-center mb-2">Remove / Resign Member</h3>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center mb-6 leading-relaxed">
-              Are you sure you want to remove <span className="font-semibold text-gray-700 dark:text-gray-200">{deleteTarget.name}</span>? They will be removed from Top Star and Agent Dashboard. Historical data for previous months will be preserved in Team Leader and Quality dashboards, starting deletion from <strong>{selectedMonth} {selectedYear}</strong> onwards.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="flex-1 px-4 py-2.5 rounded-lg bg-red-500 text-sm font-medium text-white hover:bg-red-600 transition shadow-sm"
-              >
-                Remove
-              </button>
+      {/* Delete / Resign Member Confirmation Modal */}
+      {deleteTarget && (() => {
+        const curEffective = getCurrentEffectiveMonth(selectedMonth, selectedYear);
+        const nextEffective = getNextMonthAndYear(curEffective.month, curEffective.year);
+
+        return (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div 
+              className="absolute inset-0 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" 
+              onClick={() => !isDeletingMember && setDeleteTarget(null)} 
+            />
+            <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-6 sm:p-7 max-w-lg w-full border border-gray-200/80 dark:border-gray-800 animate-in fade-in zoom-in-95 duration-150">
+              
+              {/* Top Header */}
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200/80 dark:border-rose-800/60 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0 shadow-xs">
+                  <UserMinus size={22} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
+                      Remove / Resign Member
+                    </h3>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                      إنهاء خدمة موظف
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                      {deleteTarget.name}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                      {deleteTarget.team.replace(' Team', '')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 🛡️ Historical Data Protection Banner */}
+              <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 flex items-start gap-3">
+                <ShieldCheck size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <div className="text-xs text-emerald-900 dark:text-emerald-200 leading-relaxed">
+                  <p className="font-bold mb-0.5">
+                    Historical Data is 100% Protected & Preserved
+                  </p>
+                  <p className="text-[11px] opacity-90">
+                    كافة البيانات والتقييمات والملاحظات المسجلة للشهور السابقة ستبقى محفوظة بالكامل في الداشبوردات، مع استبعاد الموظف من الكشوفات المستقبلية فقط.
+                  </p>
+                </div>
+              </div>
+
+              {/* Removal Effective Date Options */}
+              <div className="mb-5">
+                <label className="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                  When should removal take effect? / متى يبدأ سريان الحذف؟
+                </label>
+
+                <div className="space-y-2.5">
+                  {/* Option 1: Next Month (Recommended) */}
+                  <div
+                    onClick={() => setDeleteTiming("next")}
+                    className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 select-none ${
+                      deleteTiming === "next"
+                        ? "border-[#1C6B53] bg-emerald-50/40 dark:bg-emerald-950/30 ring-1 ring-[#1C6B53]/20"
+                        : "border-gray-200 dark:border-gray-700/80 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800/40"
+                    }`}
+                  >
+                    <div className="mt-0.5 shrink-0">
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition ${
+                        deleteTiming === "next" 
+                          ? "border-[#1C6B53] bg-[#1C6B53]" 
+                          : "border-gray-300 dark:border-gray-600"
+                      }`}>
+                        {deleteTiming === "next" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 justify-between">
+                        <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
+                          Next Month ({nextEffective.displayLabel}) • الشهر القادم
+                        </span>
+                        <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+                          Recommended
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-normal">
+                        يبقى الموظف نشطاً في هذا الشهر الحالي ({curEffective.displayLabel}) مع حفظ جميع مدخلاته. يبدأ الاستبعاد من جدول الشهر القادم ({nextEffective.displayLabel}) وما بعده.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Option 2: Current Month */}
+                  <div
+                    onClick={() => setDeleteTiming("current")}
+                    className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 select-none ${
+                      deleteTiming === "current"
+                        ? "border-rose-500 bg-rose-50/40 dark:bg-rose-950/30 ring-1 ring-rose-500/20"
+                        : "border-gray-200 dark:border-gray-700/80 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800/40"
+                    }`}
+                  >
+                    <div className="mt-0.5 shrink-0">
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition ${
+                        deleteTiming === "current" 
+                          ? "border-rose-500 bg-rose-500" 
+                          : "border-gray-300 dark:border-gray-600"
+                      }`}>
+                        {deleteTiming === "current" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 justify-between">
+                        <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
+                          Current Month ({curEffective.displayLabel}) • الشهر الحالي
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-normal">
+                        يتم استبعاد الموظف بدءاً من هذا الشهر ({curEffective.displayLabel}) فوراً. يتم الحفاظ الكامل على كافة بيانات الشهور السابقة قبل هذا الشهر.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeletingMember}
+                  onClick={() => setDeleteTarget(null)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 transition active:scale-95 cursor-pointer"
+                >
+                  Cancel • إلغاء
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeletingMember}
+                  onClick={confirmDelete}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs sm:text-sm font-bold text-white transition active:scale-95 shadow-md shadow-rose-600/20 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {isDeletingMember ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin" />
+                      <span>Removing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={14} />
+                      <span>Confirm Removal • تأكيد</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Previous Month Incomplete Lock Modal */}
       {showMonthLockModal && prevMonthIncompleteInfo && (

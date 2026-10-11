@@ -11,7 +11,7 @@ import {
   SlidersHorizontal, CheckCircle, Film
 } from "lucide-react";
 import { formatDuration, checkTeamCompleteness, fetchTopStarSyncStatus, invalidateTopStarCache } from "@/lib/topStarUtils";
-import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
+import { DEFAULT_COMPANY_EMPLOYEES, isMemberActiveInPeriod } from "@/lib/companyRoster";
 import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
 import { getCanonicalAgentName } from "@/lib/canonicalAgents";
 import TopStarCelebrationVideoModal from "./TopStarCelebrationVideoModal";
@@ -153,32 +153,32 @@ export default function TopStarDashboard({
     });
   };
 
-  // Active rosters (strictly excluding deleted / resigned agents)
+  // Active rosters (strictly excluding deleted / resigned agents for the selected period)
   const chatRoster = useMemo(() => {
     const inactiveSet = new Set(
       membersList
-        .filter(m => m.is_deleted === true || m.is_active === false || m.resigned_month)
+        .filter(m => !isMemberActiveInPeriod(m, selectedMonth, selectedYear))
         .map(m => normalizeName(m.agent_name || m.name))
     );
     const fromProps = membersList
-      .filter(m => m.team === "Mohammed Dlshad Team" && m.is_deleted !== true && m.is_active !== false && !m.resigned_month)
+      .filter(m => m.team === "Mohammed Dlshad Team" && isMemberActiveInPeriod(m, selectedMonth, selectedYear))
       .map(m => normalizeName(m.agent_name || m.name));
     const combined = Array.from(new Set([...fromProps, ...DEFAULT_CHAT_AGENTS])).filter(n => !inactiveSet.has(n));
     return combined.sort((a, b) => a.localeCompare(b));
-  }, [membersList]);
+  }, [membersList, selectedMonth, selectedYear]);
 
   const callRoster = useMemo(() => {
     const inactiveSet = new Set(
       membersList
-        .filter(m => m.is_deleted === true || m.is_active === false || m.resigned_month)
+        .filter(m => !isMemberActiveInPeriod(m, selectedMonth, selectedYear))
         .map(m => normalizeName(m.agent_name || m.name))
     );
     const fromProps = membersList
-      .filter(m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && m.is_deleted !== true && m.is_active !== false && !m.resigned_month)
+      .filter(m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && isMemberActiveInPeriod(m, selectedMonth, selectedYear))
       .map(m => normalizeName(m.agent_name || m.name));
     const combined = Array.from(new Set([...fromProps, ...DEFAULT_CALL_AGENTS])).filter(n => !inactiveSet.has(n));
     return combined.sort((a, b) => a.localeCompare(b));
-  }, [membersList]);
+  }, [membersList, selectedMonth, selectedYear]);
 
   // Load Criteria & Sync Status from Firestore
   useEffect(() => {
