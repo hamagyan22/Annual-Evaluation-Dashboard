@@ -1001,7 +1001,7 @@ export default function AnnualEvaluationDashboard({
             {/* Back Button (Always First on the Far Right) */}
             <button
               onClick={onBack}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 border border-emerald-200/80 dark:border-emerald-800/60 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white bg-white hover:bg-gray-100/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
               title="Return to Main Dashboard"
             >
               <ArrowLeft size={14} />

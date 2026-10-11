@@ -2995,73 +2995,44 @@ export default function QualityDashboard({
     }
   };
 
-  // Helper to resolve all possible key aliases for a cell (chat/call, bonus, and weekly variations)
-  const getAllCellKeys = useCallback((key: string, week: number, isChat: boolean): string[] => {
-    const keys = new Set<string>();
+  // Helper to resolve key aliases for a cell (strictly scoped to the same cell, NEVER crossing weeks or months)
+  const getAllCellKeys = useCallback((key: string): string[] => {
     if (!key) return [];
+    const keys = new Set<string>();
     keys.add(key);
 
-    // 1. Matches call_N or chat_N (with optional week prefix)
-    const m = key.match(/(?:w\d+_)?(call|chat)_(\d+)/i);
-    if (m) {
-      const cNum = parseInt(m[2], 10);
-      keys.add(`call_${cNum}`);
-      keys.add(`chat_${cNum}`);
-
-      // Bonus week mapping: w = floor((cNum - 1) / 6) + 1
-      const wBonus = Math.floor((cNum - 1) / 6) + 1;
-      keys.add(`w${wBonus}_call_${cNum}`);
-      keys.add(`w${wBonus}_chat_${cNum}`);
-
-      // All 5 weeks standard variants
-      for (let w = 1; w <= 5; w++) {
-        keys.add(`w${w}_call_${cNum}`);
-        keys.add(`w${w}_chat_${cNum}`);
-
-        // Standard inbound call index mapping: callBase = (w - 1) * 3
-        const callIndex = (w - 1) * 3 + cNum;
-        keys.add(`w${w}_call_${callIndex}`);
-        keys.add(`w${w}_chat_${callIndex}`);
-
-        if (cNum > (w - 1) * 3 && cNum <= w * 3) {
-          const subIndex = cNum - (w - 1) * 3;
-          keys.add(`w${w}_call_${subIndex}`);
-          keys.add(`w${w}_chat_${subIndex}`);
-        }
-      }
-    }
-
-    // 2. Monitoring eval matches: m{month}_eval_{N}
-    const evalMatch = key.match(/m\d+_eval_(\d+)/i);
-    if (evalMatch) {
-      keys.add(`eval_${evalMatch[1]}`);
-      keys.add(key);
+    // Only allow exact same-week alias between chat and call
+    if (key.includes("_chat_")) {
+      keys.add(key.replace("_chat_", "_call_"));
+    } else if (key.includes("_call_")) {
+      keys.add(key.replace("_call_", "_chat_"));
     }
 
     return Array.from(keys);
   }, []);
 
-  // Helper to resolve cell note with candidate key fallbacks
-  const getCellNote = useCallback((notes: Record<string, any> | undefined, cellKey: string, week: number, isChat: boolean): string => {
+  // Helper to resolve cell note strictly for this specific evaluation cell
+  const getCellNote = useCallback((notes: Record<string, any> | undefined, cellKey: string, _week?: number, _isChat?: boolean): string => {
     if (!notes) return "";
     if (notes[cellKey] && String(notes[cellKey]).trim()) return String(notes[cellKey]);
-    const candidateKeys = getAllCellKeys(cellKey, week, isChat);
-    for (const k of candidateKeys) {
-      if (notes[k] && String(notes[k]).trim()) return String(notes[k]);
+    // Exact same-week chat/call alias fallback only
+    if (cellKey.includes("_chat_")) {
+      const altKey = cellKey.replace("_chat_", "_call_");
+      if (notes[altKey] && String(notes[altKey]).trim()) return String(notes[altKey]);
     }
     return "";
-  }, [getAllCellKeys]);
+  }, []);
 
-  // Helper to resolve cell link with candidate key fallbacks
-  const getCellLink = useCallback((links: Record<string, any> | undefined, cellKey: string, week: number, isChat: boolean): string => {
+  // Helper to resolve cell link strictly for this specific evaluation cell
+  const getCellLink = useCallback((links: Record<string, any> | undefined, cellKey: string, _week?: number, _isChat?: boolean): string => {
     if (!links) return "";
     if (links[cellKey] && String(links[cellKey]).trim()) return String(links[cellKey]);
-    const candidateKeys = getAllCellKeys(cellKey, week, isChat);
-    for (const k of candidateKeys) {
-      if (links[k] && String(links[k]).trim()) return String(links[k]);
+    if (cellKey.includes("_chat_")) {
+      const altKey = cellKey.replace("_chat_", "_call_");
+      if (links[altKey] && String(links[altKey]).trim()) return String(links[altKey]);
     }
     return "";
-  }, [getAllCellKeys]);
+  }, []);
 
   // Open note modal for a specific cell
   const handleOpenNote = (csrName: string, key: string, callLabel: string) => {
@@ -3076,33 +3047,13 @@ export default function QualityDashboard({
     const targetDoc = evalData[defaultDocId] || getQualityEvalDoc(evalData, defaultDocId) || {};
     const docId = targetDoc.id || defaultDocId;
 
-    const candidateKeys = getAllCellKeys(key, selectedWeek, isChatTeam);
     const notesMap = targetDoc.notes || {};
     const linksMap = targetDoc.links || {};
     const scoresMap = targetDoc.scores || {};
 
-    let existingNote = notesMap[key] || targetDoc[`notes.${key}`] || "";
-    let existingLink = linksMap[key] || targetDoc[`links.${key}`] || "";
+    let existingNote = getCellNote(notesMap, key) || targetDoc[`notes.${key}`] || "";
+    let existingLink = getCellLink(linksMap, key) || targetDoc[`links.${key}`] || "";
     let scoreVal = scoresMap[key] !== undefined && scoresMap[key] !== null ? String(scoresMap[key]) : "";
-
-    if (!existingNote) {
-      for (const k of candidateKeys) {
-        const n = notesMap[k] || targetDoc[`notes.${k}`];
-        if (n && String(n).trim()) { existingNote = String(n); break; }
-      }
-    }
-    if (!existingLink) {
-      for (const k of candidateKeys) {
-        const l = linksMap[k] || targetDoc[`links.${k}`];
-        if (l && String(l).trim()) { existingLink = String(l); break; }
-      }
-    }
-    if (!scoreVal) {
-      for (const k of candidateKeys) {
-        const s = scoresMap[k];
-        if (s !== undefined && s !== null && s !== "") { scoreVal = String(s); break; }
-      }
-    }
 
     // If no explicit link is stored, check if the note text contains an HTTP link
     if (!existingLink && existingNote) {
@@ -3135,7 +3086,6 @@ export default function QualityDashboard({
     const defaultDocId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
     const docId = modalDocId || defaultDocId;
 
-    const candidateKeys = getAllCellKeys(key, selectedWeek, isChatTeam);
     const nowIso = new Date().toISOString();
 
     try {
@@ -3150,35 +3100,45 @@ export default function QualityDashboard({
         ...(targetDoc.cell_timestamps || {})
       };
 
+      // 1. Strictly save/delete note on this single cell key only
       if (noteText.trim()) {
         updatedNotes[key] = noteText.trim();
-        candidateKeys.forEach(k => {
-          updatedNotes[k] = noteText.trim();
-        });
       } else {
         delete updatedNotes[key];
-        candidateKeys.forEach(k => {
-          delete updatedNotes[k];
-        });
       }
 
       if (linkUrl.trim()) {
         updatedLinks[key] = linkUrl.trim();
-        candidateKeys.forEach(k => {
-          updatedLinks[k] = linkUrl.trim();
-        });
       } else {
         delete updatedLinks[key];
-        candidateKeys.forEach(k => {
-          delete updatedLinks[k];
-        });
       }
 
       if (noteText.trim() || linkUrl.trim() || targetDoc.scores?.[key] !== undefined) {
         updatedTimestamps[key] = nowIso;
-        candidateKeys.forEach(k => {
-          updatedTimestamps[k] = nowIso;
-        });
+      } else {
+        delete updatedTimestamps[key];
+      }
+
+      // 2. CRITICAL PURGE: Clean up any legacy generic keys that previously caused notes to leak across evaluations
+      const purgeKeys: string[] = [];
+      const evalMatch = key.match(/m\d+_eval_(\d+)/i);
+      if (evalMatch) {
+        const genericKey = `eval_${evalMatch[1]}`;
+        delete updatedNotes[genericKey];
+        delete updatedLinks[genericKey];
+        delete updatedTimestamps[genericKey];
+        purgeKeys.push(genericKey);
+      }
+
+      const callMatch = key.match(/^w\d+_(call|chat)_(\d+)$/i);
+      if (callMatch) {
+        const genericCall = `call_${callMatch[2]}`;
+        const genericChat = `chat_${callMatch[2]}`;
+        delete updatedNotes[genericCall];
+        delete updatedNotes[genericChat];
+        delete updatedLinks[genericCall];
+        delete updatedLinks[genericChat];
+        purgeKeys.push(genericCall, genericChat);
       }
 
       // Optimistically update local evalData state
@@ -3223,12 +3183,14 @@ export default function QualityDashboard({
         updated_at: nowIso
       };
 
-      // Also clean up any legacy dot-keys with deleteField()
-      candidateKeys.forEach(k => {
+      // Also clean up any legacy dot-keys and purged cross-pollinating keys with deleteField()
+      purgeKeys.forEach(k => {
         firestorePayload[`notes.${k}`] = deleteField();
         firestorePayload[`links.${k}`] = deleteField();
         firestorePayload[`cell_timestamps.${k}`] = deleteField();
       });
+      firestorePayload[`notes.${key}`] = noteText.trim() ? noteText.trim() : deleteField();
+      firestorePayload[`links.${key}`] = linkUrl.trim() ? linkUrl.trim() : deleteField();
 
       try {
         await updateDoc(doc(db, "quality_evaluations", docId), firestorePayload);
@@ -3255,7 +3217,7 @@ export default function QualityDashboard({
     }
   };
 
-  // Delete note & link from Firestore
+  // Delete note & link from Firestore strictly from this specific evaluation cell
   const handleDeleteNote = async () => {
     if (!activeNoteModal) return;
     setSavingNote(true);
@@ -3266,19 +3228,37 @@ export default function QualityDashboard({
     const defaultDocId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
     const docId = modalDocId || defaultDocId;
 
-    const candidateKeys = getAllCellKeys(key, selectedWeek, isChatTeam);
     const nowIso = new Date().toISOString();
 
     try {
       const targetDoc = evalData[docId] || getQualityEvalDoc(evalData, docId) || {};
       const updatedNotes = { ...(targetDoc.notes || {}) };
       const updatedLinks = { ...(targetDoc.links || {}) };
+      const updatedTimestamps = { ...(targetDoc.cell_timestamps || {}) };
+
       delete updatedNotes[key];
       delete updatedLinks[key];
-      candidateKeys.forEach(k => {
-        delete updatedNotes[k];
-        delete updatedLinks[k];
-      });
+      delete updatedTimestamps[key];
+
+      const purgeKeys: string[] = [key];
+      const evalMatch = key.match(/m\d+_eval_(\d+)/i);
+      if (evalMatch) {
+        const genericKey = `eval_${evalMatch[1]}`;
+        delete updatedNotes[genericKey];
+        delete updatedLinks[genericKey];
+        delete updatedTimestamps[genericKey];
+        purgeKeys.push(genericKey);
+      }
+      const callMatch = key.match(/^w\d+_(call|chat)_(\d+)$/i);
+      if (callMatch) {
+        const genericCall = `call_${callMatch[2]}`;
+        const genericChat = `chat_${callMatch[2]}`;
+        delete updatedNotes[genericCall];
+        delete updatedNotes[genericChat];
+        delete updatedLinks[genericCall];
+        delete updatedLinks[genericChat];
+        purgeKeys.push(genericCall, genericChat);
+      }
 
       // 1. Optimistically update local evalData state
       setEvalData(prev => {
@@ -3289,6 +3269,7 @@ export default function QualityDashboard({
             ...currentDoc,
             notes: updatedNotes,
             links: updatedLinks,
+            cell_timestamps: updatedTimestamps,
             updated_at: nowIso
           }
         };
@@ -3300,6 +3281,7 @@ export default function QualityDashboard({
                 ...nextMap[aliasKey],
                 notes: updatedNotes,
                 links: updatedLinks,
+                cell_timestamps: updatedTimestamps,
                 updated_at: nowIso
               };
             }
@@ -3312,27 +3294,21 @@ export default function QualityDashboard({
       const deletePayload: Record<string, any> = {
         notes: updatedNotes,
         links: updatedLinks,
+        cell_timestamps: updatedTimestamps,
         updated_at: nowIso
       };
-      candidateKeys.forEach(k => {
+      purgeKeys.forEach(k => {
         deletePayload[`notes.${k}`] = deleteField();
         deletePayload[`links.${k}`] = deleteField();
+        deletePayload[`cell_timestamps.${k}`] = deleteField();
       });
 
-      // 3. Persist to Firestore: use updateDoc so the notes map is replaced without deep-merging deleted keys
-      try {
-        await updateDoc(doc(db, "quality_evaluations", docId), deletePayload);
-      } catch {
-        await setDoc(doc(db, "quality_evaluations", docId), deletePayload, { merge: true });
-      }
+      // 3. Persist to Firestore (both canonical and alias doc)
+      await setDoc(doc(db, "quality_evaluations", docId), deletePayload, { merge: true });
       for (const [regex, replacement] of SLUG_ALIASES) {
         if (regex.test(docId)) {
           const aliasKey = docId.replace(regex, replacement);
-          try {
-            await updateDoc(doc(db, "quality_evaluations", aliasKey), deletePayload);
-          } catch {
-            await setDoc(doc(db, "quality_evaluations", aliasKey), deletePayload, { merge: true }).catch(() => {});
-          }
+          setDoc(doc(db, "quality_evaluations", aliasKey), deletePayload, { merge: true }).catch(() => {});
         }
       }
 
@@ -4497,7 +4473,7 @@ export default function QualityDashboard({
                 {/* Back Button (Always First on the Far Right) */}
                 <button
                   onClick={onBack}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 border border-emerald-200/80 dark:border-emerald-800/60 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white bg-white hover:bg-gray-100/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
                   title="Return to Main Dashboard"
                 >
                   <ArrowLeft size={14} /> <span>Back</span>

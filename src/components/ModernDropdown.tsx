@@ -81,7 +81,7 @@ export const ModernDropdown: React.FC<ModernDropdownProps> = ({
       case "theme":
         return `${sizeClasses} bg-[#1C6B53] hover:bg-[#155a45] text-white shadow-xs border border-emerald-600/40`;
       case "tinted-green":
-        return `${sizeClasses} bg-emerald-50 hover:bg-emerald-100/70 dark:bg-emerald-950/70 dark:hover:bg-emerald-900/70 text-[#1C6B53] dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80 shadow-xs`;
+        return `${sizeClasses} bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-750 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 shadow-xs`;
       case "gray":
         return `${sizeClasses} bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 shadow-xs`;
       case "white":
@@ -135,15 +135,15 @@ export const ModernDropdown: React.FC<ModernDropdownProps> = ({
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-xl font-bold transition-colors cursor-pointer select-none text-left ${
                     isSelected
-                      ? "bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-black"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+                      ? "bg-gray-100 dark:bg-gray-800 text-gray-950 dark:text-white font-black"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-white"
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate">
                     {OptIcon && (
                       <OptIcon
                         size={13}
-                        className={isSelected ? "text-[#1C6B53] dark:text-emerald-400" : "text-gray-400"}
+                        className={isSelected ? "text-gray-900 dark:text-white" : "text-gray-400"}
                       />
                     )}
                     <span className="truncate">{opt.label}</span>
@@ -152,7 +152,7 @@ export const ModernDropdown: React.FC<ModernDropdownProps> = ({
                     <Check
                       size={13}
                       strokeWidth={2.5}
-                      className="text-[#1C6B53] dark:text-emerald-400 shrink-0 ml-2"
+                      className="text-gray-900 dark:text-white shrink-0 ml-2"
                     />
                   )}
                 </button>

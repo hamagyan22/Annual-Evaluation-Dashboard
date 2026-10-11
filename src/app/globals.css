@@ -28,105 +28,105 @@
 }
 
 [data-theme="emerald"] {
-  --brand-primary: #1B4D3E;
-  --brand-hover: #153E32;
-  --brand-accent: #2D7D65;
-  --brand-glow: rgba(27, 77, 62, 0.20);
-  --brand-bg-light: #F0F5F2;
-  --brand-text-light: #1B4D3E;
-  --brand-dark-bg-light: rgba(27, 77, 62, 0.35);
-  --brand-dark-text-light: #A4D9C5;
-  --brand-border-light: #C8DED4;
-  --brand-dark-border-light: #276A54;
-  --brand-from: #174336;
-  --brand-via: #1B4D3E;
-  --brand-to: #112F26;
-  --brand-gradient: linear-gradient(135deg, #174336 0%, #1B4D3E 50%, #112F26 100%);
+  --brand-primary: #1C6B53;
+  --brand-hover: #155A45;
+  --brand-accent: #00A991;
+  --brand-glow: rgba(28, 107, 83, 0.25);
+  --brand-bg-light: #ECFDF5;
+  --brand-text-light: #065F46;
+  --brand-dark-bg-light: rgba(6, 78, 59, 0.40);
+  --brand-dark-text-light: #6EE7B7;
+  --brand-border-light: #A7F3D0;
+  --brand-dark-border-light: #065F46;
+  --brand-from: #1C6B53;
+  --brand-via: #165A46;
+  --brand-to: #104334;
+  --brand-gradient: linear-gradient(135deg, #1C6B53 0%, #165A46 50%, #104334 100%);
 }
 
-[data-theme="slate"] {
-  --brand-primary: #27384A;
-  --brand-hover: #1E2B38;
-  --brand-accent: #3D566E;
-  --brand-glow: rgba(39, 56, 74, 0.20);
-  --brand-bg-light: #F2F5F8;
-  --brand-text-light: #27384A;
-  --brand-dark-bg-light: rgba(39, 56, 74, 0.38);
-  --brand-dark-text-light: #ADC4DA;
-  --brand-border-light: #CFDCE6;
-  --brand-dark-border-light: #3A5168;
-  --brand-from: #1C2936;
-  --brand-via: #27384A;
-  --brand-to: #141D26;
-  --brand-gradient: linear-gradient(135deg, #1C2936 0%, #27384A 50%, #141D26 100%);
+[data-theme="sapphire"] {
+  --brand-primary: #1E40AF;
+  --brand-hover: #1D4ED8;
+  --brand-accent: #3B82F6;
+  --brand-glow: rgba(30, 64, 175, 0.25);
+  --brand-bg-light: #EFF6FF;
+  --brand-text-light: #1E40AF;
+  --brand-dark-bg-light: rgba(30, 58, 138, 0.40);
+  --brand-dark-text-light: #93C5FD;
+  --brand-border-light: #BFDBFE;
+  --brand-dark-border-light: #1E40AF;
+  --brand-from: #1E3A8A;
+  --brand-via: #1E40AF;
+  --brand-to: #172554;
+  --brand-gradient: linear-gradient(135deg, #1E3A8A 0%, #1E40AF 50%, #172554 100%);
 }
 
-[data-theme="sage"] {
-  --brand-primary: #2A574E;
-  --brand-hover: #20433C;
-  --brand-accent: #3B7569;
-  --brand-glow: rgba(42, 87, 78, 0.20);
-  --brand-bg-light: #F1F6F4;
-  --brand-text-light: #2A574E;
-  --brand-dark-bg-light: rgba(42, 87, 78, 0.38);
-  --brand-dark-text-light: #AFD6CE;
-  --brand-border-light: #CDDFDB;
-  --brand-dark-border-light: #3A7367;
-  --brand-from: #1F4039;
-  --brand-via: #2A574E;
-  --brand-to: #152B26;
-  --brand-gradient: linear-gradient(135deg, #1F4039 0%, #2A574E 50%, #152B26 100%);
+[data-theme="teal"] {
+  --brand-primary: #0F766E;
+  --brand-hover: #115E59;
+  --brand-accent: #14B8A6;
+  --brand-glow: rgba(15, 118, 110, 0.25);
+  --brand-bg-light: #F0FDFA;
+  --brand-text-light: #115E59;
+  --brand-dark-bg-light: rgba(19, 78, 74, 0.40);
+  --brand-dark-text-light: #5EEAD4;
+  --brand-border-light: #99F6E4;
+  --brand-dark-border-light: #134E4A;
+  --brand-from: #115E59;
+  --brand-via: #0F766E;
+  --brand-to: #042F2E;
+  --brand-gradient: linear-gradient(135deg, #115E59 0%, #0F766E 50%, #042F2E 100%);
 }
 
-[data-theme="cashmere"] {
-  --brand-primary: #3E3A37;
-  --brand-hover: #302D2A;
-  --brand-accent: #5D5753;
-  --brand-glow: rgba(62, 58, 55, 0.20);
-  --brand-bg-light: #F7F5F3;
-  --brand-text-light: #3E3A37;
-  --brand-dark-bg-light: rgba(62, 58, 55, 0.38);
-  --brand-dark-text-light: #D2CBC5;
-  --brand-border-light: #DED8D2;
-  --brand-dark-border-light: #58514C;
-  --brand-from: #2D2A28;
-  --brand-via: #3E3A37;
-  --brand-to: #1E1C1A;
-  --brand-gradient: linear-gradient(135deg, #2D2A28 0%, #3E3A37 50%, #1E1C1A 100%);
+[data-theme="amethyst"] {
+  --brand-primary: #6D28D9;
+  --brand-hover: #5B21B6;
+  --brand-accent: #8B5CF6;
+  --brand-glow: rgba(109, 40, 217, 0.25);
+  --brand-bg-light: #F5F3FF;
+  --brand-text-light: #5B21B6;
+  --brand-dark-bg-light: rgba(91, 33, 182, 0.40);
+  --brand-dark-text-light: #C4B5FD;
+  --brand-border-light: #DDD6FE;
+  --brand-dark-border-light: #5B21B6;
+  --brand-from: #5B21B6;
+  --brand-via: #6D28D9;
+  --brand-to: #4C1D95;
+  --brand-gradient: linear-gradient(135deg, #5B21B6 0%, #6D28D9 50%, #4C1D95 100%);
 }
 
-[data-theme="twilight"] {
-  --brand-primary: #353B55;
-  --brand-hover: #292E42;
-  --brand-accent: #4C5578;
-  --brand-glow: rgba(53, 59, 85, 0.20);
-  --brand-bg-light: #F3F4F8;
-  --brand-text-light: #353B55;
-  --brand-dark-bg-light: rgba(53, 59, 85, 0.38);
-  --brand-dark-text-light: #B6BEDC;
-  --brand-border-light: #D4D8E7;
-  --brand-dark-border-light: #4C5578;
-  --brand-from: #262B3D;
-  --brand-via: #353B55;
-  --brand-to: #1A1D2B;
-  --brand-gradient: linear-gradient(135deg, #262B3D 0%, #353B55 50%, #1A1D2B 100%);
+[data-theme="ruby"] {
+  --brand-primary: #9F1239;
+  --brand-hover: #881337;
+  --brand-accent: #E11D48;
+  --brand-glow: rgba(159, 18, 57, 0.25);
+  --brand-bg-light: #FFF1F2;
+  --brand-text-light: #881337;
+  --brand-dark-bg-light: rgba(136, 19, 55, 0.40);
+  --brand-dark-text-light: #FDA4AF;
+  --brand-border-light: #FECDD3;
+  --brand-dark-border-light: #881337;
+  --brand-from: #881337;
+  --brand-via: #9F1239;
+  --brand-to: #4C0519;
+  --brand-gradient: linear-gradient(135deg, #881337 0%, #9F1239 50%, #4C0519 100%);
 }
 
-[data-theme="obsidian"] {
-  --brand-primary: #242830;
-  --brand-hover: #1B1E24;
-  --brand-accent: #3D4350;
-  --brand-glow: rgba(36, 40, 48, 0.25);
-  --brand-bg-light: #F3F5F7;
-  --brand-text-light: #242830;
-  --brand-dark-bg-light: rgba(36, 40, 48, 0.45);
-  --brand-dark-text-light: #C0C5CE;
-  --brand-border-light: #D3D6DC;
-  --brand-dark-border-light: #3D4350;
-  --brand-from: #1A1D22;
-  --brand-via: #242830;
-  --brand-to: #111317;
-  --brand-gradient: linear-gradient(135deg, #1A1D22 0%, #242830 50%, #111317 100%);
+[data-theme="carbon"] {
+  --brand-primary: #18181B;
+  --brand-hover: #27272A;
+  --brand-accent: #52525B;
+  --brand-glow: rgba(24, 24, 27, 0.25);
+  --brand-bg-light: #F4F4F5;
+  --brand-text-light: #18181B;
+  --brand-dark-bg-light: rgba(39, 39, 42, 0.45);
+  --brand-dark-text-light: #D4D4D8;
+  --brand-border-light: #E4E4E7;
+  --brand-dark-border-light: #3F3F46;
+  --brand-from: #27272A;
+  --brand-via: #18181B;
+  --brand-to: #09090B;
+  --brand-gradient: linear-gradient(135deg, #27272A 0%, #18181B 50%, #09090B 100%);
 }
 
 /* =========================================================================
@@ -198,71 +198,15 @@
   --tw-gradient-to: var(--brand-to, #104334) var(--tw-gradient-to-position) !important;
 }
 
-/* Brand Light Tint Backgrounds (e.g. Back button, badges, pills) */
-[data-theme] .bg-emerald-50,
-[data-theme] .bg-emerald-50\/90,
-[data-theme] .bg-emerald-50\/80,
-[data-theme] [class*="bg-emerald-50"] {
+/* Explicit brand accent helper for UI elements that choose to follow brand styling */
+.brand-bg-light {
   background-color: var(--brand-bg-light) !important;
 }
-
-[data-theme] .hover\:bg-emerald-100:hover,
-[data-theme] .hover\:bg-emerald-100\/80:hover,
-[data-theme] .hover\:bg-emerald-100\/70:hover,
-[data-theme] [class*="hover:bg-emerald-100"]:hover {
-  background-color: var(--brand-border-light) !important;
-}
-
-[data-theme] .border-emerald-200,
-[data-theme] .border-emerald-200\/60,
-[data-theme] .border-emerald-200\/70,
-[data-theme] .border-emerald-200\/80,
-[data-theme] .border-emerald-300,
-[data-theme] [class*="border-emerald-200"],
-[data-theme] [class*="border-emerald-300"] {
+.brand-border-light {
   border-color: var(--brand-border-light) !important;
 }
-
-[data-theme] .border-emerald-500\/30,
-[data-theme] .border-emerald-500\/25,
-[data-theme] .border-emerald-500\/20 {
-  border-color: var(--brand-border-light) !important;
-}
-
-/* Dark Mode Tint Adaptations */
-.dark[data-theme] .dark\:bg-emerald-950\/60,
-.dark[data-theme] .dark\:bg-emerald-950\/40,
-.dark[data-theme] .dark\:bg-emerald-950\/50,
-.dark[data-theme] [class*="dark:bg-emerald-950/"],
-[data-theme] .dark .dark\:bg-emerald-950\/60,
-[data-theme] .dark .dark\:bg-emerald-950\/40,
-[data-theme] .dark .dark\:bg-emerald-950\/50,
-[data-theme] .dark [class*="dark:bg-emerald-950/"] {
-  background-color: var(--brand-dark-bg-light) !important;
-}
-
-.dark[data-theme] .dark\:border-emerald-800,
-.dark[data-theme] .dark\:border-emerald-800\/60,
-.dark[data-theme] .dark\:border-emerald-800\/70,
-.dark[data-theme] .dark\:border-emerald-700\/60,
-.dark[data-theme] [class*="dark:border-emerald-800"],
-[data-theme] .dark .dark\:border-emerald-800,
-[data-theme] .dark .dark\:border-emerald-800\/60,
-[data-theme] .dark .dark\:border-emerald-800\/70,
-[data-theme] .dark .dark\:border-emerald-700\/60,
-[data-theme] .dark [class*="dark:border-emerald-800"] {
-  border-color: var(--brand-dark-border-light) !important;
-}
-
-.dark[data-theme] .dark\:text-emerald-300,
-.dark[data-theme] .dark\:text-emerald-400,
-.dark[data-theme] [class*="dark:text-emerald-300"],
-.dark[data-theme] [class*="dark:text-emerald-400"],
-[data-theme] .dark .dark\:text-emerald-300,
-[data-theme] .dark .dark\:text-emerald-400,
-[data-theme] .dark [class*="dark:text-emerald-300"],
-[data-theme] .dark [class*="dark:text-emerald-400"] {
-  color: var(--brand-dark-text-light) !important;
+.brand-text-light {
+  color: var(--brand-text-light) !important;
 }
 
 html {
@@ -271,7 +215,7 @@ html {
 }
 
 body {
-  @apply bg-[#F9F8F4] text-gray-800 transition-colors duration-200;
+  @apply bg-[#F8F9FA] text-gray-800 transition-colors duration-200;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   min-height: 100vh;
   min-height: 100dvh;
