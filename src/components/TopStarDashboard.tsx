@@ -133,6 +133,8 @@ export default function TopStarDashboard({
   const [isEditingCriteria, setIsEditingCriteria] = useState<boolean>(false);
   const [tempCriteria, setTempCriteria] = useState(DEFAULT_CRITERIA);
   const [isSavingCriteria, setIsSavingCriteria] = useState<boolean>(false);
+  const [criteriaModalTab, setCriteriaModalTab] = useState<"weights" | "matrix">("weights");
+  const [benchmarkMatrixTeam, setBenchmarkMatrixTeam] = useState<"call" | "chat">("call");
 
   // Top 3 Celebration & Appreciation Video Modal state
   const [showCelebrationVideo, setShowCelebrationVideo] = useState<boolean>(false);
@@ -585,10 +587,10 @@ export default function TopStarDashboard({
         </div>
       )}
 
-      {/* KPI Criteria Modal (With Edit Ability for Admin/Manager) */}
+      {/* KPI Criteria Modal (With Edit Ability for Admin/Manager & 5-Star Rating Matrix) */}
       {showCriteriaModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-gray-850 border border-gray-200 dark:border-gray-700 rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+          <div className="bg-white dark:bg-gray-850 border border-gray-200 dark:border-gray-700 rounded-3xl max-w-3xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
             
             <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-2.5">
@@ -596,13 +598,13 @@ export default function TopStarDashboard({
                   <Award size={18} />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-gray-900 dark:text-white">KPI Evaluation Criteria</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Total Benchmark & Weights (100 Pts Total)</p>
+                  <h3 className="text-base font-black text-gray-900 dark:text-white">KPI Evaluation & Benchmark Standards</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Total Benchmark Weights & Official 5-Star Performance Matrix</p>
                 </div>
               </div>
               
               <div className="flex items-center gap-2">
-                {canEdit && !isEditingCriteria && (
+                {criteriaModalTab === "weights" && canEdit && !isEditingCriteria && (
                   <button
                     onClick={() => {
                       setTempCriteria(criteria);
@@ -626,190 +628,456 @@ export default function TopStarDashboard({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
-              
-              {/* Chat Breakdown */}
-              <div className="p-4 rounded-2xl border border-emerald-200/80 dark:border-emerald-800/40 bg-emerald-50/40 dark:bg-emerald-950/20">
-                <div className="flex items-center gap-2 mb-3 text-xs font-black uppercase tracking-wider text-[#1C6B53] dark:text-emerald-400">
-                  <MessageSquare size={15} />
-                  <span>Chat Team Criteria</span>
-                </div>
-                
-                {isEditingCriteria ? (
-                  <div className="space-y-2.5 text-xs">
-                    <div>
-                      <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Qa Max Points & Target</label>
-                      <div className="flex gap-2 mt-1">
-                        <input type="number" value={tempCriteria.chat.qaMax} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, qaMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (30)" />
-                        <input type="number" value={tempCriteria.chat.qaTarget} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, qaTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (100)" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Productivity Max Points & Target (/hr)</label>
-                      <div className="flex gap-2 mt-1">
-                        <input type="number" value={tempCriteria.chat.prodMax} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, prodMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (15)" />
-                        <input type="number" value={tempCriteria.chat.prodTarget} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, prodTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (13)" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Aht Max Points & Target (s)</label>
-                      <div className="flex gap-2 mt-1">
-                        <input type="number" value={tempCriteria.chat.ahtMax} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, ahtMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (15)" />
-                        <input type="number" value={tempCriteria.chat.ahtTarget} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, ahtTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (210s)" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Art Max Points & Target (s)</label>
-                      <div className="flex gap-2 mt-1">
-                        <input type="number" value={tempCriteria.chat.artMax} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, artMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (20)" />
-                        <input type="number" value={tempCriteria.chat.artTarget} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, artTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (89s)" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Exam Max Points & Target</label>
-                      <div className="flex gap-2 mt-1">
-                        <input type="number" value={tempCriteria.chat.examMax} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, examMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (20)" />
-                        <input type="number" value={tempCriteria.chat.examTarget} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, examTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (100)" />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between py-1 border-b border-emerald-100 dark:border-emerald-900/40">
-                      <span className="text-gray-600 dark:text-gray-300">1. Quality (Qa)</span>
-                      <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">{criteria.chat.qaMax} pts (Target {criteria.chat.qaTarget})</span>
-                    </div>
-                    <div className="flex justify-between py-1 border-b border-emerald-100 dark:border-emerald-900/40">
-                      <span className="text-gray-600 dark:text-gray-300">2. Productivity (Prod)</span>
-                      <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">{criteria.chat.prodMax} pts ({criteria.chat.prodTarget}/hr)</span>
-                    </div>
-                    <div className="flex justify-between py-1 border-b border-emerald-100 dark:border-emerald-900/40">
-                      <span className="text-gray-600 dark:text-gray-300">3. Average Handle Time (Aht)</span>
-                      <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">{criteria.chat.ahtMax} pts ({criteria.chat.ahtTarget}s)</span>
-                    </div>
-                    <div className="flex justify-between py-1 border-b border-emerald-100 dark:border-emerald-900/40">
-                      <span className="text-gray-600 dark:text-gray-300">4. Response Time (Art)</span>
-                      <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">{criteria.chat.artMax} pts ({criteria.chat.artTarget}s)</span>
-                    </div>
-                    <div className="flex justify-between py-1">
-                      <span className="text-gray-600 dark:text-gray-300">5. Knowledge Exam (Exam)</span>
-                      <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">{criteria.chat.examMax} pts (Target {criteria.chat.examTarget})</span>
-                    </div>
-                  </div>
-                )}
-              </div>
+            {/* Navigation Tabs inside Modal: Point Weights vs 5-Star Rating Matrix */}
+            <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-gray-100 dark:bg-gray-800 mt-4 mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setCriteriaModalTab("weights");
+                  setIsEditingCriteria(false);
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-black transition cursor-pointer ${
+                  criteriaModalTab === "weights"
+                    ? "bg-[#1C6B53] text-white shadow-xs"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                <SlidersHorizontal size={13} />
+                <span>Point Weights (100 Pts Total)</span>
+              </button>
 
-              {/* Call Breakdown */}
-              <div className="p-4 rounded-2xl border border-amber-200/80 dark:border-amber-800/40 bg-amber-50/40 dark:bg-amber-950/20">
-                <div className="flex items-center gap-2 mb-3 text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
-                  <PhoneCall size={15} />
-                  <span>Call Center Criteria</span>
-                </div>
-                
-                {isEditingCriteria ? (
-                  <div className="space-y-2.5 text-xs">
-                    <div>
-                      <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Qa Max Points & Target</label>
-                      <div className="flex gap-2 mt-1">
-                        <input type="number" value={tempCriteria.call.qaMax} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, qaMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (30)" />
-                        <input type="number" value={tempCriteria.call.qaTarget} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, qaTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (100)" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Productivity Max Points & Target</label>
-                      <div className="flex gap-2 mt-1">
-                        <input type="number" value={tempCriteria.call.prodMax} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, prodMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (20)" />
-                        <input type="number" value={tempCriteria.call.prodTarget} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, prodTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (100)" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Aht Max Points & Target (s)</label>
-                      <div className="flex gap-2 mt-1">
-                        <input type="number" value={tempCriteria.call.ahtMax} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, ahtMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (20)" />
-                        <input type="number" value={tempCriteria.call.ahtTarget} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, ahtTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (169s)" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Exam Max Points & Target</label>
-                      <div className="flex gap-2 mt-1">
-                        <input type="number" value={tempCriteria.call.examMax} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, examMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (20)" />
-                        <input type="number" value={tempCriteria.call.examTarget} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, examTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (100)" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Wrapup & Hold Max Points</label>
-                      <div className="flex gap-2 mt-1">
-                        <input type="number" value={tempCriteria.call.wrapupMax} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, wrapupMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Wrapup (5)" />
-                        <input type="number" value={tempCriteria.call.holdMax} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, holdMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Hold (5)" />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between py-1 border-b border-amber-100 dark:border-amber-900/40">
-                      <span className="text-gray-600 dark:text-gray-300">1. Quality (Qa)</span>
-                      <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{criteria.call.qaMax} pts (Target {criteria.call.qaTarget})</span>
-                    </div>
-                    <div className="flex justify-between py-1 border-b border-amber-100 dark:border-amber-900/40">
-                      <span className="text-gray-600 dark:text-gray-300">2. Productivity (Prod)</span>
-                      <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{criteria.call.prodMax} pts (Target {criteria.call.prodTarget})</span>
-                    </div>
-                    <div className="flex justify-between py-1 border-b border-amber-100 dark:border-amber-900/40">
-                      <span className="text-gray-600 dark:text-gray-300">3. Average Handle Time (Aht)</span>
-                      <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{criteria.call.ahtMax} pts ({criteria.call.ahtTarget}s)</span>
-                    </div>
-                    <div className="flex justify-between py-1 border-b border-amber-100 dark:border-amber-900/40">
-                      <span className="text-gray-600 dark:text-gray-300">4. Knowledge Exam (Exam)</span>
-                      <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{criteria.call.examMax} pts (Target {criteria.call.examTarget})</span>
-                    </div>
-                    <div className="flex justify-between py-1 border-b border-amber-100 dark:border-amber-900/40">
-                      <span className="text-gray-600 dark:text-gray-300">5. Wrapup</span>
-                      <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{criteria.call.wrapupMax} pts (Relative)</span>
-                    </div>
-                    <div className="flex justify-between py-1">
-                      <span className="text-gray-600 dark:text-gray-300">6. Hold Time</span>
-                      <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{criteria.call.holdMax} pts ({criteria.call.holdTarget}s)</span>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setCriteriaModalTab("matrix");
+                  setIsEditingCriteria(false);
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-black transition cursor-pointer ${
+                  criteriaModalTab === "matrix"
+                    ? "bg-[#1C6B53] text-white shadow-xs"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                <Star size={13} className="fill-current" />
+                <span>Official 5 ⭐ Rating Matrix</span>
+              </button>
             </div>
 
-            <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center text-xs">
-              <div className="flex items-center gap-3">
-                <span className="font-bold text-emerald-600">85+ Elite</span>
-                <span className="font-bold text-amber-600">70–84 Good</span>
-                <span className="font-bold text-rose-600">&lt;70 Needs Imp.</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                {isEditingCriteria ? (
-                  <>
+            {criteriaModalTab === "weights" ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Chat Breakdown */}
+                  <div className="p-4 rounded-2xl border border-emerald-200/80 dark:border-emerald-800/40 bg-emerald-50/40 dark:bg-emerald-950/20">
+                    <div className="flex items-center gap-2 mb-3 text-xs font-black uppercase tracking-wider text-[#1C6B53] dark:text-emerald-400">
+                      <MessageSquare size={15} />
+                      <span>Chat Team Criteria</span>
+                    </div>
+                    
+                    {isEditingCriteria ? (
+                      <div className="space-y-2.5 text-xs">
+                        <div>
+                          <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Qa Max Points & Target</label>
+                          <div className="flex gap-2 mt-1">
+                            <input type="number" value={tempCriteria.chat.qaMax} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, qaMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (30)" />
+                            <input type="number" value={tempCriteria.chat.qaTarget} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, qaTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (100)" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Productivity Max Points & Target (/hr)</label>
+                          <div className="flex gap-2 mt-1">
+                            <input type="number" value={tempCriteria.chat.prodMax} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, prodMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (15)" />
+                            <input type="number" value={tempCriteria.chat.prodTarget} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, prodTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (13)" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Aht Max Points & Target (s)</label>
+                          <div className="flex gap-2 mt-1">
+                            <input type="number" value={tempCriteria.chat.ahtMax} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, ahtMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (15)" />
+                            <input type="number" value={tempCriteria.chat.ahtTarget} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, ahtTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (210s)" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Art Max Points & Target (s)</label>
+                          <div className="flex gap-2 mt-1">
+                            <input type="number" value={tempCriteria.chat.artMax} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, artMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (20)" />
+                            <input type="number" value={tempCriteria.chat.artTarget} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, artTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (90s)" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Exam Max Points & Target</label>
+                          <div className="flex gap-2 mt-1">
+                            <input type="number" value={tempCriteria.chat.examMax} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, examMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (20)" />
+                            <input type="number" value={tempCriteria.chat.examTarget} onChange={e => setTempCriteria({...tempCriteria, chat: {...tempCriteria.chat, examTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (100)" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between py-1 border-b border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-gray-600 dark:text-gray-300">1. Quality (Qa)</span>
+                          <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">{criteria.chat.qaMax} pts (Target {criteria.chat.qaTarget})</span>
+                        </div>
+                        <div className="flex justify-between py-1 border-b border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-gray-600 dark:text-gray-300">2. Productivity (Prod)</span>
+                          <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">{criteria.chat.prodMax} pts ({criteria.chat.prodTarget}/hr)</span>
+                        </div>
+                        <div className="flex justify-between py-1 border-b border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-gray-600 dark:text-gray-300">3. Average Handle Time (Aht)</span>
+                          <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">{criteria.chat.ahtMax} pts ({criteria.chat.ahtTarget}s)</span>
+                        </div>
+                        <div className="flex justify-between py-1 border-b border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-gray-600 dark:text-gray-300">4. Response Time (Art)</span>
+                          <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">{criteria.chat.artMax} pts ({criteria.chat.artTarget}s)</span>
+                        </div>
+                        <div className="flex justify-between py-1">
+                          <span className="text-gray-600 dark:text-gray-300">5. Knowledge Exam (Exam)</span>
+                          <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">{criteria.chat.examMax} pts (Target {criteria.chat.examTarget})</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Call Breakdown */}
+                  <div className="p-4 rounded-2xl border border-amber-200/80 dark:border-amber-800/40 bg-amber-50/40 dark:bg-amber-950/20">
+                    <div className="flex items-center gap-2 mb-3 text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                      <PhoneCall size={15} />
+                      <span>Call Center Criteria</span>
+                    </div>
+                    
+                    {isEditingCriteria ? (
+                      <div className="space-y-2.5 text-xs">
+                        <div>
+                          <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Qa Max Points & Target</label>
+                          <div className="flex gap-2 mt-1">
+                            <input type="number" value={tempCriteria.call.qaMax} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, qaMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (30)" />
+                            <input type="number" value={tempCriteria.call.qaTarget} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, qaTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (100)" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Productivity Max Points & Target</label>
+                          <div className="flex gap-2 mt-1">
+                            <input type="number" value={tempCriteria.call.prodMax} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, prodMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (20)" />
+                            <input type="number" value={tempCriteria.call.prodTarget} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, prodTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (100)" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Aht Max Points & Target (s)</label>
+                          <div className="flex gap-2 mt-1">
+                            <input type="number" value={tempCriteria.call.ahtMax} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, ahtMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (20)" />
+                            <input type="number" value={tempCriteria.call.ahtTarget} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, ahtTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (164s)" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Exam Max Points & Target</label>
+                          <div className="flex gap-2 mt-1">
+                            <input type="number" value={tempCriteria.call.examMax} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, examMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Pts (20)" />
+                            <input type="number" value={tempCriteria.call.examTarget} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, examTarget: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Target (100)" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-gray-600 dark:text-gray-300">Wrapup & Hold Max Points</label>
+                          <div className="flex gap-2 mt-1">
+                            <input type="number" value={tempCriteria.call.wrapupMax} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, wrapupMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Wrapup (5)" />
+                            <input type="number" value={tempCriteria.call.holdMax} onChange={e => setTempCriteria({...tempCriteria, call: {...tempCriteria.call, holdMax: Number(e.target.value)}})} className="w-1/2 p-1.5 border rounded-lg text-xs font-mono font-bold dark:bg-gray-800" placeholder="Hold (5)" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between py-1 border-b border-amber-100 dark:border-amber-900/40">
+                          <span className="text-gray-600 dark:text-gray-300">1. Quality (Qa)</span>
+                          <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{criteria.call.qaMax} pts (Target {criteria.call.qaTarget})</span>
+                        </div>
+                        <div className="flex justify-between py-1 border-b border-amber-100 dark:border-amber-900/40">
+                          <span className="text-gray-600 dark:text-gray-300">2. Productivity (Prod)</span>
+                          <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{criteria.call.prodMax} pts (Target {criteria.call.prodTarget})</span>
+                        </div>
+                        <div className="flex justify-between py-1 border-b border-amber-100 dark:border-amber-900/40">
+                          <span className="text-gray-600 dark:text-gray-300">3. Average Handle Time (Aht)</span>
+                          <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{criteria.call.ahtMax} pts ({criteria.call.ahtTarget}s)</span>
+                        </div>
+                        <div className="flex justify-between py-1 border-b border-amber-100 dark:border-amber-900/40">
+                          <span className="text-gray-600 dark:text-gray-300">4. Knowledge Exam (Exam)</span>
+                          <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{criteria.call.examMax} pts (Target {criteria.call.examTarget})</span>
+                        </div>
+                        <div className="flex justify-between py-1 border-b border-amber-100 dark:border-amber-900/40">
+                          <span className="text-gray-600 dark:text-gray-300">5. Wrapup</span>
+                          <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{criteria.call.wrapupMax} pts (Relative)</span>
+                        </div>
+                        <div className="flex justify-between py-1">
+                          <span className="text-gray-600 dark:text-gray-300">6. Hold Time</span>
+                          <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{criteria.call.holdMax} pts ({criteria.call.holdTarget}s)</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-emerald-600">85+ Elite</span>
+                    <span className="font-bold text-amber-600">70–84 Good</span>
+                    <span className="font-bold text-rose-600">&lt;70 Needs Imp.</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    {isEditingCriteria ? (
+                      <>
+                        <button
+                          onClick={() => setIsEditingCriteria(false)}
+                          className="px-3.5 py-1.5 border border-gray-300 dark:border-gray-700 rounded-xl font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveCriteria}
+                          disabled={isSavingCriteria}
+                          className="px-4 py-1.5 bg-[#1C6B53] hover:bg-[#155340] text-white rounded-xl font-bold cursor-pointer transition shadow-xs flex items-center gap-1.5"
+                        >
+                          {isSavingCriteria ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
+                          <span>Save Changes</span>
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => setShowCriteriaModal(false)}
+                        className="px-4 py-2 bg-[#1C6B53] hover:bg-[#155340] text-white rounded-xl font-bold cursor-pointer transition shadow-xs"
+                      >
+                        Close
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              /* Official 5-Star Rating Matrix replica from operational benchmark */
+              <div className="space-y-4">
+                {/* Team Switcher Tabs for Matrix */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100 dark:bg-gray-800">
                     <button
-                      onClick={() => setIsEditingCriteria(false)}
-                      className="px-3.5 py-1.5 border border-gray-300 dark:border-gray-700 rounded-xl font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition cursor-pointer"
+                      type="button"
+                      onClick={() => setBenchmarkMatrixTeam("call")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        benchmarkMatrixTeam === "call"
+                          ? "bg-[#1C6B53] text-white shadow-xs"
+                          : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                      }`}
                     >
-                      Cancel
+                      <PhoneCall size={13} />
+                      <span>Calls Matrix (Voice Operations)</span>
                     </button>
+
                     <button
-                      onClick={handleSaveCriteria}
-                      disabled={isSavingCriteria}
-                      className="px-4 py-1.5 bg-[#1C6B53] hover:bg-[#155340] text-white rounded-xl font-bold cursor-pointer transition shadow-xs flex items-center gap-1.5"
+                      type="button"
+                      onClick={() => setBenchmarkMatrixTeam("chat")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        benchmarkMatrixTeam === "chat"
+                          ? "bg-[#1C6B53] text-white shadow-xs"
+                          : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                      }`}
                     >
-                      {isSavingCriteria ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
-                      <span>Save Changes</span>
+                      <MessageSquare size={13} />
+                      <span>Chat Matrix (Digital Operations)</span>
                     </button>
-                  </>
+                  </div>
+
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-[#1C6B53] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                    Official 5 ⭐ Standard
+                  </span>
+                </div>
+
+                {benchmarkMatrixTeam === "call" ? (
+                  <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xs">
+                    <table className="w-full text-xs text-center border-collapse">
+                      <thead>
+                        <tr className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-extrabold border-b border-gray-200 dark:border-gray-700">
+                          <th className="p-3 text-left">Rating Tier</th>
+                          <th className="p-3">QA</th>
+                          <th className="p-3">AHT</th>
+                          <th className="p-3">Exam</th>
+                          <th className="p-3">Productivity</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {/* 5 Exceptional */}
+                        <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">
+                              <span>5 ⭐</span>
+                              <span>Exceptional</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-emerald-800 dark:text-emerald-300">99% - 100%</td>
+                          <td className="p-3 font-mono font-bold text-emerald-800 dark:text-emerald-300">&lt; 2:44</td>
+                          <td className="p-3 font-mono font-bold text-emerald-800 dark:text-emerald-300">99% - 100%</td>
+                          <td className="p-3 font-mono font-bold text-emerald-800 dark:text-emerald-300">&gt; 93%</td>
+                        </tr>
+
+                        {/* 4 Exceeds Expectations */}
+                        <tr className="bg-sky-50/50 dark:bg-sky-950/20">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-sky-100 text-sky-800 dark:bg-sky-900/60 dark:text-sky-200 border border-sky-300 dark:border-sky-700">
+                              <span>4 ⭐</span>
+                              <span>Exceeds</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-sky-800 dark:text-sky-300">96% - 98%</td>
+                          <td className="p-3 font-mono font-bold text-sky-800 dark:text-sky-300">2:45 - 2:59</td>
+                          <td className="p-3 font-mono font-bold text-sky-800 dark:text-sky-300">96% - 98%</td>
+                          <td className="p-3 font-mono font-bold text-sky-800 dark:text-sky-300">91% - 92%</td>
+                        </tr>
+
+                        {/* 3 Meets Expectations */}
+                        <tr className="bg-slate-50/50 dark:bg-slate-800/20">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+                              <span>3 ⭐</span>
+                              <span>Meets</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">95%</td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">3:00 - 3:10</td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">90% - 95%</td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">90%</td>
+                        </tr>
+
+                        {/* 2 Developing */}
+                        <tr className="bg-amber-50/50 dark:bg-amber-950/20">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+                              <span>2 ⭐</span>
+                              <span>Developing</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-amber-800 dark:text-amber-300">90% - 94%</td>
+                          <td className="p-3 font-mono font-semibold text-amber-800 dark:text-amber-300">3:11 - 3:30</td>
+                          <td className="p-3 font-mono font-semibold text-amber-800 dark:text-amber-300">85% - 89%</td>
+                          <td className="p-3 font-mono font-semibold text-amber-800 dark:text-amber-300">86% - 89%</td>
+                        </tr>
+
+                        {/* 1 Needs Improvement */}
+                        <tr className="bg-rose-50/50 dark:bg-rose-950/20">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200 border border-rose-300 dark:border-rose-700">
+                              <span>1 ⭐</span>
+                              <span>Needs Imp.</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">&lt; 89%</td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">&gt; 3:31</td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">&lt; 85%</td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">&lt; 85%</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 ) : (
+                  <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xs">
+                    <table className="w-full text-xs text-center border-collapse">
+                      <thead>
+                        <tr className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-extrabold border-b border-gray-200 dark:border-gray-700">
+                          <th className="p-3 text-left">Rating Tier</th>
+                          <th className="p-3">Exam</th>
+                          <th className="p-3">QA</th>
+                          <th className="p-3">AHT</th>
+                          <th className="p-3">ART</th>
+                          <th className="p-3">Productivity</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {/* 5 Exceptional */}
+                        <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">
+                              <span>5 ⭐</span>
+                              <span>Exceptional</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-emerald-800 dark:text-emerald-300">99% - 100%</td>
+                          <td className="p-3 font-mono font-bold text-emerald-800 dark:text-emerald-300">99% - 100%</td>
+                          <td className="p-3 font-mono font-bold text-emerald-800 dark:text-emerald-300">3:00 - 3:30</td>
+                          <td className="p-3 font-mono font-bold text-emerald-800 dark:text-emerald-300">&lt; 1:30</td>
+                          <td className="p-3 font-mono font-bold text-emerald-800 dark:text-emerald-300">&gt; 13</td>
+                        </tr>
+
+                        {/* 4 Exceeds Expectations */}
+                        <tr className="bg-sky-50/50 dark:bg-sky-950/20">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-sky-100 text-sky-800 dark:bg-sky-900/60 dark:text-sky-200 border border-sky-300 dark:border-sky-700">
+                              <span>4 ⭐</span>
+                              <span>Exceeds</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-sky-800 dark:text-sky-300">96% - 98%</td>
+                          <td className="p-3 font-mono font-bold text-sky-800 dark:text-sky-300">96% - 98%</td>
+                          <td className="p-3 font-mono font-bold text-sky-800 dark:text-sky-300">3:31 - 4:00</td>
+                          <td className="p-3 font-mono font-bold text-sky-800 dark:text-sky-300">1:31 - 1:59</td>
+                          <td className="p-3 font-mono font-bold text-sky-800 dark:text-sky-300">11 - 12.99</td>
+                        </tr>
+
+                        {/* 3 Meets Expectations */}
+                        <tr className="bg-slate-50/50 dark:bg-slate-800/20">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+                              <span>3 ⭐</span>
+                              <span>Meets</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">90% - 95%</td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">95%</td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">4:01 - 4:59</td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">2:00 - 2:59</td>
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">8.5 - 10.99</td>
+                        </tr>
+
+                        {/* 2 Developing */}
+                        <tr className="bg-amber-50/50 dark:bg-amber-950/20">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+                              <span>2 ⭐</span>
+                              <span>Developing</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-semibold text-amber-800 dark:text-amber-300">85% - 89%</td>
+                          <td className="p-3 font-mono font-semibold text-amber-800 dark:text-amber-300">90% - 94%</td>
+                          <td className="p-3 font-mono font-semibold text-amber-800 dark:text-amber-300">5:00 - 5:59</td>
+                          <td className="p-3 font-mono font-semibold text-amber-800 dark:text-amber-300">3:00 - 3:30</td>
+                          <td className="p-3 font-mono font-semibold text-amber-800 dark:text-amber-300">7.50 - 8.49</td>
+                        </tr>
+
+                        {/* 1 Needs Improvement */}
+                        <tr className="bg-rose-50/50 dark:bg-rose-950/20">
+                          <td className="p-3 text-left">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200 border border-rose-300 dark:border-rose-700">
+                              <span>1 ⭐</span>
+                              <span>Needs Imp.</span>
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">&lt; 85%</td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">&lt; 89%</td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">&gt; 6:00</td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">&gt; 3:31</td>
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">&lt; 7.50</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center text-xs">
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+                    Official benchmark matrix adopted for all contact center evaluation tiers.
+                  </span>
                   <button
                     onClick={() => setShowCriteriaModal(false)}
                     className="px-4 py-2 bg-[#1C6B53] hover:bg-[#155340] text-white rounded-xl font-bold cursor-pointer transition shadow-xs"
                   >
                     Close
                   </button>
-                )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}

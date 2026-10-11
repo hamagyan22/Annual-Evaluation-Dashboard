@@ -702,12 +702,12 @@ export default function AnnualEvaluationDashboard({
             else suggestions.knowledge = 1;
             suggestions.exam = suggestions.knowledge;
           }
-          // Productivity: Greater than 93 (>93 -> 5), 91-92 (4), 90 (3), 88-89 (2), <87 (1)
+          // Productivity: Greater than 93 (>93 -> 5), 91-92 (4), 90 (3), 86-89 (2), <85 (1)
           if (avgProd !== null) {
             if (avgProd > 93) suggestions.productivity = 5;
             else if (avgProd >= 91) suggestions.productivity = 4;
             else if (avgProd >= 90) suggestions.productivity = 3;
-            else if (avgProd >= 88) suggestions.productivity = 2;
+            else if (avgProd >= 86) suggestions.productivity = 2;
             else suggestions.productivity = 1;
           }
         }
@@ -2271,7 +2271,7 @@ export default function AnnualEvaluationDashboard({
                             <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">85% - 89%</span>
                           </td>
                           <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
-                            <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">88% - 89%</span>
+                            <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">86% - 89%</span>
                           </td>
                         </tr>
 
@@ -2293,7 +2293,7 @@ export default function AnnualEvaluationDashboard({
                             <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&lt; 85%</span>
                           </td>
                           <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
-                            <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&lt; 87%</span>
+                            <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&lt; 85%</span>
                           </td>
                         </tr>
                       </tbody>

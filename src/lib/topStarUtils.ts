@@ -275,11 +275,11 @@ export function scoreAgent(
   if (t === "chat") {
     const c = criteria.chat;
     const art = parseSec(v.art);
-    const qaTarget = c.qaTarget > 0 ? c.qaTarget : 100;
+    const qaTarget = c.qaTarget > 0 ? c.qaTarget : 99;
     const prodTarget = c.prodTarget > 0 ? c.prodTarget : 13;
     const ahtTarget = c.ahtTarget > 0 ? c.ahtTarget : 210;
-    const artTarget = c.artTarget > 0 ? c.artTarget : 89;
-    const examTarget = c.examTarget > 0 ? c.examTarget : 100;
+    const artTarget = c.artTarget > 0 ? c.artTarget : 90;
+    const examTarget = c.examTarget > 0 ? c.examTarget : 99;
 
     const parts = [
       { key: "qa",   pts: qa == null ? null : clamp01(Math.min(qa, qaTarget) / qaTarget) * c.qaMax, max: c.qaMax },
@@ -297,11 +297,11 @@ export function scoreAgent(
   const wrapup = num(v.wrapup);
   const hold = parseSec(v.hold);
 
-  const qaTarget = c.qaTarget > 0 ? c.qaTarget : 100;
-  const prodTarget = c.prodTarget > 0 ? c.prodTarget : 100;
-  const ahtTarget = c.ahtTarget > 0 ? c.ahtTarget : 169;
-  const examTarget = c.examTarget > 0 ? c.examTarget : 100;
-  const holdTarget = c.holdTarget > 0 ? c.holdTarget : 45;
+  const qaTarget = c.qaTarget > 0 ? c.qaTarget : 99;
+  const prodTarget = c.prodTarget > 0 ? c.prodTarget : 93;
+  const ahtTarget = c.ahtTarget > 0 ? c.ahtTarget : 164;
+  const examTarget = c.examTarget > 0 ? c.examTarget : 99;
+  const holdTarget = c.holdTarget > 0 ? c.holdTarget : 30;
 
   let wrapupPts: number | null = null;
   if (wrapup != null && wrapupRange) {

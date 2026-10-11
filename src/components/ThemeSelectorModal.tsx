@@ -158,8 +158,8 @@ export const ThemeSelectorModal: React.FC<ThemeSelectorModalProps> = ({
             <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500">English Only</span>
           </div>
 
-          {/* Simple Themes List */}
-          <div className="p-1 space-y-0.5">
+          {/* Themes List */}
+          <div className="p-1.5 space-y-1">
             {THEMES.map((theme) => {
               const isSelected = theme.id === themeId;
 
@@ -171,27 +171,30 @@ export const ThemeSelectorModal: React.FC<ThemeSelectorModalProps> = ({
                     setTheme(theme.id);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-left ${
+                  className={`w-full flex items-center justify-between p-2 rounded-xl text-xs transition-all cursor-pointer text-left ${
                     isSelected
-                      ? "bg-gray-100/90 dark:bg-gray-800 text-gray-950 dark:text-white font-black"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60 hover:text-gray-950 dark:hover:text-white"
+                      ? "bg-gray-100 dark:bg-gray-800 ring-1 ring-gray-300 dark:ring-gray-700 font-bold"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60"
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span
-                      className="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs ring-1 ring-black/10 dark:ring-white/10"
-                      style={{ backgroundColor: theme.primary }}
+                      className="w-4 h-4 rounded-full shrink-0 shadow-xs ring-1 ring-black/10 dark:ring-white/20"
+                      style={{ background: theme.gradientStyle || theme.primary }}
                     />
-                    <span className="truncate text-xs">{theme.name}</span>
+                    <div className="min-w-0 flex flex-col">
+                      <span className="truncate text-xs font-bold text-gray-900 dark:text-gray-100">{theme.name}</span>
+                      <span className="truncate text-[10px] text-gray-400 dark:text-gray-500 font-medium">{theme.subtitle}</span>
+                    </div>
                   </div>
 
                   {isSelected && (
-                    <Check
-                      size={14}
-                      strokeWidth={2.5}
-                      className="shrink-0 ml-2"
-                      style={{ color: theme.primary }}
-                    />
+                    <div
+                      className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 ml-2 text-white"
+                      style={{ backgroundColor: theme.primary }}
+                    >
+                      <Check size={12} strokeWidth={3} />
+                    </div>
                   )}
                 </button>
               );

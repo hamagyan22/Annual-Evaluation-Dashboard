@@ -28,27 +28,27 @@
 }
 
 [data-theme="emerald"] {
-  --brand-primary: #1C6B53;
-  --brand-hover: #155A45;
-  --brand-accent: #00A991;
-  --brand-glow: rgba(28, 107, 83, 0.25);
+  --brand-primary: #10664F;
+  --brand-hover: #0D523F;
+  --brand-accent: #059669;
+  --brand-glow: rgba(16, 102, 79, 0.25);
   --brand-bg-light: #ECFDF5;
   --brand-text-light: #065F46;
   --brand-dark-bg-light: rgba(6, 78, 59, 0.40);
   --brand-dark-text-light: #6EE7B7;
   --brand-border-light: #A7F3D0;
   --brand-dark-border-light: #065F46;
-  --brand-from: #1C6B53;
-  --brand-via: #165A46;
-  --brand-to: #104334;
-  --brand-gradient: linear-gradient(135deg, #1C6B53 0%, #165A46 50%, #104334 100%);
+  --brand-from: #10664F;
+  --brand-via: #0D523F;
+  --brand-to: #09382B;
+  --brand-gradient: linear-gradient(135deg, #10664F 0%, #0D523F 50%, #09382B 100%);
 }
 
 [data-theme="sapphire"] {
-  --brand-primary: #1E40AF;
-  --brand-hover: #1D4ED8;
+  --brand-primary: #1D4ED8;
+  --brand-hover: #1E40AF;
   --brand-accent: #3B82F6;
-  --brand-glow: rgba(30, 64, 175, 0.25);
+  --brand-glow: rgba(29, 78, 216, 0.25);
   --brand-bg-light: #EFF6FF;
   --brand-text-light: #1E40AF;
   --brand-dark-bg-light: rgba(30, 58, 138, 0.40);
@@ -56,33 +56,33 @@
   --brand-border-light: #BFDBFE;
   --brand-dark-border-light: #1E40AF;
   --brand-from: #1E3A8A;
-  --brand-via: #1E40AF;
+  --brand-via: #1D4ED8;
   --brand-to: #172554;
-  --brand-gradient: linear-gradient(135deg, #1E3A8A 0%, #1E40AF 50%, #172554 100%);
+  --brand-gradient: linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 50%, #172554 100%);
 }
 
-[data-theme="teal"] {
-  --brand-primary: #0F766E;
-  --brand-hover: #115E59;
-  --brand-accent: #14B8A6;
-  --brand-glow: rgba(15, 118, 110, 0.25);
-  --brand-bg-light: #F0FDFA;
-  --brand-text-light: #115E59;
-  --brand-dark-bg-light: rgba(19, 78, 74, 0.40);
-  --brand-dark-text-light: #5EEAD4;
-  --brand-border-light: #99F6E4;
-  --brand-dark-border-light: #134E4A;
-  --brand-from: #115E59;
-  --brand-via: #0F766E;
-  --brand-to: #042F2E;
-  --brand-gradient: linear-gradient(135deg, #115E59 0%, #0F766E 50%, #042F2E 100%);
+[data-theme="amber"] {
+  --brand-primary: #C2410C;
+  --brand-hover: #9A3412;
+  --brand-accent: #EA580C;
+  --brand-glow: rgba(194, 65, 12, 0.25);
+  --brand-bg-light: #FFF7ED;
+  --brand-text-light: #9A3412;
+  --brand-dark-bg-light: rgba(124, 45, 18, 0.40);
+  --brand-dark-text-light: #FDBA74;
+  --brand-border-light: #FED7AA;
+  --brand-dark-border-light: #9A3412;
+  --brand-from: #9A3412;
+  --brand-via: #C2410C;
+  --brand-to: #7C2D12;
+  --brand-gradient: linear-gradient(135deg, #9A3412 0%, #C2410C 50%, #7C2D12 100%);
 }
 
 [data-theme="amethyst"] {
-  --brand-primary: #6D28D9;
-  --brand-hover: #5B21B6;
+  --brand-primary: #7C3AED;
+  --brand-hover: #6D28D9;
   --brand-accent: #8B5CF6;
-  --brand-glow: rgba(109, 40, 217, 0.25);
+  --brand-glow: rgba(124, 58, 237, 0.25);
   --brand-bg-light: #F5F3FF;
   --brand-text-light: #5B21B6;
   --brand-dark-bg-light: rgba(91, 33, 182, 0.40);
@@ -90,16 +90,33 @@
   --brand-border-light: #DDD6FE;
   --brand-dark-border-light: #5B21B6;
   --brand-from: #5B21B6;
-  --brand-via: #6D28D9;
+  --brand-via: #7C3AED;
   --brand-to: #4C1D95;
-  --brand-gradient: linear-gradient(135deg, #5B21B6 0%, #6D28D9 50%, #4C1D95 100%);
+  --brand-gradient: linear-gradient(135deg, #5B21B6 0%, #7C3AED 50%, #4C1D95 100%);
+}
+
+[data-theme="cyan"] {
+  --brand-primary: #0284C7;
+  --brand-hover: #0369A1;
+  --brand-accent: #0EA5E9;
+  --brand-glow: rgba(2, 132, 199, 0.25);
+  --brand-bg-light: #F0F9FF;
+  --brand-text-light: #0369A1;
+  --brand-dark-bg-light: rgba(12, 74, 110, 0.40);
+  --brand-dark-text-light: #7DD3FC;
+  --brand-border-light: #BAE6FD;
+  --brand-dark-border-light: #0369A1;
+  --brand-from: #0369A1;
+  --brand-via: #0284C7;
+  --brand-to: #082F49;
+  --brand-gradient: linear-gradient(135deg, #0369A1 0%, #0284C7 50%, #082F49 100%);
 }
 
 [data-theme="ruby"] {
-  --brand-primary: #9F1239;
-  --brand-hover: #881337;
+  --brand-primary: #BE123C;
+  --brand-hover: #9F1239;
   --brand-accent: #E11D48;
-  --brand-glow: rgba(159, 18, 57, 0.25);
+  --brand-glow: rgba(190, 18, 60, 0.25);
   --brand-bg-light: #FFF1F2;
   --brand-text-light: #881337;
   --brand-dark-bg-light: rgba(136, 19, 55, 0.40);
@@ -107,9 +124,9 @@
   --brand-border-light: #FECDD3;
   --brand-dark-border-light: #881337;
   --brand-from: #881337;
-  --brand-via: #9F1239;
+  --brand-via: #BE123C;
   --brand-to: #4C0519;
-  --brand-gradient: linear-gradient(135deg, #881337 0%, #9F1239 50%, #4C0519 100%);
+  --brand-gradient: linear-gradient(135deg, #881337 0%, #BE123C 50%, #4C0519 100%);
 }
 
 [data-theme="carbon"] {
@@ -134,17 +151,30 @@
    Ensures that when the user switches themes, all dashboards & cards react instantly!
    ========================================================================= */
 
-/* Brand Primary Backgrounds */
+/* Brand Primary Solid Backgrounds (Only exact class, not opacity variants) */
 [data-theme] .bg-\[\#1C6B53\],
-[data-theme] [class*="bg-[#1C6B53]"] {
+[data-theme] .bg-\[\#155a45\],
+[data-theme] .bg-\[\#104334\],
+[data-theme] .bg-\[\#155340\] {
   background-color: var(--brand-primary) !important;
+}
+
+/* Opacity variants - Keep them soft pastel backgrounds, never solid dark blobs! */
+[data-theme] .bg-\[\#1C6B53\]\/5,
+[data-theme] .bg-\[\#1C6B53\]\/10,
+[data-theme] .bg-\[\#1C6B53\]\/15,
+[data-theme] .bg-\[\#1C6B53\]\/20,
+[data-theme] .bg-\[\#1C6B53\]\/25,
+[data-theme] .bg-\[\#1C6B53\]\/30,
+[data-theme] .bg-\[\#1C6B53\]\/40,
+[data-theme] [class*="bg-[#1C6B53]/"] {
+  background-color: var(--brand-bg-light) !important;
 }
 
 /* Brand Primary Hover Backgrounds */
 [data-theme] .hover\:bg-\[\#1C6B53\]:hover,
-[data-theme] [class*="hover:bg-[#1C6B53]"]:hover,
 [data-theme] .hover\:bg-\[\#155a45\]:hover,
-[data-theme] [class*="hover:bg-[#155a45]"]:hover {
+[data-theme] .hover\:bg-\[\#155340\]:hover {
   background-color: var(--brand-hover) !important;
 }
 
@@ -156,7 +186,7 @@
 
 [data-theme] .hover\:text-\[\#1C6B53\]:hover,
 [data-theme] [class*="hover:text-[#1C6B53]"]:hover {
-  color: var(--brand-primary) !important;
+  color: var(--brand-hover) !important;
 }
 
 /* Brand Border Colors */

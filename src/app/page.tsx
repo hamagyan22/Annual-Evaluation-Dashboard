@@ -4784,52 +4784,51 @@ export default function Dashboard() {
                 {isManager && (
                   <button
                     onClick={() => setShowAgentPreview(true)}
-                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-[#1C6B53] dark:hover:text-emerald-300 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40 transition-all group cursor-pointer"
+                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-sky-800 dark:hover:text-sky-300 hover:bg-sky-50/80 dark:hover:bg-sky-950/40 transition-all group cursor-pointer shrink-0"
                     title="Agent View"
                   >
-                    <div className="w-5 h-5 rounded-lg bg-[#1C6B53]/10 dark:bg-emerald-400/10 flex items-center justify-center text-[#1C6B53] dark:text-emerald-400 group-hover:scale-110 transition-transform">
-                      <LayoutDashboard size={13} />
+                    <div className="w-6 h-6 rounded-lg bg-sky-500/15 dark:bg-sky-400/20 text-sky-700 dark:text-sky-300 flex items-center justify-center group-hover:scale-105 transition-transform shadow-2xs">
+                      <LayoutDashboard size={13.5} />
                     </div>
-                    <span className="hidden xs:inline sm:inline">Agent View</span>
+                    <span className="font-bold text-xs whitespace-nowrap">Agent View</span>
                   </button>
                 )}
-
 
                 {(isAdmin || isManager) && (
                   <button
                     onClick={() => setShowQualityView(true)}
-                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-amber-50/80 dark:hover:bg-amber-950/40 transition-all group cursor-pointer"
+                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50/80 dark:hover:bg-purple-950/40 transition-all group cursor-pointer shrink-0"
                     title="Quality Assurance Dashboard"
                   >
-                    <div className="w-5 h-5 rounded-lg bg-amber-500/15 dark:bg-amber-400/15 flex items-center justify-center text-amber-700 dark:text-amber-400 group-hover:scale-110 transition-transform">
-                      <Award size={13} />
+                    <div className="w-6 h-6 rounded-lg bg-purple-500/15 dark:bg-purple-400/20 text-purple-700 dark:text-purple-300 flex items-center justify-center group-hover:scale-105 transition-transform shadow-2xs">
+                      <Award size={13.5} />
                     </div>
-                    <span className="hidden xs:inline sm:inline">Quality</span>
+                    <span className="font-bold text-xs whitespace-nowrap">Quality</span>
                   </button>
                 )}
 
                 {(isAdmin || isManager || userProfile?.role === 'tl') && (
                   <button
                     onClick={() => setShowTopStarView(true)}
-                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-amber-50/80 dark:hover:bg-amber-950/40 transition-all group cursor-pointer"
+                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-amber-50/80 dark:hover:bg-amber-950/40 transition-all group cursor-pointer shrink-0"
                     title="Top Star KPI Leaderboard"
                   >
-                    <div className="w-5 h-5 rounded-lg bg-amber-500/15 dark:bg-amber-400/15 flex items-center justify-center text-amber-700 dark:text-amber-400 group-hover:scale-110 transition-transform">
-                      <Star size={13} />
+                    <div className="w-6 h-6 rounded-lg bg-amber-500/20 dark:bg-amber-400/25 text-amber-700 dark:text-amber-400 flex items-center justify-center group-hover:scale-105 transition-transform shadow-2xs">
+                      <Star size={13.5} className="fill-amber-500/20" />
                     </div>
-                    <span className="hidden xs:inline sm:inline">Top Star</span>
+                    <span className="font-bold text-xs whitespace-nowrap">Top Star</span>
                   </button>
                 )}
 
                 <button
                   onClick={() => setShowAnnualEvalView(true)}
-                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-[#1C6B53] dark:hover:text-emerald-300 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40 transition-all group cursor-pointer"
+                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40 transition-all group cursor-pointer shrink-0"
                   title="Annual & Semi-Annual Performance Evaluation"
                 >
-                  <div className="w-5 h-5 rounded-lg bg-[#1C6B53]/15 dark:bg-emerald-400/15 flex items-center justify-center text-[#1C6B53] dark:text-emerald-400 group-hover:scale-110 transition-transform">
-                    <ClipboardCheck size={13} />
+                  <div className="w-6 h-6 rounded-lg bg-emerald-500/15 dark:bg-emerald-400/20 text-emerald-700 dark:text-emerald-300 flex items-center justify-center group-hover:scale-105 transition-transform shadow-2xs">
+                    <ClipboardCheck size={13.5} />
                   </div>
-                  <span className="text-xs font-bold">Evaluation</span>
+                  <span className="font-bold text-xs whitespace-nowrap">Evaluation</span>
                 </button>
               </div>
 
