@@ -202,12 +202,10 @@ function toTitleCase(str: string) {
   const upper = str.toUpperCase().trim();
   if (upper === 'ART') return 'ART';
   if (upper === 'AHT') return 'AHT';
-  if (upper === 'PROD' || upper === 'PRODUCTIVITY') return 'Productivity';
   return str.replace(/\w\S*/g, (txt) => {
     const u = txt.toUpperCase();
     if (u === 'ART') return 'ART';
     if (u === 'AHT') return 'AHT';
-    if (u === 'PROD') return 'Productivity';
     return txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase();
   });
 }
@@ -1216,13 +1214,14 @@ function AgentDashboard({
   const getAgentColLabel = (col: any) => {
     const id = (col.id || '').toLowerCase();
     const lbl = (col.label || '').toLowerCase();
+    if (col.label && col.label.trim()) return col.label.trim();
     if (id === 'aht' || lbl === 'aht') return 'AHT';
     if (id === 'art' || lbl === 'art') return 'ART';
     if (id === 'productivity' || lbl === 'productivity' || id.includes('prod') || lbl.includes('prod')) return 'Productivity';
     if (id === 'wrapup' || lbl === 'wrapup' || id.includes('wrapup') || lbl.includes('wrapup')) return 'Wrapup Not Selected';
     if (id === 'call_handled' || lbl === 'call handled') return 'Call Handled';
     if (id === 'chat_handled' || lbl === 'chat handled') return 'Chat Handled';
-    return toTitleCase(col.label);
+    return toTitleCase(col.id || '');
   };
 
   return (
@@ -2626,7 +2625,6 @@ export default function Dashboard() {
       for (const t of TEAMS) {
         if (!map[t] || map[t].length === 0) {
           map[t] = t === 'Mohammed Dlshad Team' ? DEFAULT_CHAT_COLUMNS : DEFAULT_OTHER_COLUMNS;
-          setDoc(doc(db, 'columns_config', t), { columns: map[t] }).catch(console.error);
         }
       }
       setColumnsMap(map);
@@ -3730,7 +3728,7 @@ export default function Dashboard() {
 
   const openManageModal = () => {
     if (!isAdmin) return;
-    setManageColsTeam('ALL');
+    setManageColsTeam(selectedTeam);
     setNewMemberTeam(selectedTeam);
     fetchAllMembers();
     setShowManageMembers(true);
@@ -3768,7 +3766,7 @@ export default function Dashboard() {
       fetchAllMembers();
       fetchData(true);
     } catch (err: any) {
-      setErrorMsg(`Failed to save: ${err.message}`);
+      setErrorMsg(`Failed to edit: ${err.message}`);
     }
   };
 
@@ -3783,14 +3781,14 @@ export default function Dashboard() {
       const resYear = deleteTiming === "next" ? nextEffective.year : curEffective.year;
       const nowIso = new Date().toISOString();
 
-      // Soft delete in team_members: marks resigned from resMonth/resYear onwards
-      await updateDoc(doc(db, 'team_members', deleteTarget.memberId), {
+      // Soft delete in team_members: marks resigned from resMonth/resYear onwards (safe merge)
+      await setDoc(doc(db, 'team_members', deleteTarget.memberId), {
         is_active: false,
         is_deleted: true,
         resigned_month: resMonth,
         resigned_year: resYear,
         deleted_at: nowIso
-      });
+      }, { merge: true });
 
       // Deactivate agent in users collection if present
       try {
@@ -3812,7 +3810,7 @@ export default function Dashboard() {
         console.warn("Could not deactivate user account:", userErr);
       }
 
-      // Purge metrics ONLY for resMonth and future months; keep all prior months intact
+      // Purge metrics ONLY for resMonth and future months; keep all prior months 100% intact
       const tName = deleteTarget.team === 'Younis Kamal Team' ? 'younis_metrics' :
                     deleteTarget.team === 'Ankido Buya Team' ? 'ankido_metrics' :
                     'mohammed_metrics';
@@ -3845,8 +3843,9 @@ export default function Dashboard() {
 
   const handleAddColumn = async () => {
     if (!newColLabel.trim()) return;
-    const newId = newColLabel.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
-    const newCol: ColumnConfig = { id: newId, label: newColLabel.trim(), type: newColType, aggregation: newColAgg };
+    const trimmedLabel = newColLabel.trim();
+    const newId = trimmedLabel.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    const newCol: ColumnConfig = { id: newId, label: trimmedLabel, type: newColType, aggregation: newColAgg };
     
     try {
       const targetTeams = manageColsTeam === 'ALL' ? TEAMS : [manageColsTeam as TeamName];
@@ -3861,6 +3860,8 @@ export default function Dashboard() {
       }
       setColumnsMap(newMap);
       setNewColLabel("");
+      teamDataCacheRef.current = {};
+      fetchData(true);
     } catch (err: any) {
       setErrorMsg(`Failed to add column: ${err.message}`);
     }
@@ -3875,6 +3876,7 @@ export default function Dashboard() {
 
   const handleSaveColumn = async () => {
     if (!editingColId || !editColLabel.trim()) return;
+    const trimmedLabel = editColLabel.trim();
     try {
       const targetTeams = manageColsTeam === 'ALL' ? TEAMS : [manageColsTeam as TeamName];
       const newMap = { ...columnsMap };
@@ -3882,7 +3884,7 @@ export default function Dashboard() {
         const currentCols = newMap[t] || [];
         const updatedCols = currentCols.map(c => 
           c.id === editingColId 
-            ? { ...c, label: editColLabel.trim(), type: editColType, aggregation: editColAgg } 
+            ? { ...c, label: trimmedLabel, type: editColType, aggregation: editColAgg } 
             : c
         );
         newMap[t] = updatedCols;
@@ -3890,6 +3892,8 @@ export default function Dashboard() {
       }
       setColumnsMap(newMap);
       setEditingColId(null);
+      teamDataCacheRef.current = {};
+      fetchData(true);
     } catch (err: any) {
       setErrorMsg(`Failed to edit column: ${err.message}`);
     }
@@ -3906,6 +3910,8 @@ export default function Dashboard() {
         await setDoc(doc(db, 'columns_config', t), { columns: updatedCols }, { merge: true });
       }
       setColumnsMap(newMap);
+      teamDataCacheRef.current = {};
+      fetchData(true);
     } catch (err: any) {
       setErrorMsg(`Failed to remove column: ${err.message}`);
     }
@@ -4675,7 +4681,7 @@ export default function Dashboard() {
       ? getEffectiveColumns('Ankido Buya Team', selectedMonth, selectedYear, columnsMap['Ankido Buya Team'] || columnsMap['Younis Kamal Team'] || DEFAULT_OTHER_COLUMNS)
       : getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
     const manageCols = manageColsTeam === 'ALL'
-      ? (columnsMap['Ankido Buya Team'] || columnsMap['Younis Kamal Team'] || columnsMap[selectedTeam] || [])
+      ? (columnsMap[selectedTeam] || columnsMap['Ankido Buya Team'] || columnsMap['Younis Kamal Team'] || [])
       : (columnsMap[manageColsTeam] || []);
 
     const handleCellKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, rowIndex: number, colIndex: number) => {
@@ -4923,7 +4929,7 @@ export default function Dashboard() {
                 return (
                   <div key={col.id} className="bg-white/10 dark:bg-black/25 backdrop-blur-md rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 border border-white/10 flex flex-col justify-between hover:bg-white/15 transition shadow-sm">
                     <div className="text-[10px] sm:text-[11px] font-bold tracking-wide text-emerald-100/90 truncate mb-1.5 sm:mb-2" title={col.label}>
-                      {toTitleCase(col.label)}
+                      {col.label || col.id}
                     </div>
                     <div className="text-lg sm:text-2xl font-black text-white tracking-tight leading-none">
                       {annualVal}
@@ -4980,7 +4986,7 @@ export default function Dashboard() {
                   {(getEffectiveColumns('Ankido Buya Team', 'YEAR - AVG', selectedYear, columnsMap['Ankido Buya Team'] || DEFAULT_OTHER_COLUMNS)).slice(0, 8).map(col => (
                     <div key={col.id} className="p-2 sm:p-2.5 rounded-xl text-center bg-white/10 border border-white/10 backdrop-blur-md">
                       <div className="text-[10px] font-bold truncate text-emerald-100/90" title={col.label}>
-                        {toTitleCase(col.label)}
+                        {col.label || col.id}
                       </div>
                       <div className="font-black text-xs sm:text-base mt-1 text-white tabular-nums">
                         {calcYearTeamStat(col)}
@@ -5030,7 +5036,7 @@ export default function Dashboard() {
                       {teamCols.slice(0, 8).map(col => (
                         <div key={col.id} className={`p-1.5 sm:p-2 rounded-xl text-center border ${isActive ? 'bg-white/10 border-white/10' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-100 dark:border-gray-700'}`}>
                           <div className={`text-[9px] font-bold truncate ${isActive ? 'text-emerald-100/80' : 'text-gray-400'}`} title={col.label}>
-                            {toTitleCase(col.label)}
+                            {col.label || col.id}
                           </div>
                           <div className="font-extrabold text-xs sm:text-sm mt-0.5">
                             {isActive ? calcYearTeamStat(col, teamName) : '-'}
@@ -5253,8 +5259,8 @@ export default function Dashboard() {
                 Agent
               </div>
               {activeCols.map(col => (
-                <div key={col.id} className="text-center font-extrabold text-[11px] sm:text-xs text-gray-600 dark:text-gray-300 px-1 truncate" title={toTitleCase(col.label)}>
-                  {toTitleCase(col.label)}
+                <div key={col.id} className="text-center font-extrabold text-[11px] sm:text-xs text-gray-600 dark:text-gray-300 px-1 truncate" title={col.label}>
+                  {col.label || col.id}
                 </div>
               ))}
             </div>
@@ -5432,7 +5438,7 @@ export default function Dashboard() {
                     return (
                       <tr key={col.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-850/50">
                         <td className="p-3">
-                          <span className="font-extrabold">{toTitleCase(col.label)}</span>
+                          <span className="font-extrabold">{col.label || col.id}</span>
                           <span className="text-[10px] text-gray-400 ml-1.5 uppercase font-medium">({col.aggregation})</span>
                         </td>
                         <td className="p-3 text-center tabular-nums font-semibold text-gray-700 dark:text-gray-300">
@@ -5743,7 +5749,7 @@ export default function Dashboard() {
                         </div>
                       ) : (
                         <>
-                          <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-200">{toTitleCase(col.label)}</span>
+                          <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-200">{col.label || col.id}</span>
                           <div className="flex items-center gap-2 sm:gap-2.5">
                             <button
                               type="button"
@@ -5910,7 +5916,7 @@ export default function Dashboard() {
                       Remove / Resign Member
                     </h3>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                      إنهاء خدمة موظف
+                      Employee Resignation
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
@@ -5932,7 +5938,7 @@ export default function Dashboard() {
                     Historical Data is 100% Protected & Preserved
                   </p>
                   <p className="text-[11px] opacity-90">
-                    كافة البيانات والتقييمات والملاحظات المسجلة للشهور السابقة ستبقى محفوظة بالكامل في الداشبوردات، مع استبعاد الموظف من الكشوفات المستقبلية فقط.
+                    All performance metrics, evaluations, and records from past months will remain permanently saved in all dashboards and reports. The member will only be excluded from future active rosters.
                   </p>
                 </div>
               </div>
@@ -5940,7 +5946,7 @@ export default function Dashboard() {
               {/* Removal Effective Date Options */}
               <div className="mb-5">
                 <label className="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
-                  When should removal take effect? / متى يبدأ سريان الحذف؟
+                  When should removal take effect?
                 </label>
 
                 <div className="space-y-2.5">
@@ -5965,14 +5971,14 @@ export default function Dashboard() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 justify-between">
                         <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                          Next Month ({nextEffective.displayLabel}) • الشهر القادم
+                          Next Month ({nextEffective.displayLabel})
                         </span>
                         <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
                           Recommended
                         </span>
                       </div>
                       <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-normal">
-                        يبقى الموظف نشطاً في هذا الشهر الحالي ({curEffective.displayLabel}) مع حفظ جميع مدخلاته. يبدأ الاستبعاد من جدول الشهر القادم ({nextEffective.displayLabel}) وما بعده.
+                        The employee remains active in the current month ({curEffective.displayLabel}) with all metrics saved. Removal starts from next month ({nextEffective.displayLabel}) onwards.
                       </p>
                     </div>
                   </div>
@@ -5998,11 +6004,11 @@ export default function Dashboard() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 justify-between">
                         <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                          Current Month ({curEffective.displayLabel}) • الشهر الحالي
+                          Current Month ({curEffective.displayLabel})
                         </span>
                       </div>
                       <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-normal">
-                        يتم استبعاد الموظف بدءاً من هذا الشهر ({curEffective.displayLabel}) فوراً. يتم الحفاظ الكامل على كافة بيانات الشهور السابقة قبل هذا الشهر.
+                        The employee is removed starting from {curEffective.displayLabel} immediately. All historical data from previous months (January through the preceding month) is 100% preserved and untouched.
                       </p>
                     </div>
                   </div>
@@ -6017,7 +6023,7 @@ export default function Dashboard() {
                   onClick={() => setDeleteTarget(null)}
                   className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 transition active:scale-95 cursor-pointer"
                 >
-                  Cancel • إلغاء
+                  Cancel
                 </button>
                 <button
                   type="button"
@@ -6033,7 +6039,7 @@ export default function Dashboard() {
                   ) : (
                     <>
                       <Trash2 size={14} />
-                      <span>Confirm Removal • تأكيد</span>
+                      <span>Confirm Removal</span>
                     </>
                   )}
                 </button>
