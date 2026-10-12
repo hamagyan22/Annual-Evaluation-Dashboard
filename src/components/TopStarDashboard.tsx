@@ -1134,7 +1134,7 @@ export default function TopStarDashboard({
             {/* Celebration Video Button */}
             <button
               onClick={() => setShowCelebrationVideo(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-white bg-[#00A991] hover:bg-[#00927d] shadow-md shadow-emerald-500/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155340] shadow-md shadow-emerald-500/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer"
               title="Generate Motivational & Appreciation Celebration Video for Top 3"
             >
               <Film size={14} className="text-white shrink-0" />
@@ -1170,9 +1170,9 @@ export default function TopStarDashboard({
         </div>
 
         {/* Celebration Reel Quick Access Banner */}
-        <div className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-[#00A991]/10 border border-emerald-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+        <div className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-[#1C6B53]/10 border border-emerald-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#00A991] text-white flex items-center justify-center font-black shrink-0 shadow-md shadow-emerald-500/20">
+            <div className="w-10 h-10 rounded-2xl bg-[#1C6B53] text-white flex items-center justify-center font-black shrink-0 shadow-md shadow-emerald-500/20">
               <Film size={20} />
             </div>
             <div>
@@ -1180,7 +1180,7 @@ export default function TopStarDashboard({
                 <h3 className="text-xs sm:text-sm font-black text-gray-900 dark:text-white">
                   Top 3 Motivational & Appreciation Celebration Video
                 </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-[#00A991] dark:text-teal-300 border border-emerald-500/30">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-[#1C6B53] dark:text-teal-300 border border-emerald-500/30">
                   {selectedMonth} {selectedYear}
                 </span>
               </div>
@@ -1192,7 +1192,7 @@ export default function TopStarDashboard({
 
           <button
             onClick={() => setShowCelebrationVideo(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white bg-[#00A991] hover:bg-[#00927d] shadow-md shadow-emerald-700/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0 self-end sm:self-auto"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155340] shadow-md shadow-emerald-700/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0 self-end sm:self-auto"
           >
             <Sparkles size={14} className="text-emerald-100" />
             <span>Generate Video</span>
@@ -1202,9 +1202,12 @@ export default function TopStarDashboard({
         {/* Top 3 Vibrant Podium Cards (Both cards styled with matching Emerald color as requested) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 mb-5">
           
-          {/* Top 3 Chat Agents Card: Emerald background matching Call Team as requested */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#1C6B53] via-[#145a46] to-[#0c392c] border border-emerald-700/70 text-white shadow-lg shadow-[#1C6B53]/20 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-44 h-44 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+          {/* Top 3 Chat Agents Card: Dynamically styled with active theme gradient */}
+          <div 
+            style={{ background: 'var(--brand-gradient)' }}
+            className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#1C6B53] via-[#145a46] to-[#0c392c] border border-white/20 text-white shadow-lg relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-44 h-44 bg-white/10 rounded-full blur-3xl pointer-events-none" />
             <div className="flex items-center justify-between mb-3.5 relative z-10">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-white/20 text-white flex items-center justify-center font-black shadow-xs">
@@ -1212,7 +1215,7 @@ export default function TopStarDashboard({
                 </div>
                 <div>
                   <h3 className="font-black text-xs sm:text-sm tracking-wide text-white">Top 3 Chat Team</h3>
-                  <p className="text-[10px] text-emerald-200/80">Chat Operations</p>
+                  <p className="text-[10px] text-white/80">Chat Operations</p>
                 </div>
               </div>
               <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-white/15 text-white border border-white/20 backdrop-blur-md">
@@ -1222,7 +1225,7 @@ export default function TopStarDashboard({
 
             <div className="space-y-2 relative z-10">
               {top3Chat.length === 0 ? (
-                <div className="py-4 text-center text-xs text-emerald-200/70 font-medium">No calculated scores for this period yet</div>
+                <div className="py-4 text-center text-xs text-white/70 font-medium">No calculated scores for this period yet</div>
               ) : (
                 top3Chat.map((agent) => (
                   <div 
@@ -1259,8 +1262,8 @@ export default function TopStarDashboard({
                       <span className="font-bold text-xs truncate text-white">{agent.name}</span>
                     </div>
                     <div className="flex items-center gap-1 shrink-0 pl-2">
-                      <span className="font-mono font-black text-sm text-emerald-200">{agent.score}</span>
-                      <span className="text-[10px] text-emerald-200/80 font-semibold">pts</span>
+                      <span className="font-mono font-black text-sm text-white">{agent.score}</span>
+                      <span className="text-[10px] text-white/80 font-semibold">pts</span>
                     </div>
                   </div>
                 ))
@@ -1269,8 +1272,11 @@ export default function TopStarDashboard({
           </div>
 
           {/* Top 3 Call Team Card */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#1C6B53] via-[#145a46] to-[#0c392c] border border-emerald-700/70 text-white shadow-lg shadow-[#1C6B53]/20 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-44 h-44 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+          <div 
+            style={{ background: 'var(--brand-gradient)' }}
+            className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#1C6B53] via-[#145a46] to-[#0c392c] border border-white/20 text-white shadow-lg relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-44 h-44 bg-white/10 rounded-full blur-3xl pointer-events-none" />
             <div className="flex items-center justify-between mb-3.5 relative z-10">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-white/20 text-white flex items-center justify-center font-black shadow-xs">
@@ -1278,7 +1284,7 @@ export default function TopStarDashboard({
                 </div>
                 <div>
                   <h3 className="font-black text-xs sm:text-sm tracking-wide text-white">Top 3 Call Team</h3>
-                  <p className="text-[10px] text-emerald-200/80">Voice Operations</p>
+                  <p className="text-[10px] text-white/80">Voice Operations</p>
                 </div>
               </div>
               <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-white/15 text-white border border-white/20 backdrop-blur-md">
@@ -1288,7 +1294,7 @@ export default function TopStarDashboard({
 
             <div className="space-y-2 relative z-10">
               {top3Call.length === 0 ? (
-                <div className="py-4 text-center text-xs text-emerald-200/70 font-medium">No calculated scores for this period yet</div>
+                <div className="py-4 text-center text-xs text-white/70 font-medium">No calculated scores for this period yet</div>
               ) : (
                 top3Call.map((agent) => (
                   <div 
@@ -1325,8 +1331,8 @@ export default function TopStarDashboard({
                       <span className="font-bold text-xs truncate text-white">{agent.name}</span>
                     </div>
                     <div className="flex items-center gap-1 shrink-0 pl-2">
-                      <span className="font-mono font-black text-sm text-emerald-100">{agent.score}</span>
-                      <span className="text-[10px] text-emerald-200/80 font-semibold">pts</span>
+                      <span className="font-mono font-black text-sm text-white">{agent.score}</span>
+                      <span className="text-[10px] text-white/80 font-semibold">pts</span>
                     </div>
                   </div>
                 ))
@@ -1367,7 +1373,7 @@ export default function TopStarDashboard({
                   onClick={() => setTeam("chat")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                     team === "chat"
-                      ? "bg-[#00A991] text-white shadow-xs"
+                      ? "bg-[#1C6B53] text-white shadow-xs"
                       : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   }`}
                 >
@@ -1379,7 +1385,7 @@ export default function TopStarDashboard({
                   onClick={() => setTeam("call")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                     team === "call"
-                      ? "bg-[#00A991] text-white shadow-xs"
+                      ? "bg-[#1C6B53] text-white shadow-xs"
                       : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   }`}
                 >

@@ -1317,7 +1317,10 @@ export default function AnnualEvaluationDashboard({
         <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl shadow-xs overflow-hidden print:border-none print:shadow-none print:p-0">
           
           {/* Header Card: Rich Brand Emerald Gradient Design */}
-          <div className="bg-gradient-to-r from-[#0C382E] via-[#135B47] to-[#1C6B53] border-b border-[#135B47]/60 p-6 sm:p-8 relative overflow-hidden text-white">
+          <div 
+            style={{ background: 'var(--brand-gradient)' }}
+            className="bg-gradient-to-r from-[#0C382E] via-[#135B47] to-[#1C6B53] border-b border-white/20 p-6 sm:p-8 relative overflow-hidden text-white"
+          >
             <div className="absolute -right-16 -top-16 w-80 h-80 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute left-1/3 -bottom-16 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
             
@@ -2069,7 +2072,10 @@ export default function AnnualEvaluationDashboard({
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             
             {/* Modal Header */}
-            <div className="p-5 sm:p-6 bg-gradient-to-r from-[#0E3A2F] to-[#1C6B53] text-white flex items-center justify-between">
+            <div 
+              style={{ background: 'var(--brand-gradient)' }}
+              className="p-5 sm:p-6 bg-gradient-to-r from-[#0E3A2F] to-[#1C6B53] text-white flex items-center justify-between"
+            >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-white">
                   <BookOpen size={18} />

@@ -9,7 +9,7 @@ import {
   Award, ArrowLeft, Search, Users, Check, Save, Download, 
   Sun, Moon, ChevronDown, ChevronLeft, ChevronRight, CheckCheck, RefreshCw, Calendar, Plus,
   LogOut, PhoneIncoming, PhoneOutgoing, Camera, X, Trash2, FileText, MessageSquare, ShieldCheck, UserPlus, ExternalLink, Link2,
-  CheckCircle2, AlertCircle, Activity, Clock, Lock, ClipboardCheck
+  CheckCircle2, AlertCircle, Activity, Clock, Lock, ClipboardCheck, Eye
 } from "lucide-react";
 import { compressImageFile } from "@/lib/imageUtils";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
@@ -352,7 +352,15 @@ export default function QualityDashboard({
   const isAdmin = userProfile?.role === "admin" || userProfile?.email?.toLowerCase() === "mohammed.dlshad0@gmail.com";
   const isManager = isAdmin || userProfile?.role === "manager" || userProfile?.email?.toLowerCase() === "jalal.burghol@agent.com";
   
-  const canSwitchTeams = isAdmin || isManager;
+  const userEmailLower = (userProfile?.email || "").toLowerCase();
+  const userNameLower = (userProfile?.name || "").toLowerCase();
+  const userTeamLower = (userProfile?.team || "").toLowerCase();
+
+  const isYounis = userEmailLower.includes("younis.kamal") || userNameLower.includes("younis kamal") || userTeamLower.includes("younis");
+  const isAnkido = userEmailLower.includes("ankido.buya") || userNameLower.includes("ankido buya") || userTeamLower.includes("ankido");
+  const isTlViewer = isYounis || isAnkido;
+
+  const canSwitchTeams = (isAdmin || isManager) && !isTlViewer;
 
   const initialPeriod = useMemo(() => getCurrentPeriod(), []);
   const [selectedYear, setSelectedYear] = useState<string>(() => {
@@ -435,14 +443,18 @@ export default function QualityDashboard({
   const defaultSectionId = useMemo(() => {
     const email = (userProfile?.email || "").toLowerCase();
     const name = (userProfile?.name || userProfile?.evaluator || "").toLowerCase();
+    const team = (userProfile?.team || "").toLowerCase();
     if (email.includes("azad") || name.includes("azad") || userProfile?.role === "trainer") {
       return "mohammed_azad";
     }
     if (email.includes("dlshad") || name.includes("dlshad")) {
       return "mohammed_dlshad";
     }
-    if (email.includes("lara") || name.includes("lara")) {
+    if (email.includes("ankido") || name.includes("ankido") || team.includes("ankido") || email.includes("lara") || name.includes("lara")) {
       return "lara_kamil";
+    }
+    if (email.includes("younis") || name.includes("younis") || team.includes("younis")) {
+      return "mohammed_jihad";
     }
     return "mohammed_jihad";
   }, [userProfile]);
@@ -555,7 +567,11 @@ export default function QualityDashboard({
 
   const saveTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
 
-  const effectiveSectionId = canSwitchTeams ? activeSectionId : defaultSectionId;
+  const effectiveSectionId = isYounis 
+    ? "mohammed_jihad" 
+    : isAnkido 
+    ? "lara_kamil" 
+    : (canSwitchTeams ? activeSectionId : defaultSectionId);
   const currentSection = useMemo(() => {
     return DEFAULT_SECTIONS.find(s => s.id === effectiveSectionId) || DEFAULT_SECTIONS[0];
   }, [effectiveSectionId]);
@@ -1141,6 +1157,9 @@ export default function QualityDashboard({
     key: string,
     rawVal: string
   ) => {
+    // Strictly prevent edits if team leader viewer (Younis or Ankido)
+    if (isTlViewer) return;
+
     // Block data entry in a new month if a completed previous month (from SEP 2026 onwards) has not been synced yet
     if (!isTrainer && !isCallMon && !isBonus && !isCShift && unsyncedPreviousMonthRef.current) {
       setSyncReminderModal(unsyncedPreviousMonthRef.current);
@@ -3077,7 +3096,7 @@ export default function QualityDashboard({
 
   // Save note & link to Firestore
   const handleSaveNote = async () => {
-    if (!activeNoteModal) return;
+    if (isTlViewer || !activeNoteModal) return;
     setSavingNote(true);
     const { csrName, key, noteText, linkUrl, docId: modalDocId } = activeNoteModal;
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
@@ -3219,7 +3238,7 @@ export default function QualityDashboard({
 
   // Delete note & link from Firestore strictly from this specific evaluation cell
   const handleDeleteNote = async () => {
-    if (!activeNoteModal) return;
+    if (isTlViewer || !activeNoteModal) return;
     setSavingNote(true);
     const { csrName, key, docId: modalDocId } = activeNoteModal;
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
@@ -4526,10 +4545,14 @@ export default function QualityDashboard({
                   </div>
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="max-w-[70px] sm:max-w-[120px] truncate group-hover:text-[#1C6B53] dark:group-hover:text-emerald-400 transition-colors">
-                      {userProfile?.name || 'QA Evaluator'}
+                      {userProfile?.name || (isYounis ? "Younis Kamal" : (isAnkido ? "Ankido Buya" : "QA Evaluator"))}
                     </span>
-                    <span className="text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 border-emerald-300 dark:border-emerald-700/60">
-                      QA
+                    <span className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-wider ${
+                      isTlViewer
+                        ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700/60"
+                        : "bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 border-emerald-300 dark:border-emerald-700/60"
+                    }`}>
+                      {isTlViewer ? "TL" : "QA"}
                     </span>
                   </div>
                 </button>
@@ -4549,17 +4572,26 @@ export default function QualityDashboard({
         </div>
 
         {/* Top Evaluator Performance Card (Clean, Title Case, No Subtitle Line from Image 3) */}
-        <div className="bg-gradient-to-br from-[#1C6B53] via-[#165a46] to-[#104334] text-white rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-xl shadow-[#1C6B53]/15 border border-emerald-500/30 relative overflow-hidden">
+        <div 
+          style={{ background: 'var(--brand-gradient)' }}
+          className="bg-gradient-to-br from-[#1C6B53] via-[#165a46] to-[#104334] text-white rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-xl shadow-[#1C6B53]/15 border border-white/20 relative overflow-hidden"
+        >
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-5 pb-4 border-b border-white/10">
             <div className="flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner shrink-0">
-                <Award size={24} className="text-emerald-200" />
+                <Award size={24} className="text-white" />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold text-emerald-200">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] font-bold text-white/80">
                     {isTrainer ? "Call Training Performance" : "QA Evaluator Performance"}
                   </span>
+                  {isTlViewer && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-400/25 text-amber-200 border border-amber-300/30 text-[10px] font-black uppercase tracking-wider backdrop-blur-xs flex items-center gap-1">
+                      <Eye size={10} />
+                      <span>TL View Only • {currentSection.team}</span>
+                    </span>
+                  )}
                   {selectedMonthFilter !== null && !isTrainer && (
                     <span className="px-2 py-0.5 rounded-lg bg-white/20 text-white text-[10px] font-black tracking-wider uppercase backdrop-blur-xs">
                       {MONTH_NAMES[selectedMonthFilter]}
@@ -5215,32 +5247,34 @@ export default function QualityDashboard({
                 <span>Export PDF</span>
               </button>
 
-              {/* Sync Completed Quality to TL & Agent Dashboards */}
-              <button
-                type="button"
-                onClick={() => handleSyncToMetrics()}
-                disabled={syncingMetrics}
-                className={`h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-black text-white shadow-xs transition cursor-pointer active:scale-95 disabled:opacity-50 shrink-0 ${
-                  unsyncedPreviousMonth || (currentMonthSyncStatus.isMonthComplete && !currentMonthSyncStatus.isSynced)
-                    ? "bg-amber-600 hover:bg-amber-700 ring-2 ring-amber-400/50 animate-pulse"
-                    : "bg-[#1C6B53] hover:bg-[#155a45]"
-                }`}
-                title="Sync Completed Quality Scores to Dashboards"
-              >
-                <RefreshCw size={13} className={syncingMetrics ? "animate-spin" : ""} />
-                <span>
-                  {syncingMetrics
-                    ? "Syncing..."
-                    : unsyncedPreviousMonth
-                    ? `Sync ${unsyncedPreviousMonth.monthName} First!`
-                    : "Sync to Dashboards"}
-                </span>
-              </button>
+              {/* Sync Completed Quality to TL & Agent Dashboards (QA & Admins only) */}
+              {!isTlViewer && (
+                <button
+                  type="button"
+                  onClick={() => handleSyncToMetrics()}
+                  disabled={syncingMetrics}
+                  className={`h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-black text-white shadow-xs transition cursor-pointer active:scale-95 disabled:opacity-50 shrink-0 ${
+                    unsyncedPreviousMonth || (currentMonthSyncStatus.isMonthComplete && !currentMonthSyncStatus.isSynced)
+                      ? "bg-amber-600 hover:bg-amber-700 ring-2 ring-amber-400/50 animate-pulse"
+                      : "bg-[#1C6B53] hover:bg-[#155340]"
+                  }`}
+                  title="Sync Completed Quality Scores to Dashboards"
+                >
+                  <RefreshCw size={13} className={syncingMetrics ? "animate-spin" : ""} />
+                  <span>
+                    {syncingMetrics
+                      ? "Syncing..."
+                      : unsyncedPreviousMonth
+                      ? `Sync ${unsyncedPreviousMonth.monthName} First!`
+                      : "Sync to Dashboards"}
+                  </span>
+                </button>
+              )}
             </div>
           </div>
 
           {/* Lock Banner when moving to a new month without syncing the completed previous month */}
-          {unsyncedPreviousMonth && (
+          {!isTlViewer && unsyncedPreviousMonth && (
             <div 
               className="mx-4 mt-3 mb-2 p-3.5 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-700 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-left"
             >
@@ -5279,7 +5313,7 @@ export default function QualityDashboard({
                   type="button"
                   onClick={() => handleSyncToMetrics(unsyncedPreviousMonth.monthIdx)}
                   disabled={syncingMetrics}
-                  className="px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-xs flex items-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155340] shadow-xs flex items-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
                 >
                   <RefreshCw size={13} className={syncingMetrics ? "animate-spin" : ""} />
                   <span>{syncingMetrics ? "Syncing..." : `Sync ${unsyncedPreviousMonth.monthName} Now`}</span>
@@ -5289,25 +5323,24 @@ export default function QualityDashboard({
           )}
 
           {/* Ready-to-Sync Banner when current viewed month has all 4 weeks completed but is not synced yet */}
-          {!unsyncedPreviousMonth && currentMonthSyncStatus.isSyncEligible && currentMonthSyncStatus.isMonthComplete && !currentMonthSyncStatus.isSynced && (
+          {!isTlViewer && !unsyncedPreviousMonth && currentMonthSyncStatus.isSyncEligible && currentMonthSyncStatus.isMonthComplete && !currentMonthSyncStatus.isSynced && (
             <div 
-              dir="rtl"
-              className="mx-4 mt-3 mb-2 p-3 sm:p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-right"
+              className="mx-4 mt-3 mb-2 p-3 sm:p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-left"
             >
               <div className="flex items-center gap-2.5">
                 <CheckCircle2 size={18} className="text-[#1C6B53] dark:text-emerald-400 shrink-0" />
                 <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
-                  جميع أسابيع شهر <strong>{currentMonthSyncStatus.monthName} {selectedYear}</strong> مكتملة 100%! يرجى الضغط على <strong>مزامنة البيانات</strong> لاعتمادها في اللوحات قبل الانتقال للشهر القادم.
+                  All weeks for <strong>{currentMonthSyncStatus.monthName} {selectedYear}</strong> are 100% completed! Please click <strong>Sync to Dashboards</strong> to publish the official scores before moving to the next month.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => handleSyncToMetrics(currentMonthSyncStatus.monthIdx)}
                 disabled={syncingMetrics}
-                className="px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-xs flex items-center gap-2 transition cursor-pointer shrink-0 w-full md:w-auto justify-center"
+                className="px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155340] shadow-xs flex items-center gap-2 transition cursor-pointer shrink-0 w-full md:w-auto justify-center"
               >
                 <RefreshCw size={12} className={syncingMetrics ? "animate-spin" : ""} />
-                <span>{syncingMetrics ? "جارٍ المزامنة..." : `مزامنة ${currentMonthSyncStatus.monthName} الآن`}</span>
+                <span>{syncingMetrics ? "Syncing..." : `Sync ${currentMonthSyncStatus.monthName} Now`}</span>
               </button>
             </div>
           )}
@@ -5568,11 +5601,14 @@ export default function QualityDashboard({
                                     data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
                                     type="text"
                                     value={val}
+                                    readOnly={isTlViewer}
                                     onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
-                                    onKeyDown={(e) => handleCellKeyDown(e, agentIdx, cIdx)}
-                                    onFocus={(e) => e.target.select()}
+                                    onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
+                                    onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
                                     placeholder="-"
                                     className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                      isTlViewer ? "cursor-default select-none " : ""
+                                    }${
                                       isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
                                     }${
                                       isV
@@ -5711,11 +5747,14 @@ export default function QualityDashboard({
                                     data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
                                     type="text"
                                     value={val}
+                                    readOnly={isTlViewer}
                                     onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
-                                    onKeyDown={(e) => handleCellKeyDown(e, agentIdx, cIdx)}
-                                    onFocus={(e) => e.target.select()}
+                                    onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
+                                    onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
                                     placeholder="-"
                                     className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                      isTlViewer ? "cursor-default select-none " : ""
+                                    }${
                                       isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
                                     }${
                                       isV
@@ -5832,11 +5871,14 @@ export default function QualityDashboard({
                                     data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
                                     type="text"
                                     value={val}
+                                    readOnly={isTlViewer}
                                     onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
-                                    onKeyDown={(e) => handleCellKeyDown(e, agentIdx, cIdx)}
-                                    onFocus={(e) => e.target.select()}
+                                    onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
+                                    onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
                                     placeholder="-"
                                     className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                      isTlViewer ? "cursor-default select-none " : ""
+                                    }${
                                       isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
                                     }${
                                       isV
@@ -5973,11 +6015,14 @@ export default function QualityDashboard({
                                     data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
                                     type="text"
                                     value={val}
+                                    readOnly={isTlViewer}
                                     onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
-                                    onKeyDown={(e) => handleCellKeyDown(e, agentIdx, cIdx)}
-                                    onFocus={(e) => e.target.select()}
+                                    onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
+                                    onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
                                     placeholder="-"
                                     className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                      isTlViewer ? "cursor-default select-none " : ""
+                                    }${
                                       isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
                                     }${
                                       isV
@@ -6097,15 +6142,19 @@ export default function QualityDashboard({
                                   data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
                                   type="text"
                                   value={val}
-                                  readOnly={Boolean(unsyncedPreviousMonth)}
+                                  readOnly={isTlViewer || Boolean(unsyncedPreviousMonth)}
                                   onClick={() => {
-                                    if (unsyncedPreviousMonth) {
+                                    if (!isTlViewer && unsyncedPreviousMonth) {
                                       setSyncReminderModal(unsyncedPreviousMonth);
                                     }
                                   }}
                                   onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
-                                  onKeyDown={(e) => handleCellKeyDown(e, agentIdx, cIdx)}
+                                  onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
                                   onFocus={(e) => {
+                                    if (isTlViewer) {
+                                      e.target.blur();
+                                      return;
+                                    }
                                     if (unsyncedPreviousMonth) {
                                       e.target.blur();
                                       setSyncReminderModal(unsyncedPreviousMonth);
@@ -6115,7 +6164,7 @@ export default function QualityDashboard({
                                   }}
                                   placeholder="-"
                                   className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
-                                    unsyncedPreviousMonth ? "cursor-not-allowed opacity-75 " : ""
+                                    isTlViewer ? "cursor-default select-none " : (unsyncedPreviousMonth ? "cursor-not-allowed opacity-75 " : "")
                                   }${
                                     isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
                                   }${
@@ -6193,15 +6242,19 @@ export default function QualityDashboard({
                                     data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
                                     type="text"
                                     value={val}
-                                    readOnly={Boolean(unsyncedPreviousMonth)}
+                                    readOnly={isTlViewer || Boolean(unsyncedPreviousMonth)}
                                     onClick={() => {
-                                      if (unsyncedPreviousMonth) {
+                                      if (!isTlViewer && unsyncedPreviousMonth) {
                                         setSyncReminderModal(unsyncedPreviousMonth);
                                       }
                                     }}
                                     onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
-                                    onKeyDown={(e) => handleCellKeyDown(e, agentIdx, standardColCount)}
+                                    onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, standardColCount)}
                                     onFocus={(e) => {
+                                      if (isTlViewer) {
+                                        e.target.blur();
+                                        return;
+                                      }
                                       if (unsyncedPreviousMonth) {
                                         e.target.blur();
                                         setSyncReminderModal(unsyncedPreviousMonth);
@@ -6211,7 +6264,7 @@ export default function QualityDashboard({
                                     }}
                                     placeholder="-"
                                     className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
-                                      unsyncedPreviousMonth ? "cursor-not-allowed opacity-75 " : ""
+                                      isTlViewer ? "cursor-default select-none " : (unsyncedPreviousMonth ? "cursor-not-allowed opacity-75 " : "")
                                     }${
                                       isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
                                     }${
@@ -6551,11 +6604,13 @@ export default function QualityDashboard({
                     {activeNoteModal.csrName} • {activeNoteModal.callLabel}
                   </h4>
                   <p className="text-[10px] text-gray-400 font-medium">
-                    {isChatTeam ? "Chat Evaluation Note & Link" : "Call Evaluation Note & Link"}
+                    {isTlViewer 
+                      ? "Evaluation Note & Link (View Only)"
+                      : (isChatTeam ? "Chat Evaluation Note & Link" : "Call Evaluation Note & Link")}
                   </p>
                 </div>
               </div>
-              {(Boolean(activeNoteModal.noteText?.trim()) || Boolean(activeNoteModal.linkUrl?.trim()) || Boolean(activeNoteModal.hasExistingData)) && (
+              {!isTlViewer && (Boolean(activeNoteModal.noteText?.trim()) || Boolean(activeNoteModal.linkUrl?.trim()) || Boolean(activeNoteModal.hasExistingData)) && (
                 <button
                   type="button"
                   onClick={(e) => {
@@ -6580,10 +6635,13 @@ export default function QualityDashboard({
               <textarea
                 rows={3}
                 value={activeNoteModal.noteText}
-                onChange={(e) => setActiveNoteModal({ ...activeNoteModal, noteText: e.target.value })}
-                placeholder="Enter evaluation note (e.g. -2, Missing greeting, incorrect step)..."
-                className="w-full p-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs outline-none focus:border-[#00A991] focus:ring-2 focus:ring-[#00A991]/20 resize-none font-medium transition"
-                autoFocus
+                readOnly={isTlViewer}
+                onChange={(e) => !isTlViewer && setActiveNoteModal({ ...activeNoteModal, noteText: e.target.value })}
+                placeholder={isTlViewer ? "No evaluation note recorded." : "Enter evaluation note (e.g. -2, Missing greeting, incorrect step)..."}
+                className={`w-full p-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs outline-none focus:border-[#1C6B53] focus:ring-2 focus:ring-[#1C6B53]/20 resize-none font-medium transition ${
+                  isTlViewer ? "cursor-default select-text" : ""
+                }`}
+                autoFocus={!isTlViewer}
               />
             </div>
 
@@ -6598,15 +6656,18 @@ export default function QualityDashboard({
                   <input
                     type="url"
                     value={activeNoteModal.linkUrl}
-                    onChange={(e) => setActiveNoteModal({ ...activeNoteModal, linkUrl: e.target.value })}
+                    readOnly={isTlViewer}
+                    onChange={(e) => !isTlViewer && setActiveNoteModal({ ...activeNoteModal, linkUrl: e.target.value })}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") {
+                      if (!isTlViewer && e.key === "Enter") {
                         e.preventDefault();
                         handleSaveNote();
                       }
                     }}
-                    placeholder="https://app.intercom.com/..."
-                    className="w-full pl-8 pr-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-[#00A991] font-mono text-[11px]"
+                    placeholder={isTlViewer ? "No conversation link attached" : "https://app.intercom.com/..."}
+                    className={`w-full pl-8 pr-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-[#1C6B53] font-mono text-[11px] ${
+                      isTlViewer ? "cursor-default" : ""
+                    }`}
                   />
                 </div>
                 {activeNoteModal.linkUrl.trim() && (
@@ -6614,7 +6675,7 @@ export default function QualityDashboard({
                     href={activeNoteModal.linkUrl.trim()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-[#00A991] dark:text-teal-300 rounded-xl text-xs font-black flex items-center gap-1 shrink-0 border border-emerald-200/60 dark:border-emerald-800/40 transition shadow-2xs cursor-pointer"
+                    className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-[#1C6B53] dark:text-teal-300 rounded-xl text-xs font-black flex items-center gap-1 shrink-0 border border-emerald-200/60 dark:border-emerald-800/40 transition shadow-2xs cursor-pointer"
                     title="Open link in new tab"
                   >
                     <ExternalLink size={12} />
@@ -6624,39 +6685,55 @@ export default function QualityDashboard({
               </div>
             </div>
 
-            {/* Footer: Press Enter to save + Delete + Save Note & Link Button */}
-            <div className="flex justify-between items-center pt-2.5 border-t border-gray-100 dark:border-gray-800 gap-2">
-              <span className="text-[11px] text-gray-400 font-medium">
-                Press Enter to save
-              </span>
-              <div className="flex items-center gap-2">
-                {(Boolean(activeNoteModal.noteText?.trim()) || Boolean(activeNoteModal.linkUrl?.trim()) || Boolean(activeNoteModal.hasExistingData)) && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      handleDeleteNote();
-                    }}
-                    disabled={savingNote}
-                    className="px-3 py-2 text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition cursor-pointer disabled:opacity-50 flex items-center gap-1"
-                    title="Delete Note & Link"
-                  >
-                    {savingNote ? <RefreshCw size={13} className="animate-spin text-red-500" /> : <Trash2 size={13} />}
-                    <span>Delete</span>
-                  </button>
-                )}
+            {/* Footer: Read-only Close for TL viewer, or Save / Delete for Evaluator */}
+            {isTlViewer ? (
+              <div className="flex justify-between items-center pt-2.5 border-t border-gray-100 dark:border-gray-800 gap-2">
+                <span className="text-[11px] text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1">
+                  <Eye size={12} />
+                  <span>View Note Only</span>
+                </span>
                 <button
                   type="button"
-                  onClick={handleSaveNote}
-                  disabled={savingNote}
-                  className="bg-[#00A991] hover:bg-[#008f7a] text-white text-xs font-black px-4 py-2 rounded-xl transition shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                  onClick={() => setActiveNoteModal(null)}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-xl text-xs font-bold transition cursor-pointer"
                 >
-                  {savingNote ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
-                  <span>Save Note & Link</span>
+                  Close
                 </button>
               </div>
-            </div>
+            ) : (
+              <div className="flex justify-between items-center pt-2.5 border-t border-gray-100 dark:border-gray-800 gap-2">
+                <span className="text-[11px] text-gray-400 font-medium">
+                  Press Enter to save
+                </span>
+                <div className="flex items-center gap-2">
+                  {(Boolean(activeNoteModal.noteText?.trim()) || Boolean(activeNoteModal.linkUrl?.trim()) || Boolean(activeNoteModal.hasExistingData)) && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleDeleteNote();
+                      }}
+                      disabled={savingNote}
+                      className="px-3 py-2 text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition cursor-pointer disabled:opacity-50 flex items-center gap-1"
+                      title="Delete Note & Link"
+                    >
+                      {savingNote ? <RefreshCw size={13} className="animate-spin text-red-500" /> : <Trash2 size={13} />}
+                      <span>Delete</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleSaveNote}
+                    disabled={savingNote}
+                    className="bg-[#1C6B53] hover:bg-[#155340] text-white text-xs font-black px-4 py-2 rounded-xl transition shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                  >
+                    {savingNote ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+                    <span>Save Note & Link</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
           </div>
         </div>
@@ -7408,7 +7485,7 @@ export default function QualityDashboard({
       )}
 
       {/* Mandatory Sync Reminder Modal when trying to enter a new month before syncing a completed previous month */}
-      {syncReminderModal && (
+      {!isTlViewer && syncReminderModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800/80 overflow-hidden text-left">
             <div className="p-6 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border-b border-amber-100 dark:border-amber-900/50 flex items-start justify-between gap-3">

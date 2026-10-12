@@ -153,9 +153,13 @@
 
 /* Brand Primary Solid Backgrounds (Only exact class, not opacity variants) */
 [data-theme] .bg-\[\#1C6B53\],
+[data-theme] .bg-\[\#00A991\],
 [data-theme] .bg-\[\#155a45\],
 [data-theme] .bg-\[\#104334\],
-[data-theme] .bg-\[\#155340\] {
+[data-theme] .bg-\[\#155340\],
+[data-theme] .bg-\[\#0C3227\],
+[data-theme] .bg-\[\#0C382E\],
+[data-theme] .bg-\[\#0b3327\] {
   background-color: var(--brand-primary) !important;
 }
 
@@ -167,12 +171,15 @@
 [data-theme] .bg-\[\#1C6B53\]\/25,
 [data-theme] .bg-\[\#1C6B53\]\/30,
 [data-theme] .bg-\[\#1C6B53\]\/40,
-[data-theme] [class*="bg-[#1C6B53]/"] {
+[data-theme] [class*="bg-[#1C6B53]/"],
+[data-theme] [class*="bg-[#00A991]/"] {
   background-color: var(--brand-bg-light) !important;
 }
 
 /* Brand Primary Hover Backgrounds */
 [data-theme] .hover\:bg-\[\#1C6B53\]:hover,
+[data-theme] .hover\:bg-\[\#00927d\]:hover,
+[data-theme] .hover\:bg-\[\#008f7a\]:hover,
 [data-theme] .hover\:bg-\[\#155a45\]:hover,
 [data-theme] .hover\:bg-\[\#155340\]:hover {
   background-color: var(--brand-hover) !important;
@@ -180,51 +187,84 @@
 
 /* Brand Text Colors */
 [data-theme] .text-\[\#1C6B53\],
-[data-theme] [class*="text-[#1C6B53]"] {
+[data-theme] .text-\[\#00A991\],
+[data-theme] [class*="text-[#1C6B53]"],
+[data-theme] [class*="text-[#00A991]"] {
   color: var(--brand-primary) !important;
 }
 
 [data-theme] .hover\:text-\[\#1C6B53\]:hover,
-[data-theme] [class*="hover:text-[#1C6B53]"]:hover {
+[data-theme] .hover\:text-\[\#00A991\]:hover,
+[data-theme] [class*="hover:text-[#1C6B53]"]:hover,
+[data-theme] [class*="hover:text-[#00A991]"]:hover {
   color: var(--brand-hover) !important;
 }
 
 /* Brand Border Colors */
 [data-theme] .border-\[\#1C6B53\],
-[data-theme] [class*="border-[#1C6B53]"] {
+[data-theme] .border-\[\#00A991\],
+[data-theme] [class*="border-[#1C6B53]"],
+[data-theme] [class*="border-[#00A991]"] {
   border-color: var(--brand-primary) !important;
 }
 
-[data-theme] .focus\:border-\[\#1C6B53\]:focus {
+[data-theme] .focus\:border-\[\#1C6B53\]:focus,
+[data-theme] .focus\:border-\[\#00A991\]:focus {
   border-color: var(--brand-primary) !important;
 }
 
 /* Ring & Shadow Glow */
 [data-theme] .ring-\[\#1C6B53\],
-[data-theme] [class*="ring-[#1C6B53]"] {
+[data-theme] .ring-\[\#00A991\],
+[data-theme] [class*="ring-[#1C6B53]"],
+[data-theme] [class*="ring-[#00A991]"] {
   --tw-ring-color: var(--brand-primary) !important;
 }
 
-[data-theme] [class*="shadow-[#1C6B53]"] {
+[data-theme] [class*="shadow-[#1C6B53]"],
+[data-theme] [class*="shadow-[#00A991]"],
+[data-theme] [class*="shadow-[#0C3227]"] {
   --tw-shadow-color: var(--brand-glow) !important;
 }
 
-/* Hero / Team Banner Gradient Overrides */
+/* Hero / Team Banner Gradient Overrides across all dashboards & modals */
 [data-theme] .from-\[\#1C6B53\],
-[data-theme] [class*="from-[#1C6B53]"] {
+[data-theme] .from-\[\#0C3227\],
+[data-theme] .from-\[\#0C382E\],
+[data-theme] .from-\[\#0b3327\],
+[data-theme] [class*="from-[#1C6B53]"],
+[data-theme] [class*="from-[#0C3227]"],
+[data-theme] [class*="from-[#0C382E]"],
+[data-theme] [class*="from-[#0b3327]"] {
   --tw-gradient-from: var(--brand-from, var(--brand-primary)) var(--tw-gradient-from-position) !important;
   --tw-gradient-to: rgb(0 0 0 / 0) var(--tw-gradient-to-position) !important;
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
 }
 
 [data-theme] .via-\[\#165a46\],
-[data-theme] [class*="via-[#165a46]"] {
+[data-theme] .via-\[\#124235\],
+[data-theme] .via-\[\#135B47\],
+[data-theme] .via-\[\#145a46\],
+[data-theme] .via-\[\#144d3c\],
+[data-theme] [class*="via-[#165a46]"],
+[data-theme] [class*="via-[#124235]"],
+[data-theme] [class*="via-[#135B47]"],
+[data-theme] [class*="via-[#145a46]"],
+[data-theme] [class*="via-[#144d3c]"] {
   --tw-gradient-to: rgb(0 0 0 / 0) var(--tw-gradient-to-position) !important;
   --tw-gradient-stops: var(--tw-gradient-from), var(--brand-via, var(--brand-hover)) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
 }
 
 [data-theme] .to-\[\#104334\],
-[data-theme] [class*="to-[#104334]"] {
+[data-theme] .to-\[\#0A281F\],
+[data-theme] .to-\[\#0c392c\],
+[data-theme] .to-\[\#124d3a\],
+[data-theme] .to-\[\#155a45\],
+[data-theme] [class*="to-[#104334]"],
+[data-theme] [class*="to-[#0A281F]"],
+[data-theme] [class*="to-[#0c392c]"],
+[data-theme] [class*="to-[#124d3a]"],
+[data-theme] [class*="to-[#155a45]"] {
   --tw-gradient-to: var(--brand-to, #104334) var(--tw-gradient-to-position) !important;
 }
 

@@ -1646,29 +1646,38 @@ function AgentDashboard({
         ) : (
           <div className="space-y-4 sm:space-y-5">
 
-            {/* Year Performance Overview (FIB Emerald Theme - Modern & Ultra-Sleek) */}
-            <div className="bg-gradient-to-br from-[#0C3227] via-[#124235] to-[#0A281F] rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl shadow-[#0C3227]/20 border border-emerald-500/25 relative overflow-hidden text-white">
+            {/* Year Performance Overview (Adapts Dynamically to Active Brand Theme) */}
+            <div 
+              style={{ background: 'var(--brand-gradient)' }}
+              className="rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl shadow-[var(--brand-glow)] border border-white/20 relative overflow-hidden text-white"
+            >
               {/* Subtle ambient brand glow in background */}
-              <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#1C6B53]/25 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-[#00A887]/15 rounded-full blur-3xl pointer-events-none" />
+              <div 
+                className="absolute -top-24 -right-24 w-72 h-72 rounded-full blur-3xl pointer-events-none opacity-40" 
+                style={{ backgroundColor: 'var(--brand-glow)' }}
+              />
+              <div 
+                className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full blur-3xl pointer-events-none opacity-30" 
+                style={{ backgroundColor: 'var(--brand-glow)' }}
+              />
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-white/10 relative z-10">
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-xl bg-emerald-400/15 border border-emerald-400/25 text-emerald-300 text-[10px] sm:text-[11px] font-bold tracking-widest uppercase mb-1.5">
-                    <Sparkles size={11} className="text-emerald-300" />
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-xl bg-white/15 border border-white/25 text-white text-[10px] sm:text-[11px] font-bold tracking-widest uppercase mb-1.5">
+                    <Sparkles size={11} className="text-white" />
                     <span>Year Performance</span>
                   </div>
                   <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight leading-tight">
                     {selectedYear} Overview
                   </h2>
-                  <p className="text-[11px] sm:text-xs text-emerald-100/70 mt-0.5 sm:mt-1 font-medium">
+                  <p className="text-[11px] sm:text-xs text-white/75 mt-0.5 sm:mt-1 font-medium">
                     Consolidated annual metrics across all 12 months
                   </p>
                 </div>
                 
                 <div className="flex items-center gap-2 self-start sm:self-auto px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-inner">
-                  <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[11px] sm:text-xs font-bold text-emerald-100 tracking-wide">12 Months Consolidated</span>
+                  <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-white animate-pulse" />
+                  <span className="text-[11px] sm:text-xs font-bold text-white tracking-wide">12 Months Consolidated</span>
                 </div>
               </div>
 
@@ -1678,9 +1687,9 @@ function AgentDashboard({
                   return (
                     <div 
                       key={col.id} 
-                      className="relative overflow-hidden bg-white/[0.08] hover:bg-white/[0.14] backdrop-blur-md border border-white/15 hover:border-emerald-400/40 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all duration-200 group shadow-sm hover:shadow-md flex flex-col justify-between"
+                      className="relative overflow-hidden bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 hover:border-white/30 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all duration-200 group shadow-sm hover:shadow-md flex flex-col justify-between"
                     >
-                      <span className="text-[11px] sm:text-xs font-semibold text-emerald-100/80 group-hover:text-white transition-colors truncate block">
+                      <span className="text-[11px] sm:text-xs font-semibold text-white/80 group-hover:text-white transition-colors truncate block">
                         {getAgentColLabel(col)}
                       </span>
                       
@@ -2125,6 +2134,10 @@ export default function Dashboard() {
   const [userProfile, setUserProfile] = useState<any>(null);
   const isAdmin = session?.email?.toLowerCase() === 'mohammed.dlshad0@gmail.com' || userProfile?.role === 'admin';
   const isManager = isAdmin || session?.email?.toLowerCase() === 'jalal.burghol@agent.com' || userProfile?.role === 'manager';
+  const emailLower = (session?.email || userProfile?.email || '').toLowerCase().trim();
+  const isYounis = emailLower.includes('younis.kamal') || userProfile?.name?.toLowerCase().includes('younis kamal') || userProfile?.team === 'Younis Kamal Team';
+  const isAnkido = emailLower.includes('ankido.buya') || userProfile?.name?.toLowerCase().includes('ankido buya') || userProfile?.team === 'Ankido Buya Team';
+  const canAccessQuality = isAdmin || isManager || isYounis || isAnkido;
   const [authLoading, setAuthLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -4633,7 +4646,7 @@ export default function Dashboard() {
       );
     }
 
-    if (showQualityView && (isAdmin || isManager)) {
+    if (showQualityView && canAccessQuality) {
       return (
         <QualityDashboard 
           userProfile={userProfile} 
@@ -4794,11 +4807,11 @@ export default function Dashboard() {
                   </button>
                 )}
 
-                {(isAdmin || isManager) && (
+                {canAccessQuality && (
                   <button
                     onClick={() => setShowQualityView(true)}
                     className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50/80 dark:hover:bg-purple-950/40 transition-all group cursor-pointer shrink-0"
-                    title="Quality Assurance Dashboard"
+                    title={isYounis || isAnkido ? "Quality Assurance Dashboard (View Only)" : "Quality Assurance Dashboard"}
                   >
                     <div className="w-6 h-6 rounded-lg bg-purple-500/15 dark:bg-purple-400/20 text-purple-700 dark:text-purple-300 flex items-center justify-center group-hover:scale-105 transition-transform shadow-2xs">
                       <Award size={13.5} />
@@ -4904,17 +4917,20 @@ export default function Dashboard() {
 
         {/* Team Cards */}
         {activeTeams.length === 1 ? (
-          <div className="mb-6 sm:mb-8 bg-gradient-to-br from-[#1C6B53] via-[#165a46] to-[#104334] text-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xl shadow-[#1C6B53]/15 border border-emerald-500/30 relative overflow-hidden">
+          <div 
+            style={{ background: 'var(--brand-gradient)' }}
+            className="mb-6 sm:mb-8 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xl shadow-[var(--brand-glow)] border border-white/20 relative overflow-hidden"
+          >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-white/10">
               <div className="flex items-center gap-3 sm:gap-4">
                 <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-xl sm:rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner shrink-0">
-                  <Users size={20} className="text-emerald-200 sm:w-6 sm:h-6" />
+                  <Users size={20} className="text-white sm:w-6 sm:h-6" />
                 </div>
                 <div>
                   <h2 className="text-lg sm:text-2xl font-black tracking-tight text-white">
                     {activeTeams[0]}
                   </h2>
-                  <p className="text-[11px] sm:text-xs text-emerald-100/80 mt-0.5 sm:mt-1 font-medium">
+                  <p className="text-[11px] sm:text-xs text-white/80 mt-0.5 sm:mt-1 font-medium">
                     {selectedYear} Annual Team Performance Summary • {rows.length} Active Agents
                   </p>
                 </div>
@@ -4927,13 +4943,13 @@ export default function Dashboard() {
                 const annualVal = calcYearTeamStat(col);
                 return (
                   <div key={col.id} className="bg-white/10 dark:bg-black/25 backdrop-blur-md rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 border border-white/10 flex flex-col justify-between hover:bg-white/15 transition shadow-sm">
-                    <div className="text-[10px] sm:text-[11px] font-bold tracking-wide text-emerald-100/90 truncate mb-1.5 sm:mb-2" title={col.label}>
+                    <div className="text-[10px] sm:text-[11px] font-bold tracking-wide text-white/90 truncate mb-1.5 sm:mb-2" title={col.label}>
                       {col.label || col.id}
                     </div>
                     <div className="text-lg sm:text-2xl font-black text-white tracking-tight leading-none">
                       {annualVal}
                     </div>
-                    <div className="text-[9px] sm:text-[10px] text-emerald-300/70 font-medium mt-1">
+                    <div className="text-[9px] sm:text-[10px] text-white/70 font-medium mt-1">
                       {toTitleCase(col.aggregation)}
                     </div>
                   </div>
@@ -4944,8 +4960,14 @@ export default function Dashboard() {
         ) : (
           <>
             {isCombinedCallCenter && (
-              <div className="mb-5 sm:mb-6 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#0b3327] via-[#1C6B53] to-[#124d3a] text-white shadow-xl shadow-[#1C6B53]/25 border border-emerald-400/30 relative overflow-hidden animate-in fade-in slide-in-from-top-3 duration-200">
-                <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+              <div 
+                style={{ background: 'var(--brand-gradient)' }}
+                className="mb-5 sm:mb-6 p-4 sm:p-6 rounded-2xl sm:rounded-3xl text-white shadow-xl shadow-[var(--brand-glow)] border border-white/20 relative overflow-hidden animate-in fade-in slide-in-from-top-3 duration-200"
+              >
+                <div 
+                  className="absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl pointer-events-none opacity-30" 
+                  style={{ backgroundColor: 'var(--brand-glow)' }}
+                />
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 relative z-10">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/20 text-white flex items-center justify-center font-black shadow-md border border-white/20">
@@ -5012,9 +5034,10 @@ export default function Dashboard() {
                       setSelectedTeam(teamName);
                       setIsCombinedCallCenter(false);
                     }}
+                    style={isActive ? { background: 'var(--brand-gradient)' } : undefined}
                     className={`text-left p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm flex flex-col justify-between transition-all border cursor-pointer relative overflow-hidden
                       ${isActive 
-                        ? 'bg-gradient-to-br from-[#1C6B53] to-[#155a45] text-white border-transparent shadow-lg shadow-[#1C6B53]/20 ring-2 ring-[#1C6B53]/50 scale-[1.01]' 
+                        ? 'text-white border-transparent shadow-lg shadow-[var(--brand-glow)] ring-2 ring-white/40 scale-[1.01]' 
                         : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border-gray-200/80 dark:border-gray-700/80 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md'}`}
                   >
                     <div className="flex justify-between items-start w-full mb-3 sm:mb-4">
