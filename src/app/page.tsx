@@ -5289,9 +5289,10 @@ export default function Dashboard() {
               <button
                 key={m}
                 onClick={() => setSelectedMonth(m)}
-                className={`px-1.5 sm:px-2 py-1 rounded-lg text-xs font-bold transition flex-shrink-0 ${
+                style={isSel ? { backgroundColor: 'var(--brand-primary)', color: '#ffffff' } : undefined}
+                className={`px-1.5 sm:px-2 py-1 rounded-lg text-xs font-bold transition flex-shrink-0 cursor-pointer ${
                   isSel
-                    ? 'bg-[#1C6B53] text-white shadow-md shadow-[#1C6B53]/25'
+                    ? 'shadow-md shadow-[var(--brand-glow)]'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60'
                 }`}
               >
@@ -5310,10 +5311,15 @@ export default function Dashboard() {
               <button
                 key={p}
                 onClick={() => setSelectedMonth(p)}
-                className={`px-1.5 sm:px-2 py-1 rounded-lg text-xs font-extrabold transition flex-shrink-0 ${
+                style={
                   isSel
-                    ? 'bg-[#00A991] text-white shadow-md shadow-[#00A991]/30'
-                    : 'text-emerald-700 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
+                    ? { backgroundColor: 'var(--brand-primary)', color: '#ffffff' }
+                    : { backgroundColor: 'var(--brand-bg-light)', color: 'var(--brand-text-light)' }
+                }
+                className={`px-1.5 sm:px-2 py-1 rounded-lg text-xs font-extrabold transition flex-shrink-0 cursor-pointer ${
+                  isSel
+                    ? 'shadow-md shadow-[var(--brand-glow)]'
+                    : 'hover:opacity-90 dark:bg-[var(--brand-dark-bg-light)] dark:text-[var(--brand-dark-text-light)]'
                 }`}
               >
                 {p}
@@ -5328,14 +5334,23 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => setIsCombinedCallCenter(prev => !prev)}
+            style={
+              isCombinedCallCenter
+                ? { background: 'var(--brand-gradient)', color: '#ffffff', borderColor: 'transparent' }
+                : { backgroundColor: 'var(--brand-bg-light)', color: 'var(--brand-text-light)', borderColor: 'var(--brand-border-light)' }
+            }
             className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg text-[11px] font-black transition-all flex-shrink-0 flex items-center gap-1 border cursor-pointer whitespace-nowrap ${
               isCombinedCallCenter
-                ? 'bg-gradient-to-r from-[#1C6B53] to-[#155a45] text-white border-transparent shadow-md shadow-[#1C6B53]/30 ring-2 ring-[#1C6B53]/50'
-                : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
+                ? 'shadow-md shadow-[var(--brand-glow)] ring-2 ring-[var(--brand-glow)]'
+                : 'hover:opacity-90 dark:bg-[var(--brand-dark-bg-light)] dark:text-[var(--brand-dark-text-light)] dark:border-[var(--brand-dark-border-light)]'
             }`}
             title="عرض داتا تيم يونس وتيم انكيدو معاً (Call Center Combined: Younis + Ankido)"
           >
-            <Users size={11} className={isCombinedCallCenter ? 'text-amber-300 animate-pulse' : 'text-emerald-600 dark:text-emerald-400'} />
+            <Users
+              size={11}
+              style={{ color: isCombinedCallCenter ? '#fde047' : 'var(--brand-text-light)' }}
+              className={isCombinedCallCenter ? 'animate-pulse' : ''}
+            />
             <span>CC (Y+A)</span>
           </button>
         </div>

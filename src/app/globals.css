@@ -268,6 +268,49 @@
   --tw-gradient-to: var(--brand-to, #104334) var(--tw-gradient-to-position) !important;
 }
 
+/* Dynamic Theme Overrides: Ensure emerald background tints, borders, and text adapt to the active theme */
+[data-theme] .bg-emerald-50,
+[data-theme] .bg-emerald-50\/40,
+[data-theme] .bg-emerald-50\/60,
+[data-theme] .bg-emerald-50\/70,
+[data-theme] .bg-emerald-50\/80,
+[data-theme] .bg-emerald-100,
+[data-theme] .bg-emerald-100\/80,
+[data-theme] .bg-emerald-100\/90,
+[data-theme] [class*="bg-emerald-50"],
+[data-theme] [class*="bg-emerald-100"] {
+  background-color: var(--brand-bg-light) !important;
+}
+
+[data-theme] .dark [class*="bg-emerald-950"] {
+  background-color: var(--brand-dark-bg-light) !important;
+}
+
+[data-theme] .text-emerald-700,
+[data-theme] .text-emerald-800,
+[data-theme] .text-emerald-600,
+[data-theme] [class*="text-emerald-700"],
+[data-theme] [class*="text-emerald-800"] {
+  color: var(--brand-text-light) !important;
+}
+
+[data-theme] .dark [class*="text-emerald-300"],
+[data-theme] .dark [class*="text-emerald-400"] {
+  color: var(--brand-dark-text-light) !important;
+}
+
+[data-theme] .border-emerald-200,
+[data-theme] .border-emerald-300,
+[data-theme] [class*="border-emerald-200"],
+[data-theme] [class*="border-emerald-300"] {
+  border-color: var(--brand-border-light) !important;
+}
+
+[data-theme] .dark [class*="border-emerald-800"],
+[data-theme] .dark [class*="border-emerald-700"] {
+  border-color: var(--brand-dark-border-light) !important;
+}
+
 /* Explicit brand accent helper for UI elements that choose to follow brand styling */
 .brand-bg-light {
   background-color: var(--brand-bg-light) !important;
