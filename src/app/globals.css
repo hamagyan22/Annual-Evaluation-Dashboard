@@ -270,44 +270,102 @@
 
 /* Dynamic Theme Overrides: Ensure emerald background tints, borders, and text adapt to the active theme */
 [data-theme] .bg-emerald-50,
+[data-theme] .bg-emerald-50\/20,
+[data-theme] .bg-emerald-50\/30,
 [data-theme] .bg-emerald-50\/40,
+[data-theme] .bg-emerald-50\/50,
 [data-theme] .bg-emerald-50\/60,
 [data-theme] .bg-emerald-50\/70,
 [data-theme] .bg-emerald-50\/80,
 [data-theme] .bg-emerald-100,
+[data-theme] .bg-emerald-100\/40,
+[data-theme] .bg-emerald-100\/50,
+[data-theme] .bg-emerald-100\/70,
 [data-theme] .bg-emerald-100\/80,
-[data-theme] .bg-emerald-100\/90,
-[data-theme] [class*="bg-emerald-50"],
-[data-theme] [class*="bg-emerald-100"] {
+[data-theme] .bg-emerald-100\/90 {
   background-color: var(--brand-bg-light) !important;
 }
 
-[data-theme] .dark [class*="bg-emerald-950"] {
+/* Hover & group-hover overrides so interactive elements adapt cleanly without permanently tinting */
+[data-theme] .hover\:bg-emerald-50:hover,
+[data-theme] .hover\:bg-emerald-50\/30:hover,
+[data-theme] .hover\:bg-emerald-50\/40:hover,
+[data-theme] .hover\:bg-emerald-50\/50:hover,
+[data-theme] .hover\:bg-emerald-50\/80:hover,
+[data-theme] .hover\:bg-emerald-100:hover,
+[data-theme] .hover\:bg-emerald-100\/80:hover,
+[data-theme] .group:hover .group-hover\:bg-emerald-50,
+[data-theme] .group:hover .group-hover\:bg-emerald-50\/40,
+[data-theme] .group:hover .group-hover\:bg-emerald-50\/50,
+[data-theme] .group:hover .group-hover\:bg-emerald-50\/80,
+[data-theme] .group:hover .group-hover\:bg-emerald-100 {
+  background-color: var(--brand-bg-light) !important;
+}
+
+[data-theme].dark .bg-emerald-950,
+[data-theme] .dark .bg-emerald-950,
+[data-theme].dark .bg-emerald-950\/20,
+[data-theme] .dark .bg-emerald-950\/20,
+[data-theme].dark .bg-emerald-950\/25,
+[data-theme] .dark .bg-emerald-950\/25,
+[data-theme].dark .bg-emerald-950\/30,
+[data-theme] .dark .bg-emerald-950\/30,
+[data-theme].dark .bg-emerald-950\/40,
+[data-theme] .dark .bg-emerald-950\/40,
+[data-theme].dark .bg-emerald-950\/50,
+[data-theme] .dark .bg-emerald-950\/50,
+[data-theme].dark .bg-emerald-950\/60,
+[data-theme] .dark .bg-emerald-950\/60,
+[data-theme].dark .bg-emerald-950\/70,
+[data-theme] .dark .bg-emerald-950\/70 {
+  background-color: var(--brand-dark-bg-light) !important;
+}
+
+[data-theme].dark .hover\:bg-emerald-950:hover,
+[data-theme] .dark .hover\:bg-emerald-950:hover,
+[data-theme].dark .hover\:bg-emerald-950\/40:hover,
+[data-theme] .dark .hover\:bg-emerald-950\/40:hover,
+[data-theme].dark .hover\:bg-emerald-950\/50:hover,
+[data-theme] .dark .hover\:bg-emerald-950\/50:hover,
+[data-theme].dark .hover\:bg-emerald-900\/40:hover,
+[data-theme] .dark .hover\:bg-emerald-900\/40:hover,
+[data-theme].dark .hover\:bg-emerald-900\/60:hover,
+[data-theme] .dark .hover\:bg-emerald-900\/60:hover {
   background-color: var(--brand-dark-bg-light) !important;
 }
 
 [data-theme] .text-emerald-700,
 [data-theme] .text-emerald-800,
-[data-theme] .text-emerald-600,
-[data-theme] [class*="text-emerald-700"],
-[data-theme] [class*="text-emerald-800"] {
+[data-theme] .text-emerald-600 {
   color: var(--brand-text-light) !important;
 }
 
-[data-theme] .dark [class*="text-emerald-300"],
-[data-theme] .dark [class*="text-emerald-400"] {
+[data-theme] .hover\:text-emerald-700:hover,
+[data-theme] .hover\:text-emerald-800:hover,
+[data-theme] .hover\:text-emerald-600:hover {
+  color: var(--brand-text-light) !important;
+}
+
+[data-theme].dark .text-emerald-300,
+[data-theme] .dark .text-emerald-300,
+[data-theme].dark .text-emerald-400,
+[data-theme] .dark .text-emerald-400 {
   color: var(--brand-dark-text-light) !important;
 }
 
 [data-theme] .border-emerald-200,
 [data-theme] .border-emerald-300,
-[data-theme] [class*="border-emerald-200"],
-[data-theme] [class*="border-emerald-300"] {
+[data-theme] .border-emerald-200\/80,
+[data-theme] .border-emerald-300\/40 {
   border-color: var(--brand-border-light) !important;
 }
 
-[data-theme] .dark [class*="border-emerald-800"],
-[data-theme] .dark [class*="border-emerald-700"] {
+[data-theme].dark .border-emerald-800,
+[data-theme] .dark .border-emerald-800,
+[data-theme].dark .border-emerald-700,
+[data-theme] .dark .border-emerald-700,
+[data-theme].dark .border-emerald-800\/60,
+[data-theme] .dark .border-emerald-800\/60 {
   border-color: var(--brand-dark-border-light) !important;
 }
 

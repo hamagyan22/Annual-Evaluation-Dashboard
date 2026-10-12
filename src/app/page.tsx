@@ -5417,9 +5417,9 @@ export default function Dashboard() {
 
           <div className="min-w-[1000px] sm:min-w-[1150px]">
             {/* Table Header */}
-            <div className="grid gap-2 px-3 sm:px-5 py-3.5 bg-gray-50/95 dark:bg-gray-800/95 backdrop-blur-md text-xs font-bold border-b border-gray-200/80 dark:border-gray-700/80 items-center"
+            <div className="grid gap-2 px-3 sm:px-5 py-3.5 bg-gray-50/95 dark:bg-gray-800/95 backdrop-blur-md text-xs font-bold border-b border-gray-200/80 dark:border-gray-700/80 items-center rounded-t-2xl"
                  style={{ gridTemplateColumns: `minmax(180px, 2.2fr) repeat(${activeCols.length}, minmax(105px, 1fr))` }}>
-              <div className="pl-2 sticky left-0 bg-gray-50/95 dark:bg-gray-800/95 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] text-[11px] sm:text-xs font-extrabold text-gray-600 dark:text-gray-300">
+              <div className="pl-2 sm:pl-2.5 py-1 sticky left-0 bg-gray-50/95 dark:bg-gray-800/95 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] text-[11px] sm:text-xs font-extrabold text-gray-600 dark:text-gray-300 rounded-tl-2xl">
                 Agent
               </div>
               {activeCols.map(col => (
@@ -5441,14 +5441,21 @@ export default function Dashboard() {
                   const disabled = isAggregate || !!row._readonly;
 
                   return (
-                    <div key={row._memberId || index} className="grid gap-2 px-3 sm:px-5 py-2.5 sm:py-3 items-center hover:bg-emerald-50/40 dark:hover:bg-gray-800/60 transition-all duration-150 group"
+                    <div key={row._memberId || index} className="grid gap-2 px-3 sm:px-5 py-2 sm:py-2.5 items-center hover:bg-emerald-50/50 dark:hover:bg-gray-800/60 transition-colors duration-150 group rounded-xl sm:rounded-2xl"
                          style={{ gridTemplateColumns: `minmax(180px, 2.2fr) repeat(${activeCols.length}, minmax(105px, 1fr))` }}>
                       
-                      <div className="pl-2 text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2.5 sm:gap-3 sticky left-0 bg-[#FDFCFB] dark:bg-gray-900 group-hover:bg-[#f6fbf9] dark:group-hover:bg-gray-850 z-10 pr-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)]">
+                      <div className="pl-2 sm:pl-2.5 py-1 text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2.5 sm:gap-3 sticky left-0 bg-[#FDFCFB] dark:bg-gray-900 group-hover:bg-emerald-50/50 dark:group-hover:bg-gray-800/60 z-10 pr-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] rounded-l-xl sm:rounded-l-2xl transition-colors duration-150">
                         {row.photo_url ? (
-                          <img src={row.photo_url} alt={row.agent_name} className="w-8 h-8 rounded-full object-cover shadow-xs border border-emerald-500/20 flex-shrink-0 ring-2 ring-emerald-500/10" />
+                          <img src={row.photo_url} alt={row.agent_name} className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-200 dark:border-gray-700 shadow-xs" />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#1C6B53]/20 to-emerald-100 dark:from-[#1C6B53]/40 dark:to-emerald-950 text-[#1C6B53] dark:text-emerald-300 font-black text-xs flex items-center justify-center shadow-xs border border-emerald-500/20 flex-shrink-0 ring-1 ring-emerald-500/10">
+                          <div 
+                            style={{
+                              backgroundColor: 'var(--brand-bg-light)',
+                              color: 'var(--brand-primary)',
+                              borderColor: 'var(--brand-border-light)'
+                            }}
+                            className="w-8 h-8 rounded-full font-black text-xs flex items-center justify-center shrink-0 border shadow-xs select-none transition-transform duration-200 group-hover:scale-105"
+                          >
                             {row.agent_name ? row.agent_name.charAt(0).toUpperCase() : <Users size={12} />}
                           </div>
                         )}
@@ -5521,14 +5528,14 @@ export default function Dashboard() {
 
             {/* Team Average Row */}
             {!loading && (
-               <div className="grid gap-2 px-3 sm:px-5 py-3 sm:py-3.5 bg-emerald-50/50 dark:bg-emerald-950/25 border-t-2 border-emerald-500/20 dark:border-emerald-500/30 items-center font-bold"
+               <div className="grid gap-2 px-3 sm:px-5 py-3 sm:py-3.5 bg-emerald-50/50 dark:bg-emerald-950/25 border-t-2 border-emerald-500/20 dark:border-emerald-500/30 items-center font-bold rounded-b-2xl"
                     style={{ gridTemplateColumns: `minmax(180px, 2.2fr) repeat(${activeCols.length}, minmax(105px, 1fr))` }}>
-                 <div className="text-xs font-black text-gray-800 dark:text-gray-200 pl-2 sticky left-0 bg-[#F4F9F6] dark:bg-gray-850 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] flex items-center gap-2">
-                   <span className="w-2 h-2 rounded-full bg-[#1C6B53] dark:bg-emerald-400" />
+                 <div className="text-xs font-black text-gray-800 dark:text-gray-200 pl-2 sm:pl-2.5 py-1 sticky left-0 bg-emerald-50/70 dark:bg-gray-850 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] flex items-center gap-2 rounded-l-xl sm:rounded-bl-2xl">
+                   <span className="w-2 h-2 rounded-full bg-[var(--brand-primary,#1C6B53)] dark:bg-emerald-400" />
                    <span>{isCombinedCallCenter ? 'Call Center Combined Total / Avg' : 'Team Average'}</span>
                  </div>
                  {activeCols.map(col => (
-                   <div key={col.id} className="text-center text-xs sm:text-[13px] font-black text-[#1C6B53] dark:text-emerald-400 tabular-nums px-1">
+                   <div key={col.id} className="text-center text-xs sm:text-[13px] font-black text-[var(--brand-primary,#1C6B53)] dark:text-emerald-400 tabular-nums px-1">
                      {calcAvg(col, rows)}
                    </div>
                  ))}
