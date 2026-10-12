@@ -170,9 +170,7 @@
 [data-theme] .bg-\[\#1C6B53\]\/20,
 [data-theme] .bg-\[\#1C6B53\]\/25,
 [data-theme] .bg-\[\#1C6B53\]\/30,
-[data-theme] .bg-\[\#1C6B53\]\/40,
-[data-theme] [class*="bg-[#1C6B53]/"],
-[data-theme] [class*="bg-[#00A991]/"] {
+[data-theme] .bg-\[\#1C6B53\]\/40 {
   background-color: var(--brand-bg-light) !important;
 }
 
@@ -187,24 +185,18 @@
 
 /* Brand Text Colors */
 [data-theme] .text-\[\#1C6B53\],
-[data-theme] .text-\[\#00A991\],
-[data-theme] [class*="text-[#1C6B53]"],
-[data-theme] [class*="text-[#00A991]"] {
+[data-theme] .text-\[\#00A991\] {
   color: var(--brand-primary) !important;
 }
 
 [data-theme] .hover\:text-\[\#1C6B53\]:hover,
-[data-theme] .hover\:text-\[\#00A991\]:hover,
-[data-theme] [class*="hover:text-[#1C6B53]"]:hover,
-[data-theme] [class*="hover:text-[#00A991]"]:hover {
+[data-theme] .hover\:text-\[\#00A991\]:hover {
   color: var(--brand-hover) !important;
 }
 
 /* Brand Border Colors */
 [data-theme] .border-\[\#1C6B53\],
-[data-theme] .border-\[\#00A991\],
-[data-theme] [class*="border-[#1C6B53]"],
-[data-theme] [class*="border-[#00A991]"] {
+[data-theme] .border-\[\#00A991\] {
   border-color: var(--brand-primary) !important;
 }
 
@@ -215,10 +207,13 @@
 
 /* Ring & Shadow Glow */
 [data-theme] .ring-\[\#1C6B53\],
-[data-theme] .ring-\[\#00A991\],
-[data-theme] [class*="ring-[#1C6B53]"],
-[data-theme] [class*="ring-[#00A991]"] {
+[data-theme] .ring-\[\#00A991\] {
   --tw-ring-color: var(--brand-primary) !important;
+}
+
+[data-theme] .focus\:ring-\[\#1C6B53\]\/20:focus,
+[data-theme] .focus\:ring-\[\#00A991\]\/20:focus {
+  --tw-ring-color: var(--brand-glow) !important;
 }
 
 [data-theme] [class*="shadow-[#1C6B53]"],

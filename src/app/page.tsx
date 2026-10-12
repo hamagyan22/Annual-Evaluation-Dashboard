@@ -5405,7 +5405,7 @@ export default function Dashboard() {
         {/* Data Table */}
         <div 
           onPaste={handleTablePaste}
-          className={`bg-[#F9F8F4] dark:bg-gray-900 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-sm overflow-x-auto custom-scrollbar overscroll-x-contain touch-pan-x ${isSelecting ? 'select-none cursor-crosshair' : ''}`}
+          className={`bg-white dark:bg-gray-900 border border-gray-200/90 dark:border-gray-800 rounded-2xl shadow-sm overflow-x-auto custom-scrollbar overscroll-x-contain touch-pan-x ${isSelecting ? 'select-none cursor-crosshair' : ''}`}
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {errorMsg && (
@@ -5417,20 +5417,20 @@ export default function Dashboard() {
 
           <div className="min-w-[1000px] sm:min-w-[1150px]">
             {/* Table Header */}
-            <div className="grid gap-2 px-3 sm:px-5 py-3.5 bg-gray-50/95 dark:bg-gray-800/95 backdrop-blur-md text-xs font-bold border-b border-gray-200/80 dark:border-gray-700/80 items-center rounded-t-2xl"
+            <div className="grid gap-2 px-3 sm:px-5 py-3.5 bg-gray-50/90 dark:bg-gray-850/90 backdrop-blur-md text-xs font-bold border-b border-gray-200/80 dark:border-gray-800 items-center rounded-t-2xl"
                  style={{ gridTemplateColumns: `minmax(180px, 2.2fr) repeat(${activeCols.length}, minmax(105px, 1fr))` }}>
-              <div className="pl-2 sm:pl-2.5 py-1 sticky left-0 bg-gray-50/95 dark:bg-gray-800/95 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] text-[11px] sm:text-xs font-extrabold text-gray-600 dark:text-gray-300 rounded-tl-2xl">
+              <div className="pl-3 sm:pl-4 py-1 sticky left-0 bg-gray-50/95 dark:bg-gray-850/95 z-20 shadow-[3px_0_8px_-3px_rgba(0,0,0,0.06)] text-[11px] sm:text-xs font-extrabold text-gray-500 dark:text-gray-400 uppercase tracking-wider rounded-tl-2xl">
                 Agent
               </div>
               {activeCols.map(col => (
-                <div key={col.id} className="text-center font-extrabold text-[11px] sm:text-xs text-gray-600 dark:text-gray-300 px-1 truncate" title={col.label}>
+                <div key={col.id} className="text-center font-extrabold text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider px-1 truncate" title={col.label}>
                   {col.label || col.id}
                 </div>
               ))}
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-gray-100 dark:divide-gray-800/70 bg-[#FDFCFB] dark:bg-gray-900">
+            <div className="divide-y divide-gray-100 dark:divide-gray-800/70 bg-white dark:bg-gray-900">
               {loading ? (
                 <div className="p-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading data...</div>
               ) : filteredRows.length === 0 ? (
@@ -5441,10 +5441,10 @@ export default function Dashboard() {
                   const disabled = isAggregate || !!row._readonly;
 
                   return (
-                    <div key={row._memberId || index} className="grid gap-2 px-3 sm:px-5 py-2 sm:py-2.5 items-center hover:bg-emerald-50/50 dark:hover:bg-gray-800/60 transition-colors duration-150 group rounded-xl sm:rounded-2xl"
+                    <div key={row._memberId || index} className="grid gap-2 px-3 sm:px-5 py-2 sm:py-2.5 items-center hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/50 transition-colors duration-150 group"
                          style={{ gridTemplateColumns: `minmax(180px, 2.2fr) repeat(${activeCols.length}, minmax(105px, 1fr))` }}>
                       
-                      <div className="pl-2 sm:pl-2.5 py-1 text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2.5 sm:gap-3 sticky left-0 bg-[#FDFCFB] dark:bg-gray-900 group-hover:bg-emerald-50/50 dark:group-hover:bg-gray-800/60 z-10 pr-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] rounded-l-xl sm:rounded-l-2xl transition-colors duration-150">
+                      <div className="pl-3 sm:pl-4 py-1 text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2.5 sm:gap-3 sticky left-0 bg-white dark:bg-gray-900 group-hover:bg-[var(--brand-bg-light)]/40 dark:group-hover:bg-gray-800/50 z-10 pr-3 shadow-[3px_0_8px_-3px_rgba(0,0,0,0.06)] transition-colors duration-150">
                         {row.photo_url ? (
                           <img src={row.photo_url} alt={row.agent_name} className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-200 dark:border-gray-700 shadow-xs" />
                         ) : (
@@ -5454,7 +5454,7 @@ export default function Dashboard() {
                               color: 'var(--brand-primary)',
                               borderColor: 'var(--brand-border-light)'
                             }}
-                            className="w-8 h-8 rounded-full font-black text-xs flex items-center justify-center shrink-0 border shadow-xs select-none transition-transform duration-200 group-hover:scale-105"
+                            className="w-8 h-8 rounded-full font-black text-xs flex items-center justify-center shrink-0 border shadow-2xs select-none transition-transform duration-200 group-hover:scale-105"
                           >
                             {row.agent_name ? row.agent_name.charAt(0).toUpperCase() : <Users size={12} />}
                           </div>
@@ -5482,13 +5482,7 @@ export default function Dashboard() {
                             data-col-index={colIndex}
                             onMouseDown={(e) => handleCellMouseDown(e, index, colIndex)}
                             onMouseEnter={() => handleCellMouseEnter(index, colIndex)}
-                            className={`flex items-center justify-center p-0.5 sm:p-1 rounded-xl transition-all ${
-                              isSelected && isMultiCellSelected
-                                ? 'bg-emerald-100 dark:bg-emerald-950/80 ring-2 ring-[#1C6B53] dark:ring-emerald-400 z-10'
-                                : isSelected
-                                ? 'ring-2 ring-[#1C6B53]/40 dark:ring-emerald-400/40'
-                                : ''
-                            }`}
+                            className="flex items-center justify-center p-0.5"
                           >
                             <input 
                               id={`cell-${index}-${colIndex}`}
@@ -5509,12 +5503,12 @@ export default function Dashboard() {
                               onChange={(e) => handleChange(actualIndex, col.id, e.target.value)}
                               onBlur={() => handleBlur(actualIndex)}
                               onKeyDown={(e) => handleCellKeyDown(e, index, colIndex)}
-                              className={`w-full max-w-[85px] sm:max-w-[100px] text-center rounded-xl px-2.5 py-1.5 text-xs sm:text-[13px] font-bold outline-none transition-all shadow-xs tabular-nums disabled:bg-gray-100/60 dark:disabled:bg-gray-800/40 disabled:border-transparent disabled:text-gray-500 dark:disabled:text-gray-400 ${isCurrentMonthLocked ? 'cursor-not-allowed' : 'cursor-text'} ${
+                              className={`w-full max-w-[85px] sm:max-w-[95px] text-center rounded-lg px-2 py-1.5 text-xs sm:text-[13px] font-bold outline-none transition-all duration-150 shadow-2xs tabular-nums disabled:bg-gray-100/60 dark:disabled:bg-gray-800/40 disabled:border-transparent disabled:text-gray-500 dark:disabled:text-gray-400 ${isCurrentMonthLocked ? 'cursor-not-allowed' : 'cursor-text'} ${
                                 isSelected && isMultiCellSelected
-                                  ? 'bg-transparent border-transparent text-[#1C6B53] dark:text-emerald-300 font-black'
+                                  ? 'bg-[var(--brand-bg-light)] dark:bg-gray-800 border-2 border-[var(--brand-primary)] text-[var(--brand-primary)] dark:text-[var(--brand-dark-text-light)] font-black ring-2 ring-[var(--brand-glow)]'
                                   : isSelected
-                                  ? 'bg-white dark:bg-gray-800 border-[#1C6B53] dark:border-emerald-500 text-gray-800 dark:text-gray-100'
-                                  : 'bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/80 text-gray-800 dark:text-gray-100 placeholder:text-gray-300 dark:placeholder:text-gray-600 placeholder:font-medium placeholder:text-[11px] focus:border-[#1C6B53] dark:focus:border-emerald-500 focus:bg-white dark:focus:bg-gray-800 focus:ring-2 focus:ring-[#1C6B53]/20'
+                                  ? 'bg-white dark:bg-gray-800 border-2 border-[var(--brand-primary)] text-gray-900 dark:text-gray-100 font-black ring-2 ring-[var(--brand-glow)] shadow-xs'
+                                  : 'bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700/80 text-gray-800 dark:text-gray-100 placeholder:text-gray-300 dark:placeholder:text-gray-600 placeholder:font-medium placeholder:text-[11px] hover:border-gray-300 dark:hover:border-gray-600 focus:bg-white dark:focus:bg-gray-800 focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-glow)]'
                               }`}
                             />
                           </div>
@@ -5528,14 +5522,29 @@ export default function Dashboard() {
 
             {/* Team Average Row */}
             {!loading && (
-               <div className="grid gap-2 px-3 sm:px-5 py-3 sm:py-3.5 bg-emerald-50/50 dark:bg-emerald-950/25 border-t-2 border-emerald-500/20 dark:border-emerald-500/30 items-center font-bold rounded-b-2xl"
-                    style={{ gridTemplateColumns: `minmax(180px, 2.2fr) repeat(${activeCols.length}, minmax(105px, 1fr))` }}>
-                 <div className="text-xs font-black text-gray-800 dark:text-gray-200 pl-2 sm:pl-2.5 py-1 sticky left-0 bg-emerald-50/70 dark:bg-gray-850 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] flex items-center gap-2 rounded-l-xl sm:rounded-bl-2xl">
-                   <span className="w-2 h-2 rounded-full bg-[var(--brand-primary,#1C6B53)] dark:bg-emerald-400" />
-                   <span>{isCombinedCallCenter ? 'Call Center Combined Total / Avg' : 'Team Average'}</span>
+               <div 
+                 className="grid gap-2 px-3 sm:px-5 py-3 sm:py-3.5 border-t-2 border-gray-200/80 dark:border-gray-700/80 items-center font-bold rounded-b-2xl"
+                 style={{
+                   backgroundColor: 'var(--brand-bg-light)',
+                   gridTemplateColumns: `minmax(180px, 2.2fr) repeat(${activeCols.length}, minmax(105px, 1fr))`
+                 }}
+               >
+                 <div 
+                   style={{ backgroundColor: 'var(--brand-bg-light)' }}
+                   className="text-xs font-black text-gray-800 dark:text-gray-200 pl-3 sm:pl-4 py-1 sticky left-0 z-10 shadow-[3px_0_8px_-3px_rgba(0,0,0,0.06)] flex items-center gap-2 rounded-bl-2xl"
+                 >
+                   <span 
+                     style={{ backgroundColor: 'var(--brand-primary)' }} 
+                     className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" 
+                   />
+                   <span className="truncate">{isCombinedCallCenter ? 'Call Center Combined Total / Avg' : 'Team Average'}</span>
                  </div>
                  {activeCols.map(col => (
-                   <div key={col.id} className="text-center text-xs sm:text-[13px] font-black text-[var(--brand-primary,#1C6B53)] dark:text-emerald-400 tabular-nums px-1">
+                   <div 
+                     key={col.id} 
+                     style={{ color: 'var(--brand-primary)' }}
+                     className="text-center text-xs sm:text-[13px] font-black tabular-nums px-1"
+                   >
                      {calcAvg(col, rows)}
                    </div>
                  ))}
