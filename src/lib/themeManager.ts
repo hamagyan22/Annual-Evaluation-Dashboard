@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { db } from "@/lib/firebaseClient";
+import { doc, setDoc, onSnapshot } from "firebase/firestore";
 
 export interface ThemeConfig {
   id: string;
@@ -166,10 +168,10 @@ export const THEMES: ThemeConfig[] = [
   },
 ];
 
-export const DEFAULT_THEME_ID = "emerald";
+export const DEFAULT_THEME_ID = "ruby";
 
 export function getThemeById(id: string): ThemeConfig {
-  return THEMES.find((t) => t.id === id) || THEMES[0];
+  return THEMES.find((t) => t.id === id) || THEMES.find((t) => t.id === "ruby") || THEMES[0];
 }
 
 export function applyThemeToDocument(themeId: string) {
@@ -204,6 +206,18 @@ export function setAppTheme(themeId: string) {
   localStorage.setItem("app_color_theme", themeId);
   applyThemeToDocument(themeId);
   window.dispatchEvent(new CustomEvent("app-theme-changed", { detail: themeId }));
+
+  // Global Firestore persistence so the theme stays fixed permanently across all devices & users
+  try {
+    setDoc(doc(db, "system_config", "theme"), {
+      theme_id: themeId,
+      updated_at: new Date().toISOString()
+    }, { merge: true }).catch((err) => {
+      console.warn("Could not save theme to Firestore:", err);
+    });
+  } catch (err) {
+    console.warn("Firestore theme set warning:", err);
+  }
 }
 
 export function useAppTheme() {
@@ -222,9 +236,27 @@ export function useAppTheme() {
     window.addEventListener("app-theme-changed", handleThemeChange);
     window.addEventListener("storage", handleThemeChange);
 
+    // Real-time Firestore sync: ensures selected theme is fixed & live across all users
+    let unsubFirestore: (() => void) | null = null;
+    try {
+      unsubFirestore = onSnapshot(doc(db, "system_config", "theme"), (snap) => {
+        if (snap.exists()) {
+          const remoteTheme = snap.data()?.theme_id;
+          if (remoteTheme && remoteTheme !== localStorage.getItem("app_color_theme")) {
+            setThemeId(remoteTheme);
+            localStorage.setItem("app_color_theme", remoteTheme);
+            applyThemeToDocument(remoteTheme);
+          }
+        }
+      }, (err) => {
+        console.warn("Theme snapshot warning:", err);
+      });
+    } catch (e) {}
+
     return () => {
       window.removeEventListener("app-theme-changed", handleThemeChange);
       window.removeEventListener("storage", handleThemeChange);
+      if (unsubFirestore) unsubFirestore();
     };
   }, []);
 

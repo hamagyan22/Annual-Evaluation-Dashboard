@@ -2130,6 +2130,7 @@ function AgentDashboard({
 }
 
 export default function Dashboard() {
+  const { themeId } = useAppTheme();
   const [session, setSession] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const isAdmin = session?.email?.toLowerCase() === 'mohammed.dlshad0@gmail.com' || userProfile?.role === 'admin';

@@ -155,7 +155,6 @@ export const ThemeSelectorModal: React.FC<ThemeSelectorModalProps> = ({
           {/* Header */}
           <div className="px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <span>Color Theme</span>
-            <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500">English Only</span>
           </div>
 
           {/* Themes List */}

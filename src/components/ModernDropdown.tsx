@@ -79,7 +79,7 @@ export const ModernDropdown: React.FC<ModernDropdownProps> = ({
     switch (variant) {
       case "solid-green":
       case "theme":
-        return `${sizeClasses} bg-[#1C6B53] hover:bg-[#155a45] text-white shadow-xs border border-emerald-600/40`;
+        return `${sizeClasses} bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white shadow-xs border border-white/20`;
       case "tinted-green":
         return `${sizeClasses} bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-750 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 shadow-xs`;
       case "gray":
