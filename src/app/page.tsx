@@ -45,11 +45,11 @@ const DEFAULT_CHAT_COLUMNS_HISTORICAL: ColumnConfig[] = [
 ];
 
 const DEFAULT_OTHER_COLUMNS: ColumnConfig[] = [
-  { id: 'quality', label: 'Quality %', type: 'number', aggregation: 'average' },
-  { id: 'exam', label: 'Exam %', type: 'number', aggregation: 'average' },
-  { id: 'productivity', label: 'Prod %', type: 'number', aggregation: 'average' },
-  { id: 'aht', label: 'Aht S', type: 'time', aggregation: 'average' },
-  { id: 'hold', label: 'Hold S', type: 'time', aggregation: 'average' },
+  { id: 'quality', label: 'Quality', type: 'number', aggregation: 'average' },
+  { id: 'exam', label: 'Exam', type: 'number', aggregation: 'average' },
+  { id: 'productivity', label: 'Productivity', type: 'number', aggregation: 'average' },
+  { id: 'aht', label: 'AHT', type: 'time', aggregation: 'average' },
+  { id: 'hold', label: 'Hold', type: 'time', aggregation: 'average' },
   { id: 'wrapup', label: 'Wrapup', type: 'number', aggregation: 'average' },
   { id: 'handled', label: 'Handled', type: 'number', aggregation: 'sum' },
   { id: 'abandoned', label: 'Abandoned', type: 'number', aggregation: 'sum' },
@@ -75,6 +75,37 @@ function sortColumnsByOrder(cols: ColumnConfig[]) {
   });
 }
 
+function cleanColLabel(colId: string, rawLabel?: string): string {
+  const id = (colId || '').toLowerCase().trim();
+  const lbl = (rawLabel || '').trim();
+  if (id === 'quality' || lbl.toLowerCase() === 'quality %') return 'Quality';
+  if (id === 'exam' || lbl.toLowerCase() === 'exam %') return 'Exam';
+  if (id === 'productivity' || lbl.toLowerCase().includes('prod')) return 'Productivity';
+  if (id === 'aht' || lbl.toLowerCase().includes('aht s') || lbl.toLowerCase() === 'aht') return 'AHT';
+  if (id === 'art' || lbl.toLowerCase().includes('art s') || lbl.toLowerCase() === 'art') return 'ART';
+  if (id === 'hold' || lbl.toLowerCase().includes('hold s') || lbl.toLowerCase() === 'hold') return 'Hold';
+  if (id === 'wrapup' || lbl.toLowerCase().includes('wrapup')) return 'Wrapup';
+  if (id === 'handled' || lbl.toLowerCase() === 'handled') return 'Handled';
+  if (id === 'abandoned' || lbl.toLowerCase() === 'abandoned') return 'Abandoned';
+  if (id === 'call_handled' || lbl.toLowerCase() === 'call handled') return 'Call Handled';
+  if (id === 'chat_handled' || lbl.toLowerCase() === 'chat handled') return 'Chat Handled';
+  let res = lbl || colId;
+  if (res.endsWith(' %')) res = res.slice(0, -2).trim();
+  if (res.endsWith(' S')) res = res.slice(0, -2).trim();
+  return res;
+}
+
+function sanitizeCols(cols: ColumnConfig[]): ColumnConfig[] {
+  if (!cols) return [];
+  return cols.map(c => {
+    const label = cleanColLabel(c.id, c.label);
+    if (c.id === 'wrapup' || c.id?.toLowerCase().includes('wrapup') || label.toLowerCase().includes('wrapup')) {
+      return { ...c, label, type: 'number' as const, aggregation: c.aggregation || 'average' };
+    }
+    return { ...c, label };
+  });
+}
+
 function isFromMayOnwards(year: string | number, month: string): boolean {
   const y = parseInt(String(year)) || 2026;
   if (y > 2026) return true;
@@ -94,18 +125,11 @@ function getEffectiveColumns(
   year: string,
   baseCols?: ColumnConfig[]
 ): ColumnConfig[] {
-  const sanitizeCols = (cols: ColumnConfig[]) => cols.map(c => {
-    if (c.id === 'wrapup' || c.id?.toLowerCase().includes('wrapup') || c.label?.toLowerCase().includes('wrapup')) {
-      return { ...c, type: 'number' as const };
-    }
-    return c;
-  });
-
   if (team !== 'Mohammed Dlshad Team') {
     return sanitizeCols(baseCols && baseCols.length > 0 ? baseCols : DEFAULT_OTHER_COLUMNS);
   }
   const isMayPlus = isFromMayOnwards(year, month);
-  const srcCols = baseCols && baseCols.length > 0 ? baseCols : (isMayPlus ? DEFAULT_CHAT_COLUMNS : DEFAULT_CHAT_COLUMNS_HISTORICAL);
+  const srcCols = sanitizeCols(baseCols && baseCols.length > 0 ? baseCols : (isMayPlus ? DEFAULT_CHAT_COLUMNS : DEFAULT_CHAT_COLUMNS_HISTORICAL));
 
   // Chat Handled goes right before Exam for all months
   const existingChatHandled = srcCols.find(c => c.id === 'chat_handled');
@@ -422,7 +446,7 @@ const KPI_META: Record<string, { icon: any; color: string; bgLight: string; bgDa
     bgLight: 'bg-emerald-500/10', 
     bgDark: 'dark:bg-emerald-500/15',
     border: 'bg-emerald-500',
-    label: 'Quality Score'
+    label: 'Quality'
   },
   exam: { 
     icon: CheckCircle2, 
@@ -430,7 +454,7 @@ const KPI_META: Record<string, { icon: any; color: string; bgLight: string; bgDa
     bgLight: 'bg-blue-500/10', 
     bgDark: 'dark:bg-blue-500/15',
     border: 'bg-blue-500',
-    label: 'Assessment Exam'
+    label: 'Exam'
   },
   productivity: { 
     icon: TrendingUp, 
@@ -438,7 +462,7 @@ const KPI_META: Record<string, { icon: any; color: string; bgLight: string; bgDa
     bgLight: 'bg-purple-500/10', 
     bgDark: 'dark:bg-purple-500/15',
     border: 'bg-purple-500',
-    label: 'Productivity Rate'
+    label: 'Productivity'
   },
   aht: { 
     icon: Clock, 
@@ -446,7 +470,7 @@ const KPI_META: Record<string, { icon: any; color: string; bgLight: string; bgDa
     bgLight: 'bg-rose-500/10', 
     bgDark: 'dark:bg-rose-500/15',
     border: 'bg-rose-500',
-    label: 'Average Handling Time'
+    label: 'AHT'
   },
   hold: { 
     icon: PhoneOff, 
@@ -454,7 +478,7 @@ const KPI_META: Record<string, { icon: any; color: string; bgLight: string; bgDa
     bgLight: 'bg-cyan-500/10', 
     bgDark: 'dark:bg-cyan-500/15',
     border: 'bg-cyan-500',
-    label: 'Hold Duration'
+    label: 'Hold'
   },
   wrapup: { 
     icon: Activity, 
@@ -1212,16 +1236,7 @@ function AgentDashboard({
   };
 
   const getAgentColLabel = (col: any) => {
-    const id = (col.id || '').toLowerCase();
-    const lbl = (col.label || '').toLowerCase();
-    if (col.label && col.label.trim()) return col.label.trim();
-    if (id === 'aht' || lbl === 'aht') return 'AHT';
-    if (id === 'art' || lbl === 'art') return 'ART';
-    if (id === 'productivity' || lbl === 'productivity' || id.includes('prod') || lbl.includes('prod')) return 'Productivity';
-    if (id === 'wrapup' || lbl === 'wrapup' || id.includes('wrapup') || lbl.includes('wrapup')) return 'Wrapup Not Selected';
-    if (id === 'call_handled' || lbl === 'call handled') return 'Call Handled';
-    if (id === 'chat_handled' || lbl === 'chat handled') return 'Chat Handled';
-    return toTitleCase(col.id || '');
+    return cleanColLabel(col.id, col.label);
   };
 
   return (
@@ -2628,17 +2643,13 @@ export default function Dashboard() {
       const map: Record<string, ColumnConfig[]> = {};
       snap.docs.forEach(d => {
         const rawCols = d.data().columns || [];
-        const cols = rawCols.map((c: any) => {
-          if (c.id === 'wrapup' || c.id?.toLowerCase().includes('wrapup') || c.label?.toLowerCase().includes('wrapup')) {
-            return { ...c, type: 'number', aggregation: c.aggregation || 'average' };
-          }
-          return c;
-        });
-        map[d.id] = cols;
+        map[d.id] = sanitizeCols(rawCols);
       });
       for (const t of TEAMS) {
         if (!map[t] || map[t].length === 0) {
           map[t] = t === 'Mohammed Dlshad Team' ? DEFAULT_CHAT_COLUMNS : DEFAULT_OTHER_COLUMNS;
+        } else {
+          map[t] = sanitizeCols(map[t]);
         }
       }
       setColumnsMap(map);
@@ -3980,7 +3991,7 @@ export default function Dashboard() {
 
   const handleAddColumn = async () => {
     if (!newColLabel.trim()) return;
-    const trimmedLabel = newColLabel.trim();
+    const trimmedLabel = cleanColLabel("", newColLabel.trim());
     const newId = trimmedLabel.toLowerCase().replace(/[^a-z0-9]+/g, '_');
     const newCol: ColumnConfig = { id: newId, label: trimmedLabel, type: newColType, aggregation: newColAgg };
     
@@ -3988,9 +3999,10 @@ export default function Dashboard() {
       const targetTeams = manageColsTeam === 'ALL' ? TEAMS : [manageColsTeam as TeamName];
       const newMap = { ...columnsMap };
       for (const t of targetTeams) {
-        const currentCols = newMap[t] || [];
+        const fallback = t === 'Mohammed Dlshad Team' ? DEFAULT_CHAT_COLUMNS : DEFAULT_OTHER_COLUMNS;
+        const currentCols = (newMap[t] && newMap[t].length > 0) ? newMap[t] : fallback;
         if (!currentCols.some(c => c.id === newId)) {
-          const updatedCols = [...currentCols, newCol];
+          const updatedCols = sanitizeCols([...currentCols, newCol]);
           newMap[t] = updatedCols;
           await setDoc(doc(db, 'columns_config', t), { columns: updatedCols }, { merge: true });
         }
@@ -4006,24 +4018,25 @@ export default function Dashboard() {
 
   const handleEditColumnStart = (col: ColumnConfig) => {
     setEditingColId(col.id);
-    setEditColLabel(col.label);
+    setEditColLabel(cleanColLabel(col.id, col.label));
     setEditColType(col.type);
     setEditColAgg(col.aggregation);
   };
 
   const handleSaveColumn = async () => {
     if (!editingColId || !editColLabel.trim()) return;
-    const trimmedLabel = editColLabel.trim();
+    const trimmedLabel = cleanColLabel(editingColId, editColLabel.trim());
     try {
       const targetTeams = manageColsTeam === 'ALL' ? TEAMS : [manageColsTeam as TeamName];
       const newMap = { ...columnsMap };
       for (const t of targetTeams) {
-        const currentCols = newMap[t] || [];
-        const updatedCols = currentCols.map(c => 
+        const fallback = t === 'Mohammed Dlshad Team' ? DEFAULT_CHAT_COLUMNS : DEFAULT_OTHER_COLUMNS;
+        const currentCols = (newMap[t] && newMap[t].length > 0) ? newMap[t] : fallback;
+        const updatedCols = sanitizeCols(currentCols.map(c => 
           c.id === editingColId 
             ? { ...c, label: trimmedLabel, type: editColType, aggregation: editColAgg } 
             : c
-        );
+        ));
         newMap[t] = updatedCols;
         await setDoc(doc(db, 'columns_config', t), { columns: updatedCols }, { merge: true });
       }
@@ -4041,8 +4054,9 @@ export default function Dashboard() {
       const targetTeams = manageColsTeam === 'ALL' ? TEAMS : [manageColsTeam as TeamName];
       const newMap = { ...columnsMap };
       for (const t of targetTeams) {
-        const currentCols = newMap[t] || [];
-        const updatedCols = currentCols.filter(c => c.id !== colId);
+        const fallback = t === 'Mohammed Dlshad Team' ? DEFAULT_CHAT_COLUMNS : DEFAULT_OTHER_COLUMNS;
+        const currentCols = (newMap[t] && newMap[t].length > 0) ? newMap[t] : fallback;
+        const updatedCols = sanitizeCols(currentCols.filter(c => c.id !== colId));
         newMap[t] = updatedCols;
         await setDoc(doc(db, 'columns_config', t), { columns: updatedCols }, { merge: true });
       }
@@ -5070,8 +5084,8 @@ export default function Dashboard() {
                 const annualVal = calcYearTeamStat(col);
                 return (
                   <div key={col.id} className="bg-white/10 dark:bg-black/25 backdrop-blur-md rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 border border-white/10 flex flex-col justify-between hover:bg-white/15 transition shadow-sm">
-                    <div className="text-[10px] sm:text-[11px] font-bold tracking-wide text-white/90 truncate mb-1.5 sm:mb-2" title={col.label}>
-                      {col.label || col.id}
+                    <div className="text-[10px] sm:text-[11px] font-bold tracking-wide text-white/90 truncate mb-1.5 sm:mb-2" title={cleanColLabel(col.id, col.label)}>
+                      {cleanColLabel(col.id, col.label)}
                     </div>
                     <div className="text-lg sm:text-2xl font-black text-white tracking-tight leading-none">
                       {annualVal}
@@ -5133,8 +5147,8 @@ export default function Dashboard() {
                 <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 w-full relative z-10">
                   {(getEffectiveColumns('Ankido Buya Team', 'YEAR - AVG', selectedYear, columnsMap['Ankido Buya Team'] || DEFAULT_OTHER_COLUMNS)).slice(0, 8).map(col => (
                     <div key={col.id} className="p-2 sm:p-2.5 rounded-xl text-center bg-white/10 border border-white/10 backdrop-blur-md">
-                      <div className="text-[10px] font-bold truncate text-emerald-100/90" title={col.label}>
-                        {col.label || col.id}
+                      <div className="text-[10px] font-bold truncate text-emerald-100/90" title={cleanColLabel(col.id, col.label)}>
+                        {cleanColLabel(col.id, col.label)}
                       </div>
                       <div className="font-black text-xs sm:text-base mt-1 text-white tabular-nums">
                         {calcYearTeamStat(col)}
@@ -5184,8 +5198,8 @@ export default function Dashboard() {
                     <div className="grid grid-cols-4 gap-1.5 sm:gap-2 w-full mt-2">
                       {teamCols.slice(0, 8).map(col => (
                         <div key={col.id} className={`p-1.5 sm:p-2 rounded-xl text-center border ${isActive ? 'bg-white/10 border-white/10' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-100 dark:border-gray-700'}`}>
-                          <div className={`text-[9px] font-bold truncate ${isActive ? 'text-emerald-100/80' : 'text-gray-400'}`} title={col.label}>
-                            {col.label || col.id}
+                          <div className={`text-[9px] font-bold truncate ${isActive ? 'text-emerald-100/80' : 'text-gray-400'}`} title={cleanColLabel(col.id, col.label)}>
+                            {cleanColLabel(col.id, col.label)}
                           </div>
                           <div className="font-extrabold text-xs sm:text-sm mt-0.5">
                             {isActive ? calcYearTeamStat(col, teamName) : '-'}
@@ -5423,8 +5437,8 @@ export default function Dashboard() {
                 Agent
               </div>
               {activeCols.map(col => (
-                <div key={col.id} className="text-center font-extrabold text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider px-1 truncate" title={col.label}>
-                  {col.label || col.id}
+                <div key={col.id} className="text-center font-extrabold text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider px-1 truncate" title={cleanColLabel(col.id, col.label)}>
+                  {cleanColLabel(col.id, col.label)}
                 </div>
               ))}
             </div>
@@ -5618,7 +5632,7 @@ export default function Dashboard() {
                     return (
                       <tr key={col.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-850/50">
                         <td className="p-3">
-                          <span className="font-extrabold">{col.label || col.id}</span>
+                          <span className="font-extrabold">{cleanColLabel(col.id, col.label)}</span>
                           <span className="text-[10px] text-gray-400 ml-1.5 uppercase font-medium">({col.aggregation})</span>
                         </td>
                         <td className="p-3 text-center tabular-nums font-semibold text-gray-700 dark:text-gray-300">

@@ -4557,6 +4557,18 @@ export default function QualityDashboard({
                   </div>
                 </button>
 
+                {/* Back Button for Team Leader Viewers */}
+                {onBack && (
+                  <button
+                    onClick={onBack}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white bg-white hover:bg-gray-100/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
+                    title="Return to Main Dashboard"
+                  >
+                    <ArrowLeft size={14} />
+                    <span>Back</span>
+                  </button>
+                )}
+
                 {/* Sign Out (Logout) Button */}
                 <button
                   onClick={onLogout || onBack}
@@ -5236,16 +5248,31 @@ export default function QualityDashboard({
                 </button>
               )}
 
-              {/* Export PDF Button */}
-              <button
-                type="button"
-                onClick={handleExportPDF}
-                className="h-8 flex items-center gap-1.5 px-3 rounded-xl text-xs font-black text-[#1C6B53] dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800/60 transition shadow-2xs cursor-pointer active:scale-95 shrink-0"
-                title="Export Report as PDF"
-              >
-                <Download size={13} />
-                <span>Export PDF</span>
-              </button>
+              {/* Export PDF Button (QA & Admins only - hidden for TL per request) */}
+              {!isTlViewer && (
+                <button
+                  type="button"
+                  onClick={handleExportPDF}
+                  className="h-8 flex items-center gap-1.5 px-3 rounded-xl text-xs font-black text-[#1C6B53] dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800/60 transition shadow-2xs cursor-pointer active:scale-95 shrink-0"
+                  title="Export Report as PDF"
+                >
+                  <Download size={13} />
+                  <span>Export PDF</span>
+                </button>
+              )}
+
+              {/* Back to Performance Dashboard Button for Team Leaders */}
+              {isTlViewer && onBack && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white bg-white hover:bg-gray-100/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition shadow-2xs cursor-pointer active:scale-95 shrink-0"
+                  title="Back to Performance Dashboard"
+                >
+                  <ArrowLeft size={13} />
+                  <span>Back to Dashboard</span>
+                </button>
+              )}
 
               {/* Sync Completed Quality to TL & Agent Dashboards (QA & Admins only) */}
               {!isTlViewer && (
@@ -5253,10 +5280,13 @@ export default function QualityDashboard({
                   type="button"
                   onClick={() => handleSyncToMetrics()}
                   disabled={syncingMetrics}
+                  style={!unsyncedPreviousMonth && !(currentMonthSyncStatus.isMonthComplete && !currentMonthSyncStatus.isSynced) ? {
+                    backgroundColor: 'var(--brand-primary, #1C6B53)'
+                  } : undefined}
                   className={`h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-black text-white shadow-xs transition cursor-pointer active:scale-95 disabled:opacity-50 shrink-0 ${
                     unsyncedPreviousMonth || (currentMonthSyncStatus.isMonthComplete && !currentMonthSyncStatus.isSynced)
                       ? "bg-amber-600 hover:bg-amber-700 ring-2 ring-amber-400/50 animate-pulse"
-                      : "bg-[#1C6B53] hover:bg-[#155340]"
+                      : "hover:opacity-90"
                   }`}
                   title="Sync Completed Quality Scores to Dashboards"
                 >
@@ -5337,7 +5367,8 @@ export default function QualityDashboard({
                 type="button"
                 onClick={() => handleSyncToMetrics(currentMonthSyncStatus.monthIdx)}
                 disabled={syncingMetrics}
-                className="px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155340] shadow-xs flex items-center gap-2 transition cursor-pointer shrink-0 w-full md:w-auto justify-center"
+                style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
+                className="px-4 py-2 rounded-xl text-xs font-black text-white hover:opacity-90 shadow-xs flex items-center gap-2 transition cursor-pointer shrink-0 w-full md:w-auto justify-center"
               >
                 <RefreshCw size={12} className={syncingMetrics ? "animate-spin" : ""} />
                 <span>{syncingMetrics ? "Syncing..." : `Sync ${currentMonthSyncStatus.monthName} Now`}</span>
@@ -5482,7 +5513,10 @@ export default function QualityDashboard({
                           </div>
                         </th>
                       )}
-                      <th className="px-4 py-3 text-center min-w-[120px] bg-[#1C6B53] text-white font-black">
+                      <th 
+                        style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
+                        className="px-4 py-3 text-center min-w-[120px] text-white font-black"
+                      >
                         {selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Avg` : `Week ${selectedWeek} Score`}
                       </th>
                     </>
@@ -5490,7 +5524,7 @@ export default function QualityDashboard({
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800 bg-[#FDFCFB] dark:bg-gray-900">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-850 bg-white dark:bg-gray-900">
                 {currentCsrs.length === 0 ? (
                   <tr>
                     <td colSpan={isCallMon ? callMonColCount + 2 : isTrainer ? trainerColCount + 2 : isCShift ? 5 : isBonus ? bonusColCount + 1 : (standardColCount + (showOutbound ? 1 : 0) + 2)} className="p-8 text-center text-sm text-gray-400">
@@ -5551,21 +5585,32 @@ export default function QualityDashboard({
 
                       const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
                       return (
-                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`hover:bg-teal-50/30 dark:hover:bg-gray-800/40 transition ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : ""}`}>
-                          <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
+                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
+                          <td className={`sticky left-0 z-20 px-5 py-2.5 font-bold text-xs border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] transition-colors duration-150 ${
+                            isRowHighlighted
+                              ? "bg-indigo-50/60 dark:bg-indigo-950/30"
+                              : "bg-white dark:bg-gray-900 group-hover:bg-[var(--brand-bg-light)]/40 dark:group-hover:bg-gray-800/40"
+                          }`}>
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
                                 <img
                                   src={agentPhoto}
                                   alt={csrName}
-                                  className="w-7 h-7 rounded-full object-cover shadow-xs border border-teal-500/20 ring-1 ring-teal-500/20 shrink-0"
+                                  className="w-7 h-7 rounded-full object-cover shadow-xs border border-gray-200 dark:border-gray-700 shrink-0"
                                 />
                               ) : (
-                                <div className="w-7 h-7 rounded-full bg-teal-100 dark:bg-teal-950/60 text-[#0f766e] dark:text-teal-300 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                                <div 
+                                  style={{
+                                    backgroundColor: 'var(--brand-bg-light)',
+                                    color: 'var(--brand-primary)',
+                                    borderColor: 'var(--brand-border-light)'
+                                  }}
+                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover:scale-105"
+                                >
                                   {csrName.charAt(0).toUpperCase()}
                                 </div>
                               )}
-                              <span className="truncate max-w-[150px]" title={csrName}>{csrName}</span>
+                              <span className="truncate max-w-[150px] text-gray-800 dark:text-gray-100" title={csrName}>{csrName}</span>
                             </div>
                           </td>
 
@@ -5606,7 +5651,7 @@ export default function QualityDashboard({
                                     onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
                                     onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
                                     placeholder="-"
-                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                    className={`w-15 sm:w-16 h-8.5 text-center rounded-lg font-bold text-xs sm:text-sm outline-none transition-all shadow-2xs ${
                                       isTlViewer ? "cursor-default select-none " : ""
                                     }${
                                       isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
@@ -5617,7 +5662,7 @@ export default function QualityDashboard({
                                         ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
                                         : isBelow90
                                         ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
-                                        : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-teal-400 dark:hover:border-teal-500/70 focus:border-[#0f766e] dark:focus:border-teal-400 focus:ring-2 focus:ring-[#0f766e]/20 dark:focus:ring-teal-400/20"
+                                        : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-[var(--brand-primary)]/60 focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-glow)]"
                                     }`}
                                   />
                                   <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
@@ -5698,21 +5743,32 @@ export default function QualityDashboard({
                       const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
 
                       return (
-                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`hover:bg-teal-50/30 dark:hover:bg-gray-800/40 transition ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : ""}`}>
-                          <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
+                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
+                          <td className={`sticky left-0 z-20 px-5 py-2.5 font-bold text-xs border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] transition-colors duration-150 ${
+                            isRowHighlighted
+                              ? "bg-indigo-50/60 dark:bg-indigo-950/30"
+                              : "bg-white dark:bg-gray-900 group-hover:bg-[var(--brand-bg-light)]/40 dark:group-hover:bg-gray-800/40"
+                          }`}>
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
                                 <img
                                   src={agentPhoto}
                                   alt={csrName}
-                                  className="w-7 h-7 rounded-full object-cover shadow-xs border border-teal-500/20 ring-1 ring-teal-500/20 shrink-0"
+                                  className="w-7 h-7 rounded-full object-cover shadow-xs border border-gray-200 dark:border-gray-700 shrink-0"
                                 />
                               ) : (
-                                <div className="w-7 h-7 rounded-full bg-teal-100 dark:bg-teal-950/60 text-[#0d9488] dark:text-teal-300 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                                <div 
+                                  style={{
+                                    backgroundColor: 'var(--brand-bg-light)',
+                                    color: 'var(--brand-primary)',
+                                    borderColor: 'var(--brand-border-light)'
+                                  }}
+                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover:scale-105"
+                                >
                                   {csrName.charAt(0).toUpperCase()}
                                 </div>
                               )}
-                              <span className="truncate max-w-[150px]" title={csrName}>{csrName}</span>
+                              <span className="truncate max-w-[150px] text-gray-800 dark:text-gray-100" title={csrName}>{csrName}</span>
                             </div>
                           </td>
 
@@ -5752,7 +5808,7 @@ export default function QualityDashboard({
                                     onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
                                     onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
                                     placeholder="-"
-                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                    className={`w-15 sm:w-16 h-8.5 text-center rounded-lg font-bold text-xs sm:text-sm outline-none transition-all shadow-2xs ${
                                       isTlViewer ? "cursor-default select-none " : ""
                                     }${
                                       isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
@@ -5763,7 +5819,7 @@ export default function QualityDashboard({
                                         ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
                                         : isBelow90
                                         ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
-                                        : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-teal-400 dark:hover:border-teal-500/70 focus:border-[#0d9488] dark:focus:border-teal-400 focus:ring-2 focus:ring-[#0d9488]/20 dark:focus:ring-teal-400/20"
+                                        : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-[var(--brand-primary)]/60 focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-glow)]"
                                     }`}
                                   />
 
@@ -5822,21 +5878,32 @@ export default function QualityDashboard({
                     if (isCShift) {
                       const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
                       return (
-                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`hover:bg-teal-50/30 dark:hover:bg-gray-800/40 transition ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : ""}`}>
-                          <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
+                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
+                          <td className={`sticky left-0 z-20 px-5 py-2.5 font-bold text-xs border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] transition-colors duration-150 ${
+                            isRowHighlighted
+                              ? "bg-indigo-50/60 dark:bg-indigo-950/30"
+                              : "bg-white dark:bg-gray-900 group-hover:bg-[var(--brand-bg-light)]/40 dark:group-hover:bg-gray-800/40"
+                          }`}>
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
                                 <img
                                   src={agentPhoto}
                                   alt={csrName}
-                                  className="w-7 h-7 rounded-full object-cover shadow-xs border border-teal-500/20 ring-1 ring-teal-500/20 shrink-0"
+                                  className="w-7 h-7 rounded-full object-cover shadow-xs border border-gray-200 dark:border-gray-700 shrink-0"
                                 />
                               ) : (
-                                <div className="w-7 h-7 rounded-full bg-teal-100 dark:bg-teal-950/60 text-[#00A991] dark:text-teal-300 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                                <div 
+                                  style={{
+                                    backgroundColor: 'var(--brand-bg-light)',
+                                    color: 'var(--brand-primary)',
+                                    borderColor: 'var(--brand-border-light)'
+                                  }}
+                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover:scale-105"
+                                >
                                   {csrName.charAt(0).toUpperCase()}
                                 </div>
                               )}
-                              <span className="truncate max-w-[150px]" title={csrName}>{csrName}</span>
+                              <span className="truncate max-w-[150px] text-gray-800 dark:text-gray-100" title={csrName}>{csrName}</span>
                             </div>
                           </td>
 
@@ -5876,7 +5943,7 @@ export default function QualityDashboard({
                                     onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
                                     onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
                                     placeholder="-"
-                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                    className={`w-15 sm:w-16 h-8.5 text-center rounded-lg font-bold text-xs sm:text-sm outline-none transition-all shadow-2xs ${
                                       isTlViewer ? "cursor-default select-none " : ""
                                     }${
                                       isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
@@ -5887,7 +5954,7 @@ export default function QualityDashboard({
                                         ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
                                         : isBelow90
                                         ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
-                                        : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-teal-400 dark:hover:border-teal-500/70 focus:border-[#00A991] dark:focus:border-teal-400 focus:ring-2 focus:ring-[#00A991]/20 dark:focus:ring-teal-400/20"
+                                        : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-[var(--brand-primary)]/60 focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-glow)]"
                                     }`}
                                   />
 
@@ -5964,22 +6031,33 @@ export default function QualityDashboard({
                       const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
 
                       return (
-                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`hover:bg-emerald-50/30 dark:hover:bg-gray-800/40 transition ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : ""}`}>
+                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
                           {/* Sticky CSR Name with Real Profile Photo if uploaded */}
-                          <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
+                          <td className={`sticky left-0 z-20 px-5 py-2.5 font-bold text-xs border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] transition-colors duration-150 ${
+                            isRowHighlighted
+                              ? "bg-indigo-50/60 dark:bg-indigo-950/30"
+                              : "bg-white dark:bg-gray-900 group-hover:bg-[var(--brand-bg-light)]/40 dark:group-hover:bg-gray-800/40"
+                          }`}>
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
                                 <img
                                   src={agentPhoto}
                                   alt={csrName}
-                                  className="w-7 h-7 rounded-full object-cover shadow-xs border border-emerald-500/20 ring-1 ring-emerald-500/20 shrink-0"
+                                  className="w-7 h-7 rounded-full object-cover shadow-xs border border-gray-200 dark:border-gray-700 shrink-0"
                                 />
                               ) : (
-                                <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-[#00A991] dark:text-emerald-300 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                                <div 
+                                  style={{
+                                    backgroundColor: 'var(--brand-bg-light)',
+                                    color: 'var(--brand-primary)',
+                                    borderColor: 'var(--brand-border-light)'
+                                  }}
+                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover:scale-105"
+                                >
                                   {csrName.charAt(0).toUpperCase()}
                                 </div>
                               )}
-                              <span className="truncate max-w-[150px]" title={csrName}>{csrName}</span>
+                              <span className="truncate max-w-[150px] text-gray-800 dark:text-gray-100" title={csrName}>{csrName}</span>
                             </div>
                           </td>
 
@@ -6020,7 +6098,7 @@ export default function QualityDashboard({
                                     onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
                                     onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
                                     placeholder="-"
-                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                    className={`w-15 sm:w-16 h-8.5 text-center rounded-lg font-bold text-xs sm:text-sm outline-none transition-all shadow-2xs ${
                                       isTlViewer ? "cursor-default select-none " : ""
                                     }${
                                       isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
@@ -6031,7 +6109,7 @@ export default function QualityDashboard({
                                         ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
                                         : isBelow90
                                         ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
-                                        : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-teal-400 dark:hover:border-teal-500/70 focus:border-[#00A991] dark:focus:border-teal-400 focus:ring-2 focus:ring-[#00A991]/20 dark:focus:ring-teal-400/20"
+                                        : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-[var(--brand-primary)]/60 focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-glow)]"
                                     }`}
                                   />
                                   <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
@@ -6089,22 +6167,33 @@ export default function QualityDashboard({
 
                     const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
                     return (
-                      <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`hover:bg-emerald-50/30 dark:hover:bg-gray-800/40 transition ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : ""}`}>
+                      <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
                         {/* Sticky CSR Name with Real Profile Photo if uploaded */}
-                        <td className="sticky left-0 bg-white dark:bg-gray-900 z-20 px-5 py-3 font-bold text-xs shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 dark:border-gray-800">
+                        <td className={`sticky left-0 z-20 px-5 py-2.5 font-bold text-xs border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] transition-colors duration-150 ${
+                          isRowHighlighted
+                            ? "bg-indigo-50/60 dark:bg-indigo-950/30"
+                            : "bg-white dark:bg-gray-900 group-hover:bg-[var(--brand-bg-light)]/40 dark:group-hover:bg-gray-800/40"
+                        }`}>
                           <div className="flex items-center gap-2.5">
                             {agentPhoto ? (
                               <img
                                 src={agentPhoto}
                                 alt={csrName}
-                                className="w-7 h-7 rounded-full object-cover shadow-xs border border-emerald-500/20 ring-1 ring-emerald-500/20 shrink-0"
+                                className="w-7 h-7 rounded-full object-cover shadow-xs border border-gray-200 dark:border-gray-700 shrink-0"
                               />
                             ) : (
-                              <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                              <div 
+                                style={{
+                                  backgroundColor: 'var(--brand-bg-light)',
+                                  color: 'var(--brand-primary)',
+                                  borderColor: 'var(--brand-border-light)'
+                                }}
+                                className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover:scale-105"
+                              >
                                 {csrName.charAt(0).toUpperCase()}
                               </div>
                             )}
-                            <span className="truncate max-w-[150px]" title={csrName}>{csrName}</span>
+                            <span className="truncate max-w-[150px] text-gray-800 dark:text-gray-100" title={csrName}>{csrName}</span>
                           </div>
                         </td>
 
@@ -6163,7 +6252,7 @@ export default function QualityDashboard({
                                     e.target.select();
                                   }}
                                   placeholder="-"
-                                  className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
+                                  className={`w-15 sm:w-16 h-8.5 text-center rounded-lg font-bold text-xs sm:text-sm outline-none transition-all shadow-2xs ${
                                     isTlViewer ? "cursor-default select-none " : (unsyncedPreviousMonth ? "cursor-not-allowed opacity-75 " : "")
                                   }${
                                     isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
@@ -6174,7 +6263,7 @@ export default function QualityDashboard({
                                       ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
                                       : isBelow90
                                       ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
-                                      : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-emerald-400 dark:hover:border-emerald-500/70 focus:border-[#1C6B53] dark:focus:border-emerald-400 focus:ring-2 focus:ring-[#1C6B53]/20 dark:focus:ring-emerald-400/20"
+                                      : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-[var(--brand-primary)]/60 focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-glow)]"
                                   }`}
                                 />
 
@@ -6319,13 +6408,18 @@ export default function QualityDashboard({
                             const numAvg = parseFloat(displayVal);
                             const isLowAvg = !isNaN(numAvg) && numAvg < 90;
                             return (
-                              <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-black shadow-2xs ${
+                              <span 
+                                style={displayVal !== "-" && displayVal !== "V" && !isLowAvg ? {
+                                  color: 'var(--brand-primary)',
+                                  borderColor: 'var(--brand-border-light)'
+                                } : undefined}
+                                className={`inline-block px-3 py-1.5 rounded-lg text-xs font-black shadow-2xs ${
                                 displayVal === "V"
                                   ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300"
                                   : isLowAvg
                                   ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
                                   : displayVal !== "-"
-                                  ? "bg-white dark:bg-gray-800 text-[#1C6B53] dark:text-emerald-300 border border-emerald-500/20"
+                                  ? "bg-white dark:bg-gray-800 border"
                                   : "text-gray-300 dark:text-gray-600 font-normal"
                               }`}>
                                 {displayVal !== "-" && displayVal !== "V" ? `${displayVal}%` : displayVal}
@@ -6340,8 +6434,20 @@ export default function QualityDashboard({
 
                 {/* Bottom Team Average Row */}
                 {currentCsrs.length > 0 && (
-                  <tr className={`border-t-2 font-black text-xs ${isTrainer ? "bg-teal-50/80 dark:bg-teal-950/60 border-[#0d9488]/30" : "bg-emerald-50/80 dark:bg-emerald-950/60 border-[#1C6B53]/30"}`}>
-                    <td className={`sticky left-0 z-20 px-5 py-3.5 font-black shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] ${isTrainer ? "bg-teal-50 dark:bg-teal-950 text-[#0d9488] dark:text-teal-300" : "bg-emerald-50 dark:bg-emerald-950 text-[#1C6B53] dark:text-emerald-300"}`}>
+                  <tr 
+                    style={{
+                      backgroundColor: 'var(--brand-bg-light)',
+                      borderTopColor: 'var(--brand-border-light)'
+                    }}
+                    className="border-t-2 font-black text-xs"
+                  >
+                    <td 
+                      style={{
+                        backgroundColor: 'var(--brand-bg-light)',
+                        color: 'var(--brand-primary)'
+                      }}
+                      className="sticky left-0 z-20 px-5 py-3 font-black shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)]"
+                    >
                       Team Average
                     </td>
 
@@ -6515,7 +6621,11 @@ export default function QualityDashboard({
                           });
                           const colAvg = nums.length > 0 ? (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1) : "-";
                           return (
-                            <td key={cNum} className="p-2 text-center font-black text-[#1C6B53] dark:text-emerald-300">
+                            <td 
+                              key={cNum} 
+                              style={{ color: 'var(--brand-primary)' }}
+                              className="p-2 text-center font-black"
+                            >
                               {colAvg !== "-" ? `${colAvg}%` : "-"}
                             </td>
                           );
@@ -6571,7 +6681,13 @@ export default function QualityDashboard({
                               : "-";
                           }
                           return (
-                            <td className="p-2 text-center font-black text-sm bg-emerald-200/60 dark:bg-emerald-900/60 text-[#1C6B53] dark:text-emerald-300">
+                            <td 
+                              style={{
+                                backgroundColor: 'var(--brand-primary)',
+                                color: '#ffffff'
+                              }}
+                              className="p-2 text-center font-black text-sm"
+                            >
                               {totalAvg !== "-" ? `${totalAvg}%` : "-"}
                             </td>
                           );
