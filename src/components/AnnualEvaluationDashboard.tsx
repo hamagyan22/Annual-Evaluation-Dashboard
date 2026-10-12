@@ -12,6 +12,7 @@ import {
   Clock, Eye, Lock, MessageSquare
 } from "lucide-react";
 import { getCanonicalAgentName } from "@/lib/canonicalAgents";
+import { isMemberActiveInPeriod } from "@/lib/companyRoster";
 import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 
 export interface AnnualEvaluationDashboardProps {
@@ -261,7 +262,7 @@ export default function AnnualEvaluationDashboard({
             const k = normalizeAgentName(m.agent_name);
             const existing = map.get(k);
             if (existing) {
-              map.set(k, { ...existing, id: m.id, team: m.team || existing.team });
+              map.set(k, { ...existing, ...m, id: m.id, team: m.team || existing.team });
             }
           });
           return Array.from(map.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
@@ -353,6 +354,7 @@ export default function AnnualEvaluationDashboard({
         if (existing) {
           map.set(key, {
             ...existing,
+            ...m,
             id: m.id || existing.id,
             team: m.team || existing.team
           });
@@ -363,18 +365,19 @@ export default function AnnualEvaluationDashboard({
     return Array.from(map.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
   }, [allMembers, internalMembers]);
 
-  // Team counts for the 3 tabs (Younis: 12, Ankido: 13, Mohammed: 13)
+  // Team counts for the 3 tabs (Younis, Ankido, Mohammed)
   const teamCounts = useMemo(() => {
+    const activeMembers = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, selectedPeriod === "Semi-Annual" ? "H1" : "YEAR - AVG", String(selectedYear)));
     return {
-      Younis: effectiveAllMembers.filter(m => (m.team || "").toLowerCase().includes("younis")).length,
-      Ankido: effectiveAllMembers.filter(m => (m.team || "").toLowerCase().includes("ankido")).length,
-      Mohammed: effectiveAllMembers.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad")).length,
+      Younis: activeMembers.filter(m => (m.team || "").toLowerCase().includes("younis")).length,
+      Ankido: activeMembers.filter(m => (m.team || "").toLowerCase().includes("ankido")).length,
+      Mohammed: activeMembers.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad")).length,
     };
-  }, [effectiveAllMembers]);
+  }, [effectiveAllMembers, selectedPeriod, selectedYear]);
 
   // Filtered members list: Younis Kamal, Ankido Buya, or Mohammed Dlshad (No "All" tab)
   const filteredMembers = useMemo(() => {
-    let list = [...effectiveAllMembers];
+    let list = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, selectedPeriod === "Semi-Annual" ? "H1" : "YEAR - AVG", String(selectedYear)));
     
     if (isAgent) {
       const myName = normalizeAgentName(userProfile?.name || userProfile?.agent_name || "");
@@ -386,7 +389,7 @@ export default function AnnualEvaluationDashboard({
       return list.slice(0, 1);
     }
 
-    // Search Term Filter: When searching, search across all 38 agents
+    // Search Term Filter: When searching, search across all active agents
     if (employeeSearchTerm.trim()) {
       const term = normalizeAgentName(employeeSearchTerm);
       return list.filter(m => 
@@ -406,7 +409,7 @@ export default function AnnualEvaluationDashboard({
     }
     
     return list.sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
-  }, [effectiveAllMembers, employeeSearchTerm, teamTabFilter, isAgent, userProfile]);
+  }, [effectiveAllMembers, employeeSearchTerm, teamTabFilter, isAgent, userProfile, selectedPeriod, selectedYear]);
 
   // Current selected member object
   const currentMember = useMemo(() => {

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
-import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal, BarChart3, ClipboardCheck, RefreshCw } from "lucide-react";
+import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal, BarChart3, ClipboardCheck, RefreshCw, RotateCcw } from "lucide-react";
 import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesAndSeconds, getTopStarMotivationalQuote } from "@/lib/topStarUtils";
 import { DEFAULT_COMPANY_EMPLOYEES, isMemberActiveInPeriod, getNextMonthAndYear, getCurrentEffectiveMonth } from "@/lib/companyRoster";
 import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
@@ -2664,7 +2664,15 @@ export default function Dashboard() {
           if (rawName) {
             const canonName = getCanonicalAgentName(rawName);
             const k = canonName.toLowerCase().trim();
-            map.set(k, { id: d.id, ...map.get(k), ...data, agent_name: canonName, name: canonName });
+            const existing = map.get(k) || {};
+            map.set(k, {
+              ...existing,
+              ...data,
+              id: d.id,
+              agent_name: canonName,
+              name: canonName,
+              team: data.team || existing.team || ""
+            });
           }
         });
         return Array.from(map.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
@@ -2742,7 +2750,15 @@ export default function Dashboard() {
           if (rawName) {
             const canonName = getCanonicalAgentName(rawName);
             const k = canonName.toLowerCase().trim();
-            map.set(k, { id: d.id, ...map.get(k), ...data, agent_name: canonName, name: canonName });
+            const existing = map.get(k) || {};
+            map.set(k, {
+              ...existing,
+              ...data,
+              id: d.id,
+              agent_name: canonName,
+              name: canonName,
+              team: data.team || existing.team || ""
+            });
           }
         });
         return Array.from(map.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
@@ -3426,20 +3442,43 @@ export default function Dashboard() {
           getDocs(query(collection(db, 'ankido_metrics'), where('year', '==', selectedYear))).catch(() => null)
         ]);
 
-        const younisRoster = (younisMembersSnap && younisMembersSnap.docs.length > 0)
-          ? (younisMembersSnap.docs.map(d => {
-              const data = d.data();
-              const canon = getCanonicalAgentName(data.agent_name || data.name || "");
-              return { id: d.id, ...data, agent_name: canon, name: canon, team: 'Younis Kamal Team' };
-            }) as any[])
-          : (defaultYounis as any[]);
-        const ankidoRoster = (ankidoMembersSnap && ankidoMembersSnap.docs.length > 0)
-          ? (ankidoMembersSnap.docs.map(d => {
-              const data = d.data();
-              const canon = getCanonicalAgentName(data.agent_name || data.name || "");
-              return { id: d.id, ...data, agent_name: canon, name: canon, team: 'Ankido Buya Team' };
-            }) as any[])
-          : (defaultAnkido as any[]);
+        const younisRosterMap = new Map<string, any>();
+        defaultYounis.forEach(m => {
+          const c = getCanonicalAgentName(m.agent_name);
+          younisRosterMap.set(c.toLowerCase().trim(), { ...m, agent_name: c, name: c });
+        });
+        if (younisMembersSnap && younisMembersSnap.docs.length > 0) {
+          younisMembersSnap.docs.forEach(d => {
+            const data = d.data();
+            const raw = (data.agent_name || data.name || "").trim();
+            if (raw) {
+              const c = getCanonicalAgentName(raw);
+              const k = c.toLowerCase().trim();
+              const existing = younisRosterMap.get(k) || {};
+              younisRosterMap.set(k, { ...existing, ...data, id: d.id, agent_name: c, name: c, team: 'Younis Kamal Team' });
+            }
+          });
+        }
+        const younisRoster = Array.from(younisRosterMap.values());
+
+        const ankidoRosterMap = new Map<string, any>();
+        defaultAnkido.forEach(m => {
+          const c = getCanonicalAgentName(m.agent_name);
+          ankidoRosterMap.set(c.toLowerCase().trim(), { ...m, agent_name: c, name: c });
+        });
+        if (ankidoMembersSnap && ankidoMembersSnap.docs.length > 0) {
+          ankidoMembersSnap.docs.forEach(d => {
+            const data = d.data();
+            const raw = (data.agent_name || data.name || "").trim();
+            if (raw) {
+              const c = getCanonicalAgentName(raw);
+              const k = c.toLowerCase().trim();
+              const existing = ankidoRosterMap.get(k) || {};
+              ankidoRosterMap.set(k, { ...existing, ...data, id: d.id, agent_name: c, name: c, team: 'Ankido Buya Team' });
+            }
+          });
+        }
+        const ankidoRoster = Array.from(ankidoRosterMap.values());
         const roster = [...younisRoster, ...ankidoRoster].sort((a: any, b: any) => (a.agent_name > b.agent_name ? 1 : -1));
 
         const younisNames = new Set(younisRoster.map((d: any) => getCanonicalAgentName(d.agent_name || "")));
@@ -3576,13 +3615,31 @@ export default function Dashboard() {
         getDocs(query(collection(db, tableName), where('team', '==', selectedTeam), where('year', '==', selectedYear))).catch(() => null)
       ]);
 
-      const roster = (membersSnap && membersSnap.docs.length > 0)
-        ? (membersSnap.docs.map(d => {
-            const data = d.data();
-            const canon = getCanonicalAgentName(data.agent_name || data.name || "");
-            return { id: d.id, ...data, agent_name: canon, name: canon };
-          }) as any[]).sort((a, b) => (a.agent_name > b.agent_name ? 1 : -1))
-        : defaultRoster;
+      const memberMap = new Map<string, any>();
+      defaultRoster.forEach(m => {
+        const canon = getCanonicalAgentName(m.agent_name);
+        memberMap.set(canon.toLowerCase().trim(), { ...m, agent_name: canon, name: canon });
+      });
+      if (membersSnap && membersSnap.docs.length > 0) {
+        membersSnap.docs.forEach(d => {
+          const data = d.data();
+          const rawName = (data.agent_name || data.name || "").trim();
+          if (rawName) {
+            const canon = getCanonicalAgentName(rawName);
+            const k = canon.toLowerCase().trim();
+            const existing = memberMap.get(k) || {};
+            memberMap.set(k, {
+              ...existing,
+              ...data,
+              id: d.id,
+              agent_name: canon,
+              name: canon,
+              team: data.team || existing.team || selectedTeam
+            });
+          }
+        });
+      }
+      const roster = Array.from(memberMap.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
 
       const rosterNames = new Set(roster.map(d => getCanonicalAgentName(d.agent_name || "")));
       const metricsMap = new Map<string, any>();
@@ -3794,14 +3851,45 @@ export default function Dashboard() {
       const resYear = deleteTiming === "next" ? nextEffective.year : curEffective.year;
       const nowIso = new Date().toISOString();
 
-      // Soft delete in team_members: marks resigned from resMonth/resYear onwards (safe merge)
-      await setDoc(doc(db, 'team_members', deleteTarget.memberId), {
-        is_active: false,
-        is_deleted: true,
-        resigned_month: resMonth,
-        resigned_year: resYear,
-        deleted_at: nowIso
-      }, { merge: true });
+      // Soft delete in team_members: marks resigned from resMonth/resYear onwards
+      // Query all team_members documents to locate matching doc by ID or canonical name
+      const allMembersSnap = await getDocs(collection(db, 'team_members'));
+      let matchedCount = 0;
+      for (const mDoc of allMembersSnap.docs) {
+        const mData = mDoc.data();
+        const mName = (mData.agent_name || mData.name || "").trim();
+        const isTargetDoc = mDoc.id === deleteTarget.memberId ||
+                            isSameAgent(mName, deleteTarget.name) ||
+                            getCanonicalAgentName(mName).toLowerCase() === getCanonicalAgentName(deleteTarget.name).toLowerCase();
+
+        if (isTargetDoc) {
+          matchedCount++;
+          await setDoc(mDoc.ref, {
+            agent_name: deleteTarget.name,
+            name: deleteTarget.name,
+            team: deleteTarget.team || mData.team || "",
+            is_active: false,
+            is_deleted: true,
+            resigned_month: resMonth,
+            resigned_year: resYear,
+            deleted_at: nowIso
+          }, { merge: true });
+        }
+      }
+
+      // If no existing document matched by ID or name, create with memberId
+      if (matchedCount === 0) {
+        await setDoc(doc(db, 'team_members', deleteTarget.memberId), {
+          agent_name: deleteTarget.name,
+          name: deleteTarget.name,
+          team: deleteTarget.team,
+          is_active: false,
+          is_deleted: true,
+          resigned_month: resMonth,
+          resigned_year: resYear,
+          deleted_at: nowIso
+        }, { merge: true });
+      }
 
       // Deactivate agent in users collection if present
       try {
@@ -3851,6 +3939,41 @@ export default function Dashboard() {
     } finally {
       setIsDeletingMember(false);
       setDeleteTarget(null);
+    }
+  };
+
+  const handleRestoreMember = async (member: any) => {
+    try {
+      const allMembersSnap = await getDocs(collection(db, 'team_members'));
+      let matched = false;
+      for (const mDoc of allMembersSnap.docs) {
+        const mData = mDoc.data();
+        const mName = (mData.agent_name || mData.name || "").trim();
+        if (mDoc.id === member.id || isSameAgent(mName, member.agent_name) || getCanonicalAgentName(mName).toLowerCase() === getCanonicalAgentName(member.agent_name).toLowerCase()) {
+          matched = true;
+          await updateDoc(mDoc.ref, {
+            is_active: true,
+            is_deleted: false,
+            resigned_month: null,
+            resigned_year: null,
+            restored_at: new Date().toISOString()
+          });
+        }
+      }
+      if (!matched && member.id) {
+        await setDoc(doc(db, 'team_members', member.id), {
+          is_active: true,
+          is_deleted: false,
+          resigned_month: null,
+          resigned_year: null,
+          restored_at: new Date().toISOString()
+        }, { merge: true });
+      }
+      teamDataCacheRef.current = {};
+      fetchAllMembers();
+      fetchData(true);
+    } catch (err: any) {
+      setErrorMsg(`Failed to restore member: ${err.message}`);
     }
   };
 
@@ -4690,6 +4813,9 @@ export default function Dashboard() {
       ? allMembers.filter(m => m.team === userProfile.team)
       : allMembers;
 
+    const activeDisplayedMembers = displayedMembers.filter(m => !m.is_deleted && m.is_active !== false);
+    const resignedDisplayedMembers = displayedMembers.filter(m => m.is_deleted === true || m.is_active === false);
+
     const activeCols = isCombinedCallCenter
       ? getEffectiveColumns('Ankido Buya Team', selectedMonth, selectedYear, columnsMap['Ankido Buya Team'] || columnsMap['Younis Kamal Team'] || DEFAULT_OTHER_COLUMNS)
       : getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
@@ -5523,8 +5649,8 @@ export default function Dashboard() {
                       {userProfile?.role === 'tl' ? `${userProfile?.team?.replace(' Team', '') || 'My Team'} Agents` : 'Agents'}
                     </h3>
                   </div>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                    {displayedMembers.length} Agents
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300">
+                    {activeDisplayedMembers.length} Active Agents
                   </span>
                 </div>
 
@@ -5559,8 +5685,8 @@ export default function Dashboard() {
                 </button>
 
                 <div className="flex-1 overflow-y-auto overscroll-contain flex flex-col gap-2 pr-1">
-                  {displayedMembers.length === 0 && <div className="text-xs text-gray-400 text-center mt-6">No agents found in this team.</div>}
-                  {displayedMembers.map((member) => (
+                  {activeDisplayedMembers.length === 0 && <div className="text-xs text-gray-400 text-center mt-6">No active agents found in this team.</div>}
+                  {activeDisplayedMembers.map((member) => (
                     <div key={member.id} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-2.5 sm:p-3 flex justify-between items-center shadow-sm">
                       
                       {editingMemberId === member.id ? (
@@ -5604,6 +5730,43 @@ export default function Dashboard() {
                       )}
                     </div>
                   ))}
+
+                  {resignedDisplayedMembers.length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Former / Resigned Agents ({resignedDisplayedMembers.length})
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {resignedDisplayedMembers.map((member) => (
+                          <div key={member.id} className="bg-gray-50/80 dark:bg-gray-800/50 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-2.5 sm:p-3 flex justify-between items-center opacity-85 hover:opacity-100 transition">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-300 truncate">
+                                {member.agent_name}
+                              </span>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                Resigned: {member.resigned_month || 'N/A'} {member.resigned_year || '2026'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                                {member.team.replace(' Team', '')}
+                              </span>
+                              <button
+                                onClick={() => handleRestoreMember(member)}
+                                className="text-xs font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition cursor-pointer"
+                                title="Restore / Re-activate Agent"
+                              >
+                                <RotateCcw size={12} />
+                                <span>Restore</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
