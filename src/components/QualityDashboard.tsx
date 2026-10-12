@@ -5585,11 +5585,11 @@ export default function QualityDashboard({
 
                       const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
                       return (
-                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
+                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group/row transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
                           <td className={`sticky left-0 z-20 px-5 py-2.5 font-bold text-xs border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] transition-colors duration-150 ${
                             isRowHighlighted
                               ? "bg-indigo-50/60 dark:bg-indigo-950/30"
-                              : "bg-white dark:bg-gray-900 group-hover:bg-[var(--brand-bg-light)]/40 dark:group-hover:bg-gray-800/40"
+                              : "bg-white dark:bg-gray-900 group-hover/row:bg-[var(--brand-bg-light)]/40 dark:group-hover/row:bg-gray-800/40"
                           }`}>
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
@@ -5605,7 +5605,7 @@ export default function QualityDashboard({
                                     color: 'var(--brand-primary)',
                                     borderColor: 'var(--brand-border-light)'
                                   }}
-                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover:scale-105"
+                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105"
                                 >
                                   {csrName.charAt(0).toUpperCase()}
                                 </div>
@@ -5633,7 +5633,7 @@ export default function QualityDashboard({
 
                             return (
                               <td key={cNum} className="p-2 text-center">
-                                <div className="relative inline-block group">
+                                <div className="relative inline-block group/cell">
                                   {hasNote && (
                                     <div
                                       onClick={() => handleOpenNote(csrName, key, cellLabel)}
@@ -5651,7 +5651,7 @@ export default function QualityDashboard({
                                     onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
                                     onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
                                     placeholder="-"
-                                    className={`w-15 sm:w-16 h-8.5 text-center rounded-lg font-bold text-xs sm:text-sm outline-none transition-all shadow-2xs ${
+                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
                                       isTlViewer ? "cursor-default select-none " : ""
                                     }${
                                       isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
@@ -5683,8 +5683,8 @@ export default function QualityDashboard({
                                       onClick={() => handleOpenNote(csrName, key, cellLabel)}
                                       className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                                         hasNote
-                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
-                                          : "opacity-0 group-hover:opacity-100 bg-gray-100 hover:bg-[#0f766e] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
+                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 opacity-100"
+                                          : "opacity-0 group-hover/cell:opacity-100 bg-gray-100 hover:bg-[#0f766e] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
                                       }`}
                                       title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
                                     >
@@ -5743,11 +5743,11 @@ export default function QualityDashboard({
                       const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
 
                       return (
-                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
+                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group/row transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
                           <td className={`sticky left-0 z-20 px-5 py-2.5 font-bold text-xs border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] transition-colors duration-150 ${
                             isRowHighlighted
                               ? "bg-indigo-50/60 dark:bg-indigo-950/30"
-                              : "bg-white dark:bg-gray-900 group-hover:bg-[var(--brand-bg-light)]/40 dark:group-hover:bg-gray-800/40"
+                              : "bg-white dark:bg-gray-900 group-hover/row:bg-[var(--brand-bg-light)]/40 dark:group-hover/row:bg-gray-800/40"
                           }`}>
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
@@ -5763,7 +5763,7 @@ export default function QualityDashboard({
                                     color: 'var(--brand-primary)',
                                     borderColor: 'var(--brand-border-light)'
                                   }}
-                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover:scale-105"
+                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105"
                                 >
                                   {csrName.charAt(0).toUpperCase()}
                                 </div>
@@ -5789,7 +5789,7 @@ export default function QualityDashboard({
 
                             return (
                               <td key={cNum} className="p-2 text-center">
-                                <div className="relative inline-block group">
+                                <div className="relative inline-block group/cell">
                                   {hasNote && (
                                     <div 
                                       onClick={() => handleOpenNote(csrName, key, cellLabel)}
@@ -5808,7 +5808,7 @@ export default function QualityDashboard({
                                     onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
                                     onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
                                     placeholder="-"
-                                    className={`w-15 sm:w-16 h-8.5 text-center rounded-lg font-bold text-xs sm:text-sm outline-none transition-all shadow-2xs ${
+                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
                                       isTlViewer ? "cursor-default select-none " : ""
                                     }${
                                       isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
@@ -5841,8 +5841,8 @@ export default function QualityDashboard({
                                       onClick={() => handleOpenNote(csrName, key, cellLabel)}
                                       className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                                         hasNote
-                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
-                                          : "opacity-0 group-hover:opacity-100 bg-gray-100 hover:bg-[#0d9488] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
+                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 opacity-100"
+                                          : "opacity-0 group-hover/cell:opacity-100 bg-gray-100 hover:bg-[#0d9488] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
                                       }`}
                                       title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
                                     >
@@ -5878,11 +5878,11 @@ export default function QualityDashboard({
                     if (isCShift) {
                       const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
                       return (
-                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
+                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group/row transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
                           <td className={`sticky left-0 z-20 px-5 py-2.5 font-bold text-xs border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] transition-colors duration-150 ${
                             isRowHighlighted
                               ? "bg-indigo-50/60 dark:bg-indigo-950/30"
-                              : "bg-white dark:bg-gray-900 group-hover:bg-[var(--brand-bg-light)]/40 dark:group-hover:bg-gray-800/40"
+                              : "bg-white dark:bg-gray-900 group-hover/row:bg-[var(--brand-bg-light)]/40 dark:group-hover/row:bg-gray-800/40"
                           }`}>
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
@@ -5898,7 +5898,7 @@ export default function QualityDashboard({
                                     color: 'var(--brand-primary)',
                                     borderColor: 'var(--brand-border-light)'
                                   }}
-                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover:scale-105"
+                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105"
                                 >
                                   {csrName.charAt(0).toUpperCase()}
                                 </div>
@@ -5924,7 +5924,7 @@ export default function QualityDashboard({
 
                             return (
                               <td key={cNum} className="p-2 text-center">
-                                <div className="relative inline-block group">
+                                <div className="relative inline-block group/cell">
                                   {hasNote && (
                                     <div 
                                       onClick={() => handleOpenNote(csrName, key, cellLabel)}
@@ -5943,7 +5943,7 @@ export default function QualityDashboard({
                                     onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
                                     onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
                                     placeholder="-"
-                                    className={`w-15 sm:w-16 h-8.5 text-center rounded-lg font-bold text-xs sm:text-sm outline-none transition-all shadow-2xs ${
+                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
                                       isTlViewer ? "cursor-default select-none " : ""
                                     }${
                                       isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
@@ -5976,8 +5976,8 @@ export default function QualityDashboard({
                                       onClick={() => handleOpenNote(csrName, key, cellLabel)}
                                       className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                                         hasNote
-                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
-                                          : "opacity-0 group-hover:opacity-100 bg-gray-100 hover:bg-[#00A991] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
+                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 opacity-100"
+                                          : "opacity-0 group-hover/cell:opacity-100 bg-gray-100 hover:bg-[#00A991] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
                                       }`}
                                       title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
                                     >
@@ -6031,12 +6031,12 @@ export default function QualityDashboard({
                       const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
 
                       return (
-                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
+                        <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group/row transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
                           {/* Sticky CSR Name with Real Profile Photo if uploaded */}
                           <td className={`sticky left-0 z-20 px-5 py-2.5 font-bold text-xs border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] transition-colors duration-150 ${
                             isRowHighlighted
                               ? "bg-indigo-50/60 dark:bg-indigo-950/30"
-                              : "bg-white dark:bg-gray-900 group-hover:bg-[var(--brand-bg-light)]/40 dark:group-hover:bg-gray-800/40"
+                              : "bg-white dark:bg-gray-900 group-hover/row:bg-[var(--brand-bg-light)]/40 dark:group-hover/row:bg-gray-800/40"
                           }`}>
                             <div className="flex items-center gap-2.5">
                               {agentPhoto ? (
@@ -6052,7 +6052,7 @@ export default function QualityDashboard({
                                     color: 'var(--brand-primary)',
                                     borderColor: 'var(--brand-border-light)'
                                   }}
-                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover:scale-105"
+                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105"
                                 >
                                   {csrName.charAt(0).toUpperCase()}
                                 </div>
@@ -6080,7 +6080,7 @@ export default function QualityDashboard({
 
                             return (
                               <td key={cNum} className="p-2 text-center">
-                                <div className="relative inline-block group">
+                                <div className="relative inline-block group/cell">
                                   {hasNote && (
                                     <div
                                       onClick={() => handleOpenNote(csrName, key, cellLabel)}
@@ -6098,7 +6098,7 @@ export default function QualityDashboard({
                                     onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
                                     onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
                                     placeholder="-"
-                                    className={`w-15 sm:w-16 h-8.5 text-center rounded-lg font-bold text-xs sm:text-sm outline-none transition-all shadow-2xs ${
+                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
                                       isTlViewer ? "cursor-default select-none " : ""
                                     }${
                                       isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
@@ -6130,8 +6130,8 @@ export default function QualityDashboard({
                                       onClick={() => handleOpenNote(csrName, key, cellLabel)}
                                       className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                                         hasNote
-                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
-                                          : "opacity-0 group-hover:opacity-100 bg-gray-100 hover:bg-[#00A991] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
+                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 opacity-100"
+                                          : "opacity-0 group-hover/cell:opacity-100 bg-gray-100 hover:bg-[#00A991] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
                                       }`}
                                       title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
                                     >
@@ -6167,12 +6167,12 @@ export default function QualityDashboard({
 
                     const isRowHighlighted = highlightedCellTarget?.agentLower === csrName.trim().toLowerCase();
                     return (
-                      <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
+                      <tr key={csrName} data-qa-row={csrName.trim().toLowerCase()} className={`group/row transition-colors duration-150 ${isRowHighlighted ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-[var(--brand-bg-light)]/40 dark:hover:bg-gray-800/40"}`}>
                         {/* Sticky CSR Name with Real Profile Photo if uploaded */}
                         <td className={`sticky left-0 z-20 px-5 py-2.5 font-bold text-xs border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] transition-colors duration-150 ${
                           isRowHighlighted
                             ? "bg-indigo-50/60 dark:bg-indigo-950/30"
-                            : "bg-white dark:bg-gray-900 group-hover:bg-[var(--brand-bg-light)]/40 dark:group-hover:bg-gray-800/40"
+                            : "bg-white dark:bg-gray-900 group-hover/row:bg-[var(--brand-bg-light)]/40 dark:group-hover/row:bg-gray-800/40"
                         }`}>
                           <div className="flex items-center gap-2.5">
                             {agentPhoto ? (
@@ -6188,7 +6188,7 @@ export default function QualityDashboard({
                                   color: 'var(--brand-primary)',
                                   borderColor: 'var(--brand-border-light)'
                                 }}
-                                className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover:scale-105"
+                                className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105"
                               >
                                 {csrName.charAt(0).toUpperCase()}
                               </div>
@@ -6216,7 +6216,7 @@ export default function QualityDashboard({
 
                           return (
                             <td key={cNum} className="p-2 text-center">
-                              <div className="relative inline-block group">
+                              <div className="relative inline-block group/cell">
                                 {/* Red Corner Triangle Mark (Visible when note exists) */}
                                 {hasNote && (
                                   <div 
@@ -6252,7 +6252,7 @@ export default function QualityDashboard({
                                     e.target.select();
                                   }}
                                   placeholder="-"
-                                  className={`w-15 sm:w-16 h-8.5 text-center rounded-lg font-bold text-xs sm:text-sm outline-none transition-all shadow-2xs ${
+                                  className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
                                     isTlViewer ? "cursor-default select-none " : (unsyncedPreviousMonth ? "cursor-not-allowed opacity-75 " : "")
                                   }${
                                     isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
@@ -6286,8 +6286,8 @@ export default function QualityDashboard({
                                     onClick={() => handleOpenNote(csrName, key, cellLabel)}
                                     className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                                       hasNote
-                                        ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
-                                        : "opacity-0 group-hover:opacity-100 bg-gray-100 hover:bg-[#1C6B53] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
+                                        ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 opacity-100"
+                                        : "opacity-0 group-hover/cell:opacity-100 bg-gray-100 hover:bg-[#1C6B53] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
                                     }`}
                                     title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
                                   >
@@ -6317,7 +6317,7 @@ export default function QualityDashboard({
                               const isCellHighlighted = isRowHighlighted && highlightedCellTarget?.cellKey === key;
 
                               return (
-                                <div className="relative inline-block group">
+                                <div className="relative inline-block group/cell">
                                   {hasNote && (
                                     <div 
                                       onClick={() => handleOpenNote(csrName, key, "Outbound")}
@@ -6385,8 +6385,8 @@ export default function QualityDashboard({
                                       onClick={() => handleOpenNote(csrName, key, "Outbound")}
                                       className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                                         hasNote
-                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100"
-                                          : "opacity-0 group-hover:opacity-100 bg-amber-100 hover:bg-amber-600 dark:bg-amber-900 text-amber-700 hover:text-white dark:text-amber-300 ring-1 ring-amber-300 dark:ring-amber-700 hover:scale-110"
+                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 opacity-100"
+                                          : "opacity-0 group-hover/cell:opacity-100 bg-amber-100 hover:bg-amber-600 dark:bg-amber-900 text-amber-700 hover:text-white dark:text-amber-300 ring-1 ring-amber-300 dark:ring-amber-700 hover:scale-110"
                                       }`}
                                       title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
                                     >

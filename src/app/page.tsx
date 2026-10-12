@@ -5433,11 +5433,11 @@ export default function Dashboard() {
             {/* Table Header */}
             <div className="grid gap-2 px-3 sm:px-5 py-3.5 bg-gray-50/90 dark:bg-gray-850/90 backdrop-blur-md text-xs font-bold border-b border-gray-200/80 dark:border-gray-800 items-center rounded-t-2xl"
                  style={{ gridTemplateColumns: `minmax(180px, 2.2fr) repeat(${activeCols.length}, minmax(105px, 1fr))` }}>
-              <div className="pl-3 sm:pl-4 py-1 sticky left-0 bg-gray-50/95 dark:bg-gray-850/95 z-20 shadow-[3px_0_8px_-3px_rgba(0,0,0,0.06)] text-[11px] sm:text-xs font-extrabold text-gray-500 dark:text-gray-400 uppercase tracking-wider rounded-tl-2xl">
+              <div className="pl-3 sm:pl-4 py-1 sticky left-0 bg-gray-50/95 dark:bg-gray-850/95 z-20 shadow-[3px_0_8px_-3px_rgba(0,0,0,0.06)] text-[11px] sm:text-xs font-extrabold text-gray-500 dark:text-gray-400 rounded-tl-2xl">
                 Agent
               </div>
               {activeCols.map(col => (
-                <div key={col.id} className="text-center font-extrabold text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider px-1 truncate" title={cleanColLabel(col.id, col.label)}>
+                <div key={col.id} className="text-center font-extrabold text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 px-1 truncate" title={cleanColLabel(col.id, col.label)}>
                   {cleanColLabel(col.id, col.label)}
                 </div>
               ))}
