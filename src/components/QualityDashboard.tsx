@@ -348,16 +348,30 @@ export default function QualityDashboard({
   toggleDarkMode,
   onOpenAnnualEval
 }: QualityDashboardProps) {
-  const isQaUser = userProfile?.role === "qa";
-  const isAdmin = userProfile?.role === "admin" || userProfile?.email?.toLowerCase() === "mohammed.dlshad0@gmail.com";
-  const isManager = isAdmin || userProfile?.role === "manager" || userProfile?.email?.toLowerCase() === "jalal.burghol@agent.com";
-  
   const userEmailLower = (userProfile?.email || "").toLowerCase();
   const userNameLower = (userProfile?.name || "").toLowerCase();
   const userTeamLower = (userProfile?.team || "").toLowerCase();
 
-  const isYounis = userEmailLower.includes("younis.kamal") || userNameLower.includes("younis kamal") || userTeamLower.includes("younis");
-  const isAnkido = userEmailLower.includes("ankido.buya") || userNameLower.includes("ankido buya") || userTeamLower.includes("ankido");
+  const isMohammedJihad = userEmailLower.includes("mohammed.jihad") || userNameLower.includes("mohammed jihad");
+  const isLaraKamil = userEmailLower.includes("lara.kamil") || userNameLower.includes("lara kamil") || userEmailLower.includes("lara") || userNameLower.includes("lara");
+  const isMohammedAzad = userEmailLower.includes("mohammed.azad") || userNameLower.includes("mohammed azad") || userProfile?.role === "trainer";
+
+  const isQaUser = userProfile?.role === "qa" || isMohammedJihad || isLaraKamil;
+  const isTrainerUser = userProfile?.role === "trainer" || isMohammedAzad;
+  const isAdmin = userProfile?.role === "admin" || userEmailLower === "mohammed.dlshad0@gmail.com";
+  const isManager = isAdmin || userProfile?.role === "manager" || userEmailLower === "jalal.burghol@agent.com";
+
+  // ONLY Team Leaders (Younis Kamal & Ankido Buya) are View-Only (isTlViewer)
+  const isYounis = !isQaUser && !isTrainerUser && !isAdmin && !isManager && (
+    userEmailLower.includes("younis.kamal") || 
+    userNameLower.includes("younis kamal") || 
+    (userProfile?.role === "tl" && (userTeamLower.includes("younis") || userNameLower.includes("younis")))
+  );
+  const isAnkido = !isQaUser && !isTrainerUser && !isAdmin && !isManager && (
+    userEmailLower.includes("ankido.buya") || 
+    userNameLower.includes("ankido buya") || 
+    (userProfile?.role === "tl" && (userTeamLower.includes("ankido") || userNameLower.includes("ankido")))
+  );
   const isTlViewer = isYounis || isAnkido;
 
   const canSwitchTeams = (isAdmin || isManager) && !isTlViewer;
@@ -450,7 +464,13 @@ export default function QualityDashboard({
     if (email.includes("dlshad") || name.includes("dlshad")) {
       return "mohammed_dlshad";
     }
-    if (email.includes("ankido") || name.includes("ankido") || team.includes("ankido") || email.includes("lara") || name.includes("lara")) {
+    if (email.includes("lara") || name.includes("lara")) {
+      return "lara_kamil";
+    }
+    if (email.includes("jihad") || name.includes("jihad")) {
+      return "mohammed_jihad";
+    }
+    if (email.includes("ankido") || name.includes("ankido") || team.includes("ankido")) {
       return "lara_kamil";
     }
     if (email.includes("younis") || name.includes("younis") || team.includes("younis")) {
@@ -4552,13 +4572,13 @@ export default function QualityDashboard({
                         ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700/60"
                         : "bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 border-emerald-300 dark:border-emerald-700/60"
                     }`}>
-                      {isTlViewer ? "TL" : "QA"}
+                      {isTlViewer ? "TL" : isTrainerUser ? "Trainer" : isAdmin ? "Admin" : isManager ? "Manager" : "QA"}
                     </span>
                   </div>
                 </button>
 
                 {/* Back Button for Team Leader Viewers */}
-                {onBack && (
+                {isTlViewer && onBack && (
                   <button
                     onClick={onBack}
                     className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white bg-white hover:bg-gray-100/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"

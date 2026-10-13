@@ -2151,9 +2151,10 @@ export default function Dashboard() {
   const isAdmin = session?.email?.toLowerCase() === 'mohammed.dlshad0@gmail.com' || userProfile?.role === 'admin';
   const isManager = isAdmin || session?.email?.toLowerCase() === 'jalal.burghol@agent.com' || userProfile?.role === 'manager';
   const emailLower = (session?.email || userProfile?.email || '').toLowerCase().trim();
-  const isYounis = emailLower.includes('younis.kamal') || userProfile?.name?.toLowerCase().includes('younis kamal') || userProfile?.team === 'Younis Kamal Team';
-  const isAnkido = emailLower.includes('ankido.buya') || userProfile?.name?.toLowerCase().includes('ankido buya') || userProfile?.team === 'Ankido Buya Team';
-  const canAccessQuality = isAdmin || isManager || isYounis || isAnkido;
+  const isTl = userProfile?.role === 'tl';
+  const isYounis = (emailLower.includes('younis.kamal') || userProfile?.name?.toLowerCase().includes('younis kamal') || (isTl && userProfile?.team === 'Younis Kamal Team')) && !emailLower.includes('mohammed.jihad');
+  const isAnkido = (emailLower.includes('ankido.buya') || userProfile?.name?.toLowerCase().includes('ankido buya') || (isTl && userProfile?.team === 'Ankido Buya Team')) && !emailLower.includes('lara.kamil');
+  const canAccessQuality = isAdmin || isManager || isYounis || isAnkido || userProfile?.role === 'qa' || userProfile?.role === 'trainer';
   const [authLoading, setAuthLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
