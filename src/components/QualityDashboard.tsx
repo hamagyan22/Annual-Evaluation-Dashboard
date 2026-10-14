@@ -339,6 +339,161 @@ function validatePasswordSecurity(password: string): { isValid: boolean; error: 
   return { isValid: true, error: "" };
 }
 
+interface QualityScoreCellProps {
+  id: string;
+  targetKey: string;
+  value: string;
+  readOnly: boolean;
+  isLocked?: boolean;
+  isCellHighlighted?: boolean;
+  hasNote: boolean;
+  hasLink: boolean;
+  note: string;
+  link: string;
+  cellLabel: string;
+  agentIdx: number;
+  colIdx: number;
+  csrName: string;
+  scoreKey: string;
+  section: EvaluatorSection;
+  isOutbound?: boolean;
+  onScoreChange: (section: EvaluatorSection, csrName: string, key: string, value: string) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>, agentIdx: number, colIdx: number) => void;
+  onOpenNote: (csrName: string, key: string, cellLabel: string) => void;
+  onLockClick?: () => void;
+}
+
+const QualityScoreCell = React.memo(function QualityScoreCell({
+  id,
+  targetKey,
+  value,
+  readOnly,
+  isLocked = false,
+  isCellHighlighted = false,
+  hasNote,
+  hasLink,
+  note,
+  link,
+  cellLabel,
+  agentIdx,
+  colIdx,
+  csrName,
+  scoreKey,
+  section,
+  isOutbound = false,
+  onScoreChange,
+  onKeyDown,
+  onOpenNote,
+  onLockClick,
+}: QualityScoreCellProps) {
+  const [localVal, setLocalVal] = useState(value);
+
+  useEffect(() => {
+    setLocalVal(value);
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const next = e.target.value;
+    setLocalVal(next);
+    onScoreChange(section, csrName, scoreKey, next);
+  };
+
+  const handleNoteClick = () => {
+    onOpenNote(csrName, scoreKey, cellLabel);
+  };
+
+  const isV = localVal.toUpperCase() === "V";
+  const isNA = localVal.toUpperCase().includes("N/A");
+  const numVal = parseFloat(localVal);
+  const isBelow90 = !isNaN(numVal) && numVal < 90;
+
+  return (
+    <td className={`p-2 text-center ${isOutbound ? "bg-amber-50/40 dark:bg-amber-950/20 border-x border-amber-200/60 dark:border-amber-900/40" : ""}`}>
+      <div className="relative inline-block group/cell">
+        {/* Red Corner Triangle Mark (Visible when note exists) */}
+        {hasNote && (
+          <div 
+            onClick={handleNoteClick}
+            className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10" 
+            title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
+          />
+        )}
+
+        <input
+          id={id}
+          data-qa-target={targetKey}
+          type="text"
+          value={localVal}
+          readOnly={readOnly || isLocked}
+          onClick={onLockClick}
+          onChange={handleChange}
+          onKeyDown={(e) => onKeyDown?.(e, agentIdx, colIdx)}
+          onFocus={(e) => {
+            if (readOnly) {
+              e.target.blur();
+              return;
+            }
+            if (isLocked) {
+              e.target.blur();
+              onLockClick?.();
+              return;
+            }
+            e.target.select();
+          }}
+          placeholder="-"
+          className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-colors shadow-2xs ${
+            readOnly ? "cursor-default select-none " : (isLocked ? "cursor-not-allowed opacity-75 " : "")
+          }${
+            isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
+          }${
+            isV
+              ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
+              : isNA
+              ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
+              : isBelow90
+              ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
+              : isOutbound
+              ? "bg-white dark:bg-gray-800/90 border border-amber-300 dark:border-amber-700 text-gray-900 dark:text-gray-100 hover:border-amber-400 dark:hover:border-amber-500 focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20"
+              : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-[var(--brand-primary)]/60 focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-glow)]"
+          }`}
+        />
+
+        <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
+          {hasLink && (
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              style={!isOutbound ? { backgroundColor: 'var(--brand-primary, #1C6B53)' } : undefined}
+              className={`w-4 h-4 rounded-full text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer ${
+                isOutbound ? "bg-amber-600 hover:bg-amber-700" : ""
+              }`}
+              title={`Open Conversation Link: ${link}`}
+            >
+              <ExternalLink size={7} />
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={handleNoteClick}
+            className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+              hasNote
+                ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 opacity-100"
+                : isOutbound
+                ? "opacity-0 group-hover/cell:opacity-100 bg-amber-100 hover:bg-amber-600 dark:bg-amber-900 text-amber-700 hover:text-white dark:text-amber-300 ring-1 ring-amber-300 dark:ring-amber-700 hover:scale-110"
+                : "opacity-0 group-hover/cell:opacity-100 bg-gray-100 hover:bg-[var(--brand-primary,#1C6B53)] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
+            }`}
+            title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
+          >
+            <FileText size={8} />
+          </button>
+        </div>
+      </div>
+    </td>
+  );
+});
+
 export default function QualityDashboard({
   userProfile,
   onBack,
@@ -555,6 +710,7 @@ export default function QualityDashboard({
 
   // Profile Modal State
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [currentUserProfile, setCurrentUserProfile] = useState(userProfile);
   const [profileName, setProfileName] = useState(userProfile?.name || "");
   const [profilePhoto, setProfilePhoto] = useState(userProfile?.photo_url || "");
   const [newProfilePassword, setNewProfilePassword] = useState("");
@@ -562,6 +718,12 @@ export default function QualityDashboard({
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+
+  useEffect(() => {
+    setCurrentUserProfile(userProfile);
+    if (userProfile?.name) setProfileName(userProfile.name);
+    if (userProfile?.photo_url) setProfilePhoto(userProfile.photo_url);
+  }, [userProfile]);
 
   // Metric Sync State
   const [syncingMetrics, setSyncingMetrics] = useState(false);
@@ -582,6 +744,11 @@ export default function QualityDashboard({
 
   // Raw data from Firestore with guaranteed baseline evaluation fallback
   const [evalData, setEvalData] = useState<Record<string, any>>(() => ({ ...BASELINE_QUALITY_EVALUATIONS }));
+  const evalDataRef = useRef(evalData);
+  useEffect(() => {
+    evalDataRef.current = evalData;
+  }, [evalData]);
+
   const [rosterMembers, setRosterMembers] = useState<any[]>(DEFAULT_COMPANY_EMPLOYEES);
   const [memberPhotos, setMemberPhotos] = useState<Record<string, string>>({});
 
@@ -1209,7 +1376,7 @@ export default function QualityDashboard({
     }
 
     const nowIso = new Date().toISOString();
-    const existingDoc = evalData[docId] || {
+    const existingDoc = evalDataRef.current[docId] || {
       year: selectedYear,
       quarter: effectiveQuarter,
       evaluator: section.evaluator,
@@ -1247,21 +1414,32 @@ export default function QualityDashboard({
         delete mergedTimestamps[key];
         if (altKey) delete mergedTimestamps[altKey];
       }
+      const updatedDoc = {
+        ...currentDoc,
+        _fromFirestore: true,
+        scores: {
+          ...(currentDoc?.scores || {}),
+          [key]: val,
+          ...(altKey ? { [altKey]: val } : {})
+        },
+        cell_timestamps: mergedTimestamps,
+        updated_at: nowIso
+      };
       const nextMap = {
         ...prev,
-        [docId]: {
-          ...currentDoc,
-          _fromFirestore: true,
-          scores: {
-            ...(currentDoc?.scores || {}),
-            [key]: val,
-            ...(altKey ? { [altKey]: val } : {})
-          },
-          cell_timestamps: mergedTimestamps,
-          updated_at: nowIso
-        }
+        [docId]: updatedDoc
       };
-      expandQualityDocAliases(nextMap);
+      // High-performance alias update: strictly target modified docId
+      for (const [regex, replacement, canonicalName] of SLUG_ALIASES) {
+        if (regex.test(docId)) {
+          const aliasKey = docId.replace(regex, replacement);
+          nextMap[aliasKey] = {
+            ...updatedDoc,
+            id: aliasKey,
+            csr_name: canonicalName || updatedDoc.csr_name
+          };
+        }
+      }
       return nextMap;
     });
 
@@ -1297,7 +1475,7 @@ export default function QualityDashboard({
         setSaveStatus("idle");
       }
     }, 450);
-  }, [selectedYear, selectedQuarter, trainerMonth, evalData, isCShift, isCallMon, isBonus, getActiveSectionSlug, callShift, dlshadShift]);
+  }, [selectedYear, selectedQuarter, trainerMonth, isCShift, isCallMon, isBonus, isTlViewer, isTrainer, getActiveSectionSlug, callShift, dlshadShift]);
 
   // Determine the active calendar month index (0..11) currently displayed in the main table
   const activeTableMonthIdx = useMemo(() => {
@@ -1532,6 +1710,45 @@ export default function QualityDashboard({
 
   // Gather all timestamped evaluation entries for the currently selected Quality Evaluator above
   const sectionActivityData = useMemo(() => {
+    const evalLower = currentSection.evaluator.toLowerCase();
+    const isChatEval = currentSection.id === "mohammed_dlshad" || evalLower.includes("dlshad");
+
+    if (!showActivityLogModal) {
+      let todayCount = 0;
+      const seen = new Set<string>();
+      for (const [docId, docData] of Object.entries(evalData)) {
+        if (!docData || docId.startsWith("config_")) continue;
+        const docEv = (docData.evaluator || "").toLowerCase();
+        if (docEv !== evalLower && !docId.includes(`_${currentSection.id}_`)) continue;
+        const timestamps = (docData as any).cell_timestamps || {};
+        for (const [rawKey, tsVal] of Object.entries(timestamps)) {
+          const tsIso = String(tsVal || "");
+          if (toLocalDateStr(tsIso) === todayLocalStr) {
+            let canonicalKey = rawKey;
+            if (docId.includes("_bonus_")) {
+              const m = rawKey.match(/(?:call|chat)_(\d+)/);
+              if (m) canonicalKey = `bonus_${m[1]}`;
+            }
+            const uKey = `${docData.csr_name || ""}|${canonicalKey}|${todayLocalStr}`;
+            if (!seen.has(uKey)) {
+              seen.add(uKey);
+              todayCount++;
+            }
+          }
+        }
+      }
+      return {
+        todayCount,
+        yesterdayCount: 0,
+        last7DaysCount: 0,
+        activeDateLabel: "Today",
+        filteredCount: 0,
+        uniqueAgentsCount: 0,
+        notesCount: 0,
+        groupedByAgent: []
+      };
+    }
+
     const seenMap = new Map<string, {
       id: string;
       agentName: string;
@@ -1546,9 +1763,6 @@ export default function QualityDashboard({
       dateStr: string;
       timeStr: string;
     }>();
-
-    const evalLower = currentSection.evaluator.toLowerCase();
-    const isChatEval = currentSection.id === "mohammed_dlshad" || evalLower.includes("dlshad");
 
     Object.entries(evalData).forEach(([docId, docData]: [string, any]) => {
       if (!docData || docId.startsWith("config_")) return;
@@ -1700,7 +1914,7 @@ export default function QualityDashboard({
       notesCount,
       groupedByAgent
     };
-  }, [evalData, currentSection, selectedQuarter, todayLocalStr, yesterdayLocalStr, sevenDaysAgoLocalStr, activityFilterMode, activityCustomDate, toLocalDateStr]);
+  }, [showActivityLogModal, evalData, currentSection, selectedQuarter, todayLocalStr, yesterdayLocalStr, sevenDaysAgoLocalStr, activityFilterMode, activityCustomDate, toLocalDateStr, MONTH_NAMES]);
 
   // Map a calendar month (0-11) to { quarter, weekStart, weekEnd } within that quarter
   const getMonthWeekRange = (month: number): { quarter: string; weekStart: number; weekEnd: number } => {
@@ -2894,8 +3108,8 @@ export default function QualityDashboard({
       onOpenProfile();
       return;
     }
-    setProfileName(userProfile?.name || "");
-    setProfilePhoto(userProfile?.photo_url || "");
+    setProfileName(currentUserProfile?.name || userProfile?.name || "");
+    setProfilePhoto(currentUserProfile?.photo_url || userProfile?.photo_url || "");
     setNewProfilePassword("");
     setConfirmProfilePassword("");
     setProfileError("");
@@ -2952,9 +3166,29 @@ export default function QualityDashboard({
           payload.passwordChangedAt = new Date().toISOString();
         }
         await setDoc(doc(db, "users", auth.currentUser.uid), payload, { merge: true });
+        setCurrentUserProfile((prev: any) => ({
+          ...prev,
+          name: profileName,
+          photo_url: profilePhoto,
+        }));
         if (userProfile) {
           userProfile.name = profileName;
           userProfile.photo_url = profilePhoto;
+        }
+
+        // Also sync photo to matching team_members document if it exists
+        try {
+          const tmSnap = await getDocs(collection(db, "team_members"));
+          const currentName = (currentUserProfile?.name || userProfile?.name || profileName || "").trim().toLowerCase();
+          for (const d of tmSnap.docs) {
+            const data = d.data();
+            const dName = (data.agent_name || data.name || "").trim().toLowerCase();
+            if (dName && (dName === currentName || dName.includes(currentName) || currentName.includes(dName))) {
+              await setDoc(doc(db, "team_members", d.id), { photo_url: profilePhoto, display_name: profileName }, { merge: true });
+            }
+          }
+        } catch (tmErr) {
+          console.error("Error syncing to team_members in QualityDashboard:", tmErr);
         }
       }
 
@@ -3074,7 +3308,7 @@ export default function QualityDashboard({
   }, []);
 
   // Open note modal for a specific cell
-  const handleOpenNote = (csrName: string, key: string, callLabel: string) => {
+  const handleOpenNote = useCallback((csrName: string, key: string, callLabel: string) => {
     if (!isTrainer && !isCallMon && !isBonus && !isCShift && unsyncedPreviousMonthRef.current) {
       setSyncReminderModal(unsyncedPreviousMonthRef.current);
       return;
@@ -3083,7 +3317,7 @@ export default function QualityDashboard({
     const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
     const effectiveQuarter = (isTrainer || isCallMon) ? `Q${Math.floor(trainerMonth / 3) + 1}` : selectedQuarter;
     const defaultDocId = `${selectedYear}_${effectiveQuarter}_${sectionSlug}_${slug}`;
-    const targetDoc = evalData[defaultDocId] || getQualityEvalDoc(evalData, defaultDocId) || {};
+    const targetDoc = evalDataRef.current[defaultDocId] || getQualityEvalDoc(evalDataRef.current, defaultDocId) || {};
     const docId = targetDoc.id || defaultDocId;
 
     const notesMap = targetDoc.notes || {};
@@ -3112,7 +3346,7 @@ export default function QualityDashboard({
       docId,
       hasExistingData: Boolean(existingNote.trim() || existingLink.trim())
     });
-  };
+  }, [isTrainer, isCallMon, isBonus, isCShift, currentSection.evaluator, trainerMonth, selectedQuarter, selectedYear, getCellNote, getCellLink]);
 
   // Save note & link to Firestore
   const handleSaveNote = async () => {
@@ -3362,7 +3596,7 @@ export default function QualityDashboard({
   };
 
   // Keyboard arrow, Enter, and Tab navigation between score cells
-  const handleCellKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, rowIdx: number, colIdx: number) => {
+  const handleCellKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, rowIdx: number, colIdx: number) => {
     let targetRow = rowIdx;
     let targetCol = colIdx;
     const maxCol = isCallMon ? callMonColCount - 1 : isTrainer ? trainerColCount - 1 : isCShift ? 2 : isBonus ? bonusColCount - 1 : (standardColCount - 1 + (showOutbound ? 1 : 0));
@@ -3412,7 +3646,7 @@ export default function QualityDashboard({
       nextInput.focus();
       nextInput.select();
     }
-  };
+  }, [isCallMon, callMonColCount, isTrainer, trainerColCount, isCShift, isBonus, bonusColCount, standardColCount, showOutbound, currentCsrs.length]);
 
   // Export Week / Month Data to PDF
   const handleExportPDF = () => {
@@ -4557,15 +4791,15 @@ export default function QualityDashboard({
                   title="Profile Settings"
                 >
                   <div className="w-6 sm:w-7 h-6 sm:h-7 rounded-full bg-gradient-to-tr from-[#1C6B53] to-emerald-400 flex items-center justify-center overflow-hidden ring-2 ring-[#1C6B53]/20 dark:ring-emerald-400/20 text-white font-black text-xs shadow-xs shrink-0">
-                    {userProfile?.photo_url ? (
-                      <img src={userProfile.photo_url} alt="Profile" className="w-full h-full object-cover" />
+                    {(currentUserProfile?.photo_url || userProfile?.photo_url) ? (
+                      <img src={currentUserProfile?.photo_url || userProfile?.photo_url} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
-                      userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : <Users size={12} />
+                      (currentUserProfile?.name || userProfile?.name) ? (currentUserProfile?.name || userProfile?.name).charAt(0).toUpperCase() : <Users size={12} />
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="max-w-[70px] sm:max-w-[120px] truncate group-hover:text-[#1C6B53] dark:group-hover:text-emerald-400 transition-colors">
-                      {userProfile?.name || (isYounis ? "Younis Kamal" : (isAnkido ? "Ankido Buya" : "QA Evaluator"))}
+                      {currentUserProfile?.name || userProfile?.name || (isYounis ? "Younis Kamal" : (isAnkido ? "Ankido Buya" : "QA Evaluator"))}
                     </span>
                     <span className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-wider ${
                       isTlViewer
@@ -5716,67 +5950,27 @@ export default function QualityDashboard({
                             const isCellHighlighted = isRowHighlighted && highlightedCellTarget?.cellKey === key;
 
                             return (
-                              <td key={cNum} className="p-2 text-center">
-                                <div className="relative inline-block group/cell">
-                                  {hasNote && (
-                                    <div
-                                      onClick={() => handleOpenNote(csrName, key, cellLabel)}
-                                      className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10"
-                                      title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
-                                    />
-                                  )}
-                                  <input
-                                    id={`qa_cell_${agentIdx}_${cIdx}`}
-                                    data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
-                                    type="text"
-                                    value={val}
-                                    readOnly={isTlViewer}
-                                    onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
-                                    onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
-                                    onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
-                                    placeholder="-"
-                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
-                                      isTlViewer ? "cursor-default select-none " : ""
-                                    }${
-                                      isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
-                                    }${
-                                      isV
-                                        ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
-                                        : isNA
-                                        ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
-                                        : isBelow90
-                                        ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
-                                        : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-[var(--brand-primary)]/60 focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-glow)]"
-                                    }`}
-                                  />
-                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
-                                    {hasLink && (
-                                      <a
-                                        href={link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="w-4 h-4 rounded-full bg-[#0f766e] hover:bg-[#0d625b] text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
-                                        title={`Open Conversation Link: ${link}`}
-                                      >
-                                        <ExternalLink size={7} />
-                                      </a>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenNote(csrName, key, cellLabel)}
-                                      className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                                        hasNote
-                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 opacity-100"
-                                          : "opacity-0 group-hover/cell:opacity-100 bg-gray-100 hover:bg-[#0f766e] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
-                                      }`}
-                                      title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
-                                    >
-                                      <FileText size={8} />
-                                    </button>
-                                  </div>
-                                </div>
-                              </td>
+                              <QualityScoreCell
+                                key={cNum}
+                                id={`qa_cell_${agentIdx}_${cIdx}`}
+                                targetKey={`${csrName.trim().toLowerCase()}|${key}`}
+                                value={val}
+                                readOnly={isTlViewer}
+                                isCellHighlighted={isCellHighlighted}
+                                hasNote={hasNote}
+                                hasLink={hasLink}
+                                note={note}
+                                link={link}
+                                cellLabel={cellLabel}
+                                agentIdx={agentIdx}
+                                colIdx={cIdx}
+                                csrName={csrName}
+                                scoreKey={key}
+                                section={currentSection}
+                                onScoreChange={handleScoreChange}
+                                onKeyDown={handleCellKeyDown}
+                                onOpenNote={handleOpenNote}
+                              />
                             );
                           })}
 
@@ -5872,69 +6066,27 @@ export default function QualityDashboard({
                             const isCellHighlighted = isRowHighlighted && highlightedCellTarget?.cellKey === key;
 
                             return (
-                              <td key={cNum} className="p-2 text-center">
-                                <div className="relative inline-block group/cell">
-                                  {hasNote && (
-                                    <div 
-                                      onClick={() => handleOpenNote(csrName, key, cellLabel)}
-                                      className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10" 
-                                      title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
-                                    />
-                                  )}
-
-                                  <input
-                                    id={`qa_cell_${agentIdx}_${cIdx}`}
-                                    data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
-                                    type="text"
-                                    value={val}
-                                    readOnly={isTlViewer}
-                                    onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
-                                    onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
-                                    onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
-                                    placeholder="-"
-                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
-                                      isTlViewer ? "cursor-default select-none " : ""
-                                    }${
-                                      isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
-                                    }${
-                                      isV
-                                        ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
-                                        : isNA
-                                        ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
-                                        : isBelow90
-                                        ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
-                                        : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-[var(--brand-primary)]/60 focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-glow)]"
-                                    }`}
-                                  />
-
-                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
-                                    {hasLink && (
-                                      <a
-                                        href={link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="w-4 h-4 rounded-full bg-[#0d9488] hover:bg-[#0b7a6f] text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
-                                        title={`Open Conversation Link: ${link}`}
-                                      >
-                                        <ExternalLink size={7} />
-                                      </a>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenNote(csrName, key, cellLabel)}
-                                      className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                                        hasNote
-                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 opacity-100"
-                                          : "opacity-0 group-hover/cell:opacity-100 bg-gray-100 hover:bg-[#0d9488] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
-                                      }`}
-                                      title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
-                                    >
-                                      <FileText size={8} />
-                                    </button>
-                                  </div>
-                                </div>
-                              </td>
+                              <QualityScoreCell
+                                key={cNum}
+                                id={`qa_cell_${agentIdx}_${cIdx}`}
+                                targetKey={`${csrName.trim().toLowerCase()}|${key}`}
+                                value={val}
+                                readOnly={isTlViewer}
+                                isCellHighlighted={isCellHighlighted}
+                                hasNote={hasNote}
+                                hasLink={hasLink}
+                                note={note}
+                                link={link}
+                                cellLabel={cellLabel}
+                                agentIdx={agentIdx}
+                                colIdx={cIdx}
+                                csrName={csrName}
+                                scoreKey={key}
+                                section={currentSection}
+                                onScoreChange={handleScoreChange}
+                                onKeyDown={handleCellKeyDown}
+                                onOpenNote={handleOpenNote}
+                              />
                             );
                           })}
 
@@ -6007,69 +6159,27 @@ export default function QualityDashboard({
                             const isCellHighlighted = isRowHighlighted && highlightedCellTarget?.cellKey === key;
 
                             return (
-                              <td key={cNum} className="p-2 text-center">
-                                <div className="relative inline-block group/cell">
-                                  {hasNote && (
-                                    <div 
-                                      onClick={() => handleOpenNote(csrName, key, cellLabel)}
-                                      className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10" 
-                                      title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
-                                    />
-                                  )}
-
-                                  <input
-                                    id={`qa_cell_${agentIdx}_${cIdx}`}
-                                    data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
-                                    type="text"
-                                    value={val}
-                                    readOnly={isTlViewer}
-                                    onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
-                                    onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
-                                    onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
-                                    placeholder="-"
-                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
-                                      isTlViewer ? "cursor-default select-none " : ""
-                                    }${
-                                      isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
-                                    }${
-                                      isV
-                                        ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
-                                        : isNA
-                                        ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
-                                        : isBelow90
-                                        ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
-                                        : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-[var(--brand-primary)]/60 focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-glow)]"
-                                    }`}
-                                  />
-
-                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
-                                    {hasLink && (
-                                      <a
-                                        href={link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="w-4 h-4 rounded-full bg-[#00A991] hover:bg-[#008f7a] text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
-                                        title={`Open Conversation Link: ${link}`}
-                                      >
-                                        <ExternalLink size={7} />
-                                      </a>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenNote(csrName, key, cellLabel)}
-                                      className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                                        hasNote
-                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 opacity-100"
-                                          : "opacity-0 group-hover/cell:opacity-100 bg-gray-100 hover:bg-[#00A991] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
-                                      }`}
-                                      title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
-                                    >
-                                      <FileText size={8} />
-                                    </button>
-                                  </div>
-                                </div>
-                              </td>
+                              <QualityScoreCell
+                                key={cNum}
+                                id={`qa_cell_${agentIdx}_${cIdx}`}
+                                targetKey={`${csrName.trim().toLowerCase()}|${key}`}
+                                value={val}
+                                readOnly={isTlViewer}
+                                isCellHighlighted={isCellHighlighted}
+                                hasNote={hasNote}
+                                hasLink={hasLink}
+                                note={note}
+                                link={link}
+                                cellLabel={cellLabel}
+                                agentIdx={agentIdx}
+                                colIdx={cIdx}
+                                csrName={csrName}
+                                scoreKey={key}
+                                section={currentSection}
+                                onScoreChange={handleScoreChange}
+                                onKeyDown={handleCellKeyDown}
+                                onOpenNote={handleOpenNote}
+                              />
                             );
                           })}
 
@@ -6163,67 +6273,27 @@ export default function QualityDashboard({
                             const isCellHighlighted = isRowHighlighted && highlightedCellTarget?.cellKey === key;
 
                             return (
-                              <td key={cNum} className="p-2 text-center">
-                                <div className="relative inline-block group/cell">
-                                  {hasNote && (
-                                    <div
-                                      onClick={() => handleOpenNote(csrName, key, cellLabel)}
-                                      className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10"
-                                      title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
-                                    />
-                                  )}
-                                  <input
-                                    id={`qa_cell_${agentIdx}_${cIdx}`}
-                                    data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
-                                    type="text"
-                                    value={val}
-                                    readOnly={isTlViewer}
-                                    onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
-                                    onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
-                                    onFocus={(e) => isTlViewer ? e.target.blur() : e.target.select()}
-                                    placeholder="-"
-                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
-                                      isTlViewer ? "cursor-default select-none " : ""
-                                    }${
-                                      isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
-                                    }${
-                                      isV
-                                        ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
-                                        : isNA
-                                        ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
-                                        : isBelow90
-                                        ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
-                                        : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-[var(--brand-primary)]/60 focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-glow)]"
-                                    }`}
-                                  />
-                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
-                                    {hasLink && (
-                                      <a
-                                        href={link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="w-4 h-4 rounded-full bg-[#00A991] hover:bg-[#008f7a] text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
-                                        title={`Open Conversation Link: ${link}`}
-                                      >
-                                        <ExternalLink size={7} />
-                                      </a>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenNote(csrName, key, cellLabel)}
-                                      className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                                        hasNote
-                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 opacity-100"
-                                          : "opacity-0 group-hover/cell:opacity-100 bg-gray-100 hover:bg-[#00A991] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
-                                      }`}
-                                      title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
-                                    >
-                                      <FileText size={8} />
-                                    </button>
-                                  </div>
-                                </div>
-                              </td>
+                              <QualityScoreCell
+                                key={cNum}
+                                id={`qa_cell_${agentIdx}_${cIdx}`}
+                                targetKey={`${csrName.trim().toLowerCase()}|${key}`}
+                                value={val}
+                                readOnly={isTlViewer}
+                                isCellHighlighted={isCellHighlighted}
+                                hasNote={hasNote}
+                                hasLink={hasLink}
+                                note={note}
+                                link={link}
+                                cellLabel={cellLabel}
+                                agentIdx={agentIdx}
+                                colIdx={cIdx}
+                                csrName={csrName}
+                                scoreKey={key}
+                                section={currentSection}
+                                onScoreChange={handleScoreChange}
+                                onKeyDown={handleCellKeyDown}
+                                onOpenNote={handleOpenNote}
+                              />
                             );
                           })}
 
@@ -6299,189 +6369,77 @@ export default function QualityDashboard({
                           const isCellHighlighted = isRowHighlighted && highlightedCellTarget?.cellKey === key;
 
                           return (
-                            <td key={cNum} className="p-2 text-center">
-                              <div className="relative inline-block group/cell">
-                                {/* Red Corner Triangle Mark (Visible when note exists) */}
-                                {hasNote && (
-                                  <div 
-                                    onClick={() => handleOpenNote(csrName, key, cellLabel)}
-                                    className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10" 
-                                    title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
-                                  />
-                                )}
-
-                                <input
-                                  id={`qa_cell_${agentIdx}_${cIdx}`}
-                                  data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
-                                  type="text"
-                                  value={val}
-                                  readOnly={isTlViewer || Boolean(unsyncedPreviousMonth)}
-                                  onClick={() => {
-                                    if (!isTlViewer && unsyncedPreviousMonth) {
-                                      setSyncReminderModal(unsyncedPreviousMonth);
-                                    }
-                                  }}
-                                  onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
-                                  onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, cIdx)}
-                                  onFocus={(e) => {
-                                    if (isTlViewer) {
-                                      e.target.blur();
-                                      return;
-                                    }
-                                    if (unsyncedPreviousMonth) {
-                                      e.target.blur();
-                                      setSyncReminderModal(unsyncedPreviousMonth);
-                                      return;
-                                    }
-                                    e.target.select();
-                                  }}
-                                  placeholder="-"
-                                  className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
-                                    isTlViewer ? "cursor-default select-none " : (unsyncedPreviousMonth ? "cursor-not-allowed opacity-75 " : "")
-                                  }${
-                                    isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
-                                  }${
-                                    isV
-                                      ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
-                                      : isNA
-                                      ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
-                                      : isBelow90
-                                      ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
-                                      : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-[var(--brand-primary)]/60 focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-glow)]"
-                                  }`}
-                                />
-
-                                {/* Visible Note & Link Buttons */}
-                                <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
-                                  {hasLink && (
-                                    <a
-                                      href={link}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="w-4 h-4 rounded-full bg-[#1C6B53] hover:bg-[#155a45] text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
-                                      title={`Open Conversation Link: ${link}`}
-                                    >
-                                      <ExternalLink size={7} />
-                                    </a>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenNote(csrName, key, cellLabel)}
-                                    className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                                      hasNote
-                                        ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 opacity-100"
-                                        : "opacity-0 group-hover/cell:opacity-100 bg-gray-100 hover:bg-[#1C6B53] dark:bg-gray-700 text-gray-400 hover:text-white dark:text-gray-400 ring-1 ring-gray-200/90 dark:ring-gray-600/70 hover:scale-110"
-                                    }`}
-                                    title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
-                                  >
-                                    <FileText size={8} />
-                                  </button>
-                                </div>
-                              </div>
-                            </td>
+                            <QualityScoreCell
+                              key={cNum}
+                              id={`qa_cell_${agentIdx}_${cIdx}`}
+                              targetKey={`${csrName.trim().toLowerCase()}|${key}`}
+                              value={val}
+                              readOnly={isTlViewer}
+                              isLocked={Boolean(unsyncedPreviousMonth)}
+                              isCellHighlighted={isCellHighlighted}
+                              hasNote={hasNote}
+                              hasLink={hasLink}
+                              note={note}
+                              link={link}
+                              cellLabel={cellLabel}
+                              agentIdx={agentIdx}
+                              colIdx={cIdx}
+                              csrName={csrName}
+                              scoreKey={key}
+                              section={currentSection}
+                              onScoreChange={handleScoreChange}
+                              onKeyDown={handleCellKeyDown}
+                              onOpenNote={handleOpenNote}
+                              onLockClick={() => {
+                                if (!isTlViewer && unsyncedPreviousMonth) {
+                                  setSyncReminderModal(unsyncedPreviousMonth);
+                                }
+                              }}
+                            />
                           );
                         })}
 
                         {/* Outbound Call Input (When showOutbound is true) */}
-                        {showOutbound && (
-                          <td className="p-2 text-center bg-amber-50/40 dark:bg-amber-950/20 border-x border-amber-200/60 dark:border-amber-900/40">
-                            {(() => {
-                              const key = `w${selectedWeek}_outbound`;
-                              const rawVal = currentScores[key];
-                              const val = String(rawVal ?? "");
-                              const note = getCellNote(currentNotes, key, selectedWeek, isChatTeam);
-                              const link = getCellLink(currentLinks, key, selectedWeek, isChatTeam);
-                              const hasNote = Boolean(note.trim());
-                              const hasLink = Boolean(link.trim());
-                              const isV = val.toUpperCase() === "V";
-                              const isNA = val.toUpperCase().includes("N/A");
-                              const numVal = parseFloat(val);
-                              const isBelow90 = !isNaN(numVal) && numVal < 90;
-                              const isCellHighlighted = isRowHighlighted && highlightedCellTarget?.cellKey === key;
+                        {showOutbound && (() => {
+                          const key = `w${selectedWeek}_outbound`;
+                          const rawVal = currentScores[key];
+                          const val = String(rawVal ?? "");
+                          const note = getCellNote(currentNotes, key, selectedWeek, isChatTeam);
+                          const link = getCellLink(currentLinks, key, selectedWeek, isChatTeam);
+                          const hasNote = Boolean(note.trim());
+                          const hasLink = Boolean(link.trim());
+                          const isCellHighlighted = isRowHighlighted && highlightedCellTarget?.cellKey === key;
 
-                              return (
-                                <div className="relative inline-block group/cell">
-                                  {hasNote && (
-                                    <div 
-                                      onClick={() => handleOpenNote(csrName, key, "Outbound")}
-                                      className="absolute top-0 left-0 w-0 h-0 border-t-[9px] border-r-[9px] border-r-transparent border-t-red-500 rounded-tl-xl cursor-pointer z-10" 
-                                      title={`Note: ${note}${hasLink ? `\nLink: ${link}` : ""}`}
-                                    />
-                                  )}
-
-                                  <input
-                                    id={`qa_cell_${agentIdx}_${standardColCount}`}
-                                    data-qa-target={`${csrName.trim().toLowerCase()}|${key}`}
-                                    type="text"
-                                    value={val}
-                                    readOnly={isTlViewer || Boolean(unsyncedPreviousMonth)}
-                                    onClick={() => {
-                                      if (!isTlViewer && unsyncedPreviousMonth) {
-                                        setSyncReminderModal(unsyncedPreviousMonth);
-                                      }
-                                    }}
-                                    onChange={(e) => handleScoreChange(currentSection, csrName, key, e.target.value)}
-                                    onKeyDown={(e) => !isTlViewer && handleCellKeyDown(e, agentIdx, standardColCount)}
-                                    onFocus={(e) => {
-                                      if (isTlViewer) {
-                                        e.target.blur();
-                                        return;
-                                      }
-                                      if (unsyncedPreviousMonth) {
-                                        e.target.blur();
-                                        setSyncReminderModal(unsyncedPreviousMonth);
-                                        return;
-                                      }
-                                      e.target.select();
-                                    }}
-                                    placeholder="-"
-                                    className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
-                                      isTlViewer ? "cursor-default select-none " : (unsyncedPreviousMonth ? "cursor-not-allowed opacity-75 " : "")
-                                    }${
-                                      isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
-                                    }${
-                                      isV
-                                        ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
-                                        : isNA
-                                        ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
-                                        : isBelow90
-                                        ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
-                                        : "bg-white dark:bg-gray-800/90 border border-amber-300 dark:border-amber-700 text-gray-900 dark:text-gray-100 hover:border-amber-400 dark:hover:border-amber-500 focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20"
-                                    }`}
-                                  />
-
-                                  <div className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 z-5">
-                                    {hasLink && (
-                                      <a
-                                        href={link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="w-4 h-4 rounded-full bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110 cursor-pointer"
-                                        title={`Open Conversation Link: ${link}`}
-                                      >
-                                        <ExternalLink size={7} />
-                                      </a>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenNote(csrName, key, "Outbound")}
-                                      className={`w-4 h-4 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                                        hasNote
-                                          ? "bg-red-500 text-white ring-2 ring-white dark:ring-gray-900 hover:bg-red-600 scale-100 opacity-100"
-                                          : "opacity-0 group-hover/cell:opacity-100 bg-amber-100 hover:bg-amber-600 dark:bg-amber-900 text-amber-700 hover:text-white dark:text-amber-300 ring-1 ring-amber-300 dark:ring-amber-700 hover:scale-110"
-                                      }`}
-                                      title={hasNote ? `Note: ${note}${hasLink ? `\nLink: ${link}` : ''}` : (hasLink ? `Link: ${link}` : "Add Note / Link")}
-                                    >
-                                      <FileText size={8} />
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </td>
-                        )}
+                          return (
+                            <QualityScoreCell
+                              id={`qa_cell_${agentIdx}_${standardColCount}`}
+                              targetKey={`${csrName.trim().toLowerCase()}|${key}`}
+                              value={val}
+                              readOnly={isTlViewer}
+                              isLocked={Boolean(unsyncedPreviousMonth)}
+                              isCellHighlighted={isCellHighlighted}
+                              hasNote={hasNote}
+                              hasLink={hasLink}
+                              note={note}
+                              link={link}
+                              cellLabel="Outbound"
+                              agentIdx={agentIdx}
+                              colIdx={standardColCount}
+                              csrName={csrName}
+                              scoreKey={key}
+                              section={currentSection}
+                              isOutbound={true}
+                              onScoreChange={handleScoreChange}
+                              onKeyDown={handleCellKeyDown}
+                              onOpenNote={handleOpenNote}
+                              onLockClick={() => {
+                                if (!isTlViewer && unsyncedPreviousMonth) {
+                                  setSyncReminderModal(unsyncedPreviousMonth);
+                                }
+                              }}
+                            />
+                          );
+                        })()}
 
                         {/* Auto-calculated Week Score (or Monthly Avg when month filter active) */}
                         <td className="p-2 text-center font-black text-sm bg-emerald-50/50 dark:bg-emerald-950/30">

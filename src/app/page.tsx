@@ -687,7 +687,7 @@ function PwaInstallBanner() {
                   2
                 </div>
                 <div className="leading-relaxed">
-                  مرر للأسفل واختر <span className="font-bold text-[#1C6B53] dark:text-emerald-400">"إضافة إلى الشاشة الرئيسية" (Add to Home Screen)</span>.
+                  مرر للأسفل واختر <span className="font-bold text-[#1C6B53] dark:text-emerald-400">&quot;إضافة إلى الشاشة الرئيسية&quot; (Add to Home Screen)</span>.
                 </div>
               </div>
             </div>
@@ -1038,16 +1038,23 @@ function AgentDashboard({
   }, [selectedYear, currentAgent, tableName, teamLower]);
 
   const handleSaveProfile = async () => {
-    if(!memberDoc) return;
     try {
-       await updateDoc(doc(db, 'team_members', memberDoc.id), {
-         display_name: editDisplayName,
-         photo_url: editPhotoUrl
-       });
-       setMemberDoc({ ...memberDoc, display_name: editDisplayName, photo_url: editPhotoUrl });
-       setShowEditProfile(false);
+      if (memberDoc) {
+        await updateDoc(doc(db, 'team_members', memberDoc.id), {
+          display_name: editDisplayName,
+          photo_url: editPhotoUrl
+        });
+        setMemberDoc({ ...memberDoc, display_name: editDisplayName, photo_url: editPhotoUrl });
+      }
+      if (auth.currentUser?.uid) {
+        await setDoc(doc(db, 'users', auth.currentUser.uid), {
+          name: editDisplayName,
+          photo_url: editPhotoUrl
+        }, { merge: true });
+      }
+      setShowEditProfile(false);
     } catch(e) {
-       console.error(e);
+      console.error("Error saving agent profile:", e);
     }
   };
   
@@ -1622,7 +1629,7 @@ function AgentDashboard({
                   {myRank <= 3 && (
                     <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-900/90 dark:text-amber-200/90 italic mt-1 leading-snug">
                       <Sparkles size={11} className="text-amber-500 shrink-0" />
-                      <span className="truncate">"{getTopStarMotivationalQuote(myRank, selectedMonth)}"</span>
+                      <span className="truncate">&quot;{getTopStarMotivationalQuote(myRank, selectedMonth)}&quot;</span>
                     </div>
                   )}
                 </div>
@@ -2486,6 +2493,21 @@ export default function Dashboard() {
           ...prev,
           ...payload
         }));
+
+        // Also sync photo to matching team_members document if it exists
+        try {
+          const tmSnap = await getDocs(collection(db, 'team_members'));
+          const currentName = (userProfile?.name || profileName || "").trim().toLowerCase();
+          for (const d of tmSnap.docs) {
+            const data = d.data();
+            const dName = (data.agent_name || data.name || "").trim().toLowerCase();
+            if (dName && (dName === currentName || isSameAgent(dName, currentName))) {
+              await setDoc(doc(db, 'team_members', d.id), { photo_url: profilePhoto, display_name: profileName }, { merge: true });
+            }
+          }
+        } catch (tmErr) {
+          console.error("Error syncing to team_members:", tmErr);
+        }
       }
 
       setProfileSuccess("Profile updated successfully!");
@@ -2797,12 +2819,24 @@ export default function Dashboard() {
 
         // Instant optimistic role identification: Mohammed Dlshad (The Admin) is EXEMPT
         if (isMohammed) {
+          let existingData: any = {};
+          try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+              existingData = userDoc.data();
+            }
+          } catch (err) {
+            console.error("Error reading admin userDoc:", err);
+          }
+
           const adminProfile: any = {
+            ...existingData,
             role: 'admin',
             isAdmin: true,
             team: 'Mohammed Dlshad Team',
-            name: 'Mohammed Dlshad',
+            name: existingData.name || 'Mohammed Dlshad',
             email: user.email,
+            photo_url: existingData.photo_url || '',
             mustChangePassword: false,
             passwordUpdated: true,
           };
@@ -5449,7 +5483,7 @@ export default function Dashboard() {
               {loading ? (
                 <div className="p-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading data...</div>
               ) : filteredRows.length === 0 ? (
-                <div className="p-8 text-center text-sm text-gray-400 dark:text-gray-500">No team members found. Click "Manage Agents" to add members.</div>
+                <div className="p-8 text-center text-sm text-gray-400 dark:text-gray-500">No team members found. Click &quot;Manage Agents&quot; to add members.</div>
               ) : (
                 filteredRows.map((row, index) => {
                   const actualIndex = rows.findIndex(r => r === row);
@@ -5568,7 +5602,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="mt-4 text-[10px] text-gray-400 dark:text-gray-500 font-medium">
-          Agent names are fixed from the roster. Use "Settings" to edit members or columns. Data auto-saves when you click out of a field.
+          Agent names are fixed from the roster. Use &quot;Settings&quot; to edit members or columns. Data auto-saves when you click out of a field.
         </div>
       </div>
 

@@ -867,7 +867,7 @@ export default function TopStarCelebrationVideoModal({
                 {/* Dynamic Motivational Quote */}
                 {activeSlide.quote && (
                   <div className="text-[11px] sm:text-xs font-semibold text-white/90 italic max-w-sm bg-white/10 border border-white/15 px-3.5 py-1.5 rounded-xl backdrop-blur-md">
-                    "{activeSlide.quote}"
+                    &ldquo;{activeSlide.quote}&rdquo;
                   </div>
                 )}
               </div>

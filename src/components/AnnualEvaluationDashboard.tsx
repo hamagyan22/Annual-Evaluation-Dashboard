@@ -1953,7 +1953,7 @@ export default function AnnualEvaluationDashboard({
               <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
                 <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5 mb-2">
                   <Award size={14} className="text-[#1C6B53] dark:text-emerald-400" />
-                  <span>Manager's Overall Comments & Recommendations</span>
+                  <span>Manager&apos;s Overall Comments & Recommendations</span>
                 </label>
                 <textarea
                   rows={3}
@@ -1969,7 +1969,7 @@ export default function AnnualEvaluationDashboard({
               <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
                 <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5 mb-2">
                   <Users size={14} className="text-blue-600 dark:text-blue-400" />
-                  <span>Employee's Feedback & Remarks</span>
+                  <span>Employee&apos;s Feedback & Remarks</span>
                 </label>
                 <textarea
                   rows={3}
