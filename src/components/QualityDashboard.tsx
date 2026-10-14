@@ -4720,7 +4720,7 @@ export default function QualityDashboard({
                       onClick={() => setActiveSectionId(sec.id)}
                       className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
                         effectiveSectionId === sec.id
-                          ? "bg-white text-[#1C6B53] shadow-xs font-black"
+                          ? "bg-white text-[var(--brand-primary,#1C6B53)] shadow-xs font-black"
                           : "text-white/80 hover:text-white hover:bg-white/10"
                       }`}
                     >
@@ -4737,50 +4737,50 @@ export default function QualityDashboard({
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* 1. Quality Avg / Score */}
             <div className="bg-white/10 hover:bg-white/15 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/15 transition shadow-xs flex flex-col justify-between min-h-[105px]">
-              <div className="text-xs font-bold text-emerald-100/90 tracking-wide">
+              <div className="text-xs font-bold text-white/90 tracking-wide">
                 {isTrainer ? `${MONTH_NAMES[trainerMonth]} Quality Score` : (selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Score` : "Quality Score")}
               </div>
               <div className="text-2xl sm:text-3xl font-black text-white tracking-tight my-1">
                 {teamQualityStats.annualAvg !== "-" ? `${teamQualityStats.annualAvg}%` : "—"}
               </div>
-              <div className="text-[10px] text-emerald-300 font-semibold">
+              <div className="text-[10px] text-white/75 font-semibold">
                 {isTrainer ? "Average Quality Score" : (selectedMonthFilter !== null ? "Monthly Quality Score" : "Overall Quality Average")}
               </div>
             </div>
 
             {/* 2. Completed Weeks / Logged Evaluations */}
             <div className="bg-white/10 hover:bg-white/15 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/15 transition shadow-xs flex flex-col justify-between min-h-[105px]">
-              <div className="text-xs font-bold text-emerald-100/90 tracking-wide">
+              <div className="text-xs font-bold text-white/90 tracking-wide">
                 {isTrainer ? "Completed Evaluations" : "Completed Weeks"}
               </div>
               <div className="text-2xl sm:text-3xl font-black text-white tracking-tight my-1">
                 {isTrainer ? teamQualityStats.totalCallsAudited : `${teamQualityStats.weeksCount} / ${teamQualityStats.totalWeeksInPeriod}`}
               </div>
-              <div className="text-[10px] text-emerald-300 font-semibold">
+              <div className="text-[10px] text-white/75 font-semibold">
                 {isTrainer ? `${MONTH_NAMES[trainerMonth]} Total Logged` : (selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Weeks Logged` : "Weeks Logged")}
               </div>
             </div>
 
             {/* 3. Evaluation Target (Formally planned evaluations, no 'Audit') */}
             <div className="bg-white/10 hover:bg-white/15 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/15 transition shadow-xs flex flex-col justify-between min-h-[105px]">
-              <div className="text-xs font-bold text-emerald-100/90 tracking-wide">
+              <div className="text-xs font-bold text-white/90 tracking-wide">
                 {isTrainer ? "Evaluation Target" : "Target Progress"}
               </div>
               <div className="text-xl sm:text-2xl font-black text-white tracking-tight my-1">
                 {teamQualityStats.totalCallsAudited} / {teamQualityStats.totalTargetCalls}
               </div>
-              <div className="text-[10px] text-emerald-300 font-semibold">{teamQualityStats.auditProgressPercent}% Target Achieved</div>
+              <div className="text-[10px] text-white/75 font-semibold">{teamQualityStats.auditProgressPercent}% Target Achieved</div>
             </div>
 
             {/* 4. Top QA Agent / Performer */}
             <div className="bg-white/10 hover:bg-white/15 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/15 transition shadow-xs flex flex-col justify-between min-h-[105px]">
-              <div className="text-xs font-bold text-emerald-100/90 tracking-wide">
+              <div className="text-xs font-bold text-white/90 tracking-wide">
                 {isTrainer ? `Top Performer (${MONTH_NAMES[trainerMonth]})` : (selectedMonthFilter !== null ? `Top Performer (${MONTH_NAMES[selectedMonthFilter]})` : "Top Performer")}
               </div>
               <div className="text-base sm:text-lg font-black text-white tracking-tight my-1 truncate" title={teamQualityStats.topAgent}>
                 {teamQualityStats.topAgent}
               </div>
-              <div className="text-[10px] text-emerald-300 font-semibold">
+              <div className="text-[10px] text-white/75 font-semibold">
                 {isTrainer ? "Highest Monthly Score" : (selectedMonthFilter !== null ? "Highest Monthly Score" : "Highest Overall Score")}
               </div>
             </div>
@@ -4811,14 +4811,22 @@ export default function QualityDashboard({
                   ref={monthButtonRef}
                   type="button"
                   onClick={toggleMonthMenu}
+                  style={selectedMonthFilter !== null ? {
+                    backgroundColor: 'var(--brand-primary, #1C6B53)',
+                    borderColor: 'var(--brand-primary, #1C6B53)',
+                  } : {
+                    backgroundColor: 'var(--brand-bg-light)',
+                    borderColor: 'var(--brand-border-light)',
+                    color: 'var(--brand-text-light)',
+                  }}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition-all cursor-pointer shadow-xs border ${
                     selectedMonthFilter !== null
-                      ? "bg-[#00A991] text-white border-[#00A991] shadow-md shadow-[#00A991]/25 scale-[1.02]"
-                      : "bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/50 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40"
+                      ? "text-white shadow-md scale-[1.02]"
+                      : "hover:opacity-90"
                   }`}
                   title="Filter by Month"
                 >
-                  <Calendar size={13} className={selectedMonthFilter !== null ? "text-white" : "text-[#1C6B53] dark:text-emerald-400"} />
+                  <Calendar size={13} className={selectedMonthFilter !== null ? "text-white" : "text-[var(--brand-primary,#1C6B53)]"} />
                   <span>{selectedMonthFilter !== null ? MONTH_NAMES[selectedMonthFilter] : "All Months"}</span>
                   <ChevronDown size={12} className={`transition-transform duration-200 ${isMonthMenuOpen ? "rotate-180" : ""}`} />
                 </button>
@@ -4838,9 +4846,12 @@ export default function QualityDashboard({
                         handleMonthSelect(null);
                         setIsMonthMenuOpen(false);
                       }}
+                      style={selectedMonthFilter === null ? {
+                        backgroundColor: 'var(--brand-primary, #1C6B53)'
+                      } : undefined}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer mb-1.5 ${
                         selectedMonthFilter === null
-                          ? "bg-[#1C6B53] text-white font-black shadow-xs"
+                          ? "text-white font-black shadow-xs"
                           : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                       }`}
                     >
@@ -4861,10 +4872,13 @@ export default function QualityDashboard({
                               handleMonthSelect(idx);
                               setIsMonthMenuOpen(false);
                             }}
+                            style={isSel ? {
+                              backgroundColor: 'var(--brand-primary, #1C6B53)'
+                            } : undefined}
                             className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                               isSel
-                                ? "bg-[#00A991] text-white font-black shadow-xs"
-                                : "text-gray-600 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-[#1C6B53]"
+                                ? "text-white font-black shadow-xs"
+                                : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                             }`}
                           >
                             <span>{name}</span>
@@ -4885,14 +4899,15 @@ export default function QualityDashboard({
           {/* Mohammed Dlshad: Shift Switcher (Main Shift vs C shift vs Bonus) */}
           {isChatTeam && (
             <>
-              <div className="flex items-center p-0.5 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 shrink-0">
+              <div className="flex items-center p-0.5 bg-gray-100 dark:bg-gray-800/80 rounded-xl border border-gray-200/80 dark:border-gray-700/80 shrink-0">
                 <button
                   type="button"
                   onClick={() => setDlshadShift("main")}
+                  style={dlshadShift === "main" ? { backgroundColor: 'var(--brand-primary, #1C6B53)' } : undefined}
                   className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     dlshadShift === "main"
-                      ? "bg-[#1C6B53] text-white shadow-xs scale-[1.02]"
-                      : "text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40"
+                      ? "text-white shadow-xs scale-[1.02]"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-white/60 dark:hover:bg-gray-700/60"
                   }`}
                 >
                   Main Shift
@@ -4900,10 +4915,11 @@ export default function QualityDashboard({
                 <button
                   type="button"
                   onClick={() => setDlshadShift("c_shift")}
+                  style={dlshadShift === "c_shift" ? { backgroundColor: 'var(--brand-primary, #1C6B53)' } : undefined}
                   className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     dlshadShift === "c_shift"
-                      ? "bg-[#00A991] text-white shadow-xs scale-[1.02]"
-                      : "text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40"
+                      ? "text-white shadow-xs scale-[1.02]"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-white/60 dark:hover:bg-gray-700/60"
                   }`}
                 >
                   C shift
@@ -4911,10 +4927,11 @@ export default function QualityDashboard({
                 <button
                   type="button"
                   onClick={() => setDlshadShift("bonus")}
+                  style={dlshadShift === "bonus" ? { backgroundColor: 'var(--brand-primary, #1C6B53)' } : undefined}
                   className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     dlshadShift === "bonus"
-                      ? "bg-[#00A991] text-white shadow-xs scale-[1.02]"
-                      : "text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40"
+                      ? "text-white shadow-xs scale-[1.02]"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-white/60 dark:hover:bg-gray-700/60"
                   }`}
                 >
                   Bonus
@@ -4928,14 +4945,15 @@ export default function QualityDashboard({
           {/* Lara Kamil & Mohammed Jihad: Shift Switcher (Main Shift vs Bonus) */}
           {isCallEvaluator && (
             <>
-              <div className="flex items-center p-0.5 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 shrink-0">
+              <div className="flex items-center p-0.5 bg-gray-100 dark:bg-gray-800/80 rounded-xl border border-gray-200/80 dark:border-gray-700/80 shrink-0">
                 <button
                   type="button"
                   onClick={() => setCallShift("main")}
+                  style={callShift === "main" ? { backgroundColor: 'var(--brand-primary, #1C6B53)' } : undefined}
                   className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     callShift === "main"
-                      ? "bg-[#1C6B53] text-white shadow-xs scale-[1.02]"
-                      : "text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40"
+                      ? "text-white shadow-xs scale-[1.02]"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-white/60 dark:hover:bg-gray-700/60"
                   }`}
                 >
                   Main Shift
@@ -4943,10 +4961,11 @@ export default function QualityDashboard({
                 <button
                   type="button"
                   onClick={() => setCallShift("bonus")}
+                  style={callShift === "bonus" ? { backgroundColor: 'var(--brand-primary, #1C6B53)' } : undefined}
                   className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     callShift === "bonus"
-                      ? "bg-[#00A991] text-white shadow-xs scale-[1.02]"
-                      : "text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40"
+                      ? "text-white shadow-xs scale-[1.02]"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-white/60 dark:hover:bg-gray-700/60"
                   }`}
                 >
                   Bonus
@@ -4975,10 +4994,11 @@ export default function QualityDashboard({
                           setSelectedWeek(1);
                         }
                       }}
+                      style={isSel ? { backgroundColor: 'var(--brand-primary, #1C6B53)' } : undefined}
                       className={`px-3 py-1.5 text-xs font-extrabold rounded-xl transition-all cursor-pointer whitespace-nowrap ${
                         isSel
-                          ? "bg-[#00A991] text-white shadow-md shadow-[#00A991]/30 scale-[1.02]"
-                          : "text-emerald-700 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+                          ? "text-white shadow-md scale-[1.02]"
+                          : "text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800/80 hover:bg-gray-200/70 dark:hover:bg-gray-700/60"
                       }`}
                     >
                       {q.id}
@@ -4994,14 +5014,15 @@ export default function QualityDashboard({
           {isTrainer ? (
             <div className="flex items-center gap-2 shrink-0">
               {/* Azad Shift Switcher: Training | Call Mon */}
-              <div className="flex items-center p-0.5 bg-teal-50/70 dark:bg-teal-950/40 rounded-xl border border-teal-200/80 dark:border-teal-800/60 shrink-0">
+              <div className="flex items-center p-0.5 bg-gray-100 dark:bg-gray-800/80 rounded-xl border border-gray-200/80 dark:border-gray-700/80 shrink-0">
                 <button
                   type="button"
                   onClick={() => setAzadShift("training")}
+                  style={azadShift === "training" ? { backgroundColor: 'var(--brand-primary, #1C6B53)' } : undefined}
                   className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     azadShift === "training"
-                      ? "bg-[#0d9488] text-white shadow-xs scale-[1.02]"
-                      : "text-teal-800 dark:text-teal-300 hover:bg-teal-100/60 dark:hover:bg-teal-900/40"
+                      ? "text-white shadow-xs scale-[1.02]"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-white/60 dark:hover:bg-gray-700/60"
                   }`}
                 >
                   Training
@@ -5009,10 +5030,11 @@ export default function QualityDashboard({
                 <button
                   type="button"
                   onClick={() => setAzadShift("call_mon")}
+                  style={azadShift === "call_mon" ? { backgroundColor: 'var(--brand-primary, #1C6B53)' } : undefined}
                   className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     azadShift === "call_mon"
-                      ? "bg-[#0f766e] text-white shadow-xs scale-[1.02]"
-                      : "text-teal-800 dark:text-teal-300 hover:bg-teal-100/60 dark:hover:bg-teal-900/40"
+                      ? "text-white shadow-xs scale-[1.02]"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-white/60 dark:hover:bg-gray-700/60"
                   }`}
                 >
                   Call Mon
@@ -5033,9 +5055,10 @@ export default function QualityDashboard({
                         setTrainerMonth(mIdx);
                         setSelectedQuarter(`Q${Math.floor(mIdx / 3) + 1}`);
                       }}
+                      style={isSel ? { backgroundColor: 'var(--brand-primary, #1C6B53)' } : undefined}
                       className={`px-2.5 sm:px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                         isSel
-                          ? "bg-[#0d9488] text-white shadow-xs font-black scale-[1.02]"
+                          ? "text-white shadow-xs font-black scale-[1.02]"
                           : "text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800"
                       }`}
                     >
@@ -5077,7 +5100,8 @@ export default function QualityDashboard({
                     });
                   }
                 }}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl ${isCallMon ? "bg-[#0f766e] hover:bg-[#0d6962]" : "bg-[#0d9488] hover:bg-[#0b7f74]"} text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95`}
+                style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl hover:opacity-90 text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
                 title="Add Evaluation Column"
               >
                 <Plus size={13} className="stroke-[2.5]" />
@@ -5099,8 +5123,15 @@ export default function QualityDashboard({
           ) : isBonus ? (
             /* BONUS VIEW: Add & Delete Call/Chat Columns */
             <div className="flex items-center gap-2 shrink-0">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold shrink-0">
-                {isChatTeam ? <MessageSquare size={12} className="text-[#00A991]" /> : <PhoneIncoming size={12} className="text-[#00A991]" />}
+              <div 
+                style={{
+                  backgroundColor: 'var(--brand-bg-light)',
+                  borderColor: 'var(--brand-border-light)',
+                  color: 'var(--brand-text-light)'
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold shrink-0"
+              >
+                {isChatTeam ? <MessageSquare size={12} className="text-[var(--brand-primary,#1C6B53)]" /> : <PhoneIncoming size={12} className="text-[var(--brand-primary,#1C6B53)]" />}
                 <span>{isChatTeam ? "Bonus Chats" : "Bonus Calls"} (1 to {bonusColCount})</span>
               </div>
 
@@ -5108,7 +5139,8 @@ export default function QualityDashboard({
               <button
                 type="button"
                 onClick={handleAddBonusColumn}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#00A991] hover:bg-[#008f7a] text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
+                style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl hover:opacity-90 text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
                 title={isChatTeam ? "Add Bonus Chat Column" : "Add Bonus Call Column"}
               >
                 <Plus size={13} className="stroke-[2.5]" />
@@ -5136,9 +5168,10 @@ export default function QualityDashboard({
                   <button
                     key={w}
                     onClick={() => setSelectedWeek(w)}
+                    style={isSel ? { backgroundColor: 'var(--brand-primary, #1C6B53)' } : undefined}
                     className={`shrink-0 px-2.5 sm:px-3 py-1.5 text-xs font-black rounded-xl transition-all cursor-pointer whitespace-nowrap ${
                       isSel
-                        ? "bg-[#1C6B53] text-white shadow-md shadow-[#1C6B53]/25 scale-[1.02]"
+                        ? "text-white shadow-md scale-[1.02]"
                         : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60"
                     }`}
                   >
@@ -5157,7 +5190,10 @@ export default function QualityDashboard({
           <div className="px-4 sm:px-5 py-3 bg-gradient-to-r from-gray-50 via-white to-gray-50/90 dark:from-gray-800/95 dark:via-gray-900 dark:to-gray-800/95 border-b border-gray-200 dark:border-gray-700/80 flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3">
             {/* Left Info Cluster */}
             <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-              <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-black shadow-xs ${isCallMon ? "bg-[#0f766e]" : isTrainer ? "bg-[#0d9488]" : isCShift || isBonus ? "bg-[#00A991]" : "bg-[#1C6B53]"}`}>
+              <div 
+                style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-black shadow-xs"
+              >
                 <Calendar size={12} className="opacity-85 shrink-0" />
                 <span>{isCallMon ? `${MONTH_NAMES[trainerMonth]} Call Mon` : isTrainer ? `${MONTH_NAMES[trainerMonth]} Evaluations` : isBonus ? `Bonus Evaluations` : `Week ${selectedWeek}`}</span>
               </div>
@@ -5184,8 +5220,15 @@ export default function QualityDashboard({
                 }
               </span>
 
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border shadow-2xs ${isCallMon ? "bg-teal-50 dark:bg-teal-950/60 text-[#0f766e] dark:text-teal-300 border-teal-200/80 dark:border-teal-800/50" : "bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/50"}`}>
-                <Users size={12} className={`shrink-0 ${isCallMon ? "text-[#0f766e]" : "text-[#00A991]"}`} />
+              <span 
+                style={{
+                  backgroundColor: 'var(--brand-bg-light)',
+                  borderColor: 'var(--brand-border-light)',
+                  color: 'var(--brand-text-light)'
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border shadow-2xs"
+              >
+                <Users size={12} className="shrink-0 text-[var(--brand-primary,#1C6B53)]" />
                 <span>{currentCsrs.length} Agents</span>
               </span>
             </div>
@@ -5196,7 +5239,8 @@ export default function QualityDashboard({
                 <button
                   type="button"
                   onClick={() => setShowAddCShiftModal(true)}
-                  className="h-8 flex items-center gap-1.5 px-3 rounded-xl bg-[#00A991] hover:bg-[#008f7a] text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
+                  style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
+                  className="h-8 flex items-center gap-1.5 px-3 rounded-xl hover:opacity-90 text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
                   title="Add Evening Call Team Agent to C Shift"
                 >
                   <Plus size={13} className="stroke-[2.5]" />
@@ -5208,7 +5252,8 @@ export default function QualityDashboard({
                 <button
                   type="button"
                   onClick={() => setShowAddCallMonModal(true)}
-                  className="h-8 flex items-center gap-1.5 px-3 rounded-xl bg-[#0f766e] hover:bg-[#0d6360] text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
+                  style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
+                  className="h-8 flex items-center gap-1.5 px-3 rounded-xl hover:opacity-90 text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
                   title="Add Agent to Call Monitoring Roster"
                 >
                   <Plus size={13} className="stroke-[2.5]" />
@@ -5273,10 +5318,15 @@ export default function QualityDashboard({
                 <button
                   type="button"
                   onClick={handleExportPDF}
-                  className="h-8 flex items-center gap-1.5 px-3 rounded-xl text-xs font-black text-[#1C6B53] dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800/60 transition shadow-2xs cursor-pointer active:scale-95 shrink-0"
+                  style={{
+                    backgroundColor: 'var(--brand-bg-light)',
+                    borderColor: 'var(--brand-border-light)',
+                    color: 'var(--brand-text-light)'
+                  }}
+                  className="h-8 flex items-center gap-1.5 px-3 rounded-xl text-xs font-black hover:opacity-90 border transition shadow-2xs cursor-pointer active:scale-95 shrink-0"
                   title="Export Report as PDF"
                 >
-                  <Download size={13} />
+                  <Download size={13} className="text-[var(--brand-primary,#1C6B53)]" />
                   <span>Export PDF</span>
                 </button>
               )}
@@ -5437,7 +5487,10 @@ export default function QualityDashboard({
                           </th>
                         );
                       })}
-                      <th className="px-4 py-3 text-center min-w-[120px] bg-[#0f766e] text-white font-black">
+                      <th 
+                        style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
+                        className="px-4 py-3 text-center min-w-[120px] text-white font-black"
+                      >
                         {MONTH_NAMES[trainerMonth]} Avg
                       </th>
                       <th className="px-3 py-3 text-center w-12 text-gray-400 font-bold">
@@ -5467,7 +5520,10 @@ export default function QualityDashboard({
                           </div>
                         </th>
                       ))}
-                      <th className="px-4 py-3 text-center min-w-[120px] bg-[#0d9488] text-white font-black">
+                      <th 
+                        style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
+                        className="px-4 py-3 text-center min-w-[120px] text-white font-black"
+                      >
                         {MONTH_NAMES[trainerMonth]} Avg
                       </th>
                     </>
@@ -5481,7 +5537,10 @@ export default function QualityDashboard({
                           </div>
                         </th>
                       ))}
-                      <th className="px-4 py-3 text-center min-w-[120px] bg-[#00A991] text-white font-black">
+                      <th 
+                        style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
+                        className="px-4 py-3 text-center min-w-[120px] text-white font-black"
+                      >
                         {selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Avg` : `Week ${selectedWeek} Score`}
                       </th>
                       <th className="px-3 py-3 text-center w-12 text-gray-400 font-bold">
@@ -5511,7 +5570,10 @@ export default function QualityDashboard({
                           </div>
                         </th>
                       ))}
-                      <th className="px-4 py-3 text-center min-w-[120px] bg-[#00A991] text-white font-black">
+                      <th 
+                        style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
+                        className="px-4 py-3 text-center min-w-[120px] text-white font-black"
+                      >
                         Bonus Score
                       </th>
                     </>
@@ -5554,7 +5616,8 @@ export default function QualityDashboard({
                           <button
                             type="button"
                             onClick={() => setShowAddCallMonModal(true)}
-                            className="px-4 py-2 bg-[#0f766e] hover:bg-[#0d6360] text-white rounded-xl text-xs font-black transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                            style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
+                            className="px-4 py-2 hover:opacity-90 text-white rounded-xl text-xs font-black transition shadow-xs cursor-pointer flex items-center gap-1.5"
                           >
                             <Plus size={14} />
                             <span>Add Agent (Younis + Ankido Teams)</span>
@@ -5566,7 +5629,8 @@ export default function QualityDashboard({
                           <button
                             type="button"
                             onClick={() => setShowAddCShiftModal(true)}
-                            className="px-4 py-2 bg-[#00A991] hover:bg-[#008f7a] text-white rounded-xl text-xs font-black transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                            style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
+                            className="px-4 py-2 hover:opacity-90 text-white rounded-xl text-xs font-black transition shadow-xs cursor-pointer flex items-center gap-1.5"
                           >
                             <Plus size={14} />
                             <span>Add Evening Call Team Agent</span>

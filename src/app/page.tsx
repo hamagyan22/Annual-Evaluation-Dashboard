@@ -442,7 +442,7 @@ const getPreviousMonthAndYear = () => {
 const KPI_META: Record<string, { icon: any; color: string; bgLight: string; bgDark: string; border: string; label: string }> = {
   quality: { 
     icon: Award, 
-    color: 'text-emerald-600 dark:text-emerald-400', 
+    color: 'text-emerald-500 dark:text-emerald-500', 
     bgLight: 'bg-emerald-500/10', 
     bgDark: 'dark:bg-emerald-500/15',
     border: 'bg-emerald-500',
@@ -2003,7 +2003,7 @@ function AgentDashboard({
                     {/* Card Footer */}
                     <div className="relative z-10 mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-gray-100 dark:border-gray-700/70 flex items-center justify-between text-[10px] sm:text-[11px] text-gray-400 dark:text-gray-500 font-medium">
                       <span className="flex items-center gap-1 sm:gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span className={`w-1.5 h-1.5 rounded-full ${meta.border}`} />
                         <span className="hidden xs:inline sm:inline">Active</span>
                       </span>
                       <span className="font-bold text-gray-600 dark:text-gray-300">{selectedMonth} {selectedYear}</span>
