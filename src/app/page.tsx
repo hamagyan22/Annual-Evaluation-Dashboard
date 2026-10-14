@@ -975,9 +975,12 @@ function AgentDashboard({
       setLoading(false);
     };
 
+    const numYear = Number(selectedYear);
+    const yearList = !isNaN(numYear) ? [selectedYear, numYear] : [selectedYear];
+
     const q = query(
       collection(db, tableName),
-      where('year', '==', selectedYear)
+      where('year', 'in', yearList)
     );
     const unsubMetrics = onSnapshot(q, (snap) => {
       rawFirestoreDocs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
@@ -989,7 +992,7 @@ function AgentDashboard({
 
     const qaQ = query(
       collection(db, 'quality_evaluations'),
-      where('year', '==', selectedYear)
+      where('year', 'in', yearList)
     );
     const unsubQA = onSnapshot(qaQ, (qSnap) => {
       qSnap.docs.forEach(d => {
@@ -1728,7 +1731,7 @@ function AgentDashboard({
 
             {/* Month / Period Selector Toolbar with Year Dropdown beside months */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200/80 dark:border-gray-700 shadow-sm p-1.5 sm:p-2">
-              <div className="flex items-center px-1 overflow-x-auto scrollbar-hide gap-1 sm:gap-1.5">
+              <div className="flex items-center gap-1 sm:gap-1.5 px-1">
                 {/* Modern Year Select Dropdown beside months */}
                 <div className="shrink-0 mr-0.5 sm:mr-1">
                   <ModernDropdown
@@ -1743,43 +1746,45 @@ function AgentDashboard({
 
                 <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 sm:mx-1 shrink-0" />
 
-                {/* Month tabs */}
-                {months.map(m => {
-                  const displayLabel = m.charAt(0) + m.slice(1).toLowerCase();
-                  return (
-                    <button
-                      key={m}
-                      onClick={() => setSelectedMonth(m)}
-                      className={`shrink-0 px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all duration-150 ${
-                        selectedMonth === m
-                          ? 'bg-[#1C6B53] text-white shadow-md shadow-[#1C6B53]/25 scale-[1.02]'
-                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50'
-                      }`}
-                    >
-                      {displayLabel}
-                    </button>
-                  );
-                })}
+                {/* Month & Period tabs */}
+                <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto scrollbar-hide flex-1 py-0.5">
+                  {months.map(m => {
+                    const displayLabel = m.charAt(0) + m.slice(1).toLowerCase();
+                    return (
+                      <button
+                        key={m}
+                        onClick={() => setSelectedMonth(m)}
+                        className={`shrink-0 px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all duration-150 ${
+                          selectedMonth === m
+                            ? 'bg-[#1C6B53] text-white shadow-md shadow-[#1C6B53]/25 scale-[1.02]'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                        }`}
+                      >
+                        {displayLabel}
+                      </button>
+                    );
+                  })}
 
-                <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 sm:mx-1 shrink-0" />
+                  <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 sm:mx-1 shrink-0" />
 
-                {/* Period tabs - Styled in Green like Team Leader Dashboard */}
-                {PERIODS.map(p => {
-                  const isSel = selectedMonth === p.label;
-                  return (
-                    <button
-                      key={p.label}
-                      onClick={() => setSelectedMonth(p.label)}
-                      className={`shrink-0 px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-extrabold rounded-xl transition-all duration-150 whitespace-nowrap ${
-                        isSel
-                          ? 'bg-[#00A991] text-white shadow-md shadow-[#00A991]/30 scale-[1.02]'
-                          : 'text-emerald-700 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  );
-                })}
+                  {/* Period tabs - Styled in Green like Team Leader Dashboard */}
+                  {PERIODS.map(p => {
+                    const isSel = selectedMonth === p.label;
+                    return (
+                      <button
+                        key={p.label}
+                        onClick={() => setSelectedMonth(p.label)}
+                        className={`shrink-0 px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-extrabold rounded-xl transition-all duration-150 whitespace-nowrap ${
+                          isSel
+                            ? 'bg-[#00A991] text-white shadow-md shadow-[#00A991]/30 scale-[1.02]'
+                            : 'text-emerald-700 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
@@ -3479,14 +3484,17 @@ export default function Dashboard() {
       const defaultYounis = DEFAULT_COMPANY_EMPLOYEES.filter(m => m.team === 'Younis Kamal Team');
       const defaultAnkido = DEFAULT_COMPANY_EMPLOYEES.filter(m => m.team === 'Ankido Buya Team');
       const defaultCombinedRoster = [...defaultYounis, ...defaultAnkido].sort((a, b) => a.agent_name.localeCompare(b.agent_name));
-      const defaultBaselineMetrics = BASELINE_TEAM_METRICS.filter(m => (m.team === 'Younis Kamal Team' || m.team === 'Ankido Buya Team') && m.year === selectedYear);
+      const defaultBaselineMetrics = BASELINE_TEAM_METRICS.filter(m => (m.team === 'Younis Kamal Team' || m.team === 'Ankido Buya Team') && (m.year === selectedYear || String(m.year) === String(selectedYear)));
+
+      const numYear = Number(selectedYear);
+      const yearList = !isNaN(numYear) ? [selectedYear, numYear] : [selectedYear];
 
       try {
         const [younisMembersSnap, ankidoMembersSnap, younisMetricsSnap, ankidoMetricsSnap] = await Promise.all([
           getDocs(query(collection(db, 'team_members'), where('team', '==', 'Younis Kamal Team'))).catch(() => null),
           getDocs(query(collection(db, 'team_members'), where('team', '==', 'Ankido Buya Team'))).catch(() => null),
-          getDocs(query(collection(db, 'younis_metrics'), where('year', '==', selectedYear))).catch(() => null),
-          getDocs(query(collection(db, 'ankido_metrics'), where('year', '==', selectedYear))).catch(() => null)
+          getDocs(query(collection(db, 'younis_metrics'), where('year', 'in', yearList))).catch(() => null),
+          getDocs(query(collection(db, 'ankido_metrics'), where('year', 'in', yearList))).catch(() => null)
         ]);
 
         const younisRosterMap = new Map<string, any>();
@@ -3654,12 +3662,15 @@ export default function Dashboard() {
     setErrorMsg(null);
 
     const defaultRoster = DEFAULT_COMPANY_EMPLOYEES.filter(m => m.team === selectedTeam);
-    const defaultMetrics = BASELINE_TEAM_METRICS.filter(m => m.team === selectedTeam && m.year === selectedYear);
+    const defaultMetrics = BASELINE_TEAM_METRICS.filter(m => m.team === selectedTeam && (m.year === selectedYear || String(m.year) === String(selectedYear)));
+
+    const numYear = Number(selectedYear);
+    const yearList = !isNaN(numYear) ? [selectedYear, numYear] : [selectedYear];
 
     try {
       const [membersSnap, metricsSnap] = await Promise.all([
         getDocs(query(collection(db, 'team_members'), where('team', '==', selectedTeam))).catch(() => null),
-        getDocs(query(collection(db, tableName), where('team', '==', selectedTeam), where('year', '==', selectedYear))).catch(() => null)
+        getDocs(query(collection(db, tableName), where('team', '==', selectedTeam), where('year', 'in', yearList))).catch(() => null)
       ]);
 
       const memberMap = new Map<string, any>();
@@ -4767,6 +4778,7 @@ export default function Dashboard() {
         <AnnualEvaluationDashboard
           userProfile={userProfile}
           allMembers={allMembers}
+          selectedYear={selectedYear}
           onBack={() => {
             setShowAnnualEvalView(false);
           }}
@@ -5250,158 +5262,164 @@ export default function Dashboard() {
         )}
 
         {/* Month Tabs & Controls Bar */}
-        <div className="flex items-center gap-1 sm:gap-1.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-1.5 sm:p-2 pr-3 sm:pr-4 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 w-full overflow-x-auto scrollbar-hide shadow-sm mb-4 sm:mb-5">
-          {/* Year selector - Sleek Modern Custom Dropdown */}
-          <div className="shrink-0">
-            <ModernDropdown
-              value={selectedYear}
-              onChange={(val) => setSelectedYear(val)}
-              options={["2026", "2027", "2028", "2029", "2030"]}
-              variant="solid-green"
-              size="sm"
-              ariaLabel="Select Year"
-            />
-          </div>
+        <div className="flex items-center gap-1.5 sm:gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-1.5 sm:p-2 pr-3 sm:pr-4 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 w-full shadow-sm mb-4 sm:mb-5">
+          {/* Pinned Left Controls: Year, Search, Agent count, Multi-cell tools */}
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            {/* Year selector - Sleek Modern Custom Dropdown */}
+            <div className="shrink-0">
+              <ModernDropdown
+                value={selectedYear}
+                onChange={(val) => setSelectedYear(val)}
+                options={["2026", "2027", "2028", "2029", "2030"]}
+                variant="solid-green"
+                size="sm"
+                ariaLabel="Select Year"
+              />
+            </div>
 
-          {/* Search Agent Input & Count next to Year - Sleek, Spacious, and Modern */}
-          <div className="relative flex-shrink-0">
-            <Search size={13} className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search agent name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 pr-7 py-1 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/90 hover:bg-white dark:bg-gray-900/70 dark:hover:bg-gray-900 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-[#1C6B53]/30 focus:border-[#1C6B53] dark:focus:border-emerald-500 text-[11px] sm:text-xs w-36 sm:w-48 md:w-56 transition-all dark:text-gray-100 font-semibold shadow-2xs"
-            />
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 transition cursor-pointer"
-                title="Clear search"
-              >
-                <X size={12} />
-              </button>
+            {/* Search Agent Input & Count next to Year - Sleek, Spacious, and Modern */}
+            <div className="relative flex-shrink-0">
+              <Search size={13} className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search agent name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 pr-7 py-1 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/90 hover:bg-white dark:bg-gray-900/70 dark:hover:bg-gray-900 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-[#1C6B53]/30 focus:border-[#1C6B53] dark:focus:border-emerald-500 text-[11px] sm:text-xs w-36 sm:w-48 md:w-56 transition-all dark:text-gray-100 font-semibold shadow-2xs"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 transition cursor-pointer"
+                  title="Clear search"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-gray-100/90 dark:bg-gray-750/70 text-gray-600 dark:text-gray-300 text-[10px] sm:text-[11px] font-bold whitespace-nowrap flex-shrink-0 border border-gray-200/50 dark:border-gray-700/50 shadow-2xs">
+              <Users size={11} className="text-gray-400" />
+              <span>{filteredRows.length} Agents</span>
+            </div>
+
+            {/* Selection Action Toolbar */}
+            {isMultiCellSelected && (
+              <div className="flex items-center gap-1.5 sm:gap-2 px-2 py-0.5 bg-emerald-100/90 dark:bg-emerald-950/90 border border-[#1C6B53]/30 dark:border-emerald-600/40 rounded-lg text-xs text-[#1C6B53] dark:text-emerald-300 font-bold shadow-xs flex-shrink-0 animate-fadeIn">
+                <span className="tabular-nums text-[11px]">{selectedCellCount} selected</span>
+                <div className="h-3 w-px bg-emerald-300 dark:bg-emerald-700" />
+                <button 
+                  onClick={handleCopySelection}
+                  className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-emerald-200/60 dark:hover:bg-emerald-900/60 transition text-[11px]"
+                  title="Copy selected cells (Ctrl+C)"
+                >
+                  <Copy size={11} />
+                  <span>Copy</span>
+                </button>
+                {!isAggregate && (
+                  <>
+                    <div className="h-3 w-px bg-emerald-300 dark:bg-emerald-700" />
+                    <button 
+                      onClick={handleClearSelectedCells}
+                      className="flex items-center gap-1 px-1 py-0.5 rounded text-red-600 dark:text-red-400 hover:bg-red-100/60 dark:hover:bg-red-950/60 transition text-[11px]"
+                      title="Clear selected cells (Delete / Backspace)"
+                    >
+                      <Trash2 size={11} />
+                      <span>Clear</span>
+                    </button>
+                  </>
+                )}
+                <div className="h-3 w-px bg-emerald-300 dark:bg-emerald-700" />
+                <button 
+                  onClick={() => updateSelection(null, null)}
+                  className="p-0.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
+                  title="Deselect (Esc)"
+                >
+                  <X size={12} />
+                </button>
+              </div>
             )}
           </div>
 
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-gray-100/90 dark:bg-gray-750/70 text-gray-600 dark:text-gray-300 text-[10px] sm:text-[11px] font-bold whitespace-nowrap flex-shrink-0 border border-gray-200/50 dark:border-gray-700/50 shadow-2xs">
-            <Users size={11} className="text-gray-400" />
-            <span>{filteredRows.length} Agents</span>
+          {/* Separator */}
+          <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5 flex-shrink-0" />
+
+          {/* Horizontally Scrollable Months and Quarters */}
+          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto scrollbar-hide flex-1 py-0.5">
+            {/* Months (Jan - Dec) */}
+            {months.map(m => {
+              const displayLabel = m.charAt(0) + m.slice(1).toLowerCase();
+              const isSel = selectedMonth === m;
+              return (
+                <button
+                  key={m}
+                  onClick={() => setSelectedMonth(m)}
+                  style={isSel ? { backgroundColor: 'var(--brand-primary)', color: '#ffffff' } : undefined}
+                  className={`px-1.5 sm:px-2 py-1 rounded-lg text-xs font-bold transition flex-shrink-0 cursor-pointer ${
+                    isSel
+                      ? 'shadow-md shadow-[var(--brand-glow)]'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60'
+                  }`}
+                >
+                  {displayLabel}
+                </button>
+              );
+            })}
+
+            {/* Separator */}
+            <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5 flex-shrink-0" />
+
+            {/* Quarters & Halves */}
+            {periods.map(p => {
+              const isSel = selectedMonth === p;
+              return (
+                <button
+                  key={p}
+                  onClick={() => setSelectedMonth(p)}
+                  style={
+                    isSel
+                      ? { backgroundColor: 'var(--brand-primary)', color: '#ffffff' }
+                      : { backgroundColor: 'var(--brand-bg-light)', color: 'var(--brand-text-light)' }
+                  }
+                  className={`px-1.5 sm:px-2 py-1 rounded-lg text-xs font-extrabold transition flex-shrink-0 cursor-pointer ${
+                    isSel
+                      ? 'shadow-md shadow-[var(--brand-glow)]'
+                      : 'hover:opacity-90 dark:bg-[var(--brand-dark-bg-light)] dark:text-[var(--brand-dark-text-light)]'
+                  }`}
+                >
+                  {p}
+                </button>
+              );
+            })}
+
+            {/* Separator */}
+            <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5 flex-shrink-0" />
+
+            {/* Button next to H1 / H2: Younis + Ankido Combined Data (Compact & Brief) */}
+            <button
+              type="button"
+              onClick={() => setIsCombinedCallCenter(prev => !prev)}
+              style={
+                isCombinedCallCenter
+                  ? { background: 'var(--brand-gradient)', color: '#ffffff', borderColor: 'transparent' }
+                  : { backgroundColor: 'var(--brand-bg-light)', color: 'var(--brand-text-light)', borderColor: 'var(--brand-border-light)' }
+              }
+              className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg text-[11px] font-black transition-all flex-shrink-0 flex items-center gap-1 border cursor-pointer whitespace-nowrap ${
+                isCombinedCallCenter
+                  ? 'shadow-md shadow-[var(--brand-glow)] ring-2 ring-[var(--brand-glow)]'
+                  : 'hover:opacity-90 dark:bg-[var(--brand-dark-bg-light)] dark:text-[var(--brand-dark-text-light)] dark:border-[var(--brand-dark-border-light)]'
+              }`}
+              title="عرض داتا تيم يونس وتيم انكيدو معاً (Call Center Combined: Younis + Ankido)"
+            >
+              <Users
+                size={11}
+                style={{ color: isCombinedCallCenter ? '#fde047' : 'var(--brand-text-light)' }}
+                className={isCombinedCallCenter ? 'animate-pulse' : ''}
+              />
+              <span>CC (Y+A)</span>
+            </button>
           </div>
-
-          {/* Selection Action Toolbar */}
-          {isMultiCellSelected && (
-            <div className="flex items-center gap-1.5 sm:gap-2 px-2 py-0.5 bg-emerald-100/90 dark:bg-emerald-950/90 border border-[#1C6B53]/30 dark:border-emerald-600/40 rounded-lg text-xs text-[#1C6B53] dark:text-emerald-300 font-bold shadow-xs flex-shrink-0 animate-fadeIn">
-              <span className="tabular-nums text-[11px]">{selectedCellCount} selected</span>
-              <div className="h-3 w-px bg-emerald-300 dark:bg-emerald-700" />
-              <button 
-                onClick={handleCopySelection}
-                className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-emerald-200/60 dark:hover:bg-emerald-900/60 transition text-[11px]"
-                title="Copy selected cells (Ctrl+C)"
-              >
-                <Copy size={11} />
-                <span>Copy</span>
-              </button>
-              {!isAggregate && (
-                <>
-                  <div className="h-3 w-px bg-emerald-300 dark:bg-emerald-700" />
-                  <button 
-                    onClick={handleClearSelectedCells}
-                    className="flex items-center gap-1 px-1 py-0.5 rounded text-red-600 dark:text-red-400 hover:bg-red-100/60 dark:hover:bg-red-950/60 transition text-[11px]"
-                    title="Clear selected cells (Delete / Backspace)"
-                  >
-                    <Trash2 size={11} />
-                    <span>Clear</span>
-                  </button>
-                </>
-              )}
-              <div className="h-3 w-px bg-emerald-300 dark:bg-emerald-700" />
-              <button 
-                onClick={() => updateSelection(null, null)}
-                className="p-0.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
-                title="Deselect (Esc)"
-              >
-                <X size={12} />
-              </button>
-            </div>
-          )}
-
-          {/* Separator */}
-          <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5 flex-shrink-0" />
-
-          {/* Months (Jan - Dec) */}
-          {months.map(m => {
-            const displayLabel = m.charAt(0) + m.slice(1).toLowerCase();
-            const isSel = selectedMonth === m;
-            return (
-              <button
-                key={m}
-                onClick={() => setSelectedMonth(m)}
-                style={isSel ? { backgroundColor: 'var(--brand-primary)', color: '#ffffff' } : undefined}
-                className={`px-1.5 sm:px-2 py-1 rounded-lg text-xs font-bold transition flex-shrink-0 cursor-pointer ${
-                  isSel
-                    ? 'shadow-md shadow-[var(--brand-glow)]'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60'
-                }`}
-              >
-                {displayLabel}
-              </button>
-            );
-          })}
-
-          {/* Separator */}
-          <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5 flex-shrink-0" />
-
-          {/* Quarters & Halves */}
-          {periods.map(p => {
-            const isSel = selectedMonth === p;
-            return (
-              <button
-                key={p}
-                onClick={() => setSelectedMonth(p)}
-                style={
-                  isSel
-                    ? { backgroundColor: 'var(--brand-primary)', color: '#ffffff' }
-                    : { backgroundColor: 'var(--brand-bg-light)', color: 'var(--brand-text-light)' }
-                }
-                className={`px-1.5 sm:px-2 py-1 rounded-lg text-xs font-extrabold transition flex-shrink-0 cursor-pointer ${
-                  isSel
-                    ? 'shadow-md shadow-[var(--brand-glow)]'
-                    : 'hover:opacity-90 dark:bg-[var(--brand-dark-bg-light)] dark:text-[var(--brand-dark-text-light)]'
-                }`}
-              >
-                {p}
-              </button>
-            );
-          })}
-
-          {/* Separator */}
-          <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5 flex-shrink-0" />
-
-          {/* Button next to H1 / H2: Younis + Ankido Combined Data (Compact & Brief) */}
-          <button
-            type="button"
-            onClick={() => setIsCombinedCallCenter(prev => !prev)}
-            style={
-              isCombinedCallCenter
-                ? { background: 'var(--brand-gradient)', color: '#ffffff', borderColor: 'transparent' }
-                : { backgroundColor: 'var(--brand-bg-light)', color: 'var(--brand-text-light)', borderColor: 'var(--brand-border-light)' }
-            }
-            className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg text-[11px] font-black transition-all flex-shrink-0 flex items-center gap-1 border cursor-pointer whitespace-nowrap ${
-              isCombinedCallCenter
-                ? 'shadow-md shadow-[var(--brand-glow)] ring-2 ring-[var(--brand-glow)]'
-                : 'hover:opacity-90 dark:bg-[var(--brand-dark-bg-light)] dark:text-[var(--brand-dark-text-light)] dark:border-[var(--brand-dark-border-light)]'
-            }`}
-            title="عرض داتا تيم يونس وتيم انكيدو معاً (Call Center Combined: Younis + Ankido)"
-          >
-            <Users
-              size={11}
-              style={{ color: isCombinedCallCenter ? '#fde047' : 'var(--brand-text-light)' }}
-              className={isCombinedCallCenter ? 'animate-pulse' : ''}
-            />
-            <span>CC (Y+A)</span>
-          </button>
         </div>
 
         {/* Mobile Swipe Hint */}

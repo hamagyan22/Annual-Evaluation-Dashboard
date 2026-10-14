@@ -18,6 +18,7 @@ import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 export interface AnnualEvaluationDashboardProps {
   userProfile: any;
   allMembers?: any[];
+  selectedYear?: string;
   onBack: () => void;
   onLogout?: () => void;
   isDarkMode?: boolean;
@@ -155,6 +156,7 @@ const AVAILABLE_YEARS = ["2026", "2027", "2028", "2029", "2030"];
 export default function AnnualEvaluationDashboard({
   userProfile,
   allMembers = [],
+  selectedYear: initialYear = "2026",
   onBack,
   onLogout,
   isDarkMode = false,
@@ -167,7 +169,14 @@ export default function AnnualEvaluationDashboard({
   const isAgent = userProfile?.role === 'agent';
 
   // Selected filters: Year (2026-2030) and Period (Semi-Annual & Annual only)
-  const [selectedYear, setSelectedYear] = useState<string>("2026");
+  const [selectedYear, setSelectedYear] = useState<string>(initialYear || "2026");
+
+  useEffect(() => {
+    if (initialYear && initialYear !== selectedYear) {
+      setSelectedYear(initialYear);
+    }
+  }, [initialYear]);
+
   const [yearDropdownOpen, setYearDropdownOpen] = useState<boolean>(false);
   const [selectedPeriod, setSelectedPeriod] = useState<"Semi-Annual" | "Annual">("Semi-Annual");
 

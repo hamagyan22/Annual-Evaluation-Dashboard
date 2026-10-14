@@ -521,13 +521,27 @@ export async function fetchTopStarData(
     (month || "").charAt(0).toUpperCase() + (month || "").slice(1).toLowerCase()
   ])).filter(Boolean);
 
-  const [mohammedSnap, younisSnap, ankidoSnap, membersSnap, syncStatus] = await Promise.all([
+  const numYear = Number(year);
+  const isNum = !isNaN(numYear);
+
+  let [mohammedSnap, younisSnap, ankidoSnap, membersSnap, syncStatus] = await Promise.all([
     getDocs(query(collection(db, "mohammed_metrics"), where("year", "==", year), where("month", "in", monthVariants))).catch(() => null),
     getDocs(query(collection(db, "younis_metrics"), where("year", "==", year), where("month", "in", monthVariants))).catch(() => null),
     getDocs(query(collection(db, "ankido_metrics"), where("year", "==", year), where("month", "in", monthVariants))).catch(() => null),
     getDocs(collection(db, "team_members")).catch(() => null),
     fetchTopStarSyncStatus()
   ]);
+
+  if (isNum) {
+    const [mohammedNumSnap, younisNumSnap, ankidoNumSnap] = await Promise.all([
+      (!mohammedSnap || mohammedSnap.empty) ? getDocs(query(collection(db, "mohammed_metrics"), where("year", "==", numYear), where("month", "in", monthVariants))).catch(() => null) : null,
+      (!younisSnap || younisSnap.empty) ? getDocs(query(collection(db, "younis_metrics"), where("year", "==", numYear), where("month", "in", monthVariants))).catch(() => null) : null,
+      (!ankidoSnap || ankidoSnap.empty) ? getDocs(query(collection(db, "ankido_metrics"), where("year", "==", numYear), where("month", "in", monthVariants))).catch(() => null) : null,
+    ]);
+    if (mohammedNumSnap && !mohammedNumSnap.empty) mohammedSnap = mohammedNumSnap;
+    if (younisNumSnap && !younisNumSnap.empty) younisSnap = younisNumSnap;
+    if (ankidoNumSnap && !ankidoNumSnap.empty) ankidoSnap = ankidoNumSnap;
+  }
 
   // Exclude inactive / resigned agents from Top Star for the specific period
   const inactiveSet = new Set<string>();
@@ -543,7 +557,7 @@ export async function fetchTopStarData(
 
   const chatMap: Record<string, any> = {};
   const baselineChat = BASELINE_TEAM_METRICS.filter(
-    m => m.team === "Mohammed Dlshad Team" && m.year === year && m.month.toLowerCase() === (month || "").toLowerCase()
+    m => m.team === "Mohammed Dlshad Team" && String(m.year) === String(year) && m.month.toLowerCase() === (month || "").toLowerCase()
   );
   baselineChat.forEach(d => {
     const cName = normalizeName(d.agent_name || "");
@@ -557,7 +571,7 @@ export async function fetchTopStarData(
 
   const callMap: Record<string, any> = {};
   const baselineCall = BASELINE_TEAM_METRICS.filter(
-    m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && m.year === year && m.month.toLowerCase() === (month || "").toLowerCase()
+    m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && String(m.year) === String(year) && m.month.toLowerCase() === (month || "").toLowerCase()
   );
   baselineCall.forEach(d => {
     const cName = normalizeName(d.agent_name || "");

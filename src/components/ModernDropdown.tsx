@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Check } from "lucide-react";
 
 export interface DropdownOption {
@@ -31,14 +32,50 @@ export const ModernDropdown: React.FC<ModernDropdownProps> = ({
   ariaLabel = "Select option",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [coords, setCoords] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    openUpwards: boolean;
+  }>({
+    top: 0,
+    left: 0,
+    width: 0,
+    openUpwards: false,
+  });
 
-  // Close on outside click or Escape
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
+    setMounted(true);
+  }, []);
+
+  const updatePosition = useCallback(() => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const dropdownHeight = 220;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUpwards = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
+
+    setCoords({
+      top: openUpwards ? rect.top - 6 : rect.bottom + 6,
+      left: align === "right" ? rect.right : rect.left,
+      width: rect.width,
+      openUpwards,
+    });
+  }, [align]);
+
+  useLayoutEffect(() => {
+    if (isOpen) {
+      updatePosition();
+    }
+  }, [isOpen, updatePosition]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleScrollOrResize = () => {
+      updatePosition();
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -47,18 +84,16 @@ export const ModernDropdown: React.FC<ModernDropdownProps> = ({
       }
     };
 
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("touchstart", handleClickOutside);
-      document.addEventListener("keydown", handleKeyDown);
-    }
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, updatePosition]);
 
   const normalizedOptions: DropdownOption[] = options.map((opt) =>
     typeof opt === "string" ? { value: opt, label: opt } : { ...opt, label: opt.label || opt.value }
@@ -91,10 +126,14 @@ export const ModernDropdown: React.FC<ModernDropdownProps> = ({
   };
 
   return (
-    <div ref={containerRef} className={`relative inline-block text-left shrink-0 ${className}`}>
+    <div className={`relative inline-block text-left shrink-0 ${className}`}>
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (!isOpen) updatePosition();
+          setIsOpen(!isOpen);
+        }}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={ariaLabel}
@@ -111,55 +150,78 @@ export const ModernDropdown: React.FC<ModernDropdownProps> = ({
         />
       </button>
 
-      {isOpen && (
-        <div
-          role="listbox"
-          className={`absolute top-full mt-1.5 z-50 min-w-[120px] max-w-xs py-1.5 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200/90 dark:border-gray-700/90 overflow-hidden animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/5 ${
-            align === "right" ? "right-0" : "left-0"
-          }`}
-        >
-          <div className="max-h-60 overflow-y-auto p-1 space-y-0.5 overscroll-contain">
-            {normalizedOptions.map((opt) => {
-              const isSelected = opt.value === value;
-              const OptIcon = opt.icon;
+      {isOpen && mounted && typeof document !== "undefined" && createPortal(
+        <>
+          {/* Backdrop to catch clicks outside */}
+          <div
+            className="fixed inset-0 z-[99998] cursor-default bg-transparent"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(false);
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              setIsOpen(false);
+            }}
+          />
 
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  onClick={() => {
-                    onChange(opt.value);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-xl font-bold transition-colors cursor-pointer select-none text-left ${
-                    isSelected
-                      ? "bg-gray-100 dark:bg-gray-800 text-gray-950 dark:text-white font-black"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-white"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    {OptIcon && (
-                      <OptIcon
+          {/* Portal dropdown floating container */}
+          <div
+            role="listbox"
+            style={{
+              position: "fixed",
+              top: coords.openUpwards ? undefined : `${coords.top}px`,
+              bottom: coords.openUpwards ? `${Math.max(8, window.innerHeight - coords.top)}px` : undefined,
+              left: align === "right" ? undefined : `${coords.left}px`,
+              right: align === "right" ? `${Math.max(8, window.innerWidth - coords.left)}px` : undefined,
+              minWidth: Math.max(120, coords.width),
+            }}
+            className="z-[99999] max-w-xs py-1.5 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200/90 dark:border-gray-700/90 overflow-hidden animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/5"
+          >
+            <div className="max-h-60 overflow-y-auto p-1 space-y-0.5 overscroll-contain">
+              {normalizedOptions.map((opt) => {
+                const isSelected = opt.value === value;
+                const OptIcon = opt.icon;
+
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => {
+                      onChange(opt.value);
+                      setIsOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-xl font-bold transition-colors cursor-pointer select-none text-left ${
+                      isSelected
+                        ? "bg-gray-100 dark:bg-gray-800 text-gray-950 dark:text-white font-black"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      {OptIcon && (
+                        <OptIcon
+                          size={13}
+                          className={isSelected ? "text-gray-900 dark:text-white" : "text-gray-400"}
+                        />
+                      )}
+                      <span className="truncate">{opt.label}</span>
+                    </div>
+                    {isSelected && (
+                      <Check
                         size={13}
-                        className={isSelected ? "text-gray-900 dark:text-white" : "text-gray-400"}
+                        strokeWidth={2.5}
+                        className="text-gray-900 dark:text-white shrink-0 ml-2"
                       />
                     )}
-                    <span className="truncate">{opt.label}</span>
-                  </div>
-                  {isSelected && (
-                    <Check
-                      size={13}
-                      strokeWidth={2.5}
-                      className="text-gray-900 dark:text-white shrink-0 ml-2"
-                    />
-                  )}
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        </>,
+        document.body
       )}
     </div>
   );

@@ -115,6 +115,19 @@ export default function TopStarDashboard({
   const [team, setTeam] = useState<"chat" | "call">("chat");
   const [selectedYear, setSelectedYear] = useState<string>(initialYear || "2026");
   const [selectedMonth, setSelectedMonth] = useState<string>(initialMonth || "SEP");
+
+  useEffect(() => {
+    if (initialYear && initialYear !== selectedYear) {
+      setSelectedYear(initialYear);
+    }
+  }, [initialYear]);
+
+  useEffect(() => {
+    if (initialMonth && initialMonth !== selectedMonth) {
+      setSelectedMonth(initialMonth);
+    }
+  }, [initialMonth]);
+
   const [searchQuery, setSearchQuery] = useState<string>("");
   
   const [loading, setLoading] = useState<boolean>(true);
@@ -230,12 +243,27 @@ export default function TopStarDashboard({
         selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1).toLowerCase()
       ])).filter(Boolean);
 
-      const [mohammedSnap, younisSnap, ankidoSnap, statusSnap] = await Promise.all([
+      const numYear = Number(selectedYear);
+      const isNum = !isNaN(numYear);
+
+      let [mohammedSnap, younisSnap, ankidoSnap, statusSnap] = await Promise.all([
         getDocs(query(collection(db, "mohammed_metrics"), where("year", "==", selectedYear), where("month", "in", monthVariants))).catch(() => null),
         getDocs(query(collection(db, "younis_metrics"), where("year", "==", selectedYear), where("month", "in", monthVariants))).catch(() => null),
         getDocs(query(collection(db, "ankido_metrics"), where("year", "==", selectedYear), where("month", "in", monthVariants))).catch(() => null),
         getDoc(doc(db, "settings", "top_star_status")).catch(() => null)
       ]);
+
+      // Fallback: If no docs returned and year can be numeric, query numeric year
+      if (isNum) {
+        const [mohammedNumSnap, younisNumSnap, ankidoNumSnap] = await Promise.all([
+          (!mohammedSnap || mohammedSnap.empty) ? getDocs(query(collection(db, "mohammed_metrics"), where("year", "==", numYear), where("month", "in", monthVariants))).catch(() => null) : null,
+          (!younisSnap || younisSnap.empty) ? getDocs(query(collection(db, "younis_metrics"), where("year", "==", numYear), where("month", "in", monthVariants))).catch(() => null) : null,
+          (!ankidoSnap || ankidoSnap.empty) ? getDocs(query(collection(db, "ankido_metrics"), where("year", "==", numYear), where("month", "in", monthVariants))).catch(() => null) : null,
+        ]);
+        if (mohammedNumSnap && !mohammedNumSnap.empty) mohammedSnap = mohammedNumSnap;
+        if (younisNumSnap && !younisNumSnap.empty) younisSnap = younisNumSnap;
+        if (ankidoNumSnap && !ankidoNumSnap.empty) ankidoSnap = ankidoNumSnap;
+      }
 
       if (statusSnap && statusSnap.exists()) {
         setSyncStatusRegistry(statusSnap.data()?.synced_months || {});
@@ -243,7 +271,7 @@ export default function TopStarDashboard({
 
       const chatMap: Record<string, any> = {};
       const baselineChat = BASELINE_TEAM_METRICS.filter(
-        m => m.team === "Mohammed Dlshad Team" && m.year === selectedYear && m.month.toLowerCase() === selectedMonth.toLowerCase()
+        m => m.team === "Mohammed Dlshad Team" && String(m.year) === String(selectedYear) && m.month.toLowerCase() === selectedMonth.toLowerCase()
       );
       baselineChat.forEach(d => {
         const cName = normalizeName(d.agent_name || "");
@@ -259,7 +287,7 @@ export default function TopStarDashboard({
 
       const callMap: Record<string, any> = {};
       const baselineCall = BASELINE_TEAM_METRICS.filter(
-        m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && m.year === selectedYear && m.month.toLowerCase() === selectedMonth.toLowerCase()
+        m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && String(m.year) === String(selectedYear) && m.month.toLowerCase() === selectedMonth.toLowerCase()
       );
       baselineCall.forEach(d => {
         const cName = normalizeName(d.agent_name || "");
