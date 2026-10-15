@@ -12,6 +12,7 @@ import { getCanonicalAgentName, getCanonicalAgent, getCanonicalSlug, getAllAgent
 import { ModernDropdown } from "@/components/ModernDropdown";
 import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 import { useAppTheme } from "@/lib/themeManager";
+import { TrendBadge, isLowerBetterMetric } from "@/components/TrendBadge";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
 const TEAMS: TeamName[] = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team'];
@@ -1235,6 +1236,18 @@ function AgentDashboard({
     ? (metrics.find(r => (r.month || '').toUpperCase() === (selectedMonth || '').toUpperCase()) || {})
     : {};
 
+  const currentMonthIdx = months.findIndex(m => m.toUpperCase() === (selectedMonth || '').toUpperCase());
+  const prevMonthName = currentMonthIdx > 0 ? months[currentMonthIdx - 1] : null;
+  const prevMonthData: any = prevMonthName
+    ? (metrics.find(r => (r.month || '').toUpperCase() === prevMonthName.toUpperCase()) || null)
+    : null;
+
+  const getPrevMonthVal = (col: any) => {
+    if (!prevMonthData) return null;
+    const v = getRowValForCol(prevMonthData, col.id);
+    return v !== "" ? v : (prevMonthData[col.id] || null);
+  };
+
   const getDisplayVal = (col: any) => {
     if (isMonthSelected) {
       const v = getRowValForCol(selectedMonthData, col.id);
@@ -1972,7 +1985,7 @@ function AgentDashboard({
                     <div className={`absolute -right-6 -bottom-6 w-24 h-24 sm:w-32 sm:h-32 rounded-full ${meta.bgLight} ${meta.bgDark} blur-2xl pointer-events-none opacity-40 group-hover:opacity-80 transition-opacity`} />
 
                     <div className="relative z-10">
-                      {/* Header: Icon + Metric Title (clean without secondary subtitle) */}
+                      {/* Header: Icon + Metric Title + Trend Badge */}
                       <div className="flex items-center justify-between gap-2 sm:gap-3 mb-2 sm:mb-4">
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 ${meta.bgLight} ${meta.bgDark} ${meta.color} shadow-xs group-hover:scale-110 transition-transform`}>
@@ -1982,6 +1995,15 @@ function AgentDashboard({
                             {cardLabel}
                           </span>
                         </div>
+                        {isMonthSelected && prevMonthName && cleanVal !== '-' && getPrevMonthVal(col) && (
+                          <TrendBadge
+                            currentValue={val}
+                            previousValue={getPrevMonthVal(col)}
+                            isTime={isTime}
+                            isLowerBetter={isLowerBetterMetric(col.id, cardLabel)}
+                            prevMonthLabel={prevMonthName}
+                          />
+                        )}
                       </div>
 
                       {/* Hero Big Value — Modern, High-Impact & Beautiful */}
@@ -4139,6 +4161,34 @@ export default function Dashboard() {
     }
   };
 
+  const upperMonth = (selectedMonth || "").toUpperCase();
+  const mainMonthIdx = MONTHS.indexOf(upperMonth);
+  const mainPrevMonthName = mainMonthIdx > 0 ? MONTHS[mainMonthIdx - 1] : null;
+
+  const calcPrevMonthAvg = (col: ColumnConfig) => {
+    if (!mainPrevMonthName || !yearMetrics || yearMetrics.length === 0) return null;
+    
+    // Filter yearMetrics for the previous month and current team/teams
+    const prevRows = yearMetrics.filter(r => {
+      const rowMonth = (r.month || '').toUpperCase();
+      if (rowMonth !== mainPrevMonthName) return false;
+      if (isCombinedCallCenter) {
+        return r.team === 'Younis Kamal Team' || r.team === 'Ankido Buya Team' || !r.team;
+      }
+      return !r.team || r.team === selectedTeam;
+    });
+
+    if (prevRows.length === 0) return null;
+
+    // Adapt prevRows so col.id can be read via r[col.id] or getRowValForCol
+    const mappedRows = prevRows.map(r => ({
+      ...r,
+      [col.id]: getRowValForCol(r, col.id) || r[col.id] || ""
+    }));
+
+    return calcAvg(col, mappedRows);
+  };
+
   // Ensure selectedTeam is valid for TL
   useEffect(() => {
     if (userProfile?.role === 'tl' && userProfile?.team && selectedTeam !== userProfile.team) {
@@ -5480,6 +5530,52 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Monthly Team Performance Highlights & Trend Comparison */}
+        {!isAggregate && mainPrevMonthName && !loading && rows.length > 0 && (
+          <div className="mb-3.5 px-3.5 sm:px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-50/80 via-white to-emerald-50/40 dark:from-emerald-950/20 dark:via-gray-900 dark:to-emerald-950/10 border border-emerald-200/60 dark:border-emerald-900/50 shadow-2xs flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-emerald-600/10 dark:bg-emerald-500/20 flex items-center justify-center text-[#1C6B53] dark:text-emerald-300">
+                <TrendingUp size={14} />
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-black text-gray-800 dark:text-gray-200">
+                <span>Team Trends</span>
+                <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500">
+                  ({selectedMonth} vs {mainPrevMonthName})
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+              {activeCols.slice(0, 6).map(col => {
+                const curAvg = calcAvg(col, rows);
+                const prevAvg = calcPrevMonthAvg(col);
+                if (curAvg === '-' || prevAvg === '-' || !prevAvg) return null;
+                const isTime = col.type === 'time';
+                const isLowerBetter = isLowerBetterMetric(col.id, col.label);
+                const isPercent = col.aggregation === 'average' && !isTime && !col.id.toLowerCase().includes('prod') && !col.id.toLowerCase().includes('score') && !col.id.toLowerCase().includes('handled');
+                
+                return (
+                  <div key={col.id} className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-2xs">
+                    <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400">
+                      {cleanColLabel(col.id, col.label)}:
+                    </span>
+                    <span className="text-[11.5px] font-black text-gray-900 dark:text-gray-100 tabular-nums">
+                      {curAvg}{isPercent ? '%' : ''}
+                    </span>
+                    <TrendBadge
+                      currentValue={curAvg}
+                      previousValue={prevAvg}
+                      isTime={isTime}
+                      isLowerBetter={isLowerBetter}
+                      prevMonthLabel={mainPrevMonthName}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Data Table */}
         <div 
           onPaste={handleTablePaste}
@@ -5617,15 +5713,32 @@ export default function Dashboard() {
                    />
                    <span className="truncate">{isCombinedCallCenter ? 'Call Center Combined Total / Avg' : 'Team Average'}</span>
                  </div>
-                 {activeCols.map(col => (
-                   <div 
-                     key={col.id} 
-                     style={{ color: 'var(--brand-primary)' }}
-                     className="text-center text-xs sm:text-[13px] font-black tabular-nums px-1"
-                   >
-                     {calcAvg(col, rows)}
-                   </div>
-                 ))}
+                 {activeCols.map(col => {
+                   const curAvg = calcAvg(col, rows);
+                   const prevAvg = !isAggregate && mainPrevMonthName ? calcPrevMonthAvg(col) : null;
+                   const isTime = col.type === 'time';
+                   const isLowerBetter = isLowerBetterMetric(col.id, col.label);
+
+                   return (
+                     <div 
+                       key={col.id} 
+                       style={{ color: 'var(--brand-primary)' }}
+                       className="flex flex-col items-center justify-center gap-0.5 text-center text-xs sm:text-[13px] font-black tabular-nums px-1"
+                     >
+                       <span>{curAvg}</span>
+                       {prevAvg && prevAvg !== '-' && curAvg !== '-' && (
+                         <TrendBadge
+                           currentValue={curAvg}
+                           previousValue={prevAvg}
+                           isTime={isTime}
+                           isLowerBetter={isLowerBetter}
+                           prevMonthLabel={mainPrevMonthName || undefined}
+                           className="scale-90 origin-center"
+                         />
+                       )}
+                     </div>
+                   );
+                 })}
                </div>
             )}
           </div>

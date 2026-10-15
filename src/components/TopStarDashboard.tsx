@@ -17,6 +17,7 @@ import { getCanonicalAgentName } from "@/lib/canonicalAgents";
 import TopStarCelebrationVideoModal from "./TopStarCelebrationVideoModal";
 import { ModernDropdown } from "@/components/ModernDropdown";
 import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
+import { TrendBadge } from "@/components/TrendBadge";
 
 interface TopStarDashboardProps {
   userProfile: any;
@@ -530,6 +531,45 @@ export default function TopStarDashboard({
     });
     return map;
   }, [activeRanked]);
+
+  const upperMonth = (selectedMonth || "").toUpperCase();
+  const currentMonthIdx = MONTHS.indexOf(upperMonth);
+  const prevMonthName = currentMonthIdx > 0 ? MONTHS[currentMonthIdx - 1] : null;
+
+  const prevMonthScores = useMemo(() => {
+    if (!prevMonthName) return {};
+    const map: Record<string, number | null> = {};
+    const t = team;
+    
+    let wrapupRange: { min: number; max: number } | undefined;
+    if (t === "call") {
+      const wrapupVals = BASELINE_TEAM_METRICS
+        .filter(m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && 
+                     (m.month || "").toUpperCase() === prevMonthName && 
+                     String(m.year) === String(selectedYear))
+        .map(m => num(m.wrapup))
+        .filter((v): v is number => v !== null);
+      if (wrapupVals.length > 0) {
+        wrapupRange = { min: Math.min(...wrapupVals), max: Math.max(...wrapupVals) };
+      }
+    }
+
+    const roster = t === "chat" ? chatRoster : callRoster;
+    roster.forEach(name => {
+      const canonical = getCanonicalAgentName(name);
+      const row = BASELINE_TEAM_METRICS.find(m => 
+        (m.month || "").toUpperCase() === prevMonthName && 
+        String(m.year) === String(selectedYear) &&
+        (getCanonicalAgentName(m.agent_name || "") === canonical || normalizeName(m.agent_name || "") === normalizeName(name))
+      );
+      if (row) {
+        const { total } = scoreAgent(t, row, wrapupRange);
+        map[name] = total;
+      }
+    });
+
+    return map;
+  }, [prevMonthName, selectedYear, team, chatRoster, callRoster, criteria]);
 
   // Display rows: ALWAYS sorted by Rank descending (highest score first)
   const displayRows = useMemo(() => {
@@ -1614,10 +1654,10 @@ export default function TopStarDashboard({
                           );
                         })}
 
-                        {/* Final Score with Clean Progress Bar */}
+                        {/* Final Score with Clean Progress Bar & Trend Badge */}
                         <td className="py-2.5 px-4 text-right border-l border-gray-200 dark:border-gray-700 bg-emerald-500/[0.02]">
-                          <div className="flex items-center justify-end gap-2.5">
-                            <div className="flex-1 max-w-[70px] h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                          <div className="flex items-center justify-end gap-2">
+                            <div className="flex-1 max-w-[65px] h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                               <div 
                                 className={`h-full rounded-full transition-all duration-300 ${
                                   (row.total || 0) >= 85 ? "bg-emerald-500" :
@@ -1636,6 +1676,15 @@ export default function TopStarDashboard({
                             }`}>
                               {row.total !== null ? row.total.toFixed(1) : "–"}
                             </span>
+                            {prevMonthName && row.total !== null && prevMonthScores[row.name] != null && (
+                              <TrendBadge
+                                currentValue={row.total}
+                                previousValue={prevMonthScores[row.name]}
+                                prevMonthLabel={prevMonthName}
+                                suffix=" pts"
+                                className="scale-90 origin-right shrink-0"
+                              />
+                            )}
                           </div>
                         </td>
                       </tr>

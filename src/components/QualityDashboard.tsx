@@ -17,6 +17,7 @@ import { BASELINE_QUALITY_EVALUATIONS, expandQualityDocAliases, getQualityEvalDo
 import { getCanonicalAgentName as getCanonicalNameAuthority } from "@/lib/canonicalAgents";
 import { ModernDropdown } from "@/components/ModernDropdown";
 import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
+import { TrendBadge } from "@/components/TrendBadge";
 
 interface QualityDashboardProps {
   userProfile: any;
@@ -2766,6 +2767,87 @@ export default function QualityDashboard({
     };
   }, [currentCsrs, currentSection, selectedYear, selectedQuarter, cardPeriodMode, selectedMonthFilter, evalData, isChatTeam, isTrainer, trainerMonth, trainerColCount, callMonColCount, bonusColCount, isCShift, isCallMon, isBonus, cShiftWeeklyAdded, getActiveSectionSlug]);
 
+  const prevMonthQualityScore = useMemo(() => {
+    if (isTrainer) {
+      if (trainerMonth <= 0) return null;
+      const prevM = trainerMonth - 1;
+      const prevQ = `Q${Math.floor(prevM / 3) + 1}`;
+      const targetColCount = isCallMon ? callMonColCount : trainerColCount;
+      const trainerSectionSlug = isCallMon ? "mohammed_azad_call_mon" : "mohammed_azad";
+      let prevSum = 0;
+      let prevCount = 0;
+
+      currentCsrs.forEach(csrName => {
+        const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+        const docId = `${selectedYear}_${prevQ}_${trainerSectionSlug}_${slug}`;
+        const scores = evalData[docId]?.scores || {};
+
+        for (let c = 1; c <= targetColCount; c++) {
+          const k = `m${prevM}_eval_${c}`;
+          const val = scores[k];
+          if (val && val.toUpperCase() !== "V" && !val.toUpperCase().includes("N/A")) {
+            const v = parseFloat(val);
+            if (!isNaN(v)) {
+              prevSum += v;
+              prevCount++;
+            }
+          }
+        }
+      });
+
+      return prevCount > 0 ? (prevSum / prevCount).toFixed(1) : null;
+    }
+
+    if (selectedMonthFilter === null || selectedMonthFilter <= 0) return null;
+    const prevMonthIdx = selectedMonthFilter - 1;
+    const { quarter: prevQ, weekStart: pStart, weekEnd: pEnd } = getMonthWeekRange(prevMonthIdx);
+    const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
+    let prevSum = 0;
+    let prevCount = 0;
+
+    currentCsrs.forEach(csrName => {
+      const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const docId = `${selectedYear}_${prevQ}_${sectionSlug}_${slug}`;
+      const scores = evalData[docId]?.scores || {};
+
+      for (let w = pStart; w <= pEnd; w++) {
+        if (isCShift) {
+          for (let c = 1; c <= 3; c++) {
+            const val = scores[`w${w}_chat_${c}`];
+            const valStr = String(val || "").trim().toUpperCase();
+            if (valStr && valStr !== "V" && valStr !== "N/A") {
+              const num = parseFloat(valStr);
+              if (!isNaN(num)) {
+                prevSum += num;
+                prevCount++;
+              }
+            }
+          }
+        } else {
+          const wCfg = getWeekColumnsConfig(isChatTeam, selectedYear, prevQ, w);
+          for (let c = 1; c <= wCfg.colCount; c++) {
+            const key = isChatTeam ? `w${w}_chat_${c}` : `w${w}_call_${wCfg.callBase + c}`;
+            const val = scores[key] ?? (isChatTeam ? (scores[`w${w}_call_${c}`] ?? scores[`w${w}_call_${wCfg.callBase + c}`]) : undefined);
+            const valStr = String(val || "").trim().toUpperCase();
+            if (valStr && valStr !== "V" && valStr !== "N/A") {
+              const num = parseFloat(valStr);
+              if (!isNaN(num)) {
+                prevSum += num;
+                prevCount++;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return prevCount > 0 ? (prevSum / prevCount).toFixed(1) : null;
+  }, [isTrainer, trainerMonth, isCallMon, callMonColCount, trainerColCount, currentCsrs, selectedYear, evalData, selectedMonthFilter, isCShift, isChatTeam, currentSection, getActiveSectionSlug]);
+
+  const prevMonthLabel = isTrainer 
+    ? (trainerMonth > 0 ? MONTH_NAMES[trainerMonth - 1] : undefined)
+    : (selectedMonthFilter !== null && selectedMonthFilter > 0 ? MONTH_NAMES[selectedMonthFilter - 1] : undefined);
+
   const currentWeekConfig = useMemo(() => {
     return getWeekColumnsConfig(isChatTeam, selectedYear, selectedQuarter, selectedWeek);
   }, [isChatTeam, selectedYear, selectedQuarter, selectedWeek]);
@@ -4974,8 +5056,18 @@ export default function QualityDashboard({
               <div className="text-xs font-bold text-white/90 tracking-wide">
                 {isTrainer ? `${MONTH_NAMES[trainerMonth]} Quality Score` : (selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Score` : "Quality Score")}
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-white tracking-tight my-1">
-                {teamQualityStats.annualAvg !== "-" ? `${teamQualityStats.annualAvg}%` : "—"}
+              <div className="flex items-center justify-between gap-2 my-1">
+                <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  {teamQualityStats.annualAvg !== "-" ? `${teamQualityStats.annualAvg}%` : "—"}
+                </span>
+                {prevMonthQualityScore && teamQualityStats.annualAvg !== "-" && (
+                  <TrendBadge
+                    currentValue={teamQualityStats.annualAvg}
+                    previousValue={prevMonthQualityScore}
+                    prevMonthLabel={prevMonthLabel}
+                    className="shadow-sm"
+                  />
+                )}
               </div>
               <div className="text-[10px] text-white/75 font-semibold">
                 {isTrainer ? "Average Quality Score" : (selectedMonthFilter !== null ? "Monthly Quality Score" : "Overall Quality Average")}
