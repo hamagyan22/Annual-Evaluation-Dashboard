@@ -2194,9 +2194,15 @@ export default function Dashboard() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
-  const [authError, setAuthError] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("theme") === "dark") return true;
+      if (sp.get("theme") === "light") return false;
+      return localStorage.getItem('theme') === 'dark';
+    }
+    return false;
+  });
   const [lockoutTimer, setLockoutTimer] = useState(0);
 
   // Mandatory first-login password change for TL/Manager users
@@ -2247,12 +2253,16 @@ export default function Dashboard() {
   });
   const [showQualityView, setShowQualityView] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("view") === "quality" || sp.get("tab") === "quality") return true;
       return localStorage.getItem("app_show_quality_view") === "true";
     }
     return false;
   });
   const [showTopStarView, setShowTopStarView] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("view") === "topstar" || sp.get("tab") === "topstar") return true;
       return localStorage.getItem("app_show_top_star_view") === "true";
     }
     return false;
@@ -2831,6 +2841,37 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("preview") === "true" || sp.get("guest") === "true" || sp.get("demo") === "true") {
+        const demoTeam = (sp.get("team") as TeamName) || "Mohammed Dlshad Team";
+        const adminProfile: any = {
+          role: "admin",
+          isAdmin: true,
+          team: demoTeam,
+          name: "Mohammed Dlshad",
+          email: "mohammed.dlshad0@gmail.com",
+          photo_url: "",
+          mustChangePassword: false,
+          passwordUpdated: true,
+        };
+        setUserProfile(adminProfile);
+        setSession({ email: "mohammed.dlshad0@gmail.com", uid: "demo-guest-admin" });
+        if (TEAMS.includes(demoTeam)) {
+          setSelectedTeam(demoTeam);
+        }
+        if (sp.get("theme") === "dark") {
+          setIsDarkMode(true);
+          document.body.classList.add("dark");
+        } else if (sp.get("theme") === "light") {
+          setIsDarkMode(false);
+          document.body.classList.remove("dark");
+        }
+        setAuthLoading(false);
+        return;
+      }
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setSession(user);
       if (user) {
@@ -5532,7 +5573,7 @@ export default function Dashboard() {
 
         {/* Monthly Team Performance Highlights & Trend Comparison */}
         {!isAggregate && mainPrevMonthName && !loading && rows.length > 0 && (
-          <div className="mb-4 p-2.5 sm:p-3 rounded-2xl bg-white/90 dark:bg-gray-850/90 backdrop-blur-md border border-gray-200/80 dark:border-gray-750/80 shadow-xs flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
+          <div className="mb-4 p-2.5 sm:p-3 rounded-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-gray-200/80 dark:border-gray-800 shadow-xs flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
             <div className="flex items-center gap-2 pl-1">
               <div className="w-7 h-7 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-[#1C6B53] dark:text-emerald-400 flex items-center justify-center shadow-2xs shrink-0">
                 <TrendingUp size={15} strokeWidth={2.5} />
