@@ -2897,6 +2897,47 @@ export default function QualityDashboard({
     return result;
   }, [selectedMonthFilter, currentCsrs, currentSection, selectedYear, evalData, isChatTeam, isCShift, isBonus, getActiveSectionSlug]);
 
+  const tablePrevMonthAgentAvgs = useMemo(() => {
+    if (selectedMonthFilter === null || selectedMonthFilter <= 0) return {};
+    const prevMonthIdx = selectedMonthFilter - 1;
+    const { quarter, weekStart, weekEnd } = getMonthWeekRange(prevMonthIdx);
+    const sectionSlug = getActiveSectionSlug(currentSection.evaluator);
+    const result: Record<string, string> = {};
+
+    currentCsrs.forEach(csrName => {
+      const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const docId = `${selectedYear}_${quarter}_${sectionSlug}_${slug}`;
+      const scores = evalData[docId]?.scores || {};
+      let sum = 0; let cnt = 0;
+
+      for (let w = weekStart; w <= weekEnd; w++) {
+        if (isCShift) {
+          for (let c = 1; c <= 3; c++) {
+            const val = scores[`w${w}_chat_${c}`];
+            const v = parseFloat(String(val || ""));
+            if (!isNaN(v)) { sum += v; cnt++; }
+          }
+        } else {
+          const wCfg = getWeekColumnsConfig(isChatTeam, selectedYear, quarter, w);
+          for (let c = 1; c <= wCfg.colCount; c++) {
+            const key = isChatTeam ? `w${w}_chat_${c}` : `w${w}_call_${wCfg.callBase + c}`;
+            const val = scores[key] ?? (isChatTeam ? (scores[`w${w}_call_${c}`] ?? scores[`w${w}_call_${wCfg.callBase + c}`]) : undefined);
+            const v = parseFloat(String(val || ""));
+            if (!isNaN(v)) { sum += v; cnt++; }
+          }
+          if (wCfg.hasOutbound) {
+            const outV = parseFloat(String(scores[`w${w}_outbound`] ?? ""));
+            if (!isNaN(outV)) { sum += outV; cnt++; }
+          }
+        }
+      }
+
+      result[csrName] = cnt > 0 ? (sum / cnt).toFixed(1) : "-";
+    });
+
+    return result;
+  }, [selectedMonthFilter, currentCsrs, currentSection, selectedYear, evalData, isChatTeam, isCShift, getActiveSectionSlug]);
+
   // Handler for selecting month from toolbar dropdown (affects both top card and table)
   const handleMonthSelect = (monthIdx: number | null) => {
     setSelectedMonthFilter(monthIdx);
@@ -5978,6 +6019,9 @@ export default function QualityDashboard({
                     const currentNotes = currentDoc.notes || {};
                     const currentLinks = currentDoc.links || {};
                     const weekAvg = computeWeekAvg(currentScores, selectedWeek, isChatTeam, selectedYear, selectedQuarter, isCShift);
+                    const prevWeekAvg = selectedWeek > 1 
+                      ? computeWeekAvg(currentScores, selectedWeek - 1, isChatTeam, selectedYear, selectedQuarter, isCShift) 
+                      : null;
                     const agentPhoto = memberPhotos[csrName.trim().toLowerCase()] || "";
 
                     if (isCallMon) {
@@ -6277,23 +6321,42 @@ export default function QualityDashboard({
 
                           <td className="p-2 text-center font-black text-sm bg-teal-50/50 dark:bg-teal-950/30">
                             {(() => {
-                              const displayVal = selectedMonthFilter !== null
+                              const isMonthly = selectedMonthFilter !== null;
+                              const displayVal = isMonthly
                                 ? (tableMonthAgentAvgs[csrName] ?? "-")
                                 : weekAvg;
+                              const prevVal = isMonthly
+                                ? (tablePrevMonthAgentAvgs[csrName] ?? null)
+                                : prevWeekAvg;
+                              const prevLabel = isMonthly
+                                ? (selectedMonthFilter > 0 ? MONTH_NAMES[selectedMonthFilter - 1] : undefined)
+                                : (selectedWeek > 1 ? `W${selectedWeek - 1}` : undefined);
+
                               const numCShiftAvg = parseFloat(displayVal);
                               const isLowCShiftAvg = !isNaN(numCShiftAvg) && numCShiftAvg < 90;
                               return (
-                                <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-black shadow-2xs ${
-                                  displayVal === "V"
-                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300"
-                                    : isLowCShiftAvg
-                                    ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
-                                    : displayVal !== "-"
-                                    ? "bg-white dark:bg-gray-800 text-[#00A991] dark:text-teal-300 border border-teal-500/20"
-                                    : "text-gray-300 dark:text-gray-600 font-normal"
-                                }`}>
-                                  {displayVal !== "-" && displayVal !== "V" ? `${displayVal}%` : displayVal}
-                                </span>
+                                <div className="flex items-center justify-center gap-1.5 flex-nowrap">
+                                  <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-black shadow-2xs ${
+                                    displayVal === "V"
+                                      ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300"
+                                      : isLowCShiftAvg
+                                      ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
+                                      : displayVal !== "-"
+                                      ? "bg-white dark:bg-gray-800 text-[#00A991] dark:text-teal-300 border border-teal-500/20"
+                                      : "text-gray-300 dark:text-gray-600 font-normal"
+                                  }`}>
+                                    {displayVal !== "-" && displayVal !== "V" ? `${displayVal}%` : displayVal}
+                                  </span>
+                                  {prevVal && prevVal !== "-" && prevVal !== "V" && displayVal !== "-" && displayVal !== "V" && (
+                                    <TrendBadge
+                                      currentValue={displayVal}
+                                      previousValue={prevVal}
+                                      prevMonthLabel={prevLabel}
+                                      suffix="%"
+                                      className="scale-90"
+                                    />
+                                  )}
+                                </div>
                               );
                             })()}
                           </td>
@@ -6536,28 +6599,47 @@ export default function QualityDashboard({
                         {/* Auto-calculated Week Score (or Monthly Avg when month filter active) */}
                         <td className="p-2 text-center font-black text-sm bg-emerald-50/50 dark:bg-emerald-950/30">
                           {(() => {
-                            const displayVal = selectedMonthFilter !== null
+                            const isMonthly = selectedMonthFilter !== null;
+                            const displayVal = isMonthly
                               ? (tableMonthAgentAvgs[csrName] ?? "-")
                               : weekAvg;
+                            const prevVal = isMonthly
+                              ? (tablePrevMonthAgentAvgs[csrName] ?? null)
+                              : prevWeekAvg;
+                            const prevLabel = isMonthly
+                              ? (selectedMonthFilter > 0 ? MONTH_NAMES[selectedMonthFilter - 1] : undefined)
+                              : (selectedWeek > 1 ? `W${selectedWeek - 1}` : undefined);
+
                             const numAvg = parseFloat(displayVal);
                             const isLowAvg = !isNaN(numAvg) && numAvg < 90;
                             return (
-                              <span 
-                                style={displayVal !== "-" && displayVal !== "V" && !isLowAvg ? {
-                                  color: 'var(--brand-primary)',
-                                  borderColor: 'var(--brand-border-light)'
-                                } : undefined}
-                                className={`inline-block px-3 py-1.5 rounded-lg text-xs font-black shadow-2xs ${
-                                displayVal === "V"
-                                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300"
-                                  : isLowAvg
-                                  ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
-                                  : displayVal !== "-"
-                                  ? "bg-white dark:bg-gray-800 border"
-                                  : "text-gray-300 dark:text-gray-600 font-normal"
-                              }`}>
-                                {displayVal !== "-" && displayVal !== "V" ? `${displayVal}%` : displayVal}
-                              </span>
+                              <div className="flex items-center justify-center gap-1.5 flex-nowrap">
+                                <span 
+                                  style={displayVal !== "-" && displayVal !== "V" && !isLowAvg ? {
+                                    color: 'var(--brand-primary)',
+                                    borderColor: 'var(--brand-border-light)'
+                                  } : undefined}
+                                  className={`inline-block px-2.5 py-1 rounded-lg text-xs font-black shadow-2xs ${
+                                  displayVal === "V"
+                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300"
+                                    : isLowAvg
+                                    ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
+                                    : displayVal !== "-"
+                                    ? "bg-white dark:bg-gray-800 border"
+                                    : "text-gray-300 dark:text-gray-600 font-normal"
+                                }`}>
+                                  {displayVal !== "-" && displayVal !== "V" ? `${displayVal}%` : displayVal}
+                                </span>
+                                {prevVal && prevVal !== "-" && prevVal !== "V" && displayVal !== "-" && displayVal !== "V" && (
+                                  <TrendBadge
+                                    currentValue={displayVal}
+                                    previousValue={prevVal}
+                                    prevMonthLabel={prevLabel}
+                                    suffix="%"
+                                    className="scale-90"
+                                  />
+                                )}
+                              </div>
                             );
                           })()}
                         </td>

@@ -141,6 +141,11 @@ export default function TopStarDashboard({
     call: Record<string, Record<string, any>>;
   }>({ chat: {}, call: {} });
 
+  const [prevMetricsData, setPrevMetricsData] = useState<{
+    chat: Record<string, Record<string, any>>;
+    call: Record<string, Record<string, any>>;
+  }>({ chat: {}, call: {} });
+
   // Criteria & Targets configuration
   const [criteria, setCriteria] = useState(DEFAULT_CRITERIA);
   const [showCriteriaModal, setShowCriteriaModal] = useState<boolean>(false);
@@ -238,11 +243,18 @@ export default function TopStarDashboard({
     else setLoading(true);
 
     try {
-      const monthVariants = Array.from(new Set([
-        selectedMonth.toUpperCase(),
-        selectedMonth.toLowerCase(),
-        selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1).toLowerCase()
-      ])).filter(Boolean);
+      const upperMonth = (selectedMonth || "").toUpperCase();
+      const currentMonthIdx = MONTHS.indexOf(upperMonth);
+      const targetPrevMonth = currentMonthIdx > 0 ? MONTHS[currentMonthIdx - 1] : null;
+
+      const targetMonths = Array.from(new Set([selectedMonth, targetPrevMonth].filter(Boolean))) as string[];
+      const monthVariants = Array.from(new Set(
+        targetMonths.flatMap(m => [
+          m.toUpperCase(),
+          m.toLowerCase(),
+          m.charAt(0).toUpperCase() + m.slice(1).toLowerCase()
+        ])
+      )).filter(Boolean);
 
       const numYear = Number(selectedYear);
       const isNum = !isNaN(numYear);
@@ -271,61 +283,98 @@ export default function TopStarDashboard({
       }
 
       const chatMap: Record<string, any> = {};
+      const prevChatMap: Record<string, any> = {};
       const baselineChat = BASELINE_TEAM_METRICS.filter(
-        m => m.team === "Mohammed Dlshad Team" && String(m.year) === String(selectedYear) && m.month.toLowerCase() === selectedMonth.toLowerCase()
+        m => m.team === "Mohammed Dlshad Team" && String(m.year) === String(selectedYear)
       );
       baselineChat.forEach(d => {
         const cName = normalizeName(d.agent_name || "");
-        if (cName) chatMap[cName] = d;
+        if (!cName) return;
+        const dMonth = (d.month || "").toUpperCase();
+        if (dMonth === upperMonth) chatMap[cName] = d;
+        if (targetPrevMonth && dMonth === targetPrevMonth) prevChatMap[cName] = d;
       });
       if (mohammedSnap) {
         mohammedSnap.docs.forEach(docSnap => {
           const d = docSnap.data();
           const cName = normalizeName(d.agent_name || "");
-          if (cName) chatMap[cName] = { ...chatMap[cName], ...d };
+          if (!cName) return;
+          const dMonth = (d.month || "").toUpperCase();
+          if (dMonth === upperMonth) chatMap[cName] = { ...chatMap[cName], ...d };
+          if (targetPrevMonth && dMonth === targetPrevMonth) prevChatMap[cName] = { ...prevChatMap[cName], ...d };
         });
       }
 
       const callMap: Record<string, any> = {};
+      const prevCallMap: Record<string, any> = {};
       const baselineCall = BASELINE_TEAM_METRICS.filter(
-        m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && String(m.year) === String(selectedYear) && m.month.toLowerCase() === selectedMonth.toLowerCase()
+        m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && String(m.year) === String(selectedYear)
       );
       baselineCall.forEach(d => {
         const cName = normalizeName(d.agent_name || "");
-        if (cName) callMap[cName] = d;
+        if (!cName) return;
+        const dMonth = (d.month || "").toUpperCase();
+        if (dMonth === upperMonth) callMap[cName] = d;
+        if (targetPrevMonth && dMonth === targetPrevMonth) prevCallMap[cName] = d;
       });
       if (younisSnap || ankidoSnap) {
         [...(younisSnap?.docs || []), ...(ankidoSnap?.docs || [])].forEach(docSnap => {
           const d = docSnap.data();
           const cName = normalizeName(d.agent_name || "");
-          if (cName) callMap[cName] = { ...callMap[cName], ...d };
+          if (!cName) return;
+          const dMonth = (d.month || "").toUpperCase();
+          if (dMonth === upperMonth) callMap[cName] = { ...callMap[cName], ...d };
+          if (targetPrevMonth && dMonth === targetPrevMonth) prevCallMap[cName] = { ...prevCallMap[cName], ...d };
         });
       }
 
       const finalChat: Record<string, Record<string, any>> = {};
+      const prevFinalChat: Record<string, Record<string, any>> = {};
       chatRoster.forEach(name => {
-        const raw = chatMap[name] || {};
+        const raw = chatMap[name] || chatMap[normalizeName(name)] || {};
         finalChat[name] = {
-          qa: raw.quality ?? null,
-          prod: raw.productivity ?? null,
+          qa: raw.quality ?? raw.qa ?? null,
+          prod: raw.productivity ?? raw.prod ?? null,
           aht: raw.aht ? parseSec(raw.aht) : null,
           art: raw.art ? parseSec(raw.art) : null,
           exam: raw.exam ?? null
         };
+
+        const prevRaw = prevChatMap[name] || prevChatMap[normalizeName(name)] || {};
+        prevFinalChat[name] = {
+          qa: prevRaw.quality ?? prevRaw.qa ?? null,
+          prod: prevRaw.productivity ?? prevRaw.prod ?? null,
+          aht: prevRaw.aht ? parseSec(prevRaw.aht) : null,
+          art: prevRaw.art ? parseSec(prevRaw.art) : null,
+          exam: prevRaw.exam ?? null
+        };
       });
 
       const finalCall: Record<string, Record<string, any>> = {};
+      const prevFinalCall: Record<string, Record<string, any>> = {};
       callRoster.forEach(name => {
         const raw = callMap[name] || callMap[normalizeName(name)] || {};
         finalCall[name] = {
-          qa: raw.quality ?? null,
-          prod: raw.productivity ?? null,
+          qa: raw.quality ?? raw.qa ?? null,
+          prod: raw.productivity ?? raw.prod ?? null,
           aht: raw.aht ? parseSec(raw.aht) : null,
           exam: raw.exam ?? null,
           wrapup: num(raw.wrapup),
           hold: raw.hold ? parseSec(raw.hold) : null
         };
+
+        const prevRaw = prevCallMap[name] || prevCallMap[normalizeName(name)] || {};
+        prevFinalCall[name] = {
+          qa: prevRaw.quality ?? prevRaw.qa ?? null,
+          prod: prevRaw.productivity ?? prevRaw.prod ?? null,
+          aht: prevRaw.aht ? parseSec(prevRaw.aht) : null,
+          exam: prevRaw.exam ?? null,
+          wrapup: num(prevRaw.wrapup),
+          hold: prevRaw.hold ? parseSec(prevRaw.hold) : null
+        };
       });
+
+      setPrevMetricsData({ chat: prevFinalChat, call: prevFinalCall });
 
       // Strict Completeness Verification
       const currentRoster = team === "chat" ? chatRoster : callRoster;
@@ -413,8 +462,8 @@ export default function TopStarDashboard({
   // Scoring function conforming strictly to customizable Top Star criteria
   const scoreAgent = (t: "chat" | "call", vals: Record<string, any>, wrapupRange?: { min: number; max: number }) => {
     const v = vals || {};
-    const qa = num(v.qa);
-    const prod = num(v.prod);
+    const qa = num(v.qa ?? v.quality);
+    const prod = num(v.prod ?? v.productivity);
     const aht = parseSec(v.aht);
     const exam = num(v.exam);
 
@@ -540,14 +589,12 @@ export default function TopStarDashboard({
     if (!prevMonthName) return {};
     const map: Record<string, number | null> = {};
     const t = team;
+    const teamPrevData = prevMetricsData[t] || {};
     
     let wrapupRange: { min: number; max: number } | undefined;
     if (t === "call") {
-      const wrapupVals = BASELINE_TEAM_METRICS
-        .filter(m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && 
-                     (m.month || "").toUpperCase() === prevMonthName && 
-                     String(m.year) === String(selectedYear))
-        .map(m => num(m.wrapup))
+      const wrapupVals = callRoster
+        .map(name => num(teamPrevData[name]?.wrapup))
         .filter((v): v is number => v !== null);
       if (wrapupVals.length > 0) {
         wrapupRange = { min: Math.min(...wrapupVals), max: Math.max(...wrapupVals) };
@@ -556,20 +603,15 @@ export default function TopStarDashboard({
 
     const roster = t === "chat" ? chatRoster : callRoster;
     roster.forEach(name => {
-      const canonical = getCanonicalAgentName(name);
-      const row = BASELINE_TEAM_METRICS.find(m => 
-        (m.month || "").toUpperCase() === prevMonthName && 
-        String(m.year) === String(selectedYear) &&
-        (getCanonicalAgentName(m.agent_name || "") === canonical || normalizeName(m.agent_name || "") === normalizeName(name))
-      );
-      if (row) {
-        const { total } = scoreAgent(t, row, wrapupRange);
+      const agentVals = teamPrevData[name] || teamPrevData[normalizeName(name)];
+      if (agentVals) {
+        const { total } = scoreAgent(t, agentVals, wrapupRange);
         map[name] = total;
       }
     });
 
     return map;
-  }, [prevMonthName, selectedYear, team, chatRoster, callRoster, criteria]);
+  }, [prevMonthName, prevMetricsData, team, chatRoster, callRoster, criteria]);
 
   // Display rows: ALWAYS sorted by Rank descending (highest score first)
   const displayRows = useMemo(() => {

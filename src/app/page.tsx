@@ -1999,8 +1999,8 @@ function AgentDashboard({
                           <TrendBadge
                             currentValue={val}
                             previousValue={getPrevMonthVal(col)}
-                            isTime={isTime}
-                            isLowerBetter={isLowerBetterMetric(col.id, cardLabel)}
+                            colId={col.id}
+                            label={cardLabel}
                             prevMonthLabel={prevMonthName}
                           />
                         )}
@@ -5532,15 +5532,15 @@ export default function Dashboard() {
 
         {/* Monthly Team Performance Highlights & Trend Comparison */}
         {!isAggregate && mainPrevMonthName && !loading && rows.length > 0 && (
-          <div className="mb-3.5 px-3.5 sm:px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-50/80 via-white to-emerald-50/40 dark:from-emerald-950/20 dark:via-gray-900 dark:to-emerald-950/10 border border-emerald-200/60 dark:border-emerald-900/50 shadow-2xs flex flex-wrap items-center justify-between gap-2.5">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-emerald-600/10 dark:bg-emerald-500/20 flex items-center justify-center text-[#1C6B53] dark:text-emerald-300">
-                <TrendingUp size={14} />
+          <div className="mb-4 p-2.5 sm:p-3 rounded-2xl bg-white/90 dark:bg-gray-850/90 backdrop-blur-md border border-gray-200/80 dark:border-gray-750/80 shadow-xs flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
+            <div className="flex items-center gap-2 pl-1">
+              <div className="w-7 h-7 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-[#1C6B53] dark:text-emerald-400 flex items-center justify-center shadow-2xs shrink-0">
+                <TrendingUp size={15} strokeWidth={2.5} />
               </div>
-              <div className="flex items-center gap-1.5 text-xs font-black text-gray-800 dark:text-gray-200">
-                <span>Team Trends</span>
-                <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500">
-                  ({selectedMonth} vs {mainPrevMonthName})
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xs sm:text-[13px] font-black text-gray-900 dark:text-white tracking-tight">Team Trends</span>
+                <span className="text-[10px] sm:text-[11px] font-bold text-gray-400 dark:text-gray-500">
+                  {selectedMonth} vs {mainPrevMonthName}
                 </span>
               </div>
             </div>
@@ -5551,22 +5551,27 @@ export default function Dashboard() {
                 const prevAvg = calcPrevMonthAvg(col);
                 if (curAvg === '-' || prevAvg === '-' || !prevAvg) return null;
                 const isTime = col.type === 'time';
-                const isLowerBetter = isLowerBetterMetric(col.id, col.label);
-                const isPercent = col.aggregation === 'average' && !isTime && !col.id.toLowerCase().includes('prod') && !col.id.toLowerCase().includes('score') && !col.id.toLowerCase().includes('handled');
+                const isCount = col.aggregation === 'sum' || col.id.toLowerCase().includes('handled') || col.id.toLowerCase().includes('call');
+                const isPercent = col.aggregation === 'average' && !isTime && !col.id.toLowerCase().includes('prod') && !col.id.toLowerCase().includes('score') && !isCount;
                 
+                const numVal = parseFloat(String(curAvg).replace(/,/g, ''));
+                const displayVal = isCount && !isNaN(numVal) 
+                  ? Math.round(numVal).toLocaleString()
+                  : `${curAvg}${isPercent ? '%' : ''}`;
+
                 return (
-                  <div key={col.id} className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-2xs">
+                  <div key={col.id} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50/90 dark:bg-gray-800/80 border border-gray-200/70 dark:border-gray-700/60 shadow-2xs hover:border-gray-300 dark:hover:border-gray-600 transition-all">
                     <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400">
-                      {cleanColLabel(col.id, col.label)}:
+                      {cleanColLabel(col.id, col.label)}
                     </span>
-                    <span className="text-[11.5px] font-black text-gray-900 dark:text-gray-100 tabular-nums">
-                      {curAvg}{isPercent ? '%' : ''}
+                    <span className="text-xs font-black text-gray-900 dark:text-gray-100 tabular-nums">
+                      {displayVal}
                     </span>
                     <TrendBadge
                       currentValue={curAvg}
                       previousValue={prevAvg}
-                      isTime={isTime}
-                      isLowerBetter={isLowerBetter}
+                      colId={col.id}
+                      label={col.label}
                       prevMonthLabel={mainPrevMonthName}
                     />
                   </div>
@@ -5716,8 +5721,9 @@ export default function Dashboard() {
                  {activeCols.map(col => {
                    const curAvg = calcAvg(col, rows);
                    const prevAvg = !isAggregate && mainPrevMonthName ? calcPrevMonthAvg(col) : null;
-                   const isTime = col.type === 'time';
-                   const isLowerBetter = isLowerBetterMetric(col.id, col.label);
+                   const isCount = col.aggregation === 'sum' || col.id.toLowerCase().includes('handled') || col.id.toLowerCase().includes('call');
+                   const numVal = parseFloat(String(curAvg).replace(/,/g, ''));
+                   const displayVal = isCount && !isNaN(numVal) ? Math.round(numVal).toLocaleString() : curAvg;
 
                    return (
                      <div 
@@ -5725,13 +5731,13 @@ export default function Dashboard() {
                        style={{ color: 'var(--brand-primary)' }}
                        className="flex flex-col items-center justify-center gap-0.5 text-center text-xs sm:text-[13px] font-black tabular-nums px-1"
                      >
-                       <span>{curAvg}</span>
+                       <span>{displayVal}</span>
                        {prevAvg && prevAvg !== '-' && curAvg !== '-' && (
                          <TrendBadge
                            currentValue={curAvg}
                            previousValue={prevAvg}
-                           isTime={isTime}
-                           isLowerBetter={isLowerBetter}
+                           colId={col.id}
+                           label={col.label}
                            prevMonthLabel={mainPrevMonthName || undefined}
                            className="scale-90 origin-center"
                          />
