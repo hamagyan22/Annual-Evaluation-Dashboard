@@ -4701,7 +4701,7 @@ export default function Dashboard() {
             {/* Live Interactive Demo Button for Visitors */}
             <div className="mt-4">
               <a
-                href="/demo"
+                href="/demo.html"
                 className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/80 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/60 transition-all flex items-center justify-center gap-2 group shadow-2xs"
               >
                 <span>Explore Interactive Demo (Sample Data)</span>
