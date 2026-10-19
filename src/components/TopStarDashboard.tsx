@@ -680,7 +680,7 @@ export default function TopStarDashboard({
 
   return (
     <div className={`min-h-screen transition-colors duration-200 ${
-      isDarkMode ? "bg-gray-900 text-gray-100" : "bg-[#FDFCFB] text-gray-900"
+      isDarkMode ? "bg-gray-900 text-gray-100" : "bg-[#F9F8F4] text-gray-900"
     } font-sans p-3.5 sm:p-6 md:p-8`}>
       
       {/* Floating Notice / Toast */}
@@ -700,7 +700,7 @@ export default function TopStarDashboard({
       {/* KPI Criteria Modal (With Edit Ability for Admin/Manager & 5-Star Rating Matrix) */}
       {showCriteriaModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-gray-850 border border-gray-200 dark:border-gray-700 rounded-3xl max-w-3xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl max-w-3xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
             
             <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-2.5">
@@ -1597,7 +1597,7 @@ export default function TopStarDashboard({
               </thead>
 
               {/* Table Body (Strictly sorted descending by rank 1 -> 13) */}
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800/70 bg-[#FDFCFB] dark:bg-gray-900">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800/70 bg-[#F9F8F4] dark:bg-gray-900">
                 {loading ? (
                   <tr>
                     <td colSpan={2 + activeCols.length * 2 + 1} className="py-16 text-center">

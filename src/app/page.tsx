@@ -11,7 +11,7 @@ import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
 import { getCanonicalAgentName, getCanonicalAgent, getCanonicalSlug, getAllAgentSlugs, isSameAgent } from "@/lib/canonicalAgents";
 import { ModernDropdown } from "@/components/ModernDropdown";
 import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
-import { useAppTheme } from "@/lib/themeManager";
+import { useAppTheme, applyThemeToDocument, getCurrentThemeId } from "@/lib/themeManager";
 import { TrendBadge, isLowerBetterMetric } from "@/components/TrendBadge";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
@@ -194,7 +194,7 @@ import { BASELINE_QUALITY_EVALUATIONS, getQualityEvalDoc, mergeQualityDocs, expa
 
 const QualityDashboard = dynamic(() => import("@/components/QualityDashboard"), {
   loading: () => (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFCFB] dark:bg-gray-950 text-gray-800 dark:text-gray-200">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F9F8F4] dark:bg-gray-950 text-gray-800 dark:text-gray-200">
       <div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3"></div>
       <p className="text-xs font-bold text-gray-500 dark:text-gray-400">Loading Quality Dashboard...</p>
     </div>
@@ -204,7 +204,7 @@ const QualityDashboard = dynamic(() => import("@/components/QualityDashboard"), 
 
 const TopStarDashboard = dynamic(() => import("@/components/TopStarDashboard"), {
   loading: () => (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFCFB] dark:bg-gray-950 text-gray-800 dark:text-gray-200">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F9F8F4] dark:bg-gray-950 text-gray-800 dark:text-gray-200">
       <div className="w-10 h-10 border-3 border-amber-500 border-t-transparent rounded-full animate-spin mb-3"></div>
       <p className="text-xs font-bold text-gray-500 dark:text-gray-400">Loading Top Star Leaderboard...</p>
     </div>
@@ -214,7 +214,7 @@ const TopStarDashboard = dynamic(() => import("@/components/TopStarDashboard"), 
 
 const AnnualEvaluationDashboard = dynamic(() => import("@/components/AnnualEvaluationDashboard"), {
   loading: () => (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFCFB] dark:bg-gray-950 text-gray-800 dark:text-gray-200">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F9F8F4] dark:bg-gray-950 text-gray-800 dark:text-gray-200">
       <div className="w-10 h-10 border-3 border-[#1C6B53] border-t-transparent rounded-full animate-spin mb-3"></div>
       <p className="text-xs font-bold text-gray-500 dark:text-gray-400">Loading Annual Evaluation Dashboard...</p>
     </div>
@@ -620,7 +620,7 @@ function PwaInstallBanner() {
     <>
       {/* Mobile Floating Install Pill */}
       <aside aria-label="Install App" className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 sm:bottom-6 z-40 max-w-sm mx-auto sm:mx-0 animate-fadeIn">
-        <div className="bg-white/95 dark:bg-gray-850/95 backdrop-blur-xl border border-emerald-500/30 dark:border-emerald-500/25 rounded-2xl shadow-xl p-2.5 sm:p-3 flex items-center justify-between gap-3 ring-1 ring-emerald-500/10">
+        <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-emerald-500/30 dark:border-emerald-500/25 rounded-2xl shadow-xl p-2.5 sm:p-3 flex items-center justify-between gap-3 ring-1 ring-emerald-500/10">
           <div className="flex items-center gap-2.5 min-w-0">
             <img src="/apple-touch-icon.png" alt="App Icon" className="w-9 h-9 rounded-xl object-cover shadow-xs border border-emerald-500/20 shrink-0" />
             <div className="min-w-0">
@@ -1290,7 +1290,7 @@ function AgentDashboard({
                 <button
                   type="button"
                   onClick={() => setAgentDropdownOpen(!agentDropdownOpen)}
-                  className="w-full sm:w-auto flex items-center justify-between gap-2.5 px-3 py-1.5 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200/90 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 transition shadow-xs cursor-pointer"
+                  className="w-full sm:w-auto flex items-center justify-between gap-2.5 px-3 py-1.5 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 transition shadow-xs cursor-pointer"
                 >
                   <div className="w-6 h-6 rounded-lg bg-[#1C6B53]/15 text-[#1C6B53] dark:text-emerald-300 flex items-center justify-center text-[11px] font-black shrink-0">
                     {currentAgent?.agent_name ? currentAgent.agent_name.charAt(0).toUpperCase() : <Users size={12} />}
@@ -1369,7 +1369,7 @@ function AgentDashboard({
                               className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-[10px] font-bold transition cursor-pointer ${
                                 isActive
                                   ? 'bg-[#1C6B53] text-white shadow-xs font-black'
-                                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-750'
+                                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-700'
                               }`}
                             >
                               <TabIcon size={11} className={isActive ? 'text-emerald-200' : 'text-gray-400'} />
@@ -2194,6 +2194,8 @@ export default function Dashboard() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [loginAttempts, setLoginAttempts] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
       const sp = new URLSearchParams(window.location.search);
@@ -2247,6 +2249,8 @@ export default function Dashboard() {
   const [rows, setRows] = useState<any[]>([]);
   const [showAgentPreview, setShowAgentPreview] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("view") === "agent" || sp.get("tab") === "agent") return true;
       return localStorage.getItem("app_show_agent_preview") === "true";
     }
     return false;
@@ -2269,6 +2273,8 @@ export default function Dashboard() {
   });
   const [showAnnualEvalView, setShowAnnualEvalView] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("view") === "evaluation" || sp.get("tab") === "evaluation") return true;
       return localStorage.getItem("app_show_annual_eval_view") === "true";
     }
     return false;
@@ -2863,9 +2869,13 @@ export default function Dashboard() {
         if (sp.get("theme") === "dark") {
           setIsDarkMode(true);
           document.body.classList.add("dark");
+          document.documentElement.classList.add("dark");
+          applyThemeToDocument(getCurrentThemeId());
         } else if (sp.get("theme") === "light") {
           setIsDarkMode(false);
           document.body.classList.remove("dark");
+          document.documentElement.classList.remove("dark");
+          applyThemeToDocument(getCurrentThemeId());
         }
         setAuthLoading(false);
         return;
@@ -3020,6 +3030,8 @@ export default function Dashboard() {
     if (theme === 'dark') {
       setIsDarkMode(true);
       document.body.classList.add('dark');
+      document.documentElement.classList.add('dark');
+      applyThemeToDocument(getCurrentThemeId());
     }
 
     return () => unsubscribe();
@@ -3028,12 +3040,16 @@ export default function Dashboard() {
   const toggleDarkMode = () => {
     if (isDarkMode) {
       document.body.classList.remove('dark');
+      document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
       setIsDarkMode(false);
+      applyThemeToDocument(getCurrentThemeId());
     } else {
       document.body.classList.add('dark');
+      document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
       setIsDarkMode(true);
+      applyThemeToDocument(getCurrentThemeId());
     }
   };
 
@@ -5062,7 +5078,7 @@ export default function Dashboard() {
     };
 
     return (
-      <div className="min-h-screen p-3.5 sm:p-6 md:p-10 font-sans transition-colors dark:bg-gray-900 dark:text-gray-100">
+      <div className="min-h-screen p-3.5 sm:p-6 md:p-10 font-sans transition-colors bg-[#F9F8F4] dark:bg-gray-900 dark:text-gray-100">
         <div className="max-w-[1400px] mx-auto">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-6 sm:mb-8 gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-gray-200/60 dark:border-gray-800 relative z-30">
@@ -5401,7 +5417,7 @@ export default function Dashboard() {
               )}
             </div>
 
-            <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-gray-100/90 dark:bg-gray-750/70 text-gray-600 dark:text-gray-300 text-[10px] sm:text-[11px] font-bold whitespace-nowrap flex-shrink-0 border border-gray-200/50 dark:border-gray-700/50 shadow-2xs">
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 text-gray-600 dark:text-gray-300 text-[10px] sm:text-[11px] font-bold whitespace-nowrap flex-shrink-0 border border-gray-200/50 dark:border-gray-700/50 shadow-2xs">
               <Users size={11} className="text-gray-400" />
               <span>{filteredRows.length} Agents</span>
             </div>
@@ -5479,15 +5495,10 @@ export default function Dashboard() {
                 <button
                   key={p}
                   onClick={() => setSelectedMonth(p)}
-                  style={
-                    isSel
-                      ? { backgroundColor: 'var(--brand-primary)', color: '#ffffff' }
-                      : { backgroundColor: 'var(--brand-bg-light)', color: 'var(--brand-text-light)' }
-                  }
                   className={`px-1.5 sm:px-2 py-1 rounded-lg text-xs font-extrabold transition flex-shrink-0 cursor-pointer ${
                     isSel
-                      ? 'shadow-md shadow-[var(--brand-glow)]'
-                      : 'hover:opacity-90 dark:bg-[var(--brand-dark-bg-light)] dark:text-[var(--brand-dark-text-light)]'
+                      ? 'bg-[var(--brand-primary)] text-white shadow-md shadow-[var(--brand-glow)]'
+                      : 'bg-[var(--brand-bg-light)] dark:bg-gray-800 text-[var(--brand-text-light)] dark:text-[var(--brand-dark-text-light)] hover:opacity-90'
                   }`}
                 >
                   {p}
@@ -5502,22 +5513,17 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => setIsCombinedCallCenter(prev => !prev)}
-              style={
-                isCombinedCallCenter
-                  ? { background: 'var(--brand-gradient)', color: '#ffffff', borderColor: 'transparent' }
-                  : { backgroundColor: 'var(--brand-bg-light)', color: 'var(--brand-text-light)', borderColor: 'var(--brand-border-light)' }
-              }
+              style={isCombinedCallCenter ? { background: 'var(--brand-gradient)' } : undefined}
               className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg text-[11px] font-black transition-all flex-shrink-0 flex items-center gap-1 border cursor-pointer whitespace-nowrap ${
                 isCombinedCallCenter
-                  ? 'shadow-md shadow-[var(--brand-glow)] ring-2 ring-[var(--brand-glow)]'
-                  : 'hover:opacity-90 dark:bg-[var(--brand-dark-bg-light)] dark:text-[var(--brand-dark-text-light)] dark:border-[var(--brand-dark-border-light)]'
+                  ? 'text-white border-transparent shadow-md shadow-[var(--brand-glow)] ring-2 ring-[var(--brand-glow)]'
+                  : 'bg-[var(--brand-bg-light)] dark:bg-gray-800 text-[var(--brand-text-light)] dark:text-[var(--brand-dark-text-light)] border-[var(--brand-border-light)] dark:border-gray-700 hover:opacity-90'
               }`}
               title="عرض داتا تيم يونس وتيم انكيدو معاً (Call Center Combined: Younis + Ankido)"
             >
               <Users
                 size={11}
-                style={{ color: isCombinedCallCenter ? '#fde047' : 'var(--brand-text-light)' }}
-                className={isCombinedCallCenter ? 'animate-pulse' : ''}
+                className={isCombinedCallCenter ? 'text-yellow-300 animate-pulse' : 'text-[var(--brand-text-light)] dark:text-[var(--brand-dark-text-light)]'}
               />
               <span>CC (Y+A)</span>
             </button>
@@ -5637,9 +5643,9 @@ export default function Dashboard() {
 
           <div className="min-w-[1000px] sm:min-w-[1150px]">
             {/* Table Header */}
-            <div className="grid gap-2 px-3 sm:px-5 py-3.5 bg-gray-50/90 dark:bg-gray-850/90 backdrop-blur-md text-xs font-bold border-b border-gray-200/80 dark:border-gray-800 items-center rounded-t-2xl"
+            <div className="grid gap-2 px-3 sm:px-5 py-3.5 bg-gray-50/90 dark:bg-gray-800/90 backdrop-blur-md text-xs font-bold border-b border-gray-200/80 dark:border-gray-800 items-center rounded-t-2xl"
                  style={{ gridTemplateColumns: `minmax(180px, 2.2fr) repeat(${activeCols.length}, minmax(105px, 1fr))` }}>
-              <div className="pl-3 sm:pl-4 py-1 sticky left-0 bg-gray-50/95 dark:bg-gray-850/95 z-20 shadow-[3px_0_8px_-3px_rgba(0,0,0,0.06)] text-[11px] sm:text-xs font-extrabold text-gray-500 dark:text-gray-400 rounded-tl-2xl">
+              <div className="pl-3 sm:pl-4 py-1 sticky left-0 bg-gray-50/95 dark:bg-gray-800/95 z-20 shadow-[3px_0_8px_-3px_rgba(0,0,0,0.06)] text-[11px] sm:text-xs font-extrabold text-gray-500 dark:text-gray-400 rounded-tl-2xl">
                 Agent
               </div>
               {activeCols.map(col => (
@@ -5669,12 +5675,7 @@ export default function Dashboard() {
                           <img src={row.photo_url} alt={row.agent_name} className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-200 dark:border-gray-700 shadow-xs" />
                         ) : (
                           <div 
-                            style={{
-                              backgroundColor: 'var(--brand-bg-light)',
-                              color: 'var(--brand-primary)',
-                              borderColor: 'var(--brand-border-light)'
-                            }}
-                            className="w-8 h-8 rounded-full font-black text-xs flex items-center justify-center shrink-0 border shadow-2xs select-none transition-transform duration-200 group-hover:scale-105"
+                            className="w-8 h-8 rounded-full font-black text-xs flex items-center justify-center shrink-0 border border-[var(--brand-border-light)] dark:border-gray-700 bg-[var(--brand-bg-light)] dark:bg-gray-800 text-[var(--brand-primary)] dark:text-[var(--brand-dark-text-light)] shadow-2xs select-none transition-transform duration-200 group-hover:scale-105"
                           >
                             {row.agent_name ? row.agent_name.charAt(0).toUpperCase() : <Users size={12} />}
                           </div>
@@ -5743,15 +5744,13 @@ export default function Dashboard() {
             {/* Team Average Row */}
             {!loading && (
                <div 
-                 className="grid gap-2 px-3 sm:px-5 py-3 sm:py-3.5 border-t-2 border-gray-200/80 dark:border-gray-700/80 items-center font-bold rounded-b-2xl"
+                 className="grid gap-2 px-3 sm:px-5 py-3 sm:py-3.5 border-t-2 border-gray-200/80 dark:border-gray-800 items-center font-bold rounded-b-2xl bg-[var(--brand-bg-light)] dark:bg-gray-800"
                  style={{
-                   backgroundColor: 'var(--brand-bg-light)',
                    gridTemplateColumns: `minmax(180px, 2.2fr) repeat(${activeCols.length}, minmax(105px, 1fr))`
                  }}
                >
                  <div 
-                   style={{ backgroundColor: 'var(--brand-bg-light)' }}
-                   className="text-xs font-black text-gray-800 dark:text-gray-200 pl-3 sm:pl-4 py-1 sticky left-0 z-10 shadow-[3px_0_8px_-3px_rgba(0,0,0,0.06)] flex items-center gap-2 rounded-bl-2xl"
+                   className="text-xs font-black text-gray-800 dark:text-gray-200 pl-3 sm:pl-4 py-1 sticky left-0 z-10 shadow-[3px_0_8px_-3px_rgba(0,0,0,0.06)] flex items-center gap-2 rounded-bl-2xl bg-[var(--brand-bg-light)] dark:bg-gray-800"
                  >
                    <span 
                      style={{ backgroundColor: 'var(--brand-primary)' }} 
@@ -5769,8 +5768,7 @@ export default function Dashboard() {
                    return (
                      <div 
                        key={col.id} 
-                       style={{ color: 'var(--brand-primary)' }}
-                       className="flex flex-col items-center justify-center gap-0.5 text-center text-xs sm:text-[13px] font-black tabular-nums px-1"
+                       className="flex flex-col items-center justify-center gap-0.5 text-center text-xs sm:text-[13px] font-black tabular-nums px-1 text-[var(--brand-primary)] dark:text-[var(--brand-dark-text-light)]"
                      >
                        <span>{displayVal}</span>
                        {prevAvg && prevAvg !== '-' && curAvg !== '-' && (
@@ -5834,7 +5832,7 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800 font-bold text-gray-800 dark:text-gray-200">
-                  <tr className="hover:bg-gray-50/50 dark:hover:bg-gray-850/50">
+                  <tr className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
                     <td className="p-3 font-extrabold flex items-center gap-2">
                       <Users size={14} className="text-gray-400" />
                       <span>Active Agents</span>
@@ -5854,7 +5852,7 @@ export default function Dashboard() {
                     const ankidoVal = calcAvg(col, rows.filter(r => r.team === 'Ankido Buya Team'));
                     const combinedVal = calcAvg(col, rows);
                     return (
-                      <tr key={col.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-850/50">
+                      <tr key={col.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
                         <td className="p-3">
                           <span className="font-extrabold">{cleanColLabel(col.id, col.label)}</span>
                           <span className="text-[10px] text-gray-400 ml-1.5 uppercase font-medium">({col.aggregation})</span>

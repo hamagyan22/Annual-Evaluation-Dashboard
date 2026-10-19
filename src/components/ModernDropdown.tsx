@@ -116,12 +116,12 @@ export const ModernDropdown: React.FC<ModernDropdownProps> = ({
       case "theme":
         return `${sizeClasses} bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white shadow-xs border border-white/20`;
       case "tinted-green":
-        return `${sizeClasses} bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-750 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 shadow-xs`;
+        return `${sizeClasses} bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 shadow-xs`;
       case "gray":
         return `${sizeClasses} bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 shadow-xs`;
       case "white":
       default:
-        return `${sizeClasses} bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-750 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 shadow-xs`;
+        return `${sizeClasses} bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 shadow-xs`;
     }
   };
 

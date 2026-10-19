@@ -178,17 +178,18 @@ export function applyThemeToDocument(themeId: string) {
   if (typeof document === "undefined") return;
   const theme = getThemeById(themeId);
   const root = document.documentElement;
+  const isDark = root.classList.contains("dark") || (document.body && document.body.classList.contains("dark"));
 
   root.setAttribute("data-theme", theme.id);
   root.style.setProperty("--brand-primary", theme.primary);
   root.style.setProperty("--brand-hover", theme.hover);
   root.style.setProperty("--brand-accent", theme.accent);
   root.style.setProperty("--brand-glow", theme.glow);
-  root.style.setProperty("--brand-bg-light", theme.bgLight);
-  root.style.setProperty("--brand-text-light", theme.textLight);
+  root.style.setProperty("--brand-bg-light", isDark ? theme.darkBgLight : theme.bgLight);
+  root.style.setProperty("--brand-text-light", isDark ? theme.darkTextLight : theme.textLight);
   root.style.setProperty("--brand-dark-bg-light", theme.darkBgLight);
   root.style.setProperty("--brand-dark-text-light", theme.darkTextLight);
-  root.style.setProperty("--brand-border-light", theme.borderLight);
+  root.style.setProperty("--brand-border-light", isDark ? theme.darkBorderLight : theme.borderLight);
   root.style.setProperty("--brand-dark-border-light", theme.darkBorderLight);
   root.style.setProperty("--brand-from", theme.gradientFrom);
   root.style.setProperty("--brand-via", theme.gradientVia);

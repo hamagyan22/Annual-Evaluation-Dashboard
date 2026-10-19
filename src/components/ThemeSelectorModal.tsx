@@ -131,7 +131,7 @@ export const ThemeSelectorModal: React.FC<ThemeSelectorModalProps> = ({
           ref={buttonRef}
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-750 transition cursor-pointer shadow-2xs ${className}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition cursor-pointer shadow-2xs ${className}`}
           title="Color Theme"
           aria-expanded={isOpen}
         >

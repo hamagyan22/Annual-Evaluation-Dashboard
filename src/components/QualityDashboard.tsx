@@ -442,7 +442,7 @@ const QualityScoreCell = React.memo(function QualityScoreCell({
             e.target.select();
           }}
           placeholder="-"
-          className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-colors shadow-2xs ${
+          className={`w-18 sm:w-20 h-10 text-center rounded-xl font-black text-sm outline-none transition-all shadow-2xs ${
             readOnly ? "cursor-default select-none " : (isLocked ? "cursor-not-allowed opacity-75 " : "")
           }${
             isCellHighlighted ? "ring-4 ring-indigo-500 border-indigo-600 scale-105 z-20 " : ""
@@ -452,10 +452,10 @@ const QualityScoreCell = React.memo(function QualityScoreCell({
               : isNA
               ? "bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
               : isBelow90
-              ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
+              ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800/80 hover:border-red-400 dark:hover:border-red-700 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
               : isOutbound
-              ? "bg-white dark:bg-gray-800/90 border border-amber-300 dark:border-amber-700 text-gray-900 dark:text-gray-100 hover:border-amber-400 dark:hover:border-amber-500 focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20"
-              : "bg-white dark:bg-gray-800/90 border border-gray-200/90 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-[var(--brand-primary)]/60 focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-glow)]"
+              ? "bg-white dark:bg-gray-800/70 border border-amber-300 dark:border-amber-700/60 text-gray-900 dark:text-gray-100 hover:border-amber-400 dark:hover:border-amber-500 focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20"
+              : "bg-white dark:bg-gray-800/70 border border-gray-200/90 dark:border-gray-700/80 text-gray-900 dark:text-gray-100 hover:border-[var(--brand-primary)]/60 dark:hover:border-gray-500 focus:border-[var(--brand-primary)] dark:focus:border-emerald-500 focus:ring-2 focus:ring-[var(--brand-glow)] dark:focus:ring-emerald-500/20"
           }`}
         />
 
@@ -542,6 +542,9 @@ export default function QualityDashboard({
   });
   const [selectedQuarter, setSelectedQuarter] = useState<string>(() => {
     if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      const urlQ = sp.get("quarter") || sp.get("q");
+      if (urlQ && ["Q1", "Q2", "Q3", "Q4"].includes(urlQ.toUpperCase())) return urlQ.toUpperCase();
       const saved = localStorage.getItem("qa_selected_quarter");
       if (saved && ["Q1", "Q2", "Q3", "Q4"].includes(saved)) return saved;
     }
@@ -637,6 +640,9 @@ export default function QualityDashboard({
 
   const [activeSectionId, setActiveSectionId] = useState<string>(() => {
     if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      const urlSec = sp.get("section");
+      if (urlSec && DEFAULT_SECTIONS.some(s => s.id === urlSec)) return urlSec;
       const saved = localStorage.getItem("qa_active_section_id");
       if (saved && DEFAULT_SECTIONS.some(s => s.id === saved)) return saved;
     }
@@ -644,6 +650,12 @@ export default function QualityDashboard({
   });
   const [selectedWeek, setSelectedWeek] = useState<number>(() => {
     if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      const urlW = sp.get("week") || sp.get("w");
+      if (urlW && !isNaN(Number(urlW))) {
+        const num = Number(urlW);
+        if (num >= 1 && num <= 12) return num;
+      }
       const saved = localStorage.getItem("qa_selected_week");
       if (saved && !isNaN(Number(saved))) {
         const num = Number(saved);
@@ -5181,19 +5193,15 @@ export default function QualityDashboard({
                   style={selectedMonthFilter !== null ? {
                     backgroundColor: 'var(--brand-primary, #1C6B53)',
                     borderColor: 'var(--brand-primary, #1C6B53)',
-                  } : {
-                    backgroundColor: 'var(--brand-bg-light)',
-                    borderColor: 'var(--brand-border-light)',
-                    color: 'var(--brand-text-light)',
-                  }}
+                  } : undefined}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition-all cursor-pointer shadow-xs border ${
                     selectedMonthFilter !== null
                       ? "text-white shadow-md scale-[1.02]"
-                      : "hover:opacity-90"
+                      : "bg-[var(--brand-bg-light)] dark:bg-gray-800 border-[var(--brand-border-light)] dark:border-gray-700 text-[var(--brand-text-light)] dark:text-gray-200 hover:opacity-90"
                   }`}
                   title="Filter by Month"
                 >
-                  <Calendar size={13} className={selectedMonthFilter !== null ? "text-white" : "text-[var(--brand-primary,#1C6B53)]"} />
+                  <Calendar size={13} className={selectedMonthFilter !== null ? "text-white" : "text-[var(--brand-primary,#1C6B53)] dark:text-emerald-400"} />
                   <span>{selectedMonthFilter !== null ? MONTH_NAMES[selectedMonthFilter] : "All Months"}</span>
                   <ChevronDown size={12} className={`transition-transform duration-200 ${isMonthMenuOpen ? "rotate-180" : ""}`} />
                 </button>
@@ -5491,14 +5499,9 @@ export default function QualityDashboard({
             /* BONUS VIEW: Add & Delete Call/Chat Columns */
             <div className="flex items-center gap-2 shrink-0">
               <div 
-                style={{
-                  backgroundColor: 'var(--brand-bg-light)',
-                  borderColor: 'var(--brand-border-light)',
-                  color: 'var(--brand-text-light)'
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold shrink-0"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold shrink-0 bg-[var(--brand-bg-light)] dark:bg-gray-800 border-[var(--brand-border-light)] dark:border-gray-700 text-[var(--brand-text-light)] dark:text-gray-200"
               >
-                {isChatTeam ? <MessageSquare size={12} className="text-[var(--brand-primary,#1C6B53)]" /> : <PhoneIncoming size={12} className="text-[var(--brand-primary,#1C6B53)]" />}
+                {isChatTeam ? <MessageSquare size={12} className="text-[var(--brand-primary,#1C6B53)] dark:text-emerald-400" /> : <PhoneIncoming size={12} className="text-[var(--brand-primary,#1C6B53)] dark:text-emerald-400" />}
                 <span>{isChatTeam ? "Bonus Chats" : "Bonus Calls"} (1 to {bonusColCount})</span>
               </div>
 
@@ -5588,14 +5591,9 @@ export default function QualityDashboard({
               </span>
 
               <span 
-                style={{
-                  backgroundColor: 'var(--brand-bg-light)',
-                  borderColor: 'var(--brand-border-light)',
-                  color: 'var(--brand-text-light)'
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border shadow-2xs bg-[var(--brand-bg-light)] dark:bg-gray-800 border-[var(--brand-border-light)] dark:border-gray-700 text-[var(--brand-text-light)] dark:text-gray-200"
               >
-                <Users size={12} className="shrink-0 text-[var(--brand-primary,#1C6B53)]" />
+                <Users size={12} className="shrink-0 text-[var(--brand-primary,#1C6B53)] dark:text-emerald-400" />
                 <span>{currentCsrs.length} Agents</span>
               </span>
             </div>
@@ -5685,15 +5683,10 @@ export default function QualityDashboard({
                 <button
                   type="button"
                   onClick={handleExportPDF}
-                  style={{
-                    backgroundColor: 'var(--brand-bg-light)',
-                    borderColor: 'var(--brand-border-light)',
-                    color: 'var(--brand-text-light)'
-                  }}
-                  className="h-8 flex items-center gap-1.5 px-3 rounded-xl text-xs font-black hover:opacity-90 border transition shadow-2xs cursor-pointer active:scale-95 shrink-0"
+                  className="h-8 flex items-center gap-1.5 px-3 rounded-xl text-xs font-black hover:opacity-90 border transition shadow-2xs cursor-pointer active:scale-95 shrink-0 bg-[var(--brand-bg-light)] dark:bg-gray-800 border-[var(--brand-border-light)] dark:border-gray-700 text-[var(--brand-text-light)] dark:text-gray-200"
                   title="Export Report as PDF"
                 >
-                  <Download size={13} className="text-[var(--brand-primary,#1C6B53)]" />
+                  <Download size={13} className="text-[var(--brand-primary,#1C6B53)] dark:text-emerald-400" />
                   <span>Export PDF</span>
                 </button>
               )}
@@ -5973,7 +5966,7 @@ export default function QualityDashboard({
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-850 bg-white dark:bg-gray-900">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
                 {currentCsrs.length === 0 ? (
                   <tr>
                     <td colSpan={isCallMon ? callMonColCount + 2 : isTrainer ? trainerColCount + 2 : isCShift ? 5 : isBonus ? bonusColCount + 1 : (standardColCount + (showOutbound ? 1 : 0) + 2)} className="p-8 text-center text-sm text-gray-400">
@@ -6054,12 +6047,7 @@ export default function QualityDashboard({
                                 />
                               ) : (
                                 <div 
-                                  style={{
-                                    backgroundColor: 'var(--brand-bg-light)',
-                                    color: 'var(--brand-primary)',
-                                    borderColor: 'var(--brand-border-light)'
-                                  }}
-                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105"
+                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105 bg-[var(--brand-bg-light)] dark:bg-gray-800 text-[var(--brand-primary)] dark:text-[var(--brand-dark-text-light)] border-[var(--brand-border-light)] dark:border-gray-700"
                                 >
                                   {csrName.charAt(0).toUpperCase()}
                                 </div>
@@ -6110,7 +6098,7 @@ export default function QualityDashboard({
                             );
                           })}
 
-                          <td className="p-2 text-center font-black text-sm bg-teal-50/50 dark:bg-teal-950/30">
+                          <td className="p-2 text-center font-black text-sm bg-teal-50/50 dark:bg-gray-800/50 border-l border-teal-100/60 dark:border-gray-800">
                             {(() => {
                               const numCallMonAvg = parseFloat(agentCallMonAvg);
                               const isLowCallMonAvg = !isNaN(numCallMonAvg) && numCallMonAvg < 90;
@@ -6119,7 +6107,7 @@ export default function QualityDashboard({
                                   agentCallMonAvg !== "-"
                                     ? isLowCallMonAvg
                                       ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
-                                      : "bg-white dark:bg-gray-800 text-[#0f766e] dark:text-teal-300 border border-teal-500/20"
+                                      : "bg-white dark:bg-gray-800 text-[#0f766e] dark:text-teal-300 border border-teal-500/20 dark:border-gray-700"
                                     : "text-gray-300 dark:text-gray-600 font-normal"
                                 }`}>
                                   {agentCallMonAvg !== "-" ? `${agentCallMonAvg}%` : "-"}
@@ -6172,12 +6160,7 @@ export default function QualityDashboard({
                                 />
                               ) : (
                                 <div 
-                                  style={{
-                                    backgroundColor: 'var(--brand-bg-light)',
-                                    color: 'var(--brand-primary)',
-                                    borderColor: 'var(--brand-border-light)'
-                                  }}
-                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105"
+                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105 bg-[var(--brand-bg-light)] dark:bg-gray-800 text-[var(--brand-primary)] dark:text-[var(--brand-dark-text-light)] border-[var(--brand-border-light)] dark:border-gray-700"
                                 >
                                   {csrName.charAt(0).toUpperCase()}
                                 </div>
@@ -6226,7 +6209,7 @@ export default function QualityDashboard({
                             );
                           })}
 
-                          <td className="p-2 text-center font-black text-sm bg-teal-50/50 dark:bg-teal-950/30">
+                          <td className="p-2 text-center font-black text-sm bg-teal-50/50 dark:bg-gray-800/50 border-l border-teal-100/60 dark:border-gray-800">
                             {(() => {
                               const numTrainerAvg = parseFloat(agentTrainerAvg);
                               const isLowTrainerAvg = !isNaN(numTrainerAvg) && numTrainerAvg < 90;
@@ -6235,7 +6218,7 @@ export default function QualityDashboard({
                                   agentTrainerAvg !== "-"
                                     ? isLowTrainerAvg
                                       ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
-                                      : "bg-white dark:bg-gray-800 text-[#0d9488] dark:text-teal-300 border border-teal-500/20"
+                                      : "bg-white dark:bg-gray-800 text-[#0d9488] dark:text-teal-300 border border-teal-500/20 dark:border-gray-700"
                                     : "text-gray-300 dark:text-gray-600 font-normal"
                                 }`}>
                                   {agentTrainerAvg !== "-" ? `${agentTrainerAvg}%` : "-"}
@@ -6265,12 +6248,7 @@ export default function QualityDashboard({
                                 />
                               ) : (
                                 <div 
-                                  style={{
-                                    backgroundColor: 'var(--brand-bg-light)',
-                                    color: 'var(--brand-primary)',
-                                    borderColor: 'var(--brand-border-light)'
-                                  }}
-                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105"
+                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105 bg-[var(--brand-bg-light)] dark:bg-gray-800 text-[var(--brand-primary)] dark:text-[var(--brand-dark-text-light)] border-[var(--brand-border-light)] dark:border-gray-700"
                                 >
                                   {csrName.charAt(0).toUpperCase()}
                                 </div>
@@ -6319,7 +6297,7 @@ export default function QualityDashboard({
                             );
                           })}
 
-                          <td className="p-2 text-center font-black text-sm bg-teal-50/50 dark:bg-teal-950/30">
+                          <td className="p-2 text-center font-black text-sm bg-teal-50/50 dark:bg-gray-800/50 border-l border-teal-100/60 dark:border-gray-800">
                             {(() => {
                               const isMonthly = selectedMonthFilter !== null;
                               const displayVal = isMonthly
@@ -6342,7 +6320,7 @@ export default function QualityDashboard({
                                       : isLowCShiftAvg
                                       ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
                                       : displayVal !== "-"
-                                      ? "bg-white dark:bg-gray-800 text-[#00A991] dark:text-teal-300 border border-teal-500/20"
+                                      ? "bg-white dark:bg-gray-800 text-[#00A991] dark:text-teal-300 border border-teal-500/20 dark:border-gray-700"
                                       : "text-gray-300 dark:text-gray-600 font-normal"
                                   }`}>
                                     {displayVal !== "-" && displayVal !== "V" ? `${displayVal}%` : displayVal}
@@ -6396,12 +6374,7 @@ export default function QualityDashboard({
                                 />
                               ) : (
                                 <div 
-                                  style={{
-                                    backgroundColor: 'var(--brand-bg-light)',
-                                    color: 'var(--brand-primary)',
-                                    borderColor: 'var(--brand-border-light)'
-                                  }}
-                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105"
+                                  className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105 bg-[var(--brand-bg-light)] dark:bg-gray-800 text-[var(--brand-primary)] dark:text-[var(--brand-dark-text-light)] border-[var(--brand-border-light)] dark:border-gray-700"
                                 >
                                   {csrName.charAt(0).toUpperCase()}
                                 </div>
@@ -6453,7 +6426,7 @@ export default function QualityDashboard({
                           })}
 
                           {/* Bonus Score (Average of all calls) */}
-                          <td className="p-2 text-center font-black text-sm bg-teal-50/50 dark:bg-teal-950/30">
+                          <td className="p-2 text-center font-black text-sm bg-teal-50/50 dark:bg-gray-800/50 border-l border-teal-100/60 dark:border-gray-800">
                             {(() => {
                               const numBonusAvg = parseFloat(agentBonusAvg);
                               const isLowBonusAvg = !isNaN(numBonusAvg) && numBonusAvg < 90;
@@ -6462,7 +6435,7 @@ export default function QualityDashboard({
                                   agentBonusAvg !== "-" && agentBonusAvg !== "V"
                                     ? isLowBonusAvg
                                       ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
-                                      : "bg-white dark:bg-gray-800 text-[#00A991] dark:text-teal-300 border border-teal-500/20"
+                                      : "bg-white dark:bg-gray-800 text-[#00A991] dark:text-teal-300 border border-teal-500/20 dark:border-gray-700"
                                     : "text-gray-300 dark:text-gray-600 font-normal"
                                 }`}>
                                   {agentBonusAvg !== "-" && agentBonusAvg !== "V" ? `${agentBonusAvg}%` : agentBonusAvg}
@@ -6492,12 +6465,7 @@ export default function QualityDashboard({
                               />
                             ) : (
                               <div 
-                                style={{
-                                  backgroundColor: 'var(--brand-bg-light)',
-                                  color: 'var(--brand-primary)',
-                                  borderColor: 'var(--brand-border-light)'
-                                }}
-                                className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105"
+                                className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border select-none transition-transform duration-200 group-hover/row:scale-105 bg-[var(--brand-bg-light)] dark:bg-gray-800 text-[var(--brand-primary)] dark:text-[var(--brand-dark-text-light)] border-[var(--brand-border-light)] dark:border-gray-700"
                               >
                                 {csrName.charAt(0).toUpperCase()}
                               </div>
@@ -6597,7 +6565,7 @@ export default function QualityDashboard({
                         })()}
 
                         {/* Auto-calculated Week Score (or Monthly Avg when month filter active) */}
-                        <td className="p-2 text-center font-black text-sm bg-emerald-50/50 dark:bg-emerald-950/30">
+                        <td className="p-2 text-center font-black text-sm bg-emerald-50/50 dark:bg-gray-800/50 border-l border-emerald-100/60 dark:border-gray-800">
                           {(() => {
                             const isMonthly = selectedMonthFilter !== null;
                             const displayVal = isMonthly
@@ -6615,17 +6583,13 @@ export default function QualityDashboard({
                             return (
                               <div className="flex items-center justify-center gap-1.5 flex-nowrap">
                                 <span 
-                                  style={displayVal !== "-" && displayVal !== "V" && !isLowAvg ? {
-                                    color: 'var(--brand-primary)',
-                                    borderColor: 'var(--brand-border-light)'
-                                  } : undefined}
                                   className={`inline-block px-2.5 py-1 rounded-lg text-xs font-black shadow-2xs ${
                                   displayVal === "V"
                                     ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300"
                                     : isLowAvg
                                     ? "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
                                     : displayVal !== "-"
-                                    ? "bg-white dark:bg-gray-800 border"
+                                    ? "bg-white dark:bg-gray-800 text-[var(--brand-primary)] dark:text-[var(--brand-dark-text-light)] border border-[var(--brand-border-light)] dark:border-gray-700"
                                     : "text-gray-300 dark:text-gray-600 font-normal"
                                 }`}>
                                   {displayVal !== "-" && displayVal !== "V" ? `${displayVal}%` : displayVal}
@@ -6651,18 +6615,10 @@ export default function QualityDashboard({
                 {/* Bottom Team Average Row */}
                 {currentCsrs.length > 0 && (
                   <tr 
-                    style={{
-                      backgroundColor: 'var(--brand-bg-light)',
-                      borderTopColor: 'var(--brand-border-light)'
-                    }}
-                    className="border-t-2 font-black text-xs"
+                    className="border-t-2 font-black text-xs bg-[var(--brand-bg-light)] dark:bg-gray-800 border-[var(--brand-border-light)] dark:border-gray-800"
                   >
                     <td 
-                      style={{
-                        backgroundColor: 'var(--brand-bg-light)',
-                        color: 'var(--brand-primary)'
-                      }}
-                      className="sticky left-0 z-20 px-5 py-3 font-black shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)]"
+                      className="sticky left-0 z-20 px-5 py-3 font-black shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] bg-[var(--brand-bg-light)] dark:bg-gray-900 text-[var(--brand-primary)] dark:text-[var(--brand-dark-text-light)] border-r border-gray-100 dark:border-gray-800"
                     >
                       Team Average
                     </td>
@@ -6839,8 +6795,7 @@ export default function QualityDashboard({
                           return (
                             <td 
                               key={cNum} 
-                              style={{ color: 'var(--brand-primary)' }}
-                              className="p-2 text-center font-black"
+                              className="p-2 text-center font-black text-[var(--brand-primary)] dark:text-[var(--brand-dark-text-light)]"
                             >
                               {colAvg !== "-" ? `${colAvg}%` : "-"}
                             </td>

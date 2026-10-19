@@ -89,7 +89,7 @@ export const RATING_LEVELS = [
 // Dynamic color helper per score degree (1=Rose, 2=Amber, 3=Slate, 4=Blue, 5=Emerald)
 export function getRatingButtonClass(level: number, isActive: boolean) {
   if (!isActive) {
-    return "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750 border border-gray-200 dark:border-gray-700";
+    return "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700";
   }
   switch (level) {
     case 5:
@@ -1038,7 +1038,7 @@ export default function AnnualEvaluationDashboard({
                 <button
                   type="button"
                   onClick={() => setYearDropdownOpen(!yearDropdownOpen)}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200/90 dark:border-gray-700 text-xs font-black text-gray-800 dark:text-gray-100 transition shadow-2xs cursor-pointer"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 text-xs font-black text-gray-800 dark:text-gray-100 transition shadow-2xs cursor-pointer"
                 >
                   <Calendar size={13} className="text-[#1C6B53] dark:text-emerald-400" />
                   <span>{selectedYear}</span>
@@ -1121,7 +1121,7 @@ export default function AnnualEvaluationDashboard({
                   <button
                     type="button"
                     onClick={() => setEmployeeDropdownOpen(!employeeDropdownOpen)}
-                    className="w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-white hover:bg-gray-50/80 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200/90 dark:border-gray-700 rounded-2xl text-xs font-bold text-gray-900 dark:text-white transition shadow-2xs cursor-pointer"
+                    className="w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-white hover:bg-gray-50/80 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 rounded-2xl text-xs font-bold text-gray-900 dark:text-white transition shadow-2xs cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5 truncate">
                       <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#1C6B53] to-emerald-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-2xs">
@@ -1212,7 +1212,7 @@ export default function AnnualEvaluationDashboard({
                                 className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-[10px] font-bold transition cursor-pointer ${
                                   isActive
                                     ? 'bg-[#1C6B53] text-white shadow-xs font-black'
-                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-750'
+                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-700'
                                 }`}
                               >
                                 <TabIcon size={11} className={isActive ? 'text-emerald-200' : 'text-gray-400'} />
@@ -2053,7 +2053,7 @@ export default function AnnualEvaluationDashboard({
                       type="button"
                       onClick={() => handleSaveEvaluation(evaluationStatus === 'manager_finalized' ? 'manager_finalized' : 'draft')}
                       disabled={isSaving}
-                      className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200 dark:border-gray-700 transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                      className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 disabled:opacity-50 cursor-pointer"
                     >
                       <Save size={14} />
                       <span>Save Draft</span>
