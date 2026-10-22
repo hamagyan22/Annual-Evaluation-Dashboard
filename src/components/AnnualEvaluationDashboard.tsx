@@ -42,7 +42,7 @@ export function normalizeAgentName(raw: string): string {
     .trim();
 }
 
-// Distinct, vibrant, executive rating levels (Scale 1 to 5)
+// Distinct, vibrant, executive rating levels (Scale 1 to 5) - Exact Official Corporate Rubric
 export const RATING_LEVELS = [
   { 
     level: 5, 
@@ -50,7 +50,7 @@ export const RATING_LEVELS = [
     color: "text-white", 
     bg: "bg-[#1C6B53] text-white border-[#155340] shadow-xs", 
     badgeBg: "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 text-[#1C6B53] dark:text-emerald-300",
-    desc: "Consistently exceeds performance targets and acts as an exemplary institutional role model." 
+    desc: "Consistently delivers exceptional results, exceeds goals, and serves as a role model for others." 
   },
   { 
     level: 4, 
@@ -58,7 +58,7 @@ export const RATING_LEVELS = [
     color: "text-white", 
     bg: "bg-blue-600 text-white border-blue-700 shadow-xs", 
     badgeBg: "bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300",
-    desc: "Frequently exceeds operational benchmarks with high competence and proactive contribution." 
+    desc: "Frequently performs above expectations and consistently delivers high-quality work." 
   },
   { 
     level: 3, 
@@ -66,7 +66,7 @@ export const RATING_LEVELS = [
     color: "text-white", 
     bg: "bg-slate-600 text-white border-slate-700 shadow-xs", 
     badgeBg: "bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200",
-    desc: "Reliably meets all targets and quality standards according to required benchmarks." 
+    desc: "Reliably meets job expectations and completes responsibilities effectively." 
   },
   { 
     level: 2, 
@@ -74,7 +74,7 @@ export const RATING_LEVELS = [
     color: "text-white", 
     bg: "bg-amber-600 text-white border-amber-700 shadow-xs", 
     badgeBg: "bg-amber-50 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300",
-    desc: "Meets some targets but requires targeted coaching and supervision to reach full standard." 
+    desc: "Meets some expectations but requires further development and regular guidance in certain areas." 
   },
   { 
     level: 1, 
@@ -82,7 +82,7 @@ export const RATING_LEVELS = [
     color: "text-white", 
     bg: "bg-rose-600 text-white border-rose-700 shadow-xs", 
     badgeBg: "bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-700 text-rose-800 dark:text-rose-300",
-    desc: "Consistently below standard; requires an immediate formal performance improvement plan." 
+    desc: "Performance is below expectations and significant improvement is required to meet the role requirements." 
   },
 ];
 
@@ -151,6 +151,15 @@ export const COMPETENCIES_LIST = [
 export { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 
+export const KNOWN_EMPLOYEE_IDS: Record<string, string> = {
+  "kani sami": "349",
+  "kani_sami": "349",
+  "soma sherko": "371",
+  "soma_sherko": "371",
+  "soma muhammed": "371",
+  "soma_muhammed": "371",
+};
+
 const AVAILABLE_YEARS = ["2026", "2027", "2028", "2029", "2030"];
 
 export default function AnnualEvaluationDashboard({
@@ -167,6 +176,9 @@ export default function AnnualEvaluationDashboard({
   const isTL = userProfile?.role === 'tl';
   const isQA = userProfile?.role === 'qa' || userProfile?.role === 'trainer' || userProfile?.role === 'auditor';
   const isAgent = userProfile?.role === 'agent';
+
+  // View Mode: side_by_side (Interactive Comparison), self_sheet (استمارة الموظف - موظف), manager_sheet (استمارة المدير المعتمدة)
+  const [evaluationViewMode, setEvaluationViewMode] = useState<"side_by_side" | "self_sheet" | "manager_sheet">("side_by_side");
 
   // Selected filters: Year (2026-2030) and Period (Semi-Annual & Annual only)
   const [selectedYear, setSelectedYear] = useState<string>(initialYear || "2026");
@@ -194,7 +206,7 @@ export default function AnnualEvaluationDashboard({
   const resolveTeamLeader = (teamName?: string) => {
     if (!teamName) return "Contact Center Team Leader";
     if (teamName.includes('Ankido')) return "Ankido Buya";
-    if (teamName.includes('Mohammed') || teamName.includes('Dlshad')) return "Mohammed Dlshad";
+    if (teamName.includes('Mohammed') || teamName.includes('Dlshad')) return "Mohammed Dilshad";
     if (teamName.includes('Younis')) return "Younis Kamal";
     return teamName;
   };
@@ -470,7 +482,9 @@ export default function AnnualEvaluationDashboard({
   // Auto-fill Employee info when currentMember changes
   useEffect(() => {
     if (currentMember) {
-      setEmployeeId(currentMember.employee_id || currentMember.employee_code || "");
+      const norm = normalizeAgentName(currentMember.agent_name || "");
+      const knownId = KNOWN_EMPLOYEE_IDS[norm] || KNOWN_EMPLOYEE_IDS[currentMember.id] || "";
+      setEmployeeId(knownId || currentMember.employee_id || currentMember.employee_code || "");
       setTeamLeader(resolveTeamLeader(currentMember.team));
       // Sync team tab filter if not searching
       if (!employeeSearchTerm.trim()) {
@@ -500,10 +514,13 @@ export default function AnnualEvaluationDashboard({
     let isMounted = true;
     const unsub = onSnapshot(doc(db, "annual_evaluations", docId), (docSnap) => {
       if (!isMounted) return;
+      const norm = normalizeAgentName(currentMember?.agent_name || selectedEmployeeName || "");
+      const knownId = KNOWN_EMPLOYEE_IDS[norm] || KNOWN_EMPLOYEE_IDS[currentMember?.id] || "";
+
       if (docSnap.exists()) {
         const data = docSnap.data();
         setEvaluationDate(data.evaluation_date || "");
-        setEmployeeId(data.employee_id || "");
+        setEmployeeId(data.employee_id || knownId || "");
         setTeamLeader(data.team_leader || resolveTeamLeader(currentMember?.team));
         setSelfKpis(data.self_kpis || {});
         setManagerKpis(data.manager_kpis || {});
@@ -744,32 +761,29 @@ export default function AnnualEvaluationDashboard({
     return () => { isMounted = false; };
   }, [selectedEmployeeName, selectedYear, selectedPeriod, currentMember?.team, isChatSemi2026]);
 
-  // Operational KPIs for Contact Center (Chat vs Calls channel dynamic definitions)
+  // Operational KPIs for Contact Center (Chat vs Calls channel dynamic definitions matching Company Evaluation Templates)
   const kpiDefinitions = useMemo(() => {
     if (isSelectedEmployeeChat) {
-      const list = [
-        { id: "exam", name: "Knowledge & Exam", actual: actualMetricsSummary?.exam },
-        { id: "qa", name: "Quality Assurance (QA)", actual: actualMetricsSummary?.qa },
-        { id: "aht", name: "Average Handling Time (AHT)", actual: actualMetricsSummary?.aht },
-        { id: "art", name: "Average Response Time (ART)", actual: actualMetricsSummary?.art },
+      return [
+        { id: "qa", name: "Quality Assurance", actual: actualMetricsSummary?.qa },
+        { id: "art", name: "ART", actual: actualMetricsSummary?.art },
+        { id: "attendance", name: "Attendance", actual: null },
+        { id: "aht", name: "AHT", actual: actualMetricsSummary?.aht },
+        { id: "knowledge", name: "Knowledge", actual: actualMetricsSummary?.exam },
       ];
-      if (!isChatSemi2026) {
-        list.push({ id: "productivity", name: "Productivity", actual: actualMetricsSummary?.productivity });
-      }
-      list.push({ id: "attendance", name: "Attendance & Punctuality", actual: null });
-      return list;
     }
     return [
-      { id: "qa", name: "Quality Assurance (QA)", actual: actualMetricsSummary?.qa },
+      { id: "qa", name: "Quality Assurance", actual: actualMetricsSummary?.qa },
       { id: "productivity", name: "Productivity", actual: actualMetricsSummary?.productivity },
-      { id: "attendance", name: "Attendance & Punctuality", actual: null },
-      { id: "aht", name: "Average Handling Time (AHT)", actual: actualMetricsSummary?.aht },
-      { id: "knowledge", name: "Knowledge & Exam", actual: actualMetricsSummary?.exam },
+      { id: "attendance", name: "Attendance", actual: null },
+      { id: "aht", name: "AHT", actual: actualMetricsSummary?.aht },
+      { id: "knowledge", name: "Knowledge", actual: actualMetricsSummary?.exam },
     ];
-  }, [actualMetricsSummary, isSelectedEmployeeChat, isChatSemi2026]);
+  }, [actualMetricsSummary, isSelectedEmployeeChat]);
 
   // Helper to reliably read KPI score whether keyed by 'exam' or 'knowledge'
   const getKpiScore = (kpisMap: Record<string, number>, id: string) => {
+    if (!kpisMap) return 0;
     if (kpisMap[id] !== undefined && kpisMap[id] !== null && kpisMap[id] > 0) return kpisMap[id];
     if (id === 'exam' && kpisMap['knowledge']) return kpisMap['knowledge'];
     if (id === 'knowledge' && kpisMap['exam']) return kpisMap['exam'];
@@ -802,20 +816,32 @@ export default function AnnualEvaluationDashboard({
     return parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
   }, [managerCompetencies]);
 
-  // Overall Scores
+  // Overall Scores: Calculate using unrounded averages for exact Excel precision (50% KPI + 50% Competencies)
   const selfOverall = useMemo(() => {
-    if (selfKpiAvg > 0 && selfCompAvg > 0) return parseFloat(((selfKpiAvg + selfCompAvg) / 2).toFixed(2));
-    if (selfKpiAvg > 0) return selfKpiAvg;
-    if (selfCompAvg > 0) return selfCompAvg;
+    const kpiVals = kpiDefinitions.map(k => getKpiScore(selfKpis, k.id)).filter(v => v > 0);
+    const compVals = COMPETENCIES_LIST.map(c => selfCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
+    if (kpiVals.length > 0 && compVals.length > 0) {
+      const rawKpi = kpiVals.reduce((a, b) => a + b, 0) / kpiVals.length;
+      const rawComp = compVals.reduce((a, b) => a + b, 0) / compVals.length;
+      return parseFloat(((rawKpi + rawComp) / 2).toFixed(2));
+    }
+    if (kpiVals.length > 0) return selfKpiAvg;
+    if (compVals.length > 0) return selfCompAvg;
     return 0;
-  }, [selfKpiAvg, selfCompAvg]);
+  }, [kpiDefinitions, selfKpis, selfCompetencies, selfKpiAvg, selfCompAvg]);
 
   const managerOverall = useMemo(() => {
-    if (managerKpiAvg > 0 && managerCompAvg > 0) return parseFloat(((managerKpiAvg + managerCompAvg) / 2).toFixed(2));
-    if (managerKpiAvg > 0) return managerKpiAvg;
-    if (managerCompAvg > 0) return managerCompAvg;
+    const kpiVals = kpiDefinitions.map(k => getKpiScore(managerKpis, k.id)).filter(v => v > 0);
+    const compVals = COMPETENCIES_LIST.map(c => managerCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
+    if (kpiVals.length > 0 && compVals.length > 0) {
+      const rawKpi = kpiVals.reduce((a, b) => a + b, 0) / kpiVals.length;
+      const rawComp = compVals.reduce((a, b) => a + b, 0) / compVals.length;
+      return parseFloat(((rawKpi + rawComp) / 2).toFixed(2));
+    }
+    if (kpiVals.length > 0) return managerKpiAvg;
+    if (compVals.length > 0) return managerCompAvg;
     return 0;
-  }, [managerKpiAvg, managerCompAvg]);
+  }, [kpiDefinitions, managerKpis, managerCompetencies, managerKpiAvg, managerCompAvg]);
 
   // Official Score (only visible when manager data is visible or manager finalized)
   const officialOverallScore = managerOverall > 0 ? managerOverall : (isManagerDataVisible ? selfOverall : 0);
@@ -933,6 +959,371 @@ export default function AnnualEvaluationDashboard({
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const renderOfficialSheet = (mode: "self" | "manager") => {
+    const isSelf = mode === "self";
+    const kpisMap = isSelf ? selfKpis : managerKpis;
+    const compMap = isSelf ? selfCompetencies : managerCompetencies;
+    const kpiScore = isSelf ? selfKpiAvg : managerKpiAvg;
+    const compScore = isSelf ? selfCompAvg : managerCompAvg;
+    const overallScore = isSelf ? selfOverall : managerOverall;
+    const canEditThis = isSelf ? canEditSelf : canEditManager;
+    const title = `${isSelectedEmployeeChat ? "Chat Agent" : "Call Agent"} - ${selectedPeriod === "Semi-Annual" ? "Semi-Annual Evaluation" : "Annual Evaluation"}`;
+
+    return (
+      <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-3xl shadow-xs p-6 sm:p-8 space-y-6 print:border-none print:shadow-none print:p-0">
+        
+        {/* Top Header Card */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-3 border-b border-gray-200 dark:border-gray-800 print:hidden">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#1F4E79] flex items-center justify-center text-white shadow-xs">
+              <Award size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-black px-2.5 py-0.5 rounded-full border ${
+                  isSelf 
+                    ? "bg-blue-50 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800" 
+                    : "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                }`}>
+                  {isSelf ? "استمارة تقييم الموظف لنفسه (Self-Evaluation) • موظف" : "استمارة تقييم المدير المعتمدة (Manager Evaluation)"}
+                </span>
+                {evaluationStatus === 'manager_finalized' && (
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                    Finalized
+                  </span>
+                )}
+              </div>
+              <h2 className="text-lg font-black text-gray-900 dark:text-white mt-1">
+                {toTitleCase(selectedEmployeeName || "Employee Evaluation")}
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 border border-gray-300 dark:border-gray-700 transition cursor-pointer"
+            >
+              <Printer size={13} />
+              <span>Print Sheet</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setEvaluationViewMode("side_by_side")}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300/80 dark:border-emerald-700/60 hover:bg-emerald-100 transition cursor-pointer"
+            >
+              <span>Back to Side-by-Side</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Title Banner - Exact Deep Navy `#1F4E79` */}
+        <div className="bg-[#1F4E79] text-white px-5 py-3 rounded-lg font-black text-base sm:text-lg tracking-wide flex items-center justify-between shadow-2xs">
+          <span>{title}</span>
+          {isSelf ? (
+            <span className="bg-white/20 border border-white/30 text-white px-3 py-0.5 rounded text-xs font-black tracking-wider">
+              موظف
+            </span>
+          ) : (
+            <span className="bg-emerald-500/30 border border-emerald-300/40 text-emerald-100 px-3 py-0.5 rounded text-xs font-black tracking-wider">
+              المدير
+            </span>
+          )}
+        </div>
+
+        {/* Metadata Table (Top-left Grid like Excel) */}
+        <div className="border border-gray-300 dark:border-gray-700 rounded text-xs overflow-hidden max-w-xl">
+          <div className="grid grid-cols-3 divide-x divide-gray-300 dark:divide-gray-700 border-b border-gray-300 dark:border-gray-700">
+            <div className="p-2 font-bold bg-[#F2F4F8] dark:bg-gray-800 text-gray-800 dark:text-gray-200 col-span-1">Employee Name</div>
+            <div className="p-2 font-bold text-gray-900 dark:text-gray-100 col-span-2">{toTitleCase(selectedEmployeeName || "--")}</div>
+          </div>
+          <div className="grid grid-cols-3 divide-x divide-gray-300 dark:divide-gray-700 border-b border-gray-300 dark:border-gray-700">
+            <div className="p-2 font-bold bg-[#F2F4F8] dark:bg-gray-800 text-gray-800 dark:text-gray-200 col-span-1">Employee ID</div>
+            <div className="p-2 font-mono font-bold text-gray-900 dark:text-gray-100 col-span-2">{employeeId || "--"}</div>
+          </div>
+          <div className="grid grid-cols-3 divide-x divide-gray-300 dark:divide-gray-700 border-b border-gray-300 dark:border-gray-700">
+            <div className="p-2 font-bold bg-[#F2F4F8] dark:bg-gray-800 text-gray-800 dark:text-gray-200 col-span-1">Department</div>
+            <div className="p-2 font-bold text-gray-900 dark:text-gray-100 col-span-2">Contact Center</div>
+          </div>
+          <div className="grid grid-cols-3 divide-x divide-gray-300 dark:divide-gray-700 border-b border-gray-300 dark:border-gray-700">
+            <div className="p-2 font-bold bg-[#F2F4F8] dark:bg-gray-800 text-gray-800 dark:text-gray-200 col-span-1">Team Leader</div>
+            <div className="p-2 font-bold text-gray-900 dark:text-gray-100 col-span-2">{teamLeader || resolveTeamLeader(currentMember?.team)}</div>
+          </div>
+          <div className="grid grid-cols-3 divide-x divide-gray-300 dark:divide-gray-700 border-b border-gray-300 dark:border-gray-700">
+            <div className="p-2 font-bold bg-[#F2F4F8] dark:bg-gray-800 text-gray-800 dark:text-gray-200 col-span-1">Review Period</div>
+            <div className="p-2 font-bold text-gray-900 dark:text-gray-100 col-span-2">
+              {selectedPeriod === 'Semi-Annual' ? `H1 ${selectedYear}` : `Annual ${selectedYear}`}
+            </div>
+          </div>
+          <div className="grid grid-cols-3 divide-x divide-gray-300 dark:divide-gray-700">
+            <div className="p-2 font-bold bg-[#F2F4F8] dark:bg-gray-800 text-gray-800 dark:text-gray-200 col-span-1">Evaluation Date</div>
+            <div className="p-2 font-bold bg-[#FFF2CC] dark:bg-amber-950/40 text-gray-900 dark:text-gray-100 col-span-2">
+              {evaluationDate || (isSelf ? "Self Review" : "Pending Finalization")}
+            </div>
+          </div>
+        </div>
+
+        {/* Section 1: KPI Table & Rubric Side-by-Side */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
+          {/* KPI Table (Cols 1-5) */}
+          <div className="xl:col-span-5 border border-gray-300 dark:border-gray-700 rounded overflow-hidden shadow-2xs">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-[#1F4E79] text-white">
+                  <th className="p-2.5 font-bold border-r border-white/20">KPI</th>
+                  <th className="p-2.5 font-bold text-center w-28">Rating (1-5)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-300 dark:divide-gray-700">
+                {kpiDefinitions.map(k => {
+                  const val = getKpiScore(kpisMap, k.id);
+                  return (
+                    <tr key={k.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50">
+                      <td className="p-2.5 font-bold text-gray-800 dark:text-gray-200 border-r border-gray-300 dark:border-gray-700">
+                        {k.name}
+                      </td>
+                      <td className="p-2.5 text-center font-bold text-gray-900 dark:text-white">
+                        {canEditThis ? (
+                          <div className="flex items-center justify-center gap-1">
+                            {[1, 2, 3, 4, 5].map(n => (
+                              <button
+                                key={n}
+                                type="button"
+                                onClick={() => {
+                                  if (isSelf) {
+                                    setSelfKpis(prev => ({
+                                      ...prev,
+                                      [k.id]: n,
+                                      ...(k.id === 'exam' ? { knowledge: n } : {}),
+                                      ...(k.id === 'knowledge' ? { exam: n } : {})
+                                    }));
+                                  } else {
+                                    setManagerKpis(prev => ({
+                                      ...prev,
+                                      [k.id]: n,
+                                      ...(k.id === 'exam' ? { knowledge: n } : {}),
+                                      ...(k.id === 'knowledge' ? { exam: n } : {})
+                                    }));
+                                  }
+                                }}
+                                className={`w-6 h-6 rounded text-xs font-black transition cursor-pointer ${
+                                  val === n
+                                    ? "bg-[#1F4E79] text-white ring-2 ring-blue-400"
+                                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
+                                }`}
+                              >
+                                {n}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="font-mono text-sm font-black">{val > 0 ? val : "--"}</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {/* Final Score Row */}
+                <tr className="bg-[#FFF2CC] dark:bg-amber-950/50 font-black border-t-2 border-gray-300 dark:border-gray-700">
+                  <td className="p-2.5 text-gray-900 dark:text-amber-200 border-r border-gray-300 dark:border-gray-700">
+                    Final Score (1-5)
+                  </td>
+                  <td className="p-2.5 text-center font-black font-mono text-base text-gray-900 dark:text-amber-200">
+                    {kpiScore > 0 ? kpiScore.toFixed(2) : "--"}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Rubric Legend Table (Cols 6-12) */}
+          <div className="xl:col-span-7 border border-gray-300 dark:border-gray-700 rounded overflow-hidden shadow-2xs">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-[#1F4E79] text-white">
+                  <th className="p-2.5 font-bold text-center w-14 border-r border-white/20">Rating</th>
+                  <th className="p-2.5 font-bold w-36 border-r border-white/20">Level</th>
+                  <th className="p-2.5 font-bold">Description</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-300 dark:divide-gray-700">
+                {RATING_LEVELS.map(r => (
+                  <tr key={r.level} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50">
+                    <td className="p-2 text-center font-mono font-bold text-gray-800 dark:text-gray-200 border-r border-gray-300 dark:border-gray-700">
+                      {r.level}
+                    </td>
+                    <td className="p-2 font-bold text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-700">
+                      {r.label}
+                    </td>
+                    <td className="p-2 text-[11px] text-gray-600 dark:text-gray-300 leading-snug">
+                      {r.desc}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Section 2: Competencies Table & Side Content */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
+          {/* Competencies Table (Cols 1-5) */}
+          <div className="xl:col-span-5 border border-gray-300 dark:border-gray-700 rounded overflow-hidden shadow-2xs">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-[#1F4E79] text-white">
+                  <th className="p-2.5 font-bold border-r border-white/20">Competencies (Rate 1-5)</th>
+                  <th className="p-2.5 font-bold text-center w-28">Rating</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-300 dark:divide-gray-700">
+                {COMPETENCIES_LIST.map(c => {
+                  const val = compMap[c.id] || 0;
+                  return (
+                    <tr key={c.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50">
+                      <td className="p-2.5 font-bold text-gray-800 dark:text-gray-200 border-r border-gray-300 dark:border-gray-700">
+                        {c.name}
+                      </td>
+                      <td className="p-2.5 text-center font-bold text-gray-900 dark:text-white">
+                        {canEditThis ? (
+                          <div className="flex items-center justify-center gap-1">
+                            {[1, 2, 3, 4, 5].map(n => (
+                              <button
+                                key={n}
+                                type="button"
+                                onClick={() => {
+                                  if (isSelf) {
+                                    setSelfCompetencies(prev => ({ ...prev, [c.id]: n }));
+                                  } else {
+                                    setManagerCompetencies(prev => ({ ...prev, [c.id]: n }));
+                                  }
+                                }}
+                                className={`w-6 h-6 rounded text-xs font-black transition cursor-pointer ${
+                                  val === n
+                                    ? "bg-[#1F4E79] text-white ring-2 ring-blue-400"
+                                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
+                                }`}
+                              >
+                                {n}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="font-mono text-sm font-black">{val > 0 ? val : "--"}</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {/* Competency Average Row */}
+                <tr className="bg-[#FFF2CC] dark:bg-amber-950/50 font-black border-t-2 border-gray-300 dark:border-gray-700">
+                  <td className="p-2.5 text-gray-900 dark:text-amber-200 border-r border-gray-300 dark:border-gray-700">
+                    Competency Average (1-5)
+                  </td>
+                  <td className="p-2.5 text-center font-black font-mono text-base text-gray-900 dark:text-amber-200">
+                    {compScore > 0 ? compScore.toFixed(2) : "--"}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            {/* If Manager Mode: Overall Final Evaluation Score */}
+            {!isSelf && overallScore > 0 && (
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border-t-2 border-emerald-400 dark:border-emerald-700 flex items-center justify-between">
+                <span className="font-black text-xs text-emerald-900 dark:text-emerald-200">
+                  Combined Evaluation Score (50% KPI + 50% Comp):
+                </span>
+                <span className="font-black font-mono text-lg text-emerald-700 dark:text-emerald-300">
+                  {overallScore.toFixed(2)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Right side of Competencies */}
+          <div className="xl:col-span-7 flex flex-col justify-center items-center py-4 px-2">
+            {isSelf ? (
+              /* Authentic "موظف" Stamp from Image 1 & 3 */
+              <div className="flex flex-col items-center justify-center p-8 text-center border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-3xl w-full h-full min-h-[220px] bg-gray-50/50 dark:bg-gray-800/30">
+                <div className="text-5xl sm:text-6xl font-black text-gray-800 dark:text-gray-100 tracking-widest font-sans">
+                  موظف
+                </div>
+                <div className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-2">
+                  استمارة التقييم الذاتي للموظف (Employee Self-Evaluation)
+                </div>
+              </div>
+            ) : (
+              /* Manager Comments from Image 2 & 4 */
+              <div className="w-full border border-gray-300 dark:border-gray-700 rounded-xl overflow-hidden shadow-2xs">
+                <div className="bg-[#595959] text-white px-4 py-2.5 font-black text-xs uppercase tracking-wide">
+                  Manager Comments
+                </div>
+                <div className="p-3.5 bg-white dark:bg-gray-900">
+                  {canEditManager ? (
+                    <textarea
+                      rows={5}
+                      value={managerComments}
+                      onChange={e => setManagerComments(e.target.value)}
+                      placeholder="Leadership remarks, performance notes, recommendations..."
+                      className="w-full text-xs p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 outline-none focus:border-[#1F4E79] text-gray-800 dark:text-gray-100 resize-none font-medium"
+                    />
+                  ) : (
+                    <div className="text-xs text-gray-700 dark:text-gray-300 min-h-[100px] whitespace-pre-wrap leading-relaxed">
+                      {managerComments || "No manager comments entered yet."}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action bar for Official Sheet View */}
+        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-800 print:hidden">
+          <div className="text-xs text-gray-500 font-medium">
+            {lastSavedAt ? `Last Saved: ${lastSavedAt}` : "No changes saved yet"}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isSelf && canEditSelf && (
+              <button
+                type="button"
+                onClick={() => handleSaveEvaluation("self_submitted")}
+                disabled={isSaving}
+                className="px-5 py-2 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition active:scale-95 cursor-pointer disabled:opacity-50"
+              >
+                {evaluationStatus === 'self_submitted' ? 'Update Self-Evaluation' : 'Submit Self-Evaluation (موظف)'}
+              </button>
+            )}
+
+            {!isSelf && canEditManager && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSaveEvaluation("draft")}
+                  disabled={isSaving}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 transition cursor-pointer"
+                >
+                  Save Draft
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveEvaluation("manager_finalized")}
+                  disabled={isSaving}
+                  className="px-5 py-2 rounded-xl text-xs font-black text-white bg-[#1F4E79] hover:bg-[#163a5c] shadow-sm transition active:scale-95 cursor-pointer"
+                >
+                  Approve &amp; Finalize Evaluation
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+      </div>
+    );
   };
 
   return (
@@ -1325,8 +1716,62 @@ export default function AnnualEvaluationDashboard({
           </div>
         </section>
 
-        {/* Evaluation Paper Card */}
-        <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl shadow-xs overflow-hidden print:border-none print:shadow-none print:p-0">
+        {/* View Mode Selector: Side-by-Side Review vs Official Employee Sheet (موظف) vs Official Manager Sheet (المدير) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 print:hidden">
+          <div className="flex items-center gap-1.5 p-1.5 bg-white/95 dark:bg-gray-900/95 border border-gray-200/90 dark:border-gray-800 rounded-2xl shadow-2xs self-start sm:self-auto overflow-x-auto max-w-full">
+            <button
+              type="button"
+              onClick={() => setEvaluationViewMode("side_by_side")}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black transition cursor-pointer whitespace-nowrap ${
+                evaluationViewMode === "side_by_side"
+                  ? "bg-[#1C6B53] text-white shadow-xs"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              <span>مقارنة التقييمين (Side-by-Side)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setEvaluationViewMode("self_sheet")}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black transition cursor-pointer whitespace-nowrap ${
+                evaluationViewMode === "self_sheet"
+                  ? "bg-blue-600 text-white shadow-xs font-black ring-2 ring-blue-300 dark:ring-blue-800"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              <span className="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-900 dark:text-blue-200 text-[10px] font-black">موظف</span>
+              <span>استمارة الموظف (Self-Evaluation)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setEvaluationViewMode("manager_sheet")}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black transition cursor-pointer whitespace-nowrap ${
+                evaluationViewMode === "manager_sheet"
+                  ? "bg-[#1F4E79] text-white shadow-xs font-black ring-2 ring-blue-400 dark:ring-blue-700"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              <span className="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-[#1F4E79] dark:text-emerald-300 text-[10px] font-black">المدير</span>
+              <span>استمارة المدير المعتمدة (Manager)</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>القالب الرسمي ({isSelectedEmployeeChat ? 'Chat Agent Template' : 'Call Agent Template'})</span>
+          </div>
+        </div>
+
+        {/* Render Official Sheet (Self or Manager) or Side-by-Side Comprehensive Card */}
+        {evaluationViewMode === "self_sheet" ? (
+          renderOfficialSheet("self")
+        ) : evaluationViewMode === "manager_sheet" ? (
+          renderOfficialSheet("manager")
+        ) : (
+          /* Evaluation Paper Card (Side-by-Side) */
+          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl shadow-xs overflow-hidden print:border-none print:shadow-none print:p-0">
           
           {/* Header Card: Rich Brand Emerald Gradient Design */}
           <div 
@@ -1500,10 +1945,16 @@ export default function AnnualEvaluationDashboard({
                     <th className="p-3.5 text-left w-1/3">KPI Metric</th>
                     <th className="p-3.5 text-center w-28">Actual Result</th>
                     <th className="p-3.5 text-center bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
-                      Self-Evaluation (Agent)
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="px-1.5 py-0.5 rounded bg-blue-600 text-white text-[10px] font-black">موظف</span>
+                        <span>Self-Evaluation (Agent)</span>
+                      </div>
                     </th>
                     <th className="p-3.5 text-center bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
-                      Manager Evaluation
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="px-1.5 py-0.5 rounded bg-[#1C6B53] text-white text-[10px] font-black">المدير</span>
+                        <span>Manager Evaluation</span>
+                      </div>
                     </th>
                     <th className="p-3.5 text-center w-20">Gap</th>
                   </tr>
@@ -1669,10 +2120,16 @@ export default function AnnualEvaluationDashboard({
                   <tr className="bg-gray-100/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-black border-b border-gray-200 dark:border-gray-700">
                     <th className="p-3.5 text-left w-1/2">Competency & Behavioral Indicators</th>
                     <th className="p-3.5 text-center bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
-                      Self-Evaluation (Agent)
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="px-1.5 py-0.5 rounded bg-blue-600 text-white text-[10px] font-black">موظف</span>
+                        <span>Self-Evaluation (Agent)</span>
+                      </div>
                     </th>
                     <th className="p-3.5 text-center bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
-                      Manager Evaluation
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="px-1.5 py-0.5 rounded bg-[#1C6B53] text-white text-[10px] font-black">المدير</span>
+                        <span>Manager Evaluation</span>
+                      </div>
                     </th>
                     <th className="p-3.5 text-center w-20">Gap</th>
                   </tr>
@@ -2075,6 +2532,7 @@ export default function AnnualEvaluationDashboard({
           </div>
 
         </div>
+        )}
 
       </main>
 
