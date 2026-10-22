@@ -158,6 +158,8 @@ export const KNOWN_EMPLOYEE_IDS: Record<string, string> = {
   "soma_sherko": "371",
   "soma muhammed": "371",
   "soma_muhammed": "371",
+  "frmesk younis": "345",
+  "frmesk_younis": "345",
 };
 
 const AVAILABLE_YEARS = ["2026", "2027", "2028", "2029", "2030"];
@@ -176,9 +178,6 @@ export default function AnnualEvaluationDashboard({
   const isTL = userProfile?.role === 'tl';
   const isQA = userProfile?.role === 'qa' || userProfile?.role === 'trainer' || userProfile?.role === 'auditor';
   const isAgent = userProfile?.role === 'agent';
-
-  // View Mode: side_by_side (Interactive Comparison), self_sheet (استمارة الموظف - موظف), manager_sheet (استمارة المدير المعتمدة)
-  const [evaluationViewMode, setEvaluationViewMode] = useState<"side_by_side" | "self_sheet" | "manager_sheet">("side_by_side");
 
   // Selected filters: Year (2026-2030) and Period (Semi-Annual & Annual only)
   const [selectedYear, setSelectedYear] = useState<string>(initialYear || "2026");
@@ -961,371 +960,6 @@ export default function AnnualEvaluationDashboard({
     window.print();
   };
 
-  const renderOfficialSheet = (mode: "self" | "manager") => {
-    const isSelf = mode === "self";
-    const kpisMap = isSelf ? selfKpis : managerKpis;
-    const compMap = isSelf ? selfCompetencies : managerCompetencies;
-    const kpiScore = isSelf ? selfKpiAvg : managerKpiAvg;
-    const compScore = isSelf ? selfCompAvg : managerCompAvg;
-    const overallScore = isSelf ? selfOverall : managerOverall;
-    const canEditThis = isSelf ? canEditSelf : canEditManager;
-    const title = `${isSelectedEmployeeChat ? "Chat Agent" : "Call Agent"} - ${selectedPeriod === "Semi-Annual" ? "Semi-Annual Evaluation" : "Annual Evaluation"}`;
-
-    return (
-      <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-3xl shadow-xs p-6 sm:p-8 space-y-6 print:border-none print:shadow-none print:p-0">
-        
-        {/* Top Header Card */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-3 border-b border-gray-200 dark:border-gray-800 print:hidden">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#1F4E79] flex items-center justify-center text-white shadow-xs">
-              <Award size={20} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs font-black px-2.5 py-0.5 rounded-full border ${
-                  isSelf 
-                    ? "bg-blue-50 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800" 
-                    : "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                }`}>
-                  {isSelf ? "استمارة تقييم الموظف لنفسه (Self-Evaluation) • موظف" : "استمارة تقييم المدير المعتمدة (Manager Evaluation)"}
-                </span>
-                {evaluationStatus === 'manager_finalized' && (
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                    Finalized
-                  </span>
-                )}
-              </div>
-              <h2 className="text-lg font-black text-gray-900 dark:text-white mt-1">
-                {toTitleCase(selectedEmployeeName || "Employee Evaluation")}
-              </h2>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 border border-gray-300 dark:border-gray-700 transition cursor-pointer"
-            >
-              <Printer size={13} />
-              <span>Print Sheet</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setEvaluationViewMode("side_by_side")}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300/80 dark:border-emerald-700/60 hover:bg-emerald-100 transition cursor-pointer"
-            >
-              <span>Back to Side-by-Side</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Title Banner - Exact Deep Navy `#1F4E79` */}
-        <div className="bg-[#1F4E79] text-white px-5 py-3 rounded-lg font-black text-base sm:text-lg tracking-wide flex items-center justify-between shadow-2xs">
-          <span>{title}</span>
-          {isSelf ? (
-            <span className="bg-white/20 border border-white/30 text-white px-3 py-0.5 rounded text-xs font-black tracking-wider">
-              موظف
-            </span>
-          ) : (
-            <span className="bg-emerald-500/30 border border-emerald-300/40 text-emerald-100 px-3 py-0.5 rounded text-xs font-black tracking-wider">
-              المدير
-            </span>
-          )}
-        </div>
-
-        {/* Metadata Table (Top-left Grid like Excel) */}
-        <div className="border border-gray-300 dark:border-gray-700 rounded text-xs overflow-hidden max-w-xl">
-          <div className="grid grid-cols-3 divide-x divide-gray-300 dark:divide-gray-700 border-b border-gray-300 dark:border-gray-700">
-            <div className="p-2 font-bold bg-[#F2F4F8] dark:bg-gray-800 text-gray-800 dark:text-gray-200 col-span-1">Employee Name</div>
-            <div className="p-2 font-bold text-gray-900 dark:text-gray-100 col-span-2">{toTitleCase(selectedEmployeeName || "--")}</div>
-          </div>
-          <div className="grid grid-cols-3 divide-x divide-gray-300 dark:divide-gray-700 border-b border-gray-300 dark:border-gray-700">
-            <div className="p-2 font-bold bg-[#F2F4F8] dark:bg-gray-800 text-gray-800 dark:text-gray-200 col-span-1">Employee ID</div>
-            <div className="p-2 font-mono font-bold text-gray-900 dark:text-gray-100 col-span-2">{employeeId || "--"}</div>
-          </div>
-          <div className="grid grid-cols-3 divide-x divide-gray-300 dark:divide-gray-700 border-b border-gray-300 dark:border-gray-700">
-            <div className="p-2 font-bold bg-[#F2F4F8] dark:bg-gray-800 text-gray-800 dark:text-gray-200 col-span-1">Department</div>
-            <div className="p-2 font-bold text-gray-900 dark:text-gray-100 col-span-2">Contact Center</div>
-          </div>
-          <div className="grid grid-cols-3 divide-x divide-gray-300 dark:divide-gray-700 border-b border-gray-300 dark:border-gray-700">
-            <div className="p-2 font-bold bg-[#F2F4F8] dark:bg-gray-800 text-gray-800 dark:text-gray-200 col-span-1">Team Leader</div>
-            <div className="p-2 font-bold text-gray-900 dark:text-gray-100 col-span-2">{teamLeader || resolveTeamLeader(currentMember?.team)}</div>
-          </div>
-          <div className="grid grid-cols-3 divide-x divide-gray-300 dark:divide-gray-700 border-b border-gray-300 dark:border-gray-700">
-            <div className="p-2 font-bold bg-[#F2F4F8] dark:bg-gray-800 text-gray-800 dark:text-gray-200 col-span-1">Review Period</div>
-            <div className="p-2 font-bold text-gray-900 dark:text-gray-100 col-span-2">
-              {selectedPeriod === 'Semi-Annual' ? `H1 ${selectedYear}` : `Annual ${selectedYear}`}
-            </div>
-          </div>
-          <div className="grid grid-cols-3 divide-x divide-gray-300 dark:divide-gray-700">
-            <div className="p-2 font-bold bg-[#F2F4F8] dark:bg-gray-800 text-gray-800 dark:text-gray-200 col-span-1">Evaluation Date</div>
-            <div className="p-2 font-bold bg-[#FFF2CC] dark:bg-amber-950/40 text-gray-900 dark:text-gray-100 col-span-2">
-              {evaluationDate || (isSelf ? "Self Review" : "Pending Finalization")}
-            </div>
-          </div>
-        </div>
-
-        {/* Section 1: KPI Table & Rubric Side-by-Side */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
-          {/* KPI Table (Cols 1-5) */}
-          <div className="xl:col-span-5 border border-gray-300 dark:border-gray-700 rounded overflow-hidden shadow-2xs">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-[#1F4E79] text-white">
-                  <th className="p-2.5 font-bold border-r border-white/20">KPI</th>
-                  <th className="p-2.5 font-bold text-center w-28">Rating (1-5)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-300 dark:divide-gray-700">
-                {kpiDefinitions.map(k => {
-                  const val = getKpiScore(kpisMap, k.id);
-                  return (
-                    <tr key={k.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50">
-                      <td className="p-2.5 font-bold text-gray-800 dark:text-gray-200 border-r border-gray-300 dark:border-gray-700">
-                        {k.name}
-                      </td>
-                      <td className="p-2.5 text-center font-bold text-gray-900 dark:text-white">
-                        {canEditThis ? (
-                          <div className="flex items-center justify-center gap-1">
-                            {[1, 2, 3, 4, 5].map(n => (
-                              <button
-                                key={n}
-                                type="button"
-                                onClick={() => {
-                                  if (isSelf) {
-                                    setSelfKpis(prev => ({
-                                      ...prev,
-                                      [k.id]: n,
-                                      ...(k.id === 'exam' ? { knowledge: n } : {}),
-                                      ...(k.id === 'knowledge' ? { exam: n } : {})
-                                    }));
-                                  } else {
-                                    setManagerKpis(prev => ({
-                                      ...prev,
-                                      [k.id]: n,
-                                      ...(k.id === 'exam' ? { knowledge: n } : {}),
-                                      ...(k.id === 'knowledge' ? { exam: n } : {})
-                                    }));
-                                  }
-                                }}
-                                className={`w-6 h-6 rounded text-xs font-black transition cursor-pointer ${
-                                  val === n
-                                    ? "bg-[#1F4E79] text-white ring-2 ring-blue-400"
-                                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
-                                }`}
-                              >
-                                {n}
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="font-mono text-sm font-black">{val > 0 ? val : "--"}</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {/* Final Score Row */}
-                <tr className="bg-[#FFF2CC] dark:bg-amber-950/50 font-black border-t-2 border-gray-300 dark:border-gray-700">
-                  <td className="p-2.5 text-gray-900 dark:text-amber-200 border-r border-gray-300 dark:border-gray-700">
-                    Final Score (1-5)
-                  </td>
-                  <td className="p-2.5 text-center font-black font-mono text-base text-gray-900 dark:text-amber-200">
-                    {kpiScore > 0 ? kpiScore.toFixed(2) : "--"}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Rubric Legend Table (Cols 6-12) */}
-          <div className="xl:col-span-7 border border-gray-300 dark:border-gray-700 rounded overflow-hidden shadow-2xs">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-[#1F4E79] text-white">
-                  <th className="p-2.5 font-bold text-center w-14 border-r border-white/20">Rating</th>
-                  <th className="p-2.5 font-bold w-36 border-r border-white/20">Level</th>
-                  <th className="p-2.5 font-bold">Description</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-300 dark:divide-gray-700">
-                {RATING_LEVELS.map(r => (
-                  <tr key={r.level} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50">
-                    <td className="p-2 text-center font-mono font-bold text-gray-800 dark:text-gray-200 border-r border-gray-300 dark:border-gray-700">
-                      {r.level}
-                    </td>
-                    <td className="p-2 font-bold text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-700">
-                      {r.label}
-                    </td>
-                    <td className="p-2 text-[11px] text-gray-600 dark:text-gray-300 leading-snug">
-                      {r.desc}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Section 2: Competencies Table & Side Content */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
-          {/* Competencies Table (Cols 1-5) */}
-          <div className="xl:col-span-5 border border-gray-300 dark:border-gray-700 rounded overflow-hidden shadow-2xs">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-[#1F4E79] text-white">
-                  <th className="p-2.5 font-bold border-r border-white/20">Competencies (Rate 1-5)</th>
-                  <th className="p-2.5 font-bold text-center w-28">Rating</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-300 dark:divide-gray-700">
-                {COMPETENCIES_LIST.map(c => {
-                  const val = compMap[c.id] || 0;
-                  return (
-                    <tr key={c.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50">
-                      <td className="p-2.5 font-bold text-gray-800 dark:text-gray-200 border-r border-gray-300 dark:border-gray-700">
-                        {c.name}
-                      </td>
-                      <td className="p-2.5 text-center font-bold text-gray-900 dark:text-white">
-                        {canEditThis ? (
-                          <div className="flex items-center justify-center gap-1">
-                            {[1, 2, 3, 4, 5].map(n => (
-                              <button
-                                key={n}
-                                type="button"
-                                onClick={() => {
-                                  if (isSelf) {
-                                    setSelfCompetencies(prev => ({ ...prev, [c.id]: n }));
-                                  } else {
-                                    setManagerCompetencies(prev => ({ ...prev, [c.id]: n }));
-                                  }
-                                }}
-                                className={`w-6 h-6 rounded text-xs font-black transition cursor-pointer ${
-                                  val === n
-                                    ? "bg-[#1F4E79] text-white ring-2 ring-blue-400"
-                                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
-                                }`}
-                              >
-                                {n}
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="font-mono text-sm font-black">{val > 0 ? val : "--"}</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {/* Competency Average Row */}
-                <tr className="bg-[#FFF2CC] dark:bg-amber-950/50 font-black border-t-2 border-gray-300 dark:border-gray-700">
-                  <td className="p-2.5 text-gray-900 dark:text-amber-200 border-r border-gray-300 dark:border-gray-700">
-                    Competency Average (1-5)
-                  </td>
-                  <td className="p-2.5 text-center font-black font-mono text-base text-gray-900 dark:text-amber-200">
-                    {compScore > 0 ? compScore.toFixed(2) : "--"}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-
-            {/* If Manager Mode: Overall Final Evaluation Score */}
-            {!isSelf && overallScore > 0 && (
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border-t-2 border-emerald-400 dark:border-emerald-700 flex items-center justify-between">
-                <span className="font-black text-xs text-emerald-900 dark:text-emerald-200">
-                  Combined Evaluation Score (50% KPI + 50% Comp):
-                </span>
-                <span className="font-black font-mono text-lg text-emerald-700 dark:text-emerald-300">
-                  {overallScore.toFixed(2)}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Right side of Competencies */}
-          <div className="xl:col-span-7 flex flex-col justify-center items-center py-4 px-2">
-            {isSelf ? (
-              /* Authentic "موظف" Stamp from Image 1 & 3 */
-              <div className="flex flex-col items-center justify-center p-8 text-center border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-3xl w-full h-full min-h-[220px] bg-gray-50/50 dark:bg-gray-800/30">
-                <div className="text-5xl sm:text-6xl font-black text-gray-800 dark:text-gray-100 tracking-widest font-sans">
-                  موظف
-                </div>
-                <div className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-2">
-                  استمارة التقييم الذاتي للموظف (Employee Self-Evaluation)
-                </div>
-              </div>
-            ) : (
-              /* Manager Comments from Image 2 & 4 */
-              <div className="w-full border border-gray-300 dark:border-gray-700 rounded-xl overflow-hidden shadow-2xs">
-                <div className="bg-[#595959] text-white px-4 py-2.5 font-black text-xs uppercase tracking-wide">
-                  Manager Comments
-                </div>
-                <div className="p-3.5 bg-white dark:bg-gray-900">
-                  {canEditManager ? (
-                    <textarea
-                      rows={5}
-                      value={managerComments}
-                      onChange={e => setManagerComments(e.target.value)}
-                      placeholder="Leadership remarks, performance notes, recommendations..."
-                      className="w-full text-xs p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 outline-none focus:border-[#1F4E79] text-gray-800 dark:text-gray-100 resize-none font-medium"
-                    />
-                  ) : (
-                    <div className="text-xs text-gray-700 dark:text-gray-300 min-h-[100px] whitespace-pre-wrap leading-relaxed">
-                      {managerComments || "No manager comments entered yet."}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Action bar for Official Sheet View */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-800 print:hidden">
-          <div className="text-xs text-gray-500 font-medium">
-            {lastSavedAt ? `Last Saved: ${lastSavedAt}` : "No changes saved yet"}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {isSelf && canEditSelf && (
-              <button
-                type="button"
-                onClick={() => handleSaveEvaluation("self_submitted")}
-                disabled={isSaving}
-                className="px-5 py-2 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition active:scale-95 cursor-pointer disabled:opacity-50"
-              >
-                {evaluationStatus === 'self_submitted' ? 'Update Self-Evaluation' : 'Submit Self-Evaluation (موظف)'}
-              </button>
-            )}
-
-            {!isSelf && canEditManager && (
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleSaveEvaluation("draft")}
-                  disabled={isSaving}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 transition cursor-pointer"
-                >
-                  Save Draft
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSaveEvaluation("manager_finalized")}
-                  disabled={isSaving}
-                  className="px-5 py-2 rounded-xl text-xs font-black text-white bg-[#1F4E79] hover:bg-[#163a5c] shadow-sm transition active:scale-95 cursor-pointer"
-                >
-                  Approve &amp; Finalize Evaluation
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen font-sans bg-[#F9F8F4] dark:bg-gray-950 text-gray-800 dark:text-gray-100 transition-colors pb-16 print:bg-white print:text-black print:pb-0">
       
@@ -1716,62 +1350,8 @@ export default function AnnualEvaluationDashboard({
           </div>
         </section>
 
-        {/* View Mode Selector: Side-by-Side Review vs Official Employee Sheet (موظف) vs Official Manager Sheet (المدير) */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 print:hidden">
-          <div className="flex items-center gap-1.5 p-1.5 bg-white/95 dark:bg-gray-900/95 border border-gray-200/90 dark:border-gray-800 rounded-2xl shadow-2xs self-start sm:self-auto overflow-x-auto max-w-full">
-            <button
-              type="button"
-              onClick={() => setEvaluationViewMode("side_by_side")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black transition cursor-pointer whitespace-nowrap ${
-                evaluationViewMode === "side_by_side"
-                  ? "bg-[#1C6B53] text-white shadow-xs"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-              }`}
-            >
-              <span>مقارنة التقييمين (Side-by-Side)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setEvaluationViewMode("self_sheet")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black transition cursor-pointer whitespace-nowrap ${
-                evaluationViewMode === "self_sheet"
-                  ? "bg-blue-600 text-white shadow-xs font-black ring-2 ring-blue-300 dark:ring-blue-800"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-              }`}
-            >
-              <span className="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-900 dark:text-blue-200 text-[10px] font-black">موظف</span>
-              <span>استمارة الموظف (Self-Evaluation)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setEvaluationViewMode("manager_sheet")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black transition cursor-pointer whitespace-nowrap ${
-                evaluationViewMode === "manager_sheet"
-                  ? "bg-[#1F4E79] text-white shadow-xs font-black ring-2 ring-blue-400 dark:ring-blue-700"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-              }`}
-            >
-              <span className="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-[#1F4E79] dark:text-emerald-300 text-[10px] font-black">المدير</span>
-              <span>استمارة المدير المعتمدة (Manager)</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>القالب الرسمي ({isSelectedEmployeeChat ? 'Chat Agent Template' : 'Call Agent Template'})</span>
-          </div>
-        </div>
-
-        {/* Render Official Sheet (Self or Manager) or Side-by-Side Comprehensive Card */}
-        {evaluationViewMode === "self_sheet" ? (
-          renderOfficialSheet("self")
-        ) : evaluationViewMode === "manager_sheet" ? (
-          renderOfficialSheet("manager")
-        ) : (
-          /* Evaluation Paper Card (Side-by-Side) */
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl shadow-xs overflow-hidden print:border-none print:shadow-none print:p-0">
+        {/* Unified Evaluation Card */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl shadow-xs overflow-hidden print:border-none print:shadow-none print:p-0">
           
           {/* Header Card: Rich Brand Emerald Gradient Design */}
           <div 
@@ -1945,16 +1525,10 @@ export default function AnnualEvaluationDashboard({
                     <th className="p-3.5 text-left w-1/3">KPI Metric</th>
                     <th className="p-3.5 text-center w-28">Actual Result</th>
                     <th className="p-3.5 text-center bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className="px-1.5 py-0.5 rounded bg-blue-600 text-white text-[10px] font-black">موظف</span>
-                        <span>Self-Evaluation (Agent)</span>
-                      </div>
+                      <span>Self-Evaluation (Agent)</span>
                     </th>
                     <th className="p-3.5 text-center bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className="px-1.5 py-0.5 rounded bg-[#1C6B53] text-white text-[10px] font-black">المدير</span>
-                        <span>Manager Evaluation</span>
-                      </div>
+                      <span>Manager Evaluation</span>
                     </th>
                     <th className="p-3.5 text-center w-20">Gap</th>
                   </tr>
@@ -2120,16 +1694,10 @@ export default function AnnualEvaluationDashboard({
                   <tr className="bg-gray-100/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-black border-b border-gray-200 dark:border-gray-700">
                     <th className="p-3.5 text-left w-1/2">Competency & Behavioral Indicators</th>
                     <th className="p-3.5 text-center bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className="px-1.5 py-0.5 rounded bg-blue-600 text-white text-[10px] font-black">موظف</span>
-                        <span>Self-Evaluation (Agent)</span>
-                      </div>
+                      <span>Self-Evaluation (Agent)</span>
                     </th>
                     <th className="p-3.5 text-center bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className="px-1.5 py-0.5 rounded bg-[#1C6B53] text-white text-[10px] font-black">المدير</span>
-                        <span>Manager Evaluation</span>
-                      </div>
+                      <span>Manager Evaluation</span>
                     </th>
                     <th className="p-3.5 text-center w-20">Gap</th>
                   </tr>
@@ -2370,85 +1938,8 @@ export default function AnnualEvaluationDashboard({
             </div>
           </div>
 
-          {/* Section 4: Qualitative Feedback & Action Plan */}
+          {/* Actions & Print Section */}
           <div className="p-6 sm:p-8 space-y-6">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-[#1C6B53]/15 text-[#1C6B53] dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
-                4
-              </div>
-              <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                Qualitative Feedback & Development Plan
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              
-              {/* Strengths */}
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
-                <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5 mb-2">
-                  <ThumbsUp size={14} className="text-emerald-600 dark:text-emerald-400" />
-                  <span>Key Strengths & Accomplishments</span>
-                </label>
-                <textarea
-                  rows={3}
-                  value={isManagerDataVisible ? keyStrengths : ""}
-                  onChange={(e) => setKeyStrengths(e.target.value)}
-                  disabled={!canEditManager}
-                  placeholder={!isManagerDataVisible ? "Manager feedback will appear once finalized..." : "Key contributions and achievements demonstrated during the review period..."}
-                  className="w-full text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 resize-none disabled:opacity-75"
-                />
-              </div>
-
-              {/* Areas for Improvement */}
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
-                <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5 mb-2">
-                  <Target size={14} className="text-amber-600 dark:text-amber-400" />
-                  <span>Areas for Development & Training Plan</span>
-                </label>
-                <textarea
-                  rows={3}
-                  value={isManagerDataVisible ? areasForDevelopment : ""}
-                  onChange={(e) => setAreasForDevelopment(e.target.value)}
-                  disabled={!canEditManager}
-                  placeholder={!isManagerDataVisible ? "Manager feedback will appear once finalized..." : "Target competencies, skills, and coaching goals for the next review cycle..."}
-                  className="w-full text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 resize-none disabled:opacity-75"
-                />
-              </div>
-
-              {/* Manager's Overall Comments */}
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
-                <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5 mb-2">
-                  <Award size={14} className="text-[#1C6B53] dark:text-emerald-400" />
-                  <span>Manager&apos;s Overall Comments & Recommendations</span>
-                </label>
-                <textarea
-                  rows={3}
-                  value={isManagerDataVisible ? managerComments : ""}
-                  onChange={(e) => setManagerComments(e.target.value)}
-                  disabled={!canEditManager}
-                  placeholder={!isManagerDataVisible ? "Manager comments will appear once finalized..." : "Leadership summary, guidance, and strategic recommendations..."}
-                  className="w-full text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 resize-none disabled:opacity-75"
-                />
-              </div>
-
-              {/* Employee's Feedback / Agreement */}
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
-                <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5 mb-2">
-                  <Users size={14} className="text-blue-600 dark:text-blue-400" />
-                  <span>Employee&apos;s Feedback & Remarks</span>
-                </label>
-                <textarea
-                  rows={3}
-                  value={employeeComments}
-                  onChange={(e) => setEmployeeComments(e.target.value)}
-                  disabled={!canEditEmployeeFeedback}
-                  placeholder="Agent reflections, aspirations, and feedback following review meeting..."
-                  className="w-full text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 outline-none focus:border-[#1C6B53] text-gray-800 dark:text-gray-200 resize-none disabled:opacity-75"
-                />
-              </div>
-
-            </div>
-
             {/* Signature Line for Print */}
             <div className="hidden print:grid grid-cols-2 gap-8 pt-8 mt-6 border-t border-gray-300">
               <div>
@@ -2532,7 +2023,6 @@ export default function AnnualEvaluationDashboard({
           </div>
 
         </div>
-        )}
 
       </main>
 

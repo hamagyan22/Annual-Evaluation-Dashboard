@@ -140,6 +140,66 @@ async function seedEvaluations() {
   await setDoc(doc(db, "annual_evaluations", "2026_Semi-Annual_soma_muhammed"), somaData, { merge: true });
   console.log(`Saved evaluation for Soma Muhammed -> 2026_Semi-Annual_soma_sherko and 2026_Semi-Annual_soma_muhammed`);
 
+  // 3. Frmesk Younis (Call Agent - Semi-Annual 2026 / H1 2026)
+  // Images 4 & 5
+  const frmeskData = {
+    employee_name: "Frmesk Younis",
+    employee_id: "345",
+    team: "Ankido Buya Team",
+    team_leader: "Ankido Buya",
+    department: "Contact Center",
+    review_period: "H1 2026",
+    evaluation_date: "",
+    status: "manager_finalized",
+    self_kpis: {
+      qa: 5,
+      productivity: 5,
+      attendance: 5,
+      aht: 4,
+      knowledge: 5,
+      exam: 5
+    },
+    self_competencies: {
+      communication: 5,
+      problem_solving: 5,
+      accountability: 5,
+      initiative: 4,
+      responsibility: 4,
+      team_work: 5
+    },
+    manager_kpis: {
+      qa: 5,
+      productivity: 3,
+      attendance: 3,
+      aht: 4,
+      knowledge: 5,
+      exam: 5
+    },
+    manager_competencies: {
+      communication: 3,
+      problem_solving: 4,
+      accountability: 3,
+      initiative: 5,
+      responsibility: 3,
+      team_work: 5
+    },
+    self_kpi_score: 4.80,
+    self_comp_avg: 4.67,
+    self_overall_score: 4.74,
+    manager_kpi_score: 4.00,
+    manager_comp_avg: 3.83,
+    manager_overall_score: 3.92,
+    manager_comments: "",
+    self_comments: "",
+    updated_at: new Date().toISOString(),
+    last_modified_by: "System Official Import (H1 2026)",
+    manager_submitted_at: new Date().toISOString(),
+    self_submitted_at: new Date().toISOString()
+  };
+
+  await setDoc(doc(db, "annual_evaluations", "2026_Semi-Annual_frmesk_younis"), frmeskData, { merge: true });
+  console.log(`Saved evaluation for Frmesk Younis -> 2026_Semi-Annual_frmesk_younis`);
+
   console.log("Seeding complete successfully!");
   process.exit(0);
 }
