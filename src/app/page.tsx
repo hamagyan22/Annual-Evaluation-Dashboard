@@ -4805,17 +4805,6 @@ export default function Dashboard() {
               </button>
             </form>
 
-            {/* Live Interactive Demo Button for Visitors */}
-            <div className="mt-4">
-              <a
-                href="/demo.html"
-                className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-400 bg-emerald-50/80 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/60 transition-all flex items-center justify-center gap-2 group shadow-2xs"
-              >
-                <span>Explore Interactive Demo (Sample Data)</span>
-                <span className="group-hover:translate-x-0.5 transition-transform font-bold">→</span>
-              </a>
-            </div>
-
             <div className="mt-6 pt-5 border-t border-gray-100 dark:border-gray-800/80 flex flex-col items-center justify-center gap-1.5 text-gray-400 dark:text-gray-500 text-[11px] font-medium">
               <div className="text-[10.5px] font-bold tracking-wide text-gray-400/90 dark:text-gray-500">
                 Designed &amp; Engineered by <span className="text-[#1C6B53] dark:text-emerald-400 font-black">{getSystemAuthor()}</span>

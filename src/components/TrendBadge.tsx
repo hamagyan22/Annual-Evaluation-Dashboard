@@ -147,172 +147,86 @@ export const TrendBadge: React.FC<TrendBadgeProps> = ({
   }
 
   const diff = currentNum - prevNum;
-
-  // 1. Time Metric (AHT, ART, Hold, Wrapup in mm:ss)
-  if (isTime) {
-    if (Math.abs(diff) < 1) {
-      return (
-        <span
-          title={`No change vs ${prevMonthLabel}`}
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black font-mono tracking-tight bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200/80 dark:border-gray-700/80 select-none shadow-2xs ${className}`}
-        >
-          <span>•</span>
-          <span>0s</span>
-          {showVsLabel && <span className="text-[9px] font-medium opacity-70">vs {prevMonthLabel}</span>}
-        </span>
-      );
-    }
-
-    const isImproved = isLowerBetter ? diff < 0 : diff > 0;
-    const sign = diff > 0 ? "+" : "-";
-    const absSec = Math.abs(Math.round(diff));
-    const formattedDiff = absSec >= 60 
-      ? `${sign}${Math.floor(absSec / 60)}m ${absSec % 60}s`
-      : `${sign}${absSec}s`;
-
-    return (
-      <span
-        title={`${formattedDiff} vs ${prevMonthLabel}`}
-        className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10.5px] font-black font-mono tracking-tight select-none shadow-2xs border ${
-          isImproved
-            ? "bg-emerald-50 text-emerald-700 border-emerald-300/80 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700/60"
-            : "bg-rose-50 text-rose-700 border-rose-300/80 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-700/60"
-        } ${className}`}
-      >
-        <svg className="w-2.5 h-2.5 shrink-0 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {diff > 0 ? (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          )}
-        </svg>
-        <span>{formattedDiff}</span>
-        {showVsLabel && <span className="text-[9px] font-medium opacity-75">vs {prevMonthLabel}</span>}
-      </span>
-    );
-  }
-
-  // 2. Count / Integer Metric (Chat Handled, Call Handled, Inbound, Outbound, Wrapup count, RONA)
-  if (isCount) {
-    if (Math.abs(diff) < 0.5) {
-      return (
-        <span
-          title={`No change vs ${prevMonthLabel}`}
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black font-mono tracking-tight bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200/80 dark:border-gray-700/80 select-none shadow-2xs ${className}`}
-        >
-          <span>•</span>
-          <span>0</span>
-          {showVsLabel && <span className="text-[9px] font-medium opacity-70">vs {prevMonthLabel}</span>}
-        </span>
-      );
-    }
-
-    const isImproved = isLowerBetter ? diff < 0 : diff > 0;
-    const sign = diff > 0 ? "+" : "";
-    const intDiff = Math.round(diff);
-    const formattedDiff = `${sign}${intDiff.toLocaleString()}`;
-
-    return (
-      <span
-        title={`${formattedDiff} vs ${prevMonthLabel}`}
-        className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10.5px] font-black font-mono tracking-tight select-none shadow-2xs border ${
-          isImproved
-            ? "bg-emerald-50 text-emerald-700 border-emerald-300/80 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700/60"
-            : "bg-rose-50 text-rose-700 border-rose-300/80 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-700/60"
-        } ${className}`}
-      >
-        <svg className="w-2.5 h-2.5 shrink-0 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {diff > 0 ? (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          )}
-        </svg>
-        <span>{formattedDiff}</span>
-        {showVsLabel && <span className="text-[9px] font-medium opacity-75">vs {prevMonthLabel}</span>}
-      </span>
-    );
-  }
-
-  // 3. Points Metric (Top Star score)
-  if (isPoints) {
-    if (Math.abs(diff) < 0.05) {
-      return (
-        <span
-          title={`No change vs ${prevMonthLabel}`}
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black font-mono tracking-tight bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200/80 dark:border-gray-700/80 select-none shadow-2xs ${className}`}
-        >
-          <span>•</span>
-          <span>0.0 pts</span>
-          {showVsLabel && <span className="text-[9px] font-medium opacity-70">vs {prevMonthLabel}</span>}
-        </span>
-      );
-    }
-
-    const isImproved = isLowerBetter ? diff < 0 : diff > 0;
-    const sign = diff > 0 ? "+" : "";
-    const diffStr = `${sign}${diff.toFixed(1)} pts`;
-
-    return (
-      <span
-        title={`${diffStr} vs ${prevMonthLabel}`}
-        className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10.5px] font-black font-mono tracking-tight select-none shadow-2xs border ${
-          isImproved
-            ? "bg-emerald-50 text-emerald-700 border-emerald-300/80 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700/60"
-            : "bg-rose-50 text-rose-700 border-rose-300/80 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-700/60"
-        } ${className}`}
-      >
-        <svg className="w-2.5 h-2.5 shrink-0 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {diff > 0 ? (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          )}
-        </svg>
-        <span>{diffStr}</span>
-        {showVsLabel && <span className="text-[9px] font-medium opacity-75">vs {prevMonthLabel}</span>}
-      </span>
-    );
-  }
-
-  // 4. Default Percentage & Rate Metrics (Quality, Exam, Productivity, CSAT)
-  const unit = explicitSuffix !== undefined ? explicitSuffix : (explicitIsPercent ? "%" : config.suffix);
-
-  if (Math.abs(diff) < 0.05) {
-    return (
-      <span
-        title={`No change vs ${prevMonthLabel}`}
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black font-mono tracking-tight bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200/80 dark:border-gray-700/80 select-none shadow-2xs ${className}`}
-      >
-        <span>•</span>
-        <span>0.0{unit}</span>
-        {showVsLabel && <span className="text-[9px] font-medium opacity-70">vs {prevMonthLabel}</span>}
-      </span>
-    );
-  }
-
+  const isNeutral = Math.abs(diff) < (isTime ? 1 : isCount ? 0.5 : 0.05);
   const isImproved = isLowerBetter ? diff < 0 : diff > 0;
-  const sign = diff > 0 ? "+" : "";
-  const diffStr = `${sign}${diff.toFixed(1)}${unit}`;
+
+  // Format diff value nicely
+  let formattedDiff = "";
+  if (isTime) {
+    if (isNeutral) {
+      formattedDiff = "0s";
+    } else {
+      const sign = diff > 0 ? "+" : "-";
+      const absSec = Math.abs(Math.round(diff));
+      formattedDiff = absSec >= 60 
+        ? `${sign}${Math.floor(absSec / 60)}m ${absSec % 60}s`
+        : `${sign}${absSec}s`;
+    }
+  } else if (isCount) {
+    if (isNeutral) {
+      formattedDiff = "0";
+    } else {
+      const sign = diff > 0 ? "+" : "";
+      formattedDiff = `${sign}${Math.round(diff).toLocaleString()}`;
+    }
+  } else if (isPoints) {
+    if (isNeutral) {
+      formattedDiff = "0.0 pts";
+    } else {
+      const sign = diff > 0 ? "+" : "";
+      formattedDiff = `${sign}${diff.toFixed(1)} pts`;
+    }
+  } else {
+    const unit = explicitSuffix !== undefined ? explicitSuffix : (explicitIsPercent ? "%" : config.suffix);
+    if (isNeutral) {
+      formattedDiff = `0.0${unit}`;
+    } else {
+      const sign = diff > 0 ? "+" : "";
+      formattedDiff = `${sign}${diff.toFixed(1)}${unit}`;
+    }
+  }
+
+  // Modern badge styling (subtle frosted glass pill, crisp icon, clean typography)
+  const colorClasses = isNeutral
+    ? "bg-slate-500/[0.08] text-slate-600 dark:bg-slate-400/[0.12] dark:text-slate-300 border-slate-300/60 dark:border-slate-700/60"
+    : isImproved
+    ? "bg-emerald-500/[0.09] text-emerald-700 dark:bg-emerald-400/[0.14] dark:text-emerald-300 border-emerald-500/25 dark:border-emerald-400/30 shadow-[0_1px_2px_rgba(16,185,129,0.06)]"
+    : "bg-rose-500/[0.09] text-rose-700 dark:bg-rose-400/[0.14] dark:text-rose-300 border-rose-500/25 dark:border-rose-400/30 shadow-[0_1px_2px_rgba(244,63,94,0.06)]";
 
   return (
     <span
-      title={`${diffStr} vs ${prevMonthLabel}`}
-      className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10.5px] font-black font-mono tracking-tight select-none shadow-2xs border ${
-        isImproved
-          ? "bg-emerald-50 text-emerald-700 border-emerald-300/80 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700/60"
-          : "bg-rose-50 text-rose-700 border-rose-300/80 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-700/60"
-      } ${className}`}
+      title={`${formattedDiff} vs ${prevMonthLabel}`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold tabular-nums tracking-tight select-none border transition-all duration-150 ${colorClasses} ${className}`}
     >
-      <svg className="w-2.5 h-2.5 shrink-0 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        {diff > 0 ? (
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-        ) : (
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        )}
-      </svg>
-      <span>{diffStr}</span>
-      {showVsLabel && <span className="text-[9px] font-medium opacity-75">vs {prevMonthLabel}</span>}
+      {isNeutral ? (
+        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50 shrink-0" />
+      ) : diff > 0 ? (
+        <svg
+          className="w-2.5 h-2.5 shrink-0 stroke-[2.5]"
+          viewBox="0 0 10 10"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M5 8.5V1.5M5 1.5L2 4.5M5 1.5L8 4.5" />
+        </svg>
+      ) : (
+        <svg
+          className="w-2.5 h-2.5 shrink-0 stroke-[2.5]"
+          viewBox="0 0 10 10"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M5 1.5V8.5M5 8.5L2 5.5M5 8.5L8 5.5" />
+        </svg>
+      )}
+      <span className="leading-none">{formattedDiff}</span>
+      {showVsLabel && (
+        <span className="text-[9px] font-medium opacity-75 ml-0.5">vs {prevMonthLabel}</span>
+      )}
     </span>
   );
 };
