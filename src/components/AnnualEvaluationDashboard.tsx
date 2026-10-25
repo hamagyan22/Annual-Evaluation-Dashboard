@@ -170,6 +170,12 @@ export const KNOWN_EMPLOYEE_IDS: Record<string, string> = {
   "rasan_ismail": "365",
   "rassan ismail": "365",
   "rassan_ismail": "365",
+  "aya yasin": "341",
+  "aya_yasin": "341",
+  "lana halmat rafeeq": "350",
+  "lana_halmat_rafeeq": "350",
+  "lana halmat": "350",
+  "lana_halmat": "350",
 };
 
 const AVAILABLE_YEARS = ["2026", "2027", "2028", "2029", "2030"];

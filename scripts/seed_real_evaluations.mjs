@@ -323,6 +323,127 @@ async function seedEvaluations() {
   await setDoc(doc(db, "annual_evaluations", "2026_Semi-Annual_rasan_ismail_musa"), rasanData, { merge: true });
   console.log(`Saved evaluation for Rasan Ismail Musa -> 2026_Semi-Annual_rassan_ismail, rasan_ismail, rasan_ismail_musa`);
 
+  // 6. Aya Yasin (Call Agent - Semi-Annual 2026 / H1 2026)
+  // Images 1 & 2 (ID: 341)
+  const ayaData = {
+    employee_name: "Aya Yasin",
+    employee_id: "341",
+    team: "Ankido Buya Team",
+    team_leader: "Ankido Buya",
+    department: "Contact Center",
+    review_period: "H1 2026",
+    evaluation_date: "",
+    status: "manager_finalized",
+    self_kpis: {
+      qa: 5,
+      productivity: 4,
+      attendance: 4,
+      aht: 4,
+      knowledge: 4,
+      exam: 4
+    },
+    self_competencies: {
+      communication: 3,
+      problem_solving: 4,
+      accountability: 3,
+      initiative: 1,
+      responsibility: 4,
+      team_work: 3
+    },
+    manager_kpis: {
+      qa: 5,
+      productivity: 4,
+      attendance: 3,
+      aht: 4,
+      knowledge: 5,
+      exam: 5
+    },
+    manager_competencies: {
+      communication: 5,
+      problem_solving: 4,
+      accountability: 3,
+      initiative: 1,
+      responsibility: 4,
+      team_work: 4
+    },
+    self_kpi_score: 4.20,
+    self_comp_avg: 3.00,
+    self_overall_score: 3.60,
+    manager_kpi_score: 4.20,
+    manager_comp_avg: 3.50,
+    manager_overall_score: 3.85,
+    manager_comments: "",
+    self_comments: "",
+    updated_at: new Date().toISOString(),
+    last_modified_by: "System Official Import (H1 2026)",
+    manager_submitted_at: new Date().toISOString(),
+    self_submitted_at: new Date().toISOString()
+  };
+
+  await setDoc(doc(db, "annual_evaluations", "2026_Semi-Annual_aya_yasin"), ayaData, { merge: true });
+  console.log(`Saved evaluation for Aya Yasin -> 2026_Semi-Annual_aya_yasin`);
+
+  // 7. Lana Halmat Rafeeq (Call Agent - Semi-Annual 2026 / H1 2026)
+  // Images 3 & 4 (ID: 350)
+  const lanaData = {
+    employee_name: "Lana Halmat Rafeeq",
+    employee_id: "350",
+    team: "Ankido Buya Team",
+    team_leader: "Ankido Buya",
+    department: "Contact Center",
+    review_period: "H1 2026",
+    evaluation_date: "",
+    status: "manager_finalized",
+    self_kpis: {
+      qa: 4,
+      productivity: 3,
+      attendance: 5,
+      aht: 5,
+      knowledge: 4,
+      exam: 4
+    },
+    self_competencies: {
+      communication: 5,
+      problem_solving: 5,
+      accountability: 5,
+      initiative: 5,
+      responsibility: 5,
+      team_work: 5
+    },
+    manager_kpis: {
+      qa: 4,
+      productivity: 3,
+      attendance: 3,
+      aht: 5,
+      knowledge: 3,
+      exam: 3
+    },
+    manager_competencies: {
+      communication: 3,
+      problem_solving: 5,
+      accountability: 3,
+      initiative: 2,
+      responsibility: 3,
+      team_work: 5
+    },
+    self_kpi_score: 4.20,
+    self_comp_avg: 5.00,
+    self_overall_score: 4.60,
+    manager_kpi_score: 3.60,
+    manager_comp_avg: 3.50,
+    manager_overall_score: 3.55,
+    manager_comments: "",
+    self_comments: "",
+    updated_at: new Date().toISOString(),
+    last_modified_by: "System Official Import (H1 2026)",
+    manager_submitted_at: new Date().toISOString(),
+    self_submitted_at: new Date().toISOString()
+  };
+
+  await setDoc(doc(db, "annual_evaluations", "2026_Semi-Annual_lana_halmat_rafeeq"), lanaData, { merge: true });
+  await setDoc(doc(db, "annual_evaluations", "2026_Semi-Annual_lana_halmat"), lanaData, { merge: true });
+  console.log(`Saved evaluation for Lana Halmat Rafeeq -> 2026_Semi-Annual_lana_halmat_rafeeq & lana_halmat`);
+
   console.log("Seeding complete successfully!");
   process.exit(0);
 }
