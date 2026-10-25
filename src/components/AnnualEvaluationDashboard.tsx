@@ -160,6 +160,16 @@ export const KNOWN_EMPLOYEE_IDS: Record<string, string> = {
   "soma_muhammed": "371",
   "frmesk younis": "345",
   "frmesk_younis": "345",
+  "muzhda omar": "358",
+  "muzhda_omar": "358",
+  "muzhda omar ali": "358",
+  "muzhda_omar_ali": "358",
+  "rasan ismail musa": "365",
+  "rasan_ismail_musa": "365",
+  "rasan ismail": "365",
+  "rasan_ismail": "365",
+  "rassan ismail": "365",
+  "rassan_ismail": "365",
 };
 
 const AVAILABLE_YEARS = ["2026", "2027", "2028", "2029", "2030"];
