@@ -686,6 +686,126 @@ async function seedEvaluations() {
   await setDoc(doc(db, "annual_evaluations", "2026_Semi-Annual_kazhvan_wirya"), kazhvanData, { merge: true });
   console.log(`Saved evaluation for Kazhvan Wirya -> 2026_Semi-Annual_kazhvan_wirya`);
 
+  // 12. Ahmed Rustam (Chat Agent - Semi-Annual 2026 / H1 2026)
+  // Images 1 & 2 (ID: 336)
+  const ahmedRustamData = {
+    employee_name: "Ahmed Rustam",
+    employee_id: "336",
+    team: "Mohammed Dlshad Team",
+    team_leader: "Mohammed Dilshad",
+    department: "Contact Center",
+    review_period: "H1 2026",
+    evaluation_date: "19/7/2026",
+    status: "manager_finalized",
+    self_kpis: {
+      qa: 5,
+      art: 2,
+      attendance: 5,
+      aht: 2,
+      knowledge: 4,
+      exam: 4
+    },
+    self_competencies: {
+      communication: 5,
+      problem_solving: 5,
+      accountability: 4,
+      initiative: 5,
+      responsibility: 4,
+      team_work: 5
+    },
+    manager_kpis: {
+      qa: 4,
+      art: 3,
+      attendance: 3,
+      aht: 3,
+      knowledge: 4,
+      exam: 4
+    },
+    manager_competencies: {
+      communication: 5,
+      problem_solving: 4,
+      accountability: 4,
+      initiative: 3,
+      responsibility: 5,
+      team_work: 5
+    },
+    self_kpi_score: 3.60,
+    self_comp_avg: 4.67,
+    self_overall_score: 4.13,
+    manager_kpi_score: 3.40,
+    manager_comp_avg: 4.33,
+    manager_overall_score: 3.87,
+    manager_comments: "",
+    self_comments: "",
+    updated_at: new Date().toISOString(),
+    last_modified_by: "System Official Import (H1 2026)",
+    manager_submitted_at: new Date().toISOString(),
+    self_submitted_at: new Date().toISOString()
+  };
+
+  await setDoc(doc(db, "annual_evaluations", "2026_Semi-Annual_ahmed_rustam"), ahmedRustamData, { merge: true });
+  console.log(`Saved evaluation for Ahmed Rustam -> 2026_Semi-Annual_ahmed_rustam`);
+
+  // 13. Hewr Adnan (Call Agent - Semi-Annual 2026 / H1 2026)
+  // Images 3 & 4 (ID: 348)
+  const hewrData = {
+    employee_name: "Hewr Adnan",
+    employee_id: "348",
+    team: "Younis Kamal Team",
+    team_leader: "Younis Kamal",
+    department: "Contact Center",
+    review_period: "H1 2026",
+    evaluation_date: "",
+    status: "manager_finalized",
+    self_kpis: {
+      qa: 4,
+      productivity: 2,
+      attendance: 5,
+      aht: 5,
+      knowledge: 4,
+      exam: 4
+    },
+    self_competencies: {
+      communication: 5,
+      problem_solving: 3,
+      accountability: 5,
+      initiative: 2,
+      responsibility: 4,
+      team_work: 4
+    },
+    manager_kpis: {
+      qa: 4,
+      productivity: 2,
+      attendance: 4,
+      aht: 5,
+      knowledge: 4,
+      exam: 4
+    },
+    manager_competencies: {
+      communication: 5,
+      problem_solving: 3,
+      accountability: 3,
+      initiative: 2,
+      responsibility: 4,
+      team_work: 4
+    },
+    self_kpi_score: 4.00,
+    self_comp_avg: 3.83,
+    self_overall_score: 3.92,
+    manager_kpi_score: 3.80,
+    manager_comp_avg: 3.50,
+    manager_overall_score: 3.65,
+    manager_comments: "",
+    self_comments: "",
+    updated_at: new Date().toISOString(),
+    last_modified_by: "System Official Import (H1 2026)",
+    manager_submitted_at: new Date().toISOString(),
+    self_submitted_at: new Date().toISOString()
+  };
+
+  await setDoc(doc(db, "annual_evaluations", "2026_Semi-Annual_hewr_adnan"), hewrData, { merge: true });
+  console.log(`Saved evaluation for Hewr Adnan -> 2026_Semi-Annual_hewr_adnan`);
+
   console.log("Seeding complete successfully!");
   process.exit(0);
 }

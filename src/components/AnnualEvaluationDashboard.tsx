@@ -9,7 +9,9 @@ import {
   Award, X, Printer, UserCheck, Star,
   Info, ThumbsUp, Target, BookOpen, AlertTriangle,
   PhoneCall, ShieldCheck, CheckCircle, Calendar,
-  Clock, Eye, Lock, MessageSquare
+  Clock, Eye, Lock, MessageSquare,
+  ClipboardList, CheckCircle2, XCircle, AlertCircle,
+  Filter, Copy, ListChecks, ExternalLink
 } from "lucide-react";
 import { getCanonicalAgentName } from "@/lib/canonicalAgents";
 import { isMemberActiveInPeriod } from "@/lib/companyRoster";
@@ -188,6 +190,10 @@ export const KNOWN_EMPLOYEE_IDS: Record<string, string> = {
   "akar_omer": "337",
   "kazhvan wirya": "575",
   "kazhvan_wirya": "575",
+  "ahmed rustam": "336",
+  "ahmed_rustam": "336",
+  "hewr adnan": "348",
+  "hewr_adnan": "348",
 };
 
 const AVAILABLE_YEARS = ["2026", "2027", "2028", "2029", "2030"];
@@ -280,6 +286,35 @@ export default function AnnualEvaluationDashboard({
 
   // Real actual metrics fetched for the period to assist evaluation
   const [actualMetricsSummary, setActualMetricsSummary] = useState<any | null>(null);
+
+  // Coverage Tracking State (Evaluation Status across all employees)
+  const [allEvaluationsMap, setAllEvaluationsMap] = useState<Record<string, any>>({});
+  const [showCoverageModal, setShowCoverageModal] = useState<boolean>(false);
+  const [coverageFilterStatus, setCoverageFilterStatus] = useState<"pending" | "completed" | "all">("pending");
+  const [coveragePeriodFilter, setCoveragePeriodFilter] = useState<"all" | "Semi-Annual" | "Annual">("all");
+  const [coverageTeamFilter, setCoverageTeamFilter] = useState<string>("all");
+  const [coverageSearchTerm, setCoverageSearchTerm] = useState<string>("");
+  const [coverageCopiedToast, setCoverageCopiedToast] = useState<boolean>(false);
+
+  // Live real-time listener on all annual_evaluations collection docs for coverage tracking
+  useEffect(() => {
+    let isMounted = true;
+    const unsub = onSnapshot(collection(db, "annual_evaluations"), (snap) => {
+      if (!isMounted) return;
+      const map: Record<string, any> = {};
+      snap.docs.forEach(d => {
+        map[d.id] = { id: d.id, ...d.data() };
+      });
+      setAllEvaluationsMap(map);
+    }, (err) => {
+      console.warn("annual_evaluations collection listener warning:", err);
+    });
+
+    return () => {
+      isMounted = false;
+      unsub();
+    };
+  }, []);
 
   // Internal loaded members list (initialized with full official roster + live Firestore sync)
   const [internalMembers, setInternalMembers] = useState<any[]>(DEFAULT_COMPANY_EMPLOYEES);
@@ -480,6 +515,173 @@ export default function AnnualEvaluationDashboard({
   const openBenchmarkGuide = () => {
     setBenchmarkGuideTab(isSelectedEmployeeChat ? "chat" : "calls");
     setShowBenchmarkGuideModal(true);
+  };
+
+  // Coverage Tracking Computation (Who's evaluated and who's pending)
+  const coverageData = useMemo(() => {
+    const activeMembers = effectiveAllMembers.filter(m => 
+      isMemberActiveInPeriod(m, "YEAR - AVG", String(selectedYear))
+    );
+
+    let semiCompletedCount = 0;
+    let semiPendingCount = 0;
+    let annualCompletedCount = 0;
+    let annualPendingCount = 0;
+
+    const list = activeMembers.map(member => {
+      const rawName = (member.agent_name || member.name || "").trim();
+      const clean = rawName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const norm = normalizeAgentName(rawName);
+      const normClean = norm.replace(/[^a-z0-9]/g, '_');
+      const knownId = KNOWN_EMPLOYEE_IDS[norm] || KNOWN_EMPLOYEE_IDS[member.id] || member.id || "";
+
+      const findEval = (period: "Semi-Annual" | "Annual") => {
+        const direct1 = allEvaluationsMap[`${selectedYear}_${period}_${clean}`];
+        if (direct1) return direct1;
+        const direct2 = allEvaluationsMap[`${selectedYear}_${period}_${normClean}`];
+        if (direct2) return direct2;
+
+        const periodPrefix = `${selectedYear}_${period}_`;
+        for (const [k, d] of Object.entries(allEvaluationsMap)) {
+          if (!k.startsWith(periodPrefix)) continue;
+          const docEmpName = normalizeAgentName(d.employee_name || "");
+          const docEmpId = String(d.employee_id || "");
+          if (
+            (docEmpName && (docEmpName === norm || docEmpName.includes(norm) || norm.includes(docEmpName))) ||
+            (knownId && docEmpId && docEmpId === String(knownId))
+          ) {
+            return d;
+          }
+        }
+        return null;
+      };
+
+      const semiDoc = findEval("Semi-Annual");
+      const annualDoc = findEval("Annual");
+
+      const semiCompleted = Boolean(
+        semiDoc && (
+          semiDoc.status === 'manager_finalized' || 
+          (typeof semiDoc.manager_overall_score === 'number' && semiDoc.manager_overall_score > 0)
+        )
+      );
+      const semiScore = semiDoc ? (semiDoc.manager_overall_score ?? semiDoc.self_overall_score ?? null) : null;
+
+      const annualCompleted = Boolean(
+        annualDoc && (
+          annualDoc.status === 'manager_finalized' || 
+          (typeof annualDoc.manager_overall_score === 'number' && annualDoc.manager_overall_score > 0)
+        )
+      );
+      const annualScore = annualDoc ? (annualDoc.manager_overall_score ?? annualDoc.self_overall_score ?? null) : null;
+
+      if (semiCompleted) semiCompletedCount++;
+      else semiPendingCount++;
+
+      if (annualCompleted) annualCompletedCount++;
+      else annualPendingCount++;
+
+      const team = member.team || "Contact Center";
+      const isChat = team.toLowerCase().includes('mohammed') || team.toLowerCase().includes('dlshad');
+
+      return {
+        member,
+        name: rawName,
+        knownId,
+        team,
+        isChat,
+        semi: {
+          isEvaluated: Boolean(semiDoc),
+          isCompleted: semiCompleted,
+          status: semiDoc?.status || (semiCompleted ? 'manager_finalized' : 'pending'),
+          score: semiScore,
+          doc: semiDoc
+        },
+        annual: {
+          isEvaluated: Boolean(annualDoc),
+          isCompleted: annualCompleted,
+          status: annualDoc?.status || (annualCompleted ? 'manager_finalized' : 'pending'),
+          score: annualScore,
+          doc: annualDoc
+        }
+      };
+    });
+
+    return {
+      membersList: list,
+      totalCount: activeMembers.length,
+      semiCompletedCount,
+      semiPendingCount,
+      annualCompletedCount,
+      annualPendingCount,
+      semiPercent: activeMembers.length > 0 ? Math.round((semiCompletedCount / activeMembers.length) * 100) : 0,
+      annualPercent: activeMembers.length > 0 ? Math.round((annualCompletedCount / activeMembers.length) * 100) : 0
+    };
+  }, [effectiveAllMembers, allEvaluationsMap, selectedYear]);
+
+  // Filtered members list for Coverage Modal
+  const filteredCoverageList = useMemo(() => {
+    return coverageData.membersList.filter(item => {
+      // 1. Team filter
+      if (coverageTeamFilter !== "all") {
+        const t = (item.team || "").toLowerCase();
+        if (coverageTeamFilter === "Younis" && !t.includes("younis")) return false;
+        if (coverageTeamFilter === "Ankido" && !t.includes("ankido")) return false;
+        if (coverageTeamFilter === "Mohammed" && !t.includes("mohammed") && !t.includes("dlshad")) return false;
+      }
+
+      // 2. Search query filter
+      if (coverageSearchTerm.trim()) {
+        const q = coverageSearchTerm.toLowerCase();
+        const matchesName = item.name.toLowerCase().includes(q);
+        const matchesId = String(item.knownId).toLowerCase().includes(q);
+        if (!matchesName && !matchesId) return false;
+      }
+
+      // 3. Status filter
+      if (coverageFilterStatus === "pending") {
+        if (coveragePeriodFilter === "Semi-Annual") return !item.semi.isCompleted;
+        if (coveragePeriodFilter === "Annual") return !item.annual.isCompleted;
+        return !item.semi.isCompleted || !item.annual.isCompleted;
+      }
+
+      if (coverageFilterStatus === "completed") {
+        if (coveragePeriodFilter === "Semi-Annual") return item.semi.isCompleted;
+        if (coveragePeriodFilter === "Annual") return item.annual.isCompleted;
+        return item.semi.isCompleted || item.annual.isCompleted;
+      }
+
+      return true;
+    });
+  }, [coverageData, coverageFilterStatus, coveragePeriodFilter, coverageTeamFilter, coverageSearchTerm]);
+
+  // Copy pending list to clipboard
+  const handleCopyPendingList = () => {
+    const pendingItems = coverageData.membersList.filter(item => {
+      if (coveragePeriodFilter === "Semi-Annual") return !item.semi.isCompleted;
+      if (coveragePeriodFilter === "Annual") return !item.annual.isCompleted;
+      return !item.semi.isCompleted || !item.annual.isCompleted;
+    });
+
+    const lines = pendingItems.map((item, idx) => {
+      const pendingPeriods = [];
+      if (!item.semi.isCompleted) pendingPeriods.push("نصف سنوي (Semi-Annual)");
+      if (!item.annual.isCompleted) pendingPeriods.push("سنوي (Annual)");
+      return `${idx + 1}. ${toTitleCase(item.name)} (${item.knownId ? `ID: ${item.knownId}, ` : ''}${item.team.replace(' Team', '')}) -> متبقي: ${pendingPeriods.join(' + ')}`;
+    });
+
+    const textToCopy = `📋 قائمة الموظفين المتبقين بدون تقييم (${selectedYear}):\n` + lines.join('\n');
+    navigator.clipboard.writeText(textToCopy);
+    setCoverageCopiedToast(true);
+    setTimeout(() => setCoverageCopiedToast(false), 2500);
+  };
+
+  const handleSelectForEvaluation = (memberName: string, period?: "Semi-Annual" | "Annual") => {
+    setSelectedEmployeeName(memberName);
+    if (period) {
+      setSelectedPeriod(period);
+    }
+    setShowCoverageModal(false);
   };
 
   // Initialize selected employee on load
@@ -1029,6 +1231,22 @@ export default function AnnualEvaluationDashboard({
           {/* Unified Header Navigation: Features, Divider, Dark Mode, Themes, Back (Far Right) */}
           <div className="flex items-center gap-1.5 p-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-xs self-stretch sm:self-auto justify-end">
             <button
+              type="button"
+              onClick={() => {
+                setCoverageFilterStatus("pending");
+                setShowCoverageModal(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-emerald-800 dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100/90 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/50 border border-emerald-300/80 dark:border-emerald-700/60 transition active:scale-95 cursor-pointer shadow-2xs"
+              title="متابعة حالة التقييمات والموظفين المتبقين (منو باقي؟)"
+            >
+              <ClipboardList size={14} className="text-[#1C6B53] dark:text-emerald-400" />
+              <span className="font-extrabold hidden xs:inline">متابعة التقييمات</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-black bg-[#1C6B53] text-white shadow-2xs">
+                {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount} متبقي
+              </span>
+            </button>
+
+            <button
               onClick={openBenchmarkGuide}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-50 hover:bg-amber-100/80 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 transition active:scale-95 cursor-pointer shadow-2xs"
               title="KPI & Competency Benchmark Guide"
@@ -1154,6 +1372,23 @@ export default function AnnualEvaluationDashboard({
                   <span>Annual</span>
                 </button>
               </div>
+
+              {/* Quick Button: Who's Pending */}
+              <button
+                type="button"
+                onClick={() => {
+                  setCoverageFilterStatus("pending");
+                  setShowCoverageModal(true);
+                }}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-amber-50 hover:bg-amber-100/90 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 text-xs font-black text-amber-900 dark:text-amber-200 transition active:scale-95 shadow-2xs cursor-pointer"
+                title="عرض الموظفين المتبقين بدون تقييم"
+              >
+                <ListChecks size={14} className="text-amber-600 dark:text-amber-400" />
+                <span>منو باقي ممتقيم؟</span>
+                <span className="px-1.5 py-0.5 bg-amber-200 dark:bg-amber-800 text-amber-950 dark:text-amber-100 rounded-full text-[10px] font-black">
+                  {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount}
+                </span>
+              </button>
 
             </div>
 
@@ -2534,6 +2769,422 @@ export default function AnnualEvaluationDashboard({
             </div>
 
           </div>
+        </div>
+      )}
+
+      {/* Evaluation Coverage & Tracking Modal (Who's Evaluated / Who's Pending) */}
+      {showCoverageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-[#1C6B53] via-emerald-800 to-[#124636] text-white flex items-center justify-between shrink-0 shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shadow-xs border border-white/15">
+                  <ClipboardList size={22} className="text-emerald-200" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-black tracking-tight">
+                      متابعة حالة التقييمات | Evaluation Coverage Tracker
+                    </h3>
+                    <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-xs">
+                      سنة {selectedYear}
+                    </span>
+                  </div>
+                  <p className="text-xs text-emerald-100/90 font-medium mt-0.5">
+                    متابعة فورية للموظفين الذين تم تقييمهم ومن متبقي في التقييمين النصف سنوي والسنوي
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCoverageModal(false)}
+                className="w-9 h-9 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition cursor-pointer shrink-0"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* KPI Summary Overview Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 sm:p-5 bg-gray-50/80 dark:bg-gray-800/40 border-b border-gray-200/80 dark:border-gray-800 shrink-0">
+              
+              {/* Card 1: Total Employees */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-3.5 shadow-2xs">
+                <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                  <span>إجمالي الموظفين (Total Active)</span>
+                  <Users size={15} className="text-gray-400" />
+                </div>
+                <div className="text-2xl font-black text-gray-900 dark:text-white">
+                  {coverageData.totalCount} <span className="text-xs font-semibold text-gray-500">موظف</span>
+                </div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                  موزعين على فرق (Younis, Ankido, Mohammed)
+                </div>
+              </div>
+
+              {/* Card 2: Semi-Annual */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-3.5 shadow-2xs">
+                <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                  <span>التقييم النصف سنوي (Semi-Annual)</span>
+                  <Calendar size={15} className="text-[#1C6B53] dark:text-emerald-400" />
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
+                    {coverageData.semiCompletedCount} <span className="text-xs font-semibold text-gray-500">مكتمل</span>
+                  </div>
+                  <span className="text-xs font-black text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
+                    {coverageData.semiPendingCount} متبقي
+                  </span>
+                </div>
+                <div className="w-full bg-gray-100 dark:bg-gray-700 h-2 rounded-full mt-2.5 overflow-hidden">
+                  <div 
+                    className="bg-[#1C6B53] h-full rounded-full transition-all duration-500"
+                    style={{ width: `${coverageData.semiPercent}%` }}
+                  />
+                </div>
+                <div className="text-[10px] text-right font-bold text-gray-500 dark:text-gray-400 mt-1">
+                  {coverageData.semiPercent}% نسبة الإنجاز
+                </div>
+              </div>
+
+              {/* Card 3: Annual */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-3.5 shadow-2xs">
+                <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                  <span>التقييم السنوي (Annual)</span>
+                  <Award size={15} className="text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <div className="text-2xl font-black text-blue-700 dark:text-blue-400">
+                    {coverageData.annualCompletedCount} <span className="text-xs font-semibold text-gray-500">مكتمل</span>
+                  </div>
+                  <span className="text-xs font-black text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
+                    {coverageData.annualPendingCount} متبقي
+                  </span>
+                </div>
+                <div className="w-full bg-gray-100 dark:bg-gray-700 h-2 rounded-full mt-2.5 overflow-hidden">
+                  <div 
+                    className="bg-blue-600 h-full rounded-full transition-all duration-500"
+                    style={{ width: `${coverageData.annualPercent}%` }}
+                  />
+                </div>
+                <div className="text-[10px] text-right font-bold text-gray-500 dark:text-gray-400 mt-1">
+                  {coverageData.annualPercent}% نسبة الإنجاز
+                </div>
+              </div>
+
+            </div>
+
+            {/* Filter & Control Toolbar */}
+            <div className="p-4 sm:p-5 border-b border-gray-200/80 dark:border-gray-800 space-y-3 bg-white dark:bg-gray-900 shrink-0">
+              
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                
+                {/* Status Switcher Tabs: Pending, Completed, All */}
+                <div className="flex items-center bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-2xl border border-gray-200/60 dark:border-gray-700/60">
+                  <button
+                    type="button"
+                    onClick={() => setCoverageFilterStatus("pending")}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                      coverageFilterStatus === "pending"
+                        ? "bg-amber-500 text-white shadow-xs"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <AlertCircle size={13} />
+                    <span>المتبقين فقط</span>
+                    <span className="text-[10px] px-1.5 py-0.2 bg-white/25 rounded-md font-black">
+                      {coveragePeriodFilter === "Semi-Annual" 
+                        ? coverageData.semiPendingCount 
+                        : coveragePeriodFilter === "Annual" 
+                        ? coverageData.annualPendingCount 
+                        : coverageData.semiPendingCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCoverageFilterStatus("completed")}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                      coverageFilterStatus === "completed"
+                        ? "bg-[#1C6B53] text-white shadow-xs"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <CheckCircle2 size={13} />
+                    <span>المكتملين</span>
+                    <span className="text-[10px] px-1.5 py-0.2 bg-white/25 rounded-md font-black">
+                      {coveragePeriodFilter === "Semi-Annual" 
+                        ? coverageData.semiCompletedCount 
+                        : coveragePeriodFilter === "Annual" 
+                        ? coverageData.annualCompletedCount 
+                        : coverageData.semiCompletedCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCoverageFilterStatus("all")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                      coverageFilterStatus === "all"
+                        ? "bg-gray-800 text-white dark:bg-gray-700 shadow-xs"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <span>الكل ({coverageData.totalCount})</span>
+                  </button>
+                </div>
+
+                {/* Period View Filter */}
+                <div className="flex items-center gap-1 bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-2xl border border-gray-200/60 dark:border-gray-700/60 text-xs font-bold">
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400 px-2 font-medium">الفترة:</span>
+                  <button
+                    type="button"
+                    onClick={() => setCoveragePeriodFilter("all")}
+                    className={`px-3 py-1 rounded-xl transition cursor-pointer ${
+                      coveragePeriodFilter === "all"
+                        ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-black shadow-2xs"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    كلاهما
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCoveragePeriodFilter("Semi-Annual")}
+                    className={`px-3 py-1 rounded-xl transition cursor-pointer ${
+                      coveragePeriodFilter === "Semi-Annual"
+                        ? "bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-400 font-black shadow-2xs"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    نصف سنوي
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCoveragePeriodFilter("Annual")}
+                    className={`px-3 py-1 rounded-xl transition cursor-pointer ${
+                      coveragePeriodFilter === "Annual"
+                        ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 font-black shadow-2xs"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    سنوي
+                  </button>
+                </div>
+
+                {/* Copy Pending Button */}
+                <button
+                  type="button"
+                  onClick={handleCopyPendingList}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-xs font-black text-gray-700 dark:text-gray-200 transition cursor-pointer shrink-0 border border-gray-200 dark:border-gray-700"
+                  title="نسخ قائمة الموظفين المتبقين بدون تقييم"
+                >
+                  <Copy size={13} />
+                  <span>نسخ قائمة المتبقين</span>
+                </button>
+
+              </div>
+
+              {/* Second Row: Team Filter Tabs and Live Search */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+                
+                {/* Team Filter */}
+                <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400 mr-1">الفريق:</span>
+                  {[
+                    { id: "all", label: "جميع الفرق" },
+                    { id: "Younis", label: "Younis Kamal" },
+                    { id: "Ankido", label: "Ankido Buya" },
+                    { id: "Mohammed", label: "Mohammed Dlshad" },
+                  ].map(t => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setCoverageTeamFilter(t.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                        coverageTeamFilter === t.id
+                          ? "bg-[#1C6B53] text-white shadow-2xs font-black"
+                          : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative min-w-[240px]">
+                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={coverageSearchTerm}
+                    onChange={(e) => setCoverageSearchTerm(e.target.value)}
+                    placeholder="بحث بالاسم أو الرقم الوظيفي..."
+                    className="w-full pl-9 pr-8 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C6B53]"
+                  />
+                  {coverageSearchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setCoverageSearchTerm("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* Employee List Area */}
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-2.5 flex-1 bg-gray-50/50 dark:bg-gray-900/50">
+              {filteredCoverageList.length === 0 ? (
+                <div className="text-center py-16">
+                  <CheckCircle2 size={44} className="mx-auto text-emerald-500 mb-3 opacity-80" />
+                  <p className="text-sm font-black text-gray-800 dark:text-gray-200">
+                    لا يوجد موظفين يطابقون خيارات الفلترة المحددة
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {coverageFilterStatus === "pending" 
+                      ? "ممتاز جداً! جميع الموظفين في هذا التصنيف تم تقييمهم بنجاح." 
+                      : "جرب تغيير خيارات الفلترة أو مسح حقل البحث."}
+                  </p>
+                </div>
+              ) : (
+                filteredCoverageList.map(item => (
+                  <div 
+                    key={item.member.id || item.name}
+                    className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 bg-white dark:bg-gray-800/90 hover:bg-gray-50/80 dark:hover:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl transition shadow-2xs"
+                  >
+                    {/* Employee Identity */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#1C6B53] to-emerald-600 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-2xs">
+                        {item.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-black text-sm text-gray-900 dark:text-white">
+                            {toTitleCase(item.name)}
+                          </span>
+                          {item.knownId && (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+                              #{item.knownId}
+                            </span>
+                          )}
+                          <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${
+                            item.isChat
+                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                              : "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800"
+                          }`}>
+                            {item.isChat ? "Chat" : "Calls"}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          {item.team}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Status Badges & Quick Action */}
+                    <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-gray-100 dark:border-gray-700">
+                      
+                      {/* Semi-Annual Status Badge */}
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold ${
+                        item.semi.isCompleted
+                          ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300/80 dark:border-emerald-700/60"
+                          : "bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border-amber-300/80 dark:border-amber-700/60"
+                      }`}>
+                        {item.semi.isCompleted ? (
+                          <>
+                            <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            <span>نصف سنوي:</span>
+                            <span className="font-black text-emerald-700 dark:text-emerald-300">
+                              {item.semi.score !== null ? item.semi.score.toFixed(2) : "مكتمل"}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                            <span>نصف سنوي:</span>
+                            <span className="font-black text-amber-700 dark:text-amber-300">متبقي</span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Annual Status Badge */}
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold ${
+                        item.annual.isCompleted
+                          ? "bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-300/80 dark:border-blue-700/60"
+                          : "bg-slate-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700"
+                      }`}>
+                        {item.annual.isCompleted ? (
+                          <>
+                            <CheckCircle2 size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                            <span>سنوي:</span>
+                            <span className="font-black text-blue-700 dark:text-blue-300">
+                              {item.annual.score !== null ? item.annual.score.toFixed(2) : "مكتمل"}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <Clock size={13} className="text-gray-400 shrink-0" />
+                            <span>سنوي:</span>
+                            <span className="font-medium text-gray-500 dark:text-gray-400">متبقي</span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Action Button: Evaluate / Open */}
+                      <button
+                        type="button"
+                        onClick={() => handleSelectForEvaluation(item.name, !item.semi.isCompleted ? "Semi-Annual" : "Annual")}
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1C6B53] hover:bg-[#155340] text-white text-xs font-black transition active:scale-95 shadow-2xs cursor-pointer ml-auto md:ml-0"
+                      >
+                        <span>تقييم الموظف</span>
+                        <ExternalLink size={12} />
+                      </button>
+
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between shrink-0">
+              <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                عرض {filteredCoverageList.length} من أصل {coverageData.totalCount} موظفاً
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleCopyPendingList}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <Copy size={13} />
+                  <span>نسخ القائمة</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCoverageModal(false)}
+                  className="px-5 py-2 rounded-xl text-xs font-bold bg-[#1C6B53] text-white hover:bg-[#155340] transition cursor-pointer"
+                >
+                  إغلاق
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Copied Toast Notification */}
+      {coverageCopiedToast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-2xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 border border-gray-800 dark:border-gray-200 text-xs font-black animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <CheckCircle2 size={16} className="text-emerald-400 dark:text-emerald-600" />
+          <span>تم نسخ قائمة الموظفين المتبقين بنجاح! جاهزة للصق.</span>
         </div>
       )}
 
