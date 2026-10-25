@@ -194,6 +194,12 @@ export const KNOWN_EMPLOYEE_IDS: Record<string, string> = {
   "ahmed_rustam": "336",
   "hewr adnan": "348",
   "hewr_adnan": "348",
+  "yousif rashid darwesh": "374",
+  "yousif_rashid_darwesh": "374",
+  "yousif rashid": "374",
+  "yousif_rashid": "374",
+  "haseeb adeeb": "347",
+  "haseeb_adeeb": "347",
 };
 
 const AVAILABLE_YEARS = ["2026", "2027", "2028", "2029", "2030"];
