@@ -176,6 +176,14 @@ export const KNOWN_EMPLOYEE_IDS: Record<string, string> = {
   "lana_halmat_rafeeq": "350",
   "lana halmat": "350",
   "lana_halmat": "350",
+  "zainab khalid rasheed": "376",
+  "zainab_khalid_rasheed": "376",
+  "zainab khalid": "376",
+  "zainab_khalid": "376",
+  "mokhalad ali": "507",
+  "mokhalad_ali": "507",
+  "mukhalad ali": "507",
+  "mukhalad_ali": "507",
 };
 
 const AVAILABLE_YEARS = ["2026", "2027", "2028", "2029", "2030"];
@@ -1441,14 +1449,14 @@ export default function AnnualEvaluationDashboard({
                 </div>
 
                 {/* Rating Tier Card */}
-                <div className="w-[130px] sm:w-[145px] h-[78px] bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between items-center text-center shadow-xs">
+                <div className="min-w-[145px] sm:min-w-[175px] px-3 sm:px-4 h-[78px] bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl py-2.5 sm:py-3 flex flex-col justify-between items-center text-center shadow-xs">
                   <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider leading-none">
                     Rating Tier
                   </div>
                   <div className="flex-1 flex items-center justify-center">
-                    <div className="text-xs sm:text-sm font-black text-white flex items-center gap-1.5 leading-none">
+                    <div className="text-xs sm:text-[13px] font-black text-white flex items-center gap-1.5 leading-none whitespace-nowrap">
                       <Award size={15} className={isManagerDataVisible && officialOverallScore > 0 ? "text-amber-300 shrink-0" : "text-white/40 shrink-0"} />
-                      <span className="truncate max-w-[100px]">{isManagerDataVisible && officialOverallScore > 0 ? ratingTier.label : "Pending"}</span>
+                      <span>{isManagerDataVisible && officialOverallScore > 0 ? ratingTier.label : "Pending"}</span>
                     </div>
                   </div>
                 </div>

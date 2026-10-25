@@ -444,6 +444,128 @@ async function seedEvaluations() {
   await setDoc(doc(db, "annual_evaluations", "2026_Semi-Annual_lana_halmat"), lanaData, { merge: true });
   console.log(`Saved evaluation for Lana Halmat Rafeeq -> 2026_Semi-Annual_lana_halmat_rafeeq & lana_halmat`);
 
+  // 8. Zainab Khalid Rasheed (Call Agent - Semi-Annual 2026 / H1 2026)
+  // Images 2 & 3 (ID: 376)
+  const zainabData = {
+    employee_name: "Zainab Khalid Rasheed",
+    employee_id: "376",
+    team: "Ankido Buya Team",
+    team_leader: "Ankido Buya",
+    department: "Contact Center",
+    review_period: "H1 2026",
+    evaluation_date: "",
+    status: "manager_finalized",
+    self_kpis: {
+      qa: 4,
+      productivity: 3,
+      attendance: 5,
+      aht: 2,
+      knowledge: 3,
+      exam: 3
+    },
+    self_competencies: {
+      communication: 5,
+      problem_solving: 5,
+      accountability: 3,
+      initiative: 5,
+      responsibility: 4,
+      team_work: 5
+    },
+    manager_kpis: {
+      qa: 4,
+      productivity: 3,
+      attendance: 2,
+      aht: 2,
+      knowledge: 5,
+      exam: 5
+    },
+    manager_competencies: {
+      communication: 5,
+      problem_solving: 3,
+      accountability: 3,
+      initiative: 2,
+      responsibility: 4,
+      team_work: 5
+    },
+    self_kpi_score: 3.40,
+    self_comp_avg: 4.50,
+    self_overall_score: 3.95,
+    manager_kpi_score: 3.20,
+    manager_comp_avg: 3.67,
+    manager_overall_score: 3.43,
+    manager_comments: "",
+    self_comments: "",
+    updated_at: new Date().toISOString(),
+    last_modified_by: "System Official Import (H1 2026)",
+    manager_submitted_at: new Date().toISOString(),
+    self_submitted_at: new Date().toISOString()
+  };
+
+  await setDoc(doc(db, "annual_evaluations", "2026_Semi-Annual_zainab_khalid_rasheed"), zainabData, { merge: true });
+  await setDoc(doc(db, "annual_evaluations", "2026_Semi-Annual_zainab_khalid"), zainabData, { merge: true });
+  console.log(`Saved evaluation for Zainab Khalid Rasheed -> 2026_Semi-Annual_zainab_khalid_rasheed & zainab_khalid`);
+
+  // 9. Mokhalad Ali (Call Agent - Semi-Annual 2026 / H1 2026)
+  // Images 4 & 5 (ID: 507)
+  const mokhaladData = {
+    employee_name: "Mokhalad Ali",
+    employee_id: "507",
+    team: "Younis Kamal Team",
+    team_leader: "Younis Kamal",
+    department: "Contact Center",
+    review_period: "H1 2026",
+    evaluation_date: "17/7/2026",
+    status: "manager_finalized",
+    self_kpis: {
+      qa: 4,
+      productivity: 1,
+      attendance: 5,
+      aht: 4,
+      knowledge: 4,
+      exam: 4
+    },
+    self_competencies: {
+      communication: 5,
+      problem_solving: 5,
+      accountability: 5,
+      initiative: 5,
+      responsibility: 5,
+      team_work: 5
+    },
+    manager_kpis: {
+      qa: 4,
+      productivity: 2,
+      attendance: 5,
+      aht: 4,
+      knowledge: 4,
+      exam: 4
+    },
+    manager_competencies: {
+      communication: 5,
+      problem_solving: 3,
+      accountability: 5,
+      initiative: 4,
+      responsibility: 5,
+      team_work: 5
+    },
+    self_kpi_score: 3.60,
+    self_comp_avg: 5.00,
+    self_overall_score: 4.30,
+    manager_kpi_score: 3.80,
+    manager_comp_avg: 4.50,
+    manager_overall_score: 4.15,
+    manager_comments: "",
+    self_comments: "",
+    updated_at: new Date().toISOString(),
+    last_modified_by: "System Official Import (H1 2026)",
+    manager_submitted_at: new Date().toISOString(),
+    self_submitted_at: new Date().toISOString()
+  };
+
+  await setDoc(doc(db, "annual_evaluations", "2026_Semi-Annual_mokhalad_ali"), mokhaladData, { merge: true });
+  await setDoc(doc(db, "annual_evaluations", "2026_Semi-Annual_mukhalad_ali"), mokhaladData, { merge: true });
+  console.log(`Saved evaluation for Mokhalad Ali -> 2026_Semi-Annual_mokhalad_ali & mukhalad_ali`);
+
   console.log("Seeding complete successfully!");
   process.exit(0);
 }
