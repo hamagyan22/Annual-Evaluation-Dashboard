@@ -708,11 +708,13 @@ export default function TopStarCelebrationVideoModal({
 
             {/* Close Button */}
             <button
+              type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition cursor-pointer"
+              className="w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition border border-white/30 shadow-md cursor-pointer shrink-0"
               title="Close"
+              aria-label="Close"
             >
-              <X size={16} />
+              <X size={20} strokeWidth={2.5} className="text-white drop-shadow-xs" />
             </button>
           </div>
         </div>

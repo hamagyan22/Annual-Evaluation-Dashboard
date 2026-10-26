@@ -658,7 +658,7 @@ function PwaInstallBanner() {
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-5 sm:p-6 w-full max-w-sm shadow-2xl animate-fadeIn text-right" dir="rtl">
             <div className="flex justify-between items-start mb-4 flex-row-reverse">
               <button onClick={() => setShowIosModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
-                <X size={18} />
+                <X size={18} strokeWidth={2.5} />
               </button>
               <div className="flex items-center gap-2.5">
                 <img src="/apple-touch-icon.png" alt="FIB" className="w-10 h-10 rounded-xl object-cover shadow-sm" />
@@ -2693,7 +2693,7 @@ export default function Dashboard() {
 
   // Prevent background scroll when modal is open
   useEffect(() => {
-    if (showManageMembers || showProfileModal || deleteTarget || showForgotModal || showMonthLockModal) {
+    if (showManageMembers || showProfileModal || deleteTarget || showForgotModal || showMonthLockModal || showCcBreakdownModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -2701,7 +2701,7 @@ export default function Dashboard() {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [showManageMembers, showProfileModal, deleteTarget, showForgotModal, showMonthLockModal]);
+  }, [showManageMembers, showProfileModal, deleteTarget, showForgotModal, showMonthLockModal, showCcBreakdownModal]);
 
   // Real-time columns synchronization across all teams, TLs, and Agents
   useEffect(() => {
@@ -4822,7 +4822,7 @@ export default function Dashboard() {
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter your email to receive a password reset link.</p>
                   </div>
                   <button onClick={() => setShowForgotModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
-                    <X size={20} />
+                    <X size={20} strokeWidth={2.5} />
                   </button>
                 </div>
 
@@ -5803,9 +5803,9 @@ export default function Dashboard() {
               </div>
               <button 
                 onClick={() => setShowCcBreakdownModal(false)}
-                className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center justify-center transition cursor-pointer"
+                className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 transition shadow-2xs cursor-pointer shrink-0" title="Close" aria-label="Close"
               >
-                <X size={18} />
+                <X size={18} strokeWidth={2.5} />
               </button>
             </div>
 
@@ -5890,8 +5890,8 @@ export default function Dashboard() {
                   Add or remove agents and table columns across the system.
                 </p>
               </div>
-              <button onClick={() => setShowManageMembers(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
-                 <X size={22} />
+              <button onClick={() => setShowManageMembers(false)} className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 transition shadow-2xs shrink-0" title="Close" aria-label="Close">
+                 <X size={20} strokeWidth={2.5} />
               </button>
             </div>
 
@@ -6232,8 +6232,8 @@ export default function Dashboard() {
                 <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Profile Settings</h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Update Your Display Name, Profile Photo & Password</p>
               </div>
-              <button onClick={() => setShowProfileModal(false)} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400">
-                <X size={20} />
+              <button onClick={() => setShowProfileModal(false)} className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 transition shadow-2xs shrink-0" title="Close" aria-label="Close">
+                <X size={20} strokeWidth={2.5} />
               </button>
             </div>
 
@@ -6512,9 +6512,9 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setShowMonthLockModal(false)}
-                className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
+                className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 transition shadow-2xs cursor-pointer shrink-0" title="Close" aria-label="Close"
               >
-                <X size={18} />
+                <X size={18} strokeWidth={2.5} />
               </button>
             </div>
 

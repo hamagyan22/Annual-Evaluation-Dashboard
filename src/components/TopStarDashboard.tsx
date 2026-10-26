@@ -111,7 +111,18 @@ export default function TopStarDashboard({
 }: TopStarDashboardProps) {
   const isAdmin = userProfile?.email?.toLowerCase() === "mohammed.dlshad0@gmail.com" || userProfile?.role === "admin";
   const isManager = isAdmin || userProfile?.email?.toLowerCase() === "jalal.burghol@agent.com" || userProfile?.role === "manager";
+  const isTL = userProfile?.role === "tl";
   const canEdit = isAdmin || isManager;
+
+  // Strict Team Leader team scope
+  const userTeamLower = (userProfile?.team || userProfile?.name || userProfile?.email || "").toLowerCase();
+  const tlAssignedTeam: "Younis" | "Ankido" | "Mohammed" | null = useMemo(() => {
+    if (!isTL || isAdmin || isManager) return null;
+    if (userTeamLower.includes("ankido")) return "Ankido";
+    if (userTeamLower.includes("mohammed") || userTeamLower.includes("dlshad")) return "Mohammed";
+    if (userTeamLower.includes("younis")) return "Younis";
+    return null;
+  }, [isTL, isAdmin, isManager, userTeamLower]);
 
   const [team, setTeam] = useState<"chat" | "call">("chat");
   const [selectedYear, setSelectedYear] = useState<string>(initialYear || "2026");
@@ -128,6 +139,15 @@ export default function TopStarDashboard({
       setSelectedMonth(initialMonth);
     }
   }, [initialMonth]);
+
+  // Lock team for Team Leaders to their team only
+  useEffect(() => {
+    if (tlAssignedTeam === "Mohammed" && team !== "chat") {
+      setTeam("chat");
+    } else if ((tlAssignedTeam === "Younis" || tlAssignedTeam === "Ankido") && team !== "call") {
+      setTeam("call");
+    }
+  }, [tlAssignedTeam, team]);
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   
@@ -157,10 +177,26 @@ export default function TopStarDashboard({
 
   // Top 3 Celebration & Appreciation Video Modal state
   const [showCelebrationVideo, setShowCelebrationVideo] = useState<boolean>(false);
-  const [membersList, setMembersList] = useState<any[]>(allMembers && allMembers.length > 0 ? allMembers : DEFAULT_COMPANY_EMPLOYEES);
+
+  // Prevent background body scroll when any modal is open across the dashboard
+  useEffect(() => {
+    const isAnyModalOpen = showCriteriaModal || showCelebrationVideo;
+    if (isAnyModalOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prevOverflow || "unset";
+      };
+    }
+  }, [showCriteriaModal, showCelebrationVideo]);
+  const [membersList, setMembersList] = useState<any[]>(() => {
+    const base = allMembers && allMembers.length > 0 ? allMembers : DEFAULT_COMPANY_EMPLOYEES;
+    return base.filter(m => m.is_deleted !== true && m.is_active !== false);
+  });
 
   useEffect(() => {
-    setMembersList(allMembers && allMembers.length > 0 ? allMembers : DEFAULT_COMPANY_EMPLOYEES);
+    const base = allMembers && allMembers.length > 0 ? allMembers : DEFAULT_COMPANY_EMPLOYEES;
+    setMembersList(base.filter(m => m.is_deleted !== true && m.is_active !== false));
   }, [allMembers]);
 
   const handlePhotoUpdated = (agentName: string, photoUrl: string) => {
@@ -174,15 +210,15 @@ export default function TopStarDashboard({
     });
   };
 
-  // Active rosters (strictly excluding deleted / resigned agents for the selected period)
+  // Active rosters (strictly excluding deleted / resigned agents for the selected period and scoped for TL)
   const chatRoster = useMemo(() => {
     const inactiveSet = new Set(
       membersList
-        .filter(m => !isMemberActiveInPeriod(m, selectedMonth, selectedYear))
+        .filter(m => m.is_deleted === true || m.is_active === false || !isMemberActiveInPeriod(m, selectedMonth, selectedYear))
         .map(m => normalizeName(m.agent_name || m.name))
     );
     const fromProps = membersList
-      .filter(m => m.team === "Mohammed Dlshad Team" && isMemberActiveInPeriod(m, selectedMonth, selectedYear))
+      .filter(m => m.team === "Mohammed Dlshad Team" && m.is_deleted !== true && m.is_active !== false && isMemberActiveInPeriod(m, selectedMonth, selectedYear))
       .map(m => normalizeName(m.agent_name || m.name));
     const combined = Array.from(new Set([...fromProps, ...DEFAULT_CHAT_AGENTS])).filter(n => !inactiveSet.has(n));
     return combined.sort((a, b) => a.localeCompare(b));
@@ -191,15 +227,39 @@ export default function TopStarDashboard({
   const callRoster = useMemo(() => {
     const inactiveSet = new Set(
       membersList
-        .filter(m => !isMemberActiveInPeriod(m, selectedMonth, selectedYear))
+        .filter(m => m.is_deleted === true || m.is_active === false || !isMemberActiveInPeriod(m, selectedMonth, selectedYear))
         .map(m => normalizeName(m.agent_name || m.name))
     );
     const fromProps = membersList
-      .filter(m => (m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team") && isMemberActiveInPeriod(m, selectedMonth, selectedYear))
+      .filter(m => {
+        if (m.is_deleted === true || m.is_active === false) return false;
+        if (!isMemberActiveInPeriod(m, selectedMonth, selectedYear)) return false;
+        if (tlAssignedTeam === "Younis") {
+          return (m.team || "").toLowerCase().includes("younis");
+        }
+        if (tlAssignedTeam === "Ankido") {
+          return (m.team || "").toLowerCase().includes("ankido");
+        }
+        return m.team === "Younis Kamal Team" || m.team === "Ankido Buya Team";
+      })
       .map(m => normalizeName(m.agent_name || m.name));
-    const combined = Array.from(new Set([...fromProps, ...DEFAULT_CALL_AGENTS])).filter(n => !inactiveSet.has(n));
+
+    let baseDefault = DEFAULT_CALL_AGENTS;
+    if (tlAssignedTeam === "Younis") {
+      baseDefault = DEFAULT_CALL_AGENTS.filter(n => {
+        const found = membersList.find(m => normalizeName(m.agent_name || m.name) === n);
+        return found ? (found.team || "").toLowerCase().includes("younis") : true;
+      });
+    } else if (tlAssignedTeam === "Ankido") {
+      baseDefault = DEFAULT_CALL_AGENTS.filter(n => {
+        const found = membersList.find(m => normalizeName(m.agent_name || m.name) === n);
+        return found ? (found.team || "").toLowerCase().includes("ankido") : false;
+      });
+    }
+
+    const combined = Array.from(new Set([...fromProps, ...baseDefault])).filter(n => !inactiveSet.has(n));
     return combined.sort((a, b) => a.localeCompare(b));
-  }, [membersList, selectedMonth, selectedYear]);
+  }, [membersList, selectedMonth, selectedYear, tlAssignedTeam]);
 
   // Load Criteria & Sync Status from Firestore
   useEffect(() => {
@@ -727,13 +787,16 @@ export default function TopStarDashboard({
                   </button>
                 )}
                 <button
+                  type="button"
                   onClick={() => {
                     setIsEditingCriteria(false);
                     setShowCriteriaModal(false);
                   }}
-                  className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 transition cursor-pointer"
+                  className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center text-gray-800 dark:text-gray-100 transition border border-gray-300 dark:border-gray-600 shadow-sm cursor-pointer shrink-0"
+                  title="Close"
+                  aria-label="Close"
                 >
-                  <X size={16} />
+                  <X size={18} strokeWidth={2.5} />
                 </button>
               </div>
             </div>
@@ -1477,31 +1540,39 @@ export default function TopStarDashboard({
             {/* Middle & Right: Team Switcher, Year Dropdown, and Sync Action */}
             <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
               
-              {/* Team Switcher Tabs */}
+              {/* Team Switcher Tabs (Locked for TL to their team, full for Admin/Manager) */}
               <div className="flex items-center gap-1 p-1 rounded-xl bg-gray-100 dark:bg-gray-800">
-                <button
-                  onClick={() => setTeam("chat")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    team === "chat"
-                      ? "bg-[#1C6B53] text-white shadow-xs"
-                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                  }`}
-                >
-                  <MessageSquare size={13} />
-                  <span>Chat Team ({chatRoster.length})</span>
-                </button>
+                {(!tlAssignedTeam || tlAssignedTeam === "Mohammed") && (
+                  <button
+                    onClick={() => setTeam("chat")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      team === "chat"
+                        ? "bg-[#1C6B53] text-white shadow-xs"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <MessageSquare size={13} />
+                    <span>Chat Team ({chatRoster.length})</span>
+                  </button>
+                )}
 
-                <button
-                  onClick={() => setTeam("call")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    team === "call"
-                      ? "bg-[#1C6B53] text-white shadow-xs"
-                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                  }`}
-                >
-                  <PhoneCall size={13} />
-                  <span>Call Team ({callRoster.length})</span>
-                </button>
+                {(!tlAssignedTeam || tlAssignedTeam === "Younis" || tlAssignedTeam === "Ankido") && (
+                  <button
+                    onClick={() => setTeam("call")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      team === "call"
+                        ? "bg-[#1C6B53] text-white shadow-xs"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <PhoneCall size={13} />
+                    <span>
+                      {tlAssignedTeam === "Younis" ? `Younis Kamal Team (${callRoster.length})` :
+                       tlAssignedTeam === "Ankido" ? `Ankido Buya Team (${callRoster.length})` :
+                       `Call Team (${callRoster.length})`}
+                    </span>
+                  </button>
+                )}
               </div>
 
               {/* Year Selector Dropdown - Modern Custom Dropdown */}

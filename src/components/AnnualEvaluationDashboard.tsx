@@ -219,6 +219,16 @@ export default function AnnualEvaluationDashboard({
   const isQA = userProfile?.role === 'qa' || userProfile?.role === 'trainer' || userProfile?.role === 'auditor';
   const isAgent = userProfile?.role === 'agent';
 
+  // Strict Team Leader team scope
+  const userTeamLower = (userProfile?.team || userProfile?.name || userProfile?.email || "").toLowerCase();
+  const tlAssignedTeam: "Younis" | "Ankido" | "Mohammed" | null = useMemo(() => {
+    if (!isTL || isAdmin || isManager) return null;
+    if (userTeamLower.includes("ankido")) return "Ankido";
+    if (userTeamLower.includes("mohammed") || userTeamLower.includes("dlshad")) return "Mohammed";
+    if (userTeamLower.includes("younis")) return "Younis";
+    return null;
+  }, [isTL, isAdmin, isManager, userTeamLower]);
+
   // Selected filters: Year (2026-2030) and Period (Semi-Annual & Annual only)
   const [selectedYear, setSelectedYear] = useState<string>(initialYear || "2026");
 
@@ -301,6 +311,25 @@ export default function AnnualEvaluationDashboard({
   const [coverageTeamFilter, setCoverageTeamFilter] = useState<string>("all");
   const [coverageSearchTerm, setCoverageSearchTerm] = useState<string>("");
   const [coverageCopiedToast, setCoverageCopiedToast] = useState<boolean>(false);
+
+  // Prevent background body scroll when any modal is open across the dashboard
+  useEffect(() => {
+    const isAnyModalOpen = showCoverageModal || showBenchmarkGuideModal;
+    if (isAnyModalOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prevOverflow || "unset";
+      };
+    }
+  }, [showCoverageModal, showBenchmarkGuideModal]);
+
+  // Lock team tab filter for Team Leaders to their team only
+  useEffect(() => {
+    if (tlAssignedTeam && teamTabFilter !== tlAssignedTeam) {
+      setTeamTabFilter(tlAssignedTeam);
+    }
+  }, [tlAssignedTeam, teamTabFilter]);
 
   // Live real-time listener on all annual_evaluations collection docs for coverage tracking
   useEffect(() => {
@@ -445,13 +474,19 @@ export default function AnnualEvaluationDashboard({
             ...existing,
             ...m,
             id: m.id || existing.id,
-            team: m.team || existing.team
+            team: m.team || existing.team,
+            is_deleted: m.is_deleted === true || existing.is_deleted === true,
+            is_active: m.is_active === false ? false : (existing.is_active ?? true),
+            resigned_month: m.resigned_month || existing.resigned_month,
+            resigned_year: m.resigned_year || existing.resigned_year,
           });
         }
       }
     });
 
-    return Array.from(map.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
+    return Array.from(map.values())
+      .filter(m => m.is_deleted !== true && m.is_active !== false)
+      .sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
   }, [allMembers, internalMembers]);
 
   // Team counts for the 3 tabs (Younis, Ankido, Mohammed)
@@ -478,6 +513,26 @@ export default function AnnualEvaluationDashboard({
       return list.slice(0, 1);
     }
 
+    // Team Leader: strictly restrict to their assigned team only
+    if (tlAssignedTeam) {
+      if (tlAssignedTeam === "Ankido") {
+        list = list.filter(m => (m.team || "").toLowerCase().includes("ankido"));
+      } else if (tlAssignedTeam === "Mohammed") {
+        list = list.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad"));
+      } else {
+        list = list.filter(m => (m.team || "").toLowerCase().includes("younis"));
+      }
+
+      if (employeeSearchTerm.trim()) {
+        const term = normalizeAgentName(employeeSearchTerm);
+        list = list.filter(m => 
+          normalizeAgentName(m.agent_name).includes(term) ||
+          (m.team || "").toLowerCase().includes(term)
+        );
+      }
+      return list.sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
+    }
+
     // Search Term Filter: When searching, search across all active agents
     if (employeeSearchTerm.trim()) {
       const term = normalizeAgentName(employeeSearchTerm);
@@ -498,7 +553,7 @@ export default function AnnualEvaluationDashboard({
     }
     
     return list.sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
-  }, [effectiveAllMembers, employeeSearchTerm, teamTabFilter, isAgent, userProfile, selectedPeriod, selectedYear]);
+  }, [effectiveAllMembers, employeeSearchTerm, teamTabFilter, isAgent, tlAssignedTeam, userProfile, selectedPeriod, selectedYear]);
 
   // Current selected member object
   const currentMember = useMemo(() => {
@@ -525,9 +580,19 @@ export default function AnnualEvaluationDashboard({
 
   // Coverage Tracking Computation (Who's evaluated and who's pending)
   const coverageData = useMemo(() => {
-    const activeMembers = effectiveAllMembers.filter(m => 
+    let activeMembers = effectiveAllMembers.filter(m => 
       isMemberActiveInPeriod(m, "YEAR - AVG", String(selectedYear))
     );
+
+    if (tlAssignedTeam) {
+      if (tlAssignedTeam === "Ankido") {
+        activeMembers = activeMembers.filter(m => (m.team || "").toLowerCase().includes("ankido"));
+      } else if (tlAssignedTeam === "Mohammed") {
+        activeMembers = activeMembers.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad"));
+      } else {
+        activeMembers = activeMembers.filter(m => (m.team || "").toLowerCase().includes("younis"));
+      }
+    }
 
     let semiCompletedCount = 0;
     let semiPendingCount = 0;
@@ -623,7 +688,7 @@ export default function AnnualEvaluationDashboard({
       semiPercent: activeMembers.length > 0 ? Math.round((semiCompletedCount / activeMembers.length) * 100) : 0,
       annualPercent: activeMembers.length > 0 ? Math.round((annualCompletedCount / activeMembers.length) * 100) : 0
     };
-  }, [effectiveAllMembers, allEvaluationsMap, selectedYear]);
+  }, [effectiveAllMembers, allEvaluationsMap, selectedYear, tlAssignedTeam]);
 
   // Filtered members list for Coverage Modal
   const filteredCoverageList = useMemo(() => {
@@ -697,6 +762,25 @@ export default function AnnualEvaluationDashboard({
       if (agentName && selectedEmployeeName !== agentName) {
         setSelectedEmployeeName(agentName);
       }
+    } else if (tlAssignedTeam && effectiveAllMembers.length > 0) {
+      setTeamTabFilter(tlAssignedTeam);
+      const isCurrentInMyTeam = effectiveAllMembers.some(
+        m => m.agent_name === selectedEmployeeName && (
+          tlAssignedTeam === "Ankido" ? (m.team || "").toLowerCase().includes("ankido") :
+          tlAssignedTeam === "Mohammed" ? ((m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad")) :
+          (m.team || "").toLowerCase().includes("younis")
+        )
+      );
+      if (!isCurrentInMyTeam) {
+        const teamMember = effectiveAllMembers.find(m => 
+          tlAssignedTeam === "Ankido" ? (m.team || "").toLowerCase().includes("ankido") :
+          tlAssignedTeam === "Mohammed" ? ((m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad")) :
+          (m.team || "").toLowerCase().includes("younis")
+        );
+        if (teamMember) {
+          setSelectedEmployeeName(teamMember.agent_name);
+        }
+      }
     } else if (!selectedEmployeeName && effectiveAllMembers.length > 0) {
       const myTeam = (userProfile?.team || "").toLowerCase();
       let match = null;
@@ -712,7 +796,7 @@ export default function AnnualEvaluationDashboard({
       }
       setSelectedEmployeeName(match ? match.agent_name : effectiveAllMembers[0].agent_name);
     }
-  }, [isAgent, userProfile, effectiveAllMembers, selectedEmployeeName]);
+  }, [isAgent, userProfile, effectiveAllMembers, selectedEmployeeName, tlAssignedTeam]);
 
   // Auto-fill Employee info when currentMember changes
   useEffect(() => {
@@ -1236,21 +1320,24 @@ export default function AnnualEvaluationDashboard({
 
           {/* Unified Header Navigation: Features, Divider, Dark Mode, Themes, Back (Far Right) */}
           <div className="flex items-center gap-1.5 p-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-xs self-stretch sm:self-auto justify-end">
-            <button
-              type="button"
-              onClick={() => {
-                setCoverageFilterStatus("pending");
-                setShowCoverageModal(true);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-emerald-800 dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100/90 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/50 border border-emerald-300/80 dark:border-emerald-700/60 transition active:scale-95 cursor-pointer shadow-2xs"
-              title="Evaluation Coverage Tracker (Pending Reviews)"
-            >
-              <ClipboardList size={14} className="text-[#1C6B53] dark:text-emerald-400" />
-              <span className="font-extrabold hidden xs:inline">Pending Tracker</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-black bg-[#1C6B53] text-white shadow-2xs">
-                {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount} Pending
-              </span>
-            </button>
+            {/* Evaluation Coverage Quick View (Pending Tracker) - Manager & Admin Only */}
+            {(isManager || isAdmin) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCoverageFilterStatus("pending");
+                  setShowCoverageModal(true);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-emerald-800 dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100/90 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/50 border border-emerald-300/80 dark:border-emerald-700/60 transition active:scale-95 cursor-pointer shadow-2xs"
+                title="Evaluation Coverage Tracker (Pending Reviews)"
+              >
+                <ClipboardList size={14} className="text-[#1C6B53] dark:text-emerald-400" />
+                <span className="font-extrabold hidden xs:inline">Pending Tracker</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-black bg-[#1C6B53] text-white shadow-2xs">
+                  {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount} Pending
+                </span>
+              </button>
+            )}
 
             <button
               onClick={openBenchmarkGuide}
@@ -1379,22 +1466,24 @@ export default function AnnualEvaluationDashboard({
                 </button>
               </div>
 
-              {/* Quick Button: Who's Pending */}
-              <button
-                type="button"
-                onClick={() => {
-                  setCoverageFilterStatus("pending");
-                  setShowCoverageModal(true);
-                }}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-amber-50 hover:bg-amber-100/90 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 text-xs font-black text-amber-900 dark:text-amber-200 transition active:scale-95 shadow-2xs cursor-pointer"
-                title="View Pending Employees"
-              >
-                <ListChecks size={14} className="text-amber-600 dark:text-amber-400" />
-                <span>Who&apos;s Pending?</span>
-                <span className="px-1.5 py-0.5 bg-amber-200 dark:bg-amber-800 text-amber-950 dark:text-amber-100 rounded-full text-[10px] font-black">
-                  {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount}
-                </span>
-              </button>
+              {/* Quick Button: Who's Pending - Manager & Admin Only */}
+              {(isManager || isAdmin) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCoverageFilterStatus("pending");
+                    setShowCoverageModal(true);
+                  }}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-amber-50 hover:bg-amber-100/90 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 text-xs font-black text-amber-900 dark:text-amber-200 transition active:scale-95 shadow-2xs cursor-pointer"
+                  title="View Pending Employees"
+                >
+                  <ListChecks size={14} className="text-amber-600 dark:text-amber-400" />
+                  <span>Who&apos;s Pending?</span>
+                  <span className="px-1.5 py-0.5 bg-amber-200 dark:bg-amber-800 text-amber-950 dark:text-amber-100 rounded-full text-[10px] font-black">
+                    {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount}
+                  </span>
+                </button>
+              )}
 
             </div>
 
@@ -1468,7 +1557,7 @@ export default function AnnualEvaluationDashboard({
                           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
                           <input
                             type="text"
-                            placeholder="Search employee across all teams..."
+                            placeholder={tlAssignedTeam ? "Search employee in your team..." : "Search employee across all teams..."}
                             value={employeeSearchTerm}
                             onChange={(e) => setEmployeeSearchTerm(e.target.value)}
                             className="w-full pl-9 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200/90 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-[#1C6B53]/20 focus:border-[#1C6B53] dark:focus:border-emerald-500 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 font-medium shadow-xs transition"
@@ -1487,12 +1576,14 @@ export default function AnnualEvaluationDashboard({
                         </div>
 
                         {/* Team Filter Pills: Younis Kamal, Ankido Buya, Mohammed Dlshad (Strictly 3 tabs, No "All") */}
-                        <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0">
+                        <div className={`grid ${tlAssignedTeam ? 'grid-cols-1' : 'grid-cols-3'} gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0`}>
                           {[
                             { id: "Younis", label: "Younis Kamal", count: teamCounts.Younis, icon: PhoneCall },
                             { id: "Ankido", label: "Ankido Buya", count: teamCounts.Ankido, icon: PhoneCall },
                             { id: "Mohammed", label: "Mohammed Dlshad", count: teamCounts.Mohammed, icon: MessageSquare },
-                          ].map(tab => {
+                          ]
+                          .filter(tab => !tlAssignedTeam || tab.id === tlAssignedTeam)
+                          .map(tab => {
                             const TabIcon = tab.icon;
                             const isActive = teamTabFilter === tab.id;
                             return (
@@ -2319,10 +2410,13 @@ export default function AnnualEvaluationDashboard({
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setShowBenchmarkGuideModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition cursor-pointer"
+                className="w-9 h-9 rounded-full bg-[#0c3a2d] hover:bg-[#07241c] text-white flex items-center justify-center transition border border-white/30 shadow-md cursor-pointer shrink-0"
+                title="Close"
+                aria-label="Close"
               >
-                <X size={16} />
+                <X size={20} strokeWidth={2.5} className="text-white drop-shadow-xs" />
               </button>
             </div>
 
@@ -2778,13 +2872,13 @@ export default function AnnualEvaluationDashboard({
         </div>
       )}
 
-      {/* Evaluation Coverage & Tracking Modal (Who's Evaluated / Who's Pending) */}
-      {showCoverageModal && (
+      {/* Evaluation Coverage & Tracking Modal (Who's Evaluated / Who's Pending) - Manager & Admin Only */}
+      {showCoverageModal && (isManager || isAdmin) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             
             {/* Modal Header */}
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-[#1C6B53] via-emerald-800 to-[#124636] text-white flex items-center justify-between shrink-0 shadow-xs">
+            <div className="p-4 sm:p-5 bg-[#1C6B53] bg-gradient-to-r from-[#1C6B53] via-emerald-800 to-[#124636] text-white flex items-center justify-between shrink-0 shadow-xs">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shadow-xs border border-white/15">
                   <ClipboardList size={22} className="text-emerald-200" />
@@ -2806,9 +2900,11 @@ export default function AnnualEvaluationDashboard({
               <button
                 type="button"
                 onClick={() => setShowCoverageModal(false)}
-                className="w-9 h-9 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition cursor-pointer shrink-0"
+                className="w-9 h-9 rounded-full bg-[#0c3a2d] hover:bg-[#07241c] text-white flex items-center justify-center transition border border-white/30 shadow-md cursor-pointer shrink-0"
+                title="Close"
+                aria-label="Close"
               >
-                <X size={18} />
+                <X size={20} strokeWidth={2.5} className="text-white drop-shadow-xs" />
               </button>
             </div>
 
