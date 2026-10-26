@@ -150,6 +150,101 @@ export const COMPETENCIES_LIST = [
   }
 ];
 
+export const COMPETENCY_DEFINITIONS: Record<string, { id: string; name: string; description: string }> = {
+  communication: {
+    id: "communication",
+    name: "Communication",
+    description: "Conveys information clearly and professionally. Actively listens, demonstrates empathy, and maintains high standards of courteous communication with customers and colleagues."
+  },
+  problem_solving: {
+    id: "problem_solving",
+    name: "Problem Solving",
+    description: "Quickly diagnoses customer needs and formulates compliant, practical solutions. Maintains composure and analytical clarity during escalations."
+  },
+  accountability: {
+    id: "accountability",
+    name: "Accountability",
+    description: "Takes ownership of tasks and outcomes. Follows through on commitments and addresses mistakes constructively without requiring close supervision."
+  },
+  initiative: {
+    id: "initiative",
+    name: "Initiative",
+    description: "Proactively suggests workflow enhancements, assists team members, and seeks professional self-development opportunities independently."
+  },
+  responsibility: {
+    id: "responsibility",
+    name: "Responsibility",
+    description: "Strictly complies with banking policies, data security guidelines, and work schedules. Demonstrates high integrity and reliability."
+  },
+  team_work: {
+    id: "team_work",
+    name: "Team Work",
+    description: "Collaborates positively with peers and leaders. Shares domain knowledge, supports team members during peak volumes, and fosters high team morale."
+  },
+  customer_focus: {
+    id: "customer_focus",
+    name: "Customer Focus",
+    description: "Consistently demonstrates dedication to meeting customer needs, elevating service excellence, and resolving inquiries with care and empathy."
+  },
+  digitalization: {
+    id: "digitalization",
+    name: "Digitalization & Innovation",
+    description: "Actively adopts and champions digital tools, automated workflows, and innovative solutions to enhance operational quality and productivity."
+  }
+};
+
+export interface KpiItemDefinition {
+  id: string;
+  name: string;
+  description?: string;
+  actual?: string | null;
+}
+
+export const TRAINER_KPIS: KpiItemDefinition[] = [
+  { id: "training_delivery", name: "Training Delivery & Execution", description: "Delivery of all training programs across the contact center according to annual training plan." },
+  { id: "knowledge_assessment", name: "Knowledge Assessment & Testing", description: "Design, conduct, and score knowledge assessment exams and test results for onboarding & refresher training." },
+  { id: "training_materials", name: "Training Materials & Content", description: "Development, continuous enhancement, and updating of training slides, manuals, SOPs, and product guides." },
+  { id: "jira_reporting", name: "Jira & Reporting", description: "Timely resolution of Jira tickets, comprehensive training reports, audit documentation, and analytics." },
+  { id: "attendance_engagement", name: "Attendance & Engagement", description: "Trainee attendance tracking, punctuality, professional conduct, and fostering high engagement." },
+];
+
+export const QA_KPIS: KpiItemDefinition[] = [
+  { id: "evaluation_accuracy", name: "Evaluation Accuracy & Calibration", description: "Ensuring 100% calibration alignment, audit reliability, and accurate scoring across audited customer interactions." },
+  { id: "team_improvement", name: "Team Performance Improvement", description: "Measurable QA performance improvement and error reduction in coached and audited agents." },
+  { id: "reporting", name: "Quality Reporting & Insights", description: "Timely delivery of recurring quality reports, executive summaries, root-cause analyses, and action plans." },
+  { id: "session", name: "Coaching & Calibration Sessions", description: "Conducting targeted coaching sessions, calibration meetings with team leaders, and quality feedback loops." },
+  { id: "attendance", name: "Attendance & Punctuality", description: "Adherence to schedule, shift timings, audit volume deadlines, and institutional banking policies." },
+];
+
+export const TL_KPIS: KpiItemDefinition[] = [
+  { id: "leadership", name: "Leadership & Team Management", description: "Effectively guiding, mentoring, motivating, and supporting team members toward operational excellence." },
+  { id: "team_kpi", name: "Team KPI Achievement", description: "Achieving target Service Level, QA averages, AHT/ART benchmarks, and operational KPIs across the assigned team." },
+  { id: "reporting", name: "Operational Reporting & Workflow", description: "Timely submission of shift handovers, daily logs, SLA reports, escalation handling, and incident tracking." },
+  { id: "attendance", name: "Attendance & Team Discipline", description: "Team schedule adherence, punctuality, shift coverage management, and strict policy compliance." },
+  { id: "team_improvement", name: "Team Development & Coaching", description: "Continuous coaching, one-on-one reviews, skill improvement, and reducing low-performance outliers." },
+];
+
+export interface SpecialStaffMember {
+  id: string;
+  agent_name: string;
+  name: string;
+  employee_id: string;
+  team: string;
+  role_type: "trainer" | "qa" | "tl";
+  department: string;
+  manager_name: string;
+  is_special_staff?: boolean;
+}
+
+export const SPECIAL_STAFF_MEMBERS: SpecialStaffMember[] = [
+  { id: "mohammed_azad", agent_name: "Mohammed Azad", name: "Mohammed Azad", employee_id: "353", team: "Training Team", role_type: "trainer", department: "Training", manager_name: "Jalal Burghol", is_special_staff: true },
+  { id: "mohammed_jihad", agent_name: "Mohammed Jihad", name: "Mohammed Jihad", employee_id: "356", team: "Quality Assurance Team", role_type: "qa", department: "Call center - Quality", manager_name: "Jalal Burghol", is_special_staff: true },
+  { id: "lara_kamil", agent_name: "Lara Kamil", name: "Lara Kamil", employee_id: "351", team: "Quality Assurance Team", role_type: "qa", department: "Quality", manager_name: "Jalal Burghol", is_special_staff: true },
+  { id: "ankido_buya", agent_name: "Ankido Buya", name: "Ankido Buya", employee_id: "340", team: "Ankido Buya Team", role_type: "tl", department: "Contact Center", manager_name: "Jalal Burghol", is_special_staff: true },
+  { id: "younis_kamal", agent_name: "Younis Kamal", name: "Younis Kamal", employee_id: "373", team: "Younis Kamal Team", role_type: "tl", department: "Contact Center", manager_name: "Jalal Burghol", is_special_staff: true },
+  { id: "mohammed_dlshad", agent_name: "Mohammed Dilshad", name: "Mohammed Dilshad", employee_id: "338", team: "Mohammed Dlshad Team", role_type: "tl", department: "Contact Center", manager_name: "Jalal Burghol", is_special_staff: true },
+];
+
 export { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 
@@ -200,6 +295,20 @@ export const KNOWN_EMPLOYEE_IDS: Record<string, string> = {
   "yousif_rashid": "374",
   "haseeb adeeb": "347",
   "haseeb_adeeb": "347",
+  "mohammed azad": "353",
+  "mohammed_azad": "353",
+  "mohammed jihad": "356",
+  "mohammed_jihad": "356",
+  "lara kamil": "351",
+  "lara_kamil": "351",
+  "ankido buya": "340",
+  "ankido_buya": "340",
+  "younis kamal": "373",
+  "younis_kamal": "373",
+  "mohammed dlshad": "338",
+  "mohammed_dlshad": "338",
+  "mohammed dilshad": "338",
+  "mohammed_dilshad": "338",
 };
 
 const AVAILABLE_YEARS = ["2026", "2027", "2028", "2029", "2030"];
@@ -219,15 +328,31 @@ export default function AnnualEvaluationDashboard({
   const isQA = userProfile?.role === 'qa' || userProfile?.role === 'trainer' || userProfile?.role === 'auditor';
   const isAgent = userProfile?.role === 'agent';
 
-  // Strict Team Leader team scope
+  const emailLower = (userProfile?.email || "").toLowerCase().trim();
+  const nameLower = (userProfile?.name || userProfile?.agent_name || "").toLowerCase().trim();
+  const roleLower = (userProfile?.role || "").toLowerCase().trim();
   const userTeamLower = (userProfile?.team || userProfile?.name || userProfile?.email || "").toLowerCase();
+
+  // Role detection for specific special staff users
+  const isUserMohammedAzad = emailLower.includes("azad") || nameLower.includes("azad") || roleLower === "trainer";
+  const isUserMohammedJihad = (emailLower.includes("jihad") || nameLower.includes("jihad")) && !nameLower.includes("younis");
+  const isUserLaraKamil = emailLower.includes("lara") || nameLower.includes("lara");
+  const isUserAnkido = emailLower.includes("ankido") || nameLower.includes("ankido");
+  const isUserYounis = emailLower.includes("younis") || nameLower.includes("younis");
+
+  // Single-user view for Trainer & QA (they only see their own evaluation)
+  const isUserSpecialStaffOnly = (isUserMohammedAzad || isUserMohammedJihad || isUserLaraKamil) && !isAdmin && !isManager;
+
+  // Strict Team Leader team scope
   const tlAssignedTeam: "Younis" | "Ankido" | "Mohammed" | null = useMemo(() => {
-    if (!isTL || isAdmin || isManager) return null;
-    if (userTeamLower.includes("ankido")) return "Ankido";
-    if (userTeamLower.includes("mohammed") || userTeamLower.includes("dlshad")) return "Mohammed";
-    if (userTeamLower.includes("younis")) return "Younis";
+    if (isAdmin || isManager) return null;
+    if (isTL || isUserAnkido || isUserYounis) {
+      if (userTeamLower.includes("ankido") || isUserAnkido) return "Ankido";
+      if (userTeamLower.includes("mohammed") || userTeamLower.includes("dlshad")) return "Mohammed";
+      if (userTeamLower.includes("younis") || isUserYounis) return "Younis";
+    }
     return null;
-  }, [isTL, isAdmin, isManager, userTeamLower]);
+  }, [isTL, isAdmin, isManager, userTeamLower, isUserAnkido, isUserYounis]);
 
   // Selected filters: Year (2026-2030) and Period (Semi-Annual & Annual only)
   const [selectedYear, setSelectedYear] = useState<string>(initialYear || "2026");
@@ -285,20 +410,43 @@ export default function AnnualEvaluationDashboard({
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveToast, setSaveToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
+  // Self check: Is the user viewing their own evaluation?
+  const isViewingSelf = useMemo(() => {
+    const myName = normalizeAgentName(userProfile?.name || userProfile?.agent_name || "");
+    const targetName = normalizeAgentName(selectedEmployeeName || "");
+    if (!myName || !targetName) return false;
+    if (myName === targetName || myName.includes(targetName) || targetName.includes(myName)) return true;
+    const myEmail = (userProfile?.email || "").toLowerCase();
+    if (myEmail.includes("azad") && targetName.includes("azad")) return true;
+    if (myEmail.includes("jihad") && targetName.includes("jihad")) return true;
+    if (myEmail.includes("lara") && targetName.includes("lara")) return true;
+    if (myEmail.includes("ankido") && targetName.includes("ankido")) return true;
+    if (myEmail.includes("younis") && targetName.includes("younis")) return true;
+    if (myEmail.includes("dlshad") && targetName.includes("dlshad")) return true;
+    return false;
+  }, [userProfile, selectedEmployeeName]);
+
+  // Current member role type
+  const currentMemberRoleType: "trainer" | "qa" | "tl" | "agent" = useMemo(() => {
+    const norm = normalizeAgentName(selectedEmployeeName || "");
+    const special = SPECIAL_STAFF_MEMBERS.find(s => normalizeAgentName(s.agent_name) === norm);
+    if (special) return special.role_type;
+    return "agent";
+  }, [selectedEmployeeName]);
+
   // Permissions & Role Access:
-  // Tech Leader (TL) & Quality Team (QA/Trainer) are strictly VIEW-ONLY with zero edit permissions:
-  // "و خلي التيك ليدر و الكوالتي تيم بس يكونون فيو دون تحكم بأي شي"
-  const isReadOnly = isTL || isQA;
-  const canEditSelf = isAgent && !isReadOnly && evaluationStatus !== 'manager_finalized';
-  const canEditManager = (isManager || isAdmin) && !isReadOnly;
-  const canApplySuggestions = canEditManager; // Auto suggestion button only for manager, removed from employee
-  // Employee's Feedback & Remarks can be edited by Admin, Manager, and the Agent themselves (Image 1 fix):
-  const canEditEmployeeFeedback = !isReadOnly && (isAdmin || isManager || canEditSelf);
+  // Team Leaders & Quality Team are view-only when viewing others, but can edit their OWN self-evaluation
+  // Manager (Jalal Burghol) evaluates Trainer, QA, and TLs later:
+  // "و النجر بعدين رح يقيمة هذا الاقيم الي هو مسوي"
+  const isReadOnly = (isTL || isQA) && !isViewingSelf;
+  const canEditSelf = (isViewingSelf || isAgent || isAdmin || isManager) && evaluationStatus !== 'manager_finalized';
+  const canEditManager = (isManager || isAdmin);
+  const canApplySuggestions = canEditManager && currentMemberRoleType === "agent";
+  const canEditEmployeeFeedback = (isAdmin || isManager || canEditSelf);
 
   // Manager data visibility:
-  // Manager ratings and scores are only visible to the agent AFTER manager finalizes:
-  // "و المنجر من يخلي الداتا كالته و يسوي سبميت يلا يظهر عند الايجنت"
-  const isManagerDataVisible = !isAgent || evaluationStatus === 'manager_finalized';
+  // Manager ratings and scores are only visible to the agent/staff AFTER manager finalizes
+  const isManagerDataVisible = isManager || isAdmin || evaluationStatus === 'manager_finalized';
 
   // Real actual metrics fetched for the period to assist evaluation
   const [actualMetricsSummary, setActualMetricsSummary] = useState<any | null>(null);
@@ -454,13 +602,24 @@ export default function AnnualEvaluationDashboard({
     return () => { isMounted = false; };
   }, [allMembers, selectedYear]);
 
-  // Combined master members list: Strictly the 38 canonical official employees
+  // Combined master members list: 38 official agents + Special Staff (Trainer, QA, Team Leaders)
   const effectiveAllMembers = useMemo(() => {
     const map = new Map<string, any>();
     
     // 1. Initial base: All 38 Company employees
     DEFAULT_COMPANY_EMPLOYEES.forEach(m => {
       map.set(normalizeAgentName(m.agent_name), { ...m });
+    });
+
+    // 1b. Add Special Staff (Trainer, QA, Team Leaders)
+    SPECIAL_STAFF_MEMBERS.forEach(s => {
+      const k = normalizeAgentName(s.agent_name);
+      if (!map.has(k)) {
+        map.set(k, { ...s });
+      } else {
+        const existing = map.get(k);
+        map.set(k, { ...existing, ...s });
+      }
     });
 
     // 2. Attach any Firestore metadata
@@ -489,20 +648,37 @@ export default function AnnualEvaluationDashboard({
       .sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
   }, [allMembers, internalMembers]);
 
-  // Team counts for the 3 tabs (Younis, Ankido, Mohammed)
+  // Team counts for the 4 tabs (Younis, Ankido, Mohammed, QA & Training)
   const teamCounts = useMemo(() => {
     const activeMembers = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, selectedPeriod === "Semi-Annual" ? "H1" : "YEAR - AVG", String(selectedYear)));
     return {
       Younis: activeMembers.filter(m => (m.team || "").toLowerCase().includes("younis")).length,
       Ankido: activeMembers.filter(m => (m.team || "").toLowerCase().includes("ankido")).length,
       Mohammed: activeMembers.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad")).length,
+      QA_Training: activeMembers.filter(m => (m.team || "").toLowerCase().includes("quality") || (m.team || "").toLowerCase().includes("training") || m.role_type === "trainer" || m.role_type === "qa").length,
     };
   }, [effectiveAllMembers, selectedPeriod, selectedYear]);
 
-  // Filtered members list: Younis Kamal, Ankido Buya, or Mohammed Dlshad (No "All" tab)
+  // Filtered members list: Younis Kamal, Ankido Buya, Mohammed Dlshad, or QA & Training
   const filteredMembers = useMemo(() => {
     let list = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, selectedPeriod === "Semi-Annual" ? "H1" : "YEAR - AVG", String(selectedYear)));
     
+    // Special Staff (Mohammed Azad, Mohammed Jihad, Lara Kamil): strictly view only their own evaluation
+    // "هذا مال محمد ازاد الترينر خلي من يفتح التقيم بس يشوف مالته"
+    // "و هذا مال محمد جهاد هم نفس الشي"
+    // "زهذا مال لارا هم نفس الشي"
+    if (isUserSpecialStaffOnly) {
+      if (isUserMohammedAzad) {
+        return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("azad"));
+      }
+      if (isUserMohammedJihad) {
+        return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("jihad"));
+      }
+      if (isUserLaraKamil) {
+        return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("lara"));
+      }
+    }
+
     if (isAgent) {
       const myName = normalizeAgentName(userProfile?.name || userProfile?.agent_name || "");
       const me = list.filter(m => {
@@ -513,7 +689,9 @@ export default function AnnualEvaluationDashboard({
       return list.slice(0, 1);
     }
 
-    // Team Leader: strictly restrict to their assigned team only
+    // Team Leader: strictly restrict to their assigned team only (Team Leader + their team agents)
+    // "وممال انككيدو خلي يشوف مالته و مال تيمه"
+    // "و يونس هم"
     if (tlAssignedTeam) {
       if (tlAssignedTeam === "Ankido") {
         list = list.filter(m => (m.team || "").toLowerCase().includes("ankido"));
@@ -530,30 +708,41 @@ export default function AnnualEvaluationDashboard({
           (m.team || "").toLowerCase().includes(term)
         );
       }
-      return list.sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
+      return list.sort((a, b) => {
+        if (a.role_type === "tl" && b.role_type !== "tl") return -1;
+        if (b.role_type === "tl" && a.role_type !== "tl") return 1;
+        return (a.agent_name || "").localeCompare(b.agent_name || "");
+      });
     }
 
-    // Search Term Filter: When searching, search across all active agents
+    // Search Term Filter: When searching, search across all active agents & staff
     if (employeeSearchTerm.trim()) {
       const term = normalizeAgentName(employeeSearchTerm);
       return list.filter(m => 
         normalizeAgentName(m.agent_name).includes(term) ||
-        (m.team || "").toLowerCase().includes(term)
+        (m.team || "").toLowerCase().includes(term) ||
+        (m.department || "").toLowerCase().includes(term)
       ).sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
     }
 
-    // Team Tab Filter: Strictly Younis, Ankido, or Mohammed (No "All" tab)
+    // Team Tab Filter: Younis, Ankido, Mohammed, or QA & Training
     if (teamTabFilter === "Ankido") {
       list = list.filter(m => (m.team || "").toLowerCase().includes("ankido"));
     } else if (teamTabFilter === "Mohammed") {
       list = list.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad"));
+    } else if (teamTabFilter === "QA_Training") {
+      list = list.filter(m => (m.team || "").toLowerCase().includes("quality") || (m.team || "").toLowerCase().includes("training") || m.role_type === "trainer" || m.role_type === "qa");
     } else {
       // Default to Younis
       list = list.filter(m => (m.team || "").toLowerCase().includes("younis"));
     }
     
-    return list.sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
-  }, [effectiveAllMembers, employeeSearchTerm, teamTabFilter, isAgent, tlAssignedTeam, userProfile, selectedPeriod, selectedYear]);
+    return list.sort((a, b) => {
+      if (a.role_type === "tl" && b.role_type !== "tl") return -1;
+      if (b.role_type === "tl" && a.role_type !== "tl") return 1;
+      return (a.agent_name || "").localeCompare(b.agent_name || "");
+    });
+  }, [effectiveAllMembers, employeeSearchTerm, teamTabFilter, isAgent, tlAssignedTeam, userProfile, selectedPeriod, selectedYear, isUserSpecialStaffOnly, isUserMohammedAzad, isUserMohammedJihad, isUserLaraKamil]);
 
   // Current selected member object
   const currentMember = useMemo(() => {
@@ -699,6 +888,7 @@ export default function AnnualEvaluationDashboard({
         if (coverageTeamFilter === "Younis" && !t.includes("younis")) return false;
         if (coverageTeamFilter === "Ankido" && !t.includes("ankido")) return false;
         if (coverageTeamFilter === "Mohammed" && !t.includes("mohammed") && !t.includes("dlshad")) return false;
+        if (coverageTeamFilter === "QA_Training" && !t.includes("quality") && !t.includes("training") && item.member?.role_type !== "trainer" && item.member?.role_type !== "qa") return false;
       }
 
       // 2. Search query filter
@@ -757,12 +947,36 @@ export default function AnnualEvaluationDashboard({
 
   // Initialize selected employee on load
   useEffect(() => {
+    // 1. Trainer & QA: strictly lock to their own self profile
+    if (isUserSpecialStaffOnly) {
+      if (isUserMohammedAzad) {
+        setSelectedEmployeeName("Mohammed Azad");
+        setTeamTabFilter("QA_Training");
+        return;
+      }
+      if (isUserMohammedJihad) {
+        setSelectedEmployeeName("Mohammed Jihad");
+        setTeamTabFilter("QA_Training");
+        return;
+      }
+      if (isUserLaraKamil) {
+        setSelectedEmployeeName("Lara Kamil");
+        setTeamTabFilter("QA_Training");
+        return;
+      }
+    }
+
+    // 2. Regular Agent: strictly lock to their own self profile
     if (isAgent) {
       const agentName = userProfile?.agent_name || userProfile?.name || "";
       if (agentName && selectedEmployeeName !== agentName) {
         setSelectedEmployeeName(agentName);
       }
-    } else if (tlAssignedTeam && effectiveAllMembers.length > 0) {
+      return;
+    }
+
+    // 3. Team Leader: default to the Team Leader themselves, then stay within team
+    if (tlAssignedTeam && effectiveAllMembers.length > 0) {
       setTeamTabFilter(tlAssignedTeam);
       const isCurrentInMyTeam = effectiveAllMembers.some(
         m => m.agent_name === selectedEmployeeName && (
@@ -772,31 +986,32 @@ export default function AnnualEvaluationDashboard({
         )
       );
       if (!isCurrentInMyTeam) {
-        const teamMember = effectiveAllMembers.find(m => 
-          tlAssignedTeam === "Ankido" ? (m.team || "").toLowerCase().includes("ankido") :
-          tlAssignedTeam === "Mohammed" ? ((m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad")) :
-          (m.team || "").toLowerCase().includes("younis")
-        );
-        if (teamMember) {
-          setSelectedEmployeeName(teamMember.agent_name);
+        // Prefer Team Leader themselves first if available
+        const tlName = tlAssignedTeam === "Ankido" ? "Ankido Buya" : tlAssignedTeam === "Mohammed" ? "Mohammed Dilshad" : "Younis Kamal";
+        const tlMatch = effectiveAllMembers.find(m => normalizeAgentName(m.agent_name) === normalizeAgentName(tlName));
+        if (tlMatch) {
+          setSelectedEmployeeName(tlMatch.agent_name);
+        } else {
+          const teamMember = effectiveAllMembers.find(m => 
+            tlAssignedTeam === "Ankido" ? (m.team || "").toLowerCase().includes("ankido") :
+            tlAssignedTeam === "Mohammed" ? ((m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad")) :
+            (m.team || "").toLowerCase().includes("younis")
+          );
+          if (teamMember) {
+            setSelectedEmployeeName(teamMember.agent_name);
+          }
         }
       }
-    } else if (!selectedEmployeeName && effectiveAllMembers.length > 0) {
-      const myTeam = (userProfile?.team || "").toLowerCase();
-      let match = null;
-      if (myTeam.includes("ankido")) {
-        match = effectiveAllMembers.find(m => (m.team || "").toLowerCase().includes("ankido"));
-        setTeamTabFilter("Ankido");
-      } else if (myTeam.includes("mohammed") || myTeam.includes("dlshad")) {
-        match = effectiveAllMembers.find(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad"));
-        setTeamTabFilter("Mohammed");
-      } else {
-        match = effectiveAllMembers.find(m => (m.team || "").toLowerCase().includes("younis"));
-        setTeamTabFilter("Younis");
-      }
-      setSelectedEmployeeName(match ? match.agent_name : effectiveAllMembers[0].agent_name);
+      return;
     }
-  }, [isAgent, userProfile, effectiveAllMembers, selectedEmployeeName, tlAssignedTeam]);
+
+    // 4. Admin / Manager: default to Younis Kamal (first team leader)
+    if (!selectedEmployeeName && effectiveAllMembers.length > 0) {
+      const defaultMember = effectiveAllMembers.find(m => normalizeAgentName(m.agent_name) === "younis kamal") || effectiveAllMembers[0];
+      setSelectedEmployeeName(defaultMember.agent_name);
+      setTeamTabFilter("Younis");
+    }
+  }, [isAgent, isUserSpecialStaffOnly, isUserMohammedAzad, isUserMohammedJihad, isUserLaraKamil, userProfile, effectiveAllMembers, selectedEmployeeName, tlAssignedTeam]);
 
   // Auto-fill Employee info when currentMember changes
   useEffect(() => {
@@ -804,11 +1019,17 @@ export default function AnnualEvaluationDashboard({
       const norm = normalizeAgentName(currentMember.agent_name || "");
       const knownId = KNOWN_EMPLOYEE_IDS[norm] || KNOWN_EMPLOYEE_IDS[currentMember.id] || "";
       setEmployeeId(knownId || currentMember.employee_id || currentMember.employee_code || "");
-      setTeamLeader(resolveTeamLeader(currentMember.team));
+      if (currentMember.manager_name) {
+        setTeamLeader(currentMember.manager_name);
+      } else {
+        setTeamLeader(resolveTeamLeader(currentMember.team));
+      }
       // Sync team tab filter if not searching
       if (!employeeSearchTerm.trim()) {
         const t = (currentMember.team || "").toLowerCase();
-        if (t.includes("ankido") && teamTabFilter !== "Ankido") {
+        if (currentMember.role_type === "trainer" || currentMember.role_type === "qa" || t.includes("training") || t.includes("quality")) {
+          if (teamTabFilter !== "QA_Training") setTeamTabFilter("QA_Training");
+        } else if (t.includes("ankido") && teamTabFilter !== "Ankido") {
           setTeamTabFilter("Ankido");
         } else if ((t.includes("mohammed") || t.includes("dlshad")) && teamTabFilter !== "Mohammed") {
           setTeamTabFilter("Mohammed");
@@ -817,7 +1038,7 @@ export default function AnnualEvaluationDashboard({
         }
       }
     }
-  }, [currentMember, employeeSearchTerm]);
+  }, [currentMember, employeeSearchTerm, teamTabFilter]);
 
   // Document ID in Firestore: `${year}_${period}_${cleanSlug}`
   const docId = useMemo(() => {
@@ -1080,8 +1301,17 @@ export default function AnnualEvaluationDashboard({
     return () => { isMounted = false; };
   }, [selectedEmployeeName, selectedYear, selectedPeriod, currentMember?.team, isChatSemi2026]);
 
-  // Operational KPIs for Contact Center (Chat vs Calls channel dynamic definitions matching Company Evaluation Templates)
-  const kpiDefinitions = useMemo(() => {
+  // Operational KPIs dynamic definitions matching Role and Templates
+  const kpiDefinitions: KpiItemDefinition[] = useMemo(() => {
+    if (currentMemberRoleType === "trainer") {
+      return TRAINER_KPIS;
+    }
+    if (currentMemberRoleType === "qa") {
+      return QA_KPIS;
+    }
+    if (currentMemberRoleType === "tl") {
+      return TL_KPIS;
+    }
     if (isSelectedEmployeeChat) {
       return [
         { id: "qa", name: "Quality Assurance", actual: actualMetricsSummary?.qa },
@@ -1098,7 +1328,47 @@ export default function AnnualEvaluationDashboard({
       { id: "aht", name: "AHT", actual: actualMetricsSummary?.aht },
       { id: "knowledge", name: "Knowledge", actual: actualMetricsSummary?.exam },
     ];
-  }, [actualMetricsSummary, isSelectedEmployeeChat]);
+  }, [currentMemberRoleType, isSelectedEmployeeChat, actualMetricsSummary]);
+
+  // Dynamic Competencies List matching specific role templates
+  const currentCompetenciesList = useMemo(() => {
+    const norm = normalizeAgentName(selectedEmployeeName || currentMember?.agent_name || "");
+    const isJihad = norm.includes("jihad");
+
+    if (isJihad) {
+      return [
+        COMPETENCY_DEFINITIONS.communication,
+        COMPETENCY_DEFINITIONS.problem_solving,
+        COMPETENCY_DEFINITIONS.accountability,
+        COMPETENCY_DEFINITIONS.customer_focus,
+        COMPETENCY_DEFINITIONS.responsibility,
+        COMPETENCY_DEFINITIONS.team_work,
+        COMPETENCY_DEFINITIONS.digitalization,
+      ];
+    }
+
+    if (currentMemberRoleType === "qa" || currentMemberRoleType === "tl") {
+      return [
+        COMPETENCY_DEFINITIONS.communication,
+        COMPETENCY_DEFINITIONS.problem_solving,
+        COMPETENCY_DEFINITIONS.accountability,
+        COMPETENCY_DEFINITIONS.responsibility,
+        COMPETENCY_DEFINITIONS.initiative,
+        COMPETENCY_DEFINITIONS.team_work,
+        COMPETENCY_DEFINITIONS.digitalization,
+      ];
+    }
+
+    // Trainer & Regular Agents (6 standard competencies)
+    return [
+      COMPETENCY_DEFINITIONS.communication,
+      COMPETENCY_DEFINITIONS.problem_solving,
+      COMPETENCY_DEFINITIONS.accountability,
+      COMPETENCY_DEFINITIONS.initiative,
+      COMPETENCY_DEFINITIONS.responsibility,
+      COMPETENCY_DEFINITIONS.team_work,
+    ];
+  }, [selectedEmployeeName, currentMember, currentMemberRoleType]);
 
   // Helper to reliably read KPI score whether keyed by 'exam' or 'knowledge'
   const getKpiScore = (kpisMap: Record<string, number>, id: string) => {
@@ -1124,21 +1394,21 @@ export default function AnnualEvaluationDashboard({
 
   // Competencies Averages
   const selfCompAvg = useMemo(() => {
-    const vals = COMPETENCIES_LIST.map(c => selfCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
+    const vals = currentCompetenciesList.map(c => selfCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
     if (vals.length === 0) return 0;
     return parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
-  }, [selfCompetencies]);
+  }, [currentCompetenciesList, selfCompetencies]);
 
   const managerCompAvg = useMemo(() => {
-    const vals = COMPETENCIES_LIST.map(c => managerCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
+    const vals = currentCompetenciesList.map(c => managerCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
     if (vals.length === 0) return 0;
     return parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
-  }, [managerCompetencies]);
+  }, [currentCompetenciesList, managerCompetencies]);
 
   // Overall Scores: Calculate using unrounded averages for exact Excel precision (50% KPI + 50% Competencies)
   const selfOverall = useMemo(() => {
     const kpiVals = kpiDefinitions.map(k => getKpiScore(selfKpis, k.id)).filter(v => v > 0);
-    const compVals = COMPETENCIES_LIST.map(c => selfCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
+    const compVals = currentCompetenciesList.map(c => selfCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
     if (kpiVals.length > 0 && compVals.length > 0) {
       const rawKpi = kpiVals.reduce((a, b) => a + b, 0) / kpiVals.length;
       const rawComp = compVals.reduce((a, b) => a + b, 0) / compVals.length;
@@ -1147,11 +1417,11 @@ export default function AnnualEvaluationDashboard({
     if (kpiVals.length > 0) return selfKpiAvg;
     if (compVals.length > 0) return selfCompAvg;
     return 0;
-  }, [kpiDefinitions, selfKpis, selfCompetencies, selfKpiAvg, selfCompAvg]);
+  }, [kpiDefinitions, selfKpis, currentCompetenciesList, selfCompetencies, selfKpiAvg, selfCompAvg]);
 
   const managerOverall = useMemo(() => {
     const kpiVals = kpiDefinitions.map(k => getKpiScore(managerKpis, k.id)).filter(v => v > 0);
-    const compVals = COMPETENCIES_LIST.map(c => managerCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
+    const compVals = currentCompetenciesList.map(c => managerCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
     if (kpiVals.length > 0 && compVals.length > 0) {
       const rawKpi = kpiVals.reduce((a, b) => a + b, 0) / kpiVals.length;
       const rawComp = compVals.reduce((a, b) => a + b, 0) / compVals.length;
@@ -1160,7 +1430,7 @@ export default function AnnualEvaluationDashboard({
     if (kpiVals.length > 0) return managerKpiAvg;
     if (compVals.length > 0) return managerCompAvg;
     return 0;
-  }, [kpiDefinitions, managerKpis, managerCompetencies, managerKpiAvg, managerCompAvg]);
+  }, [kpiDefinitions, managerKpis, currentCompetenciesList, managerCompetencies, managerKpiAvg, managerCompAvg]);
 
   // Official Score (only visible when manager data is visible or manager finalized)
   const officialOverallScore = managerOverall > 0 ? managerOverall : (isManagerDataVisible ? selfOverall : 0);
@@ -1220,10 +1490,12 @@ export default function AnnualEvaluationDashboard({
         evaluation_date: autoDate,
         employee_name: selectedEmployeeName,
         employee_id: employeeId || "",
-        department: "Contact Center",
+        department: currentMember?.department || (currentMemberRoleType === "trainer" ? "Training" : currentMemberRoleType === "qa" ? "Quality" : "Contact Center"),
         team: currentMember?.team || "Contact Center",
         team_leader: teamLeader || resolveTeamLeader(currentMember?.team),
-        channel_type: isSelectedEmployeeChat ? "chat" : "calls",
+        channel_type: currentMemberRoleType !== "agent" ? currentMemberRoleType : (isSelectedEmployeeChat ? "chat" : "calls"),
+        role_type: currentMemberRoleType,
+        is_special_staff: currentMemberRoleType !== "agent",
         
         self_kpis: cleanSelfKpis,
         self_competencies: selfCompetencies,
@@ -1339,15 +1611,17 @@ export default function AnnualEvaluationDashboard({
               </button>
             )}
 
-            <button
-              onClick={openBenchmarkGuide}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-50 hover:bg-amber-100/80 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 transition active:scale-95 cursor-pointer shadow-2xs"
-              title="KPI & Competency Benchmark Guide"
-            >
-              <BookOpen size={14} className="text-amber-600 dark:text-amber-400" />
-              <span className="hidden xs:inline">Benchmark Guide</span>
-              <span className="text-[9px] px-1 bg-amber-200/60 dark:bg-amber-800/60 rounded font-black">Info</span>
-            </button>
+            {currentMemberRoleType === "agent" && (
+              <button
+                onClick={openBenchmarkGuide}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-50 hover:bg-amber-100/80 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 transition active:scale-95 cursor-pointer shadow-2xs"
+                title="KPI & Competency Benchmark Guide"
+              >
+                <BookOpen size={14} className="text-amber-600 dark:text-amber-400" />
+                <span className="hidden xs:inline">Benchmark Guide</span>
+                <span className="text-[9px] px-1 bg-amber-200/60 dark:bg-amber-800/60 rounded font-black">Info</span>
+              </button>
+            )}
 
             <button
               onClick={handlePrint}
@@ -1489,14 +1763,16 @@ export default function AnnualEvaluationDashboard({
 
             {/* Right Side: Employee Selector (All Employees) */}
             <div className="relative flex-1 sm:flex-initial min-w-[260px]">
-              {isAgent ? (
+              {(isAgent || isUserSpecialStaffOnly) ? (
                 <div className="flex items-center gap-2.5 px-3.5 py-2 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
                   <div className="w-7 h-7 rounded-full bg-[#1C6B53] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                     {userProfile?.name?.charAt(0) || userProfile?.agent_name?.charAt(0) || "A"}
                   </div>
                   <div>
                     <div className="text-xs font-black text-gray-900 dark:text-white">{toTitleCase(selectedEmployeeName)}</div>
-                    <div className="text-[10px] text-[#1C6B53] dark:text-emerald-400 font-bold">{currentMember?.team?.replace(' Team', '') || 'Contact Center'}</div>
+                    <div className="text-[10px] text-[#1C6B53] dark:text-emerald-400 font-bold">
+                      {currentMember?.role_type === 'trainer' ? 'Training • Trainer' : currentMember?.role_type === 'qa' ? 'Quality Assurance' : currentMember?.team?.replace(' Team', '') || 'Contact Center'}
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -1521,12 +1797,26 @@ export default function AnnualEvaluationDashboard({
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className={`text-[10px] px-2 py-0.5 rounded-lg border font-bold flex items-center gap-1 ${
-                        isSelectedEmployeeChat
+                        currentMemberRoleType === 'trainer'
+                          ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                          : currentMemberRoleType === 'qa'
+                          ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                          : currentMemberRoleType === 'tl'
+                          ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                          : isSelectedEmployeeChat
                           ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
                           : "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
                       }`}>
-                        {isSelectedEmployeeChat ? <MessageSquare size={10} /> : <PhoneCall size={10} />}
-                        <span>{isSelectedEmployeeChat ? 'Chat' : 'Calls'}</span>
+                        {currentMemberRoleType === 'trainer' ? <Award size={10} /> :
+                         currentMemberRoleType === 'qa' ? <ShieldCheck size={10} /> :
+                         currentMemberRoleType === 'tl' ? <Star size={10} /> :
+                         isSelectedEmployeeChat ? <MessageSquare size={10} /> : <PhoneCall size={10} />}
+                        <span>
+                          {currentMemberRoleType === 'trainer' ? 'Trainer' :
+                           currentMemberRoleType === 'qa' ? 'QA' :
+                           currentMemberRoleType === 'tl' ? 'Team Leader' :
+                           isSelectedEmployeeChat ? 'Chat' : 'Calls'}
+                        </span>
                       </span>
                       <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${employeeDropdownOpen ? 'rotate-180' : ''}`} />
                     </div>
@@ -1575,12 +1865,13 @@ export default function AnnualEvaluationDashboard({
                           )}
                         </div>
 
-                        {/* Team Filter Pills: Younis Kamal, Ankido Buya, Mohammed Dlshad (Strictly 3 tabs, No "All") */}
-                        <div className={`grid ${tlAssignedTeam ? 'grid-cols-1' : 'grid-cols-3'} gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0`}>
+                        {/* Team Filter Pills: Younis Kamal, Ankido Buya, Mohammed Dlshad, QA & Training */}
+                        <div className={`grid ${tlAssignedTeam ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-4'} gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0`}>
                           {[
                             { id: "Younis", label: "Younis Kamal", count: teamCounts.Younis, icon: PhoneCall },
                             { id: "Ankido", label: "Ankido Buya", count: teamCounts.Ankido, icon: PhoneCall },
                             { id: "Mohammed", label: "Mohammed Dlshad", count: teamCounts.Mohammed, icon: MessageSquare },
+                            { id: "QA_Training", label: "QA & Training", count: teamCounts.QA_Training, icon: ShieldCheck },
                           ]
                           .filter(tab => !tlAssignedTeam || tab.id === tlAssignedTeam)
                           .map(tab => {
@@ -1601,7 +1892,7 @@ export default function AnnualEvaluationDashboard({
                                 }`}
                               >
                                 <TabIcon size={11} className={isActive ? 'text-emerald-200' : 'text-gray-400'} />
-                                <span className="truncate">{tab.label.split(' ')[0]}</span>
+                                <span className="truncate">{tab.id === 'QA_Training' ? 'QA & Training' : tab.label.split(' ')[0]}</span>
                                 <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
                                   isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                                 }`}>
@@ -1617,10 +1908,10 @@ export default function AnnualEvaluationDashboard({
                           <span>
                             {employeeSearchTerm.trim() 
                               ? `${filteredMembers.length} Matching Search` 
-                              : `${filteredMembers.length} Agents in ${teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' : teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'}`}
+                              : `${filteredMembers.length} Members in ${teamTabFilter === 'QA_Training' ? 'QA & Training' : teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' : teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'}`}
                           </span>
                           <span className="text-[9px] font-bold text-[#1C6B53] dark:text-emerald-400">
-                            {teamTabFilter === 'Mohammed' ? 'Digital Chat' : 'Voice Calls'}
+                            {teamTabFilter === 'QA_Training' ? 'Specialized Operations' : teamTabFilter === 'Mohammed' ? 'Digital Chat' : 'Voice Calls'}
                           </span>
                         </div>
 
@@ -1689,10 +1980,27 @@ export default function AnnualEvaluationDashboard({
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2 shrink-0">
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-md border font-semibold flex items-center gap-1 ${teamBadgeClass}`}>
-                                      {isDlshad ? <MessageSquare size={10} /> : <PhoneCall size={10} />}
-                                      <span>{isDlshad ? 'Chat' : 'Calls'}</span>
-                                    </span>
+                                    {m.role_type === "tl" ? (
+                                      <span className="text-[10px] px-2 py-0.5 rounded-md border font-extrabold flex items-center gap-1 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                                        <Star size={10} />
+                                        <span>Team Leader</span>
+                                      </span>
+                                    ) : m.role_type === "trainer" ? (
+                                      <span className="text-[10px] px-2 py-0.5 rounded-md border font-extrabold flex items-center gap-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800">
+                                        <Award size={10} />
+                                        <span>Trainer</span>
+                                      </span>
+                                    ) : m.role_type === "qa" ? (
+                                      <span className="text-[10px] px-2 py-0.5 rounded-md border font-extrabold flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">
+                                        <ShieldCheck size={10} />
+                                        <span>QA</span>
+                                      </span>
+                                    ) : (
+                                      <span className={`text-[10px] px-2 py-0.5 rounded-md border font-semibold flex items-center gap-1 ${teamBadgeClass}`}>
+                                        {isDlshad ? <MessageSquare size={10} /> : <PhoneCall size={10} />}
+                                        <span>{isDlshad ? 'Chat' : 'Calls'}</span>
+                                      </span>
+                                    )}
                                     {isSelected && <Check size={14} className="text-[#1C6B53] dark:text-emerald-400" />}
                                   </div>
                                 </button>
@@ -1758,9 +2066,17 @@ export default function AnnualEvaluationDashboard({
                   </h2>
 
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs text-emerald-100/90 font-medium">
-                    <span className="font-bold text-white">{currentMember?.team?.replace(' Team', '') || 'Contact Center'} Team</span>
+                    <span className="font-bold text-white">{currentMember?.team || 'Contact Center'}</span>
                     <span>•</span>
-                    <span>Contact Center</span>
+                    <span>{currentMember?.department || 'Contact Center'}</span>
+                    {currentMemberRoleType !== 'agent' && (
+                      <>
+                        <span>•</span>
+                        <span className="px-2 py-0.5 rounded-full bg-white/20 text-white font-black text-[10px] uppercase tracking-wider">
+                          {currentMemberRoleType === 'trainer' ? 'Trainer' : currentMemberRoleType === 'qa' ? 'Quality Assurance' : 'Team Leader'}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1850,16 +2166,21 @@ export default function AnnualEvaluationDashboard({
                     1
                   </div>
                   <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                    Operational KPI Evaluation
+                    {currentMemberRoleType === "trainer" ? "Training Performance KPI Evaluation" :
+                     currentMemberRoleType === "qa" ? "Quality Assurance KPI Evaluation" :
+                     currentMemberRoleType === "tl" ? "Leadership & Team Management KPI Evaluation" :
+                     "Operational KPI Evaluation"}
                   </h3>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-9">
-                  Operational performance metrics evaluation (Rate 1 to 5).
+                  {currentMemberRoleType !== "agent" 
+                    ? "Role-specific operational KPIs evaluated manually on an executive 1 to 5 scale." 
+                    : "Operational performance metrics evaluation (Rate 1 to 5)."}
                 </p>
               </div>
 
-              {/* Auto suggestion helper from actual data - ONLY for managers, removed from employee view */}
-              {actualMetricsSummary && canApplySuggestions && (
+              {/* Auto suggestion helper from actual data - ONLY for CC agents and manager */}
+              {currentMemberRoleType === "agent" && actualMetricsSummary && canApplySuggestions && (
                 <div className="flex items-center gap-2 self-start sm:self-auto bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 px-3.5 py-1.5 rounded-2xl shadow-2xs">
                   <div className="text-[11px] font-bold text-[#1C6B53] dark:text-emerald-400 flex items-center gap-1.5">
                     <Sparkles size={13} className="text-emerald-500" />
@@ -1882,10 +2203,14 @@ export default function AnnualEvaluationDashboard({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-100/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-black border-b border-gray-200 dark:border-gray-700">
-                    <th className="p-3.5 text-left w-1/3">KPI Metric</th>
-                    <th className="p-3.5 text-center w-28">Actual Result</th>
+                    <th className={`p-3.5 text-left ${currentMemberRoleType === "agent" ? "w-1/3" : "w-1/2"}`}>
+                      {currentMemberRoleType === "agent" ? "KPI Metric" : "Role KPI Metric & Objectives"}
+                    </th>
+                    {currentMemberRoleType === "agent" && (
+                      <th className="p-3.5 text-center w-28">Actual Result</th>
+                    )}
                     <th className="p-3.5 text-center bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
-                      <span>Self-Evaluation (Agent)</span>
+                      <span>Self-Evaluation {currentMemberRoleType === "agent" ? "(Agent)" : ""}</span>
                     </th>
                     <th className="p-3.5 text-center bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
                       <span>Manager Evaluation</span>
@@ -1903,17 +2228,24 @@ export default function AnnualEvaluationDashboard({
                       <tr key={kpi.id} className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors">
                         <td className="p-3.5">
                           <div className="font-bold text-gray-900 dark:text-white text-sm">{kpi.name}</div>
-                        </td>
-
-                        <td className="p-3.5 text-center font-bold text-gray-700 dark:text-gray-300">
-                          {kpi.actual ? (
-                            <span className="px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-[#1C6B53] dark:text-emerald-400 font-mono font-bold">
-                              {kpi.actual}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400 font-normal">-</span>
+                          {kpi.description && (
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-normal mt-0.5 leading-relaxed">
+                              {kpi.description}
+                            </p>
                           )}
                         </td>
+
+                        {currentMemberRoleType === "agent" && (
+                          <td className="p-3.5 text-center font-bold text-gray-700 dark:text-gray-300">
+                            {kpi.actual ? (
+                              <span className="px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-[#1C6B53] dark:text-emerald-400 font-mono font-bold">
+                                {kpi.actual}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 font-normal">-</span>
+                            )}
+                          </td>
+                        )}
 
                         {/* Self Rating (1 to 5) */}
                         <td className="p-3.5 text-center bg-blue-50/20 dark:bg-blue-950/10">
@@ -2002,7 +2334,7 @@ export default function AnnualEvaluationDashboard({
 
                   {/* Summary Row for Final KPI Score */}
                   <tr className="bg-gray-100 dark:bg-gray-800/90 font-black text-gray-900 dark:text-white border-t-2 border-gray-300 dark:border-gray-700">
-                    <td className="p-3.5" colSpan={2}>
+                    <td className="p-3.5" colSpan={currentMemberRoleType === "agent" ? 2 : 1}>
                       <div className="flex items-center gap-2">
                         <Target size={16} className="text-[#1C6B53] dark:text-emerald-400" />
                         <span className="text-sm">Final Score (1-5 Average)</span>
@@ -2043,7 +2375,7 @@ export default function AnnualEvaluationDashboard({
                 </h3>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-9">
-                Assessment of the 6 core institutional competencies (Rate 1 to 5).
+                Assessment of the {currentCompetenciesList.length} core institutional competencies (Rate 1 to 5).
               </p>
             </div>
 
@@ -2054,7 +2386,7 @@ export default function AnnualEvaluationDashboard({
                   <tr className="bg-gray-100/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-black border-b border-gray-200 dark:border-gray-700">
                     <th className="p-3.5 text-left w-1/2">Competency & Behavioral Indicators</th>
                     <th className="p-3.5 text-center bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
-                      <span>Self-Evaluation (Agent)</span>
+                      <span>Self-Evaluation {currentMemberRoleType === "agent" ? "(Agent)" : ""}</span>
                     </th>
                     <th className="p-3.5 text-center bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
                       <span>Manager Evaluation</span>
@@ -2063,7 +2395,7 @@ export default function AnnualEvaluationDashboard({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800 text-xs font-medium">
-                  {COMPETENCIES_LIST.map((comp) => {
+                  {currentCompetenciesList.map((comp) => {
                     const selfVal = selfCompetencies[comp.id] || 0;
                     const mgrVal = managerCompetencies[comp.id] || 0;
                     const diff = mgrVal > 0 && selfVal > 0 ? (mgrVal - selfVal) : null;
@@ -2328,30 +2660,29 @@ export default function AnnualEvaluationDashboard({
                 {isReadOnly && (
                   <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md ml-2 flex items-center gap-1">
                     <Eye size={12} />
-                    <span>View Only (TL & Quality Team)</span>
+                    <span>View Only ({tlAssignedTeam ? 'Team Leader Review' : 'Quality Team'})</span>
                   </span>
                 )}
               </div>
 
               <div className="flex items-center gap-2.5 w-full sm:w-auto">
-                {/* Agent actions */}
-                {isAgent && !isReadOnly && (
-                  evaluationStatus === 'manager_finalized' ? (
-                    <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-[#1C6B53] dark:text-emerald-400">
-                      <CheckCircle size={15} />
-                      <span>Evaluation Finalized by Management</span>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleSaveEvaluation("self_submitted")}
-                      disabled={isSaving}
-                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer"
-                    >
-                      <CheckCircle size={14} />
-                      <span>{evaluationStatus === 'self_submitted' ? 'Update Self-Evaluation' : 'Submit Self-Evaluation'}</span>
-                    </button>
-                  )
+                {/* Self-evaluation actions (Agent, Trainer, QA, or Team Leader viewing self) */}
+                {!canEditManager && isViewingSelf && (evaluationStatus as string) === 'manager_finalized' && (
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-[#1C6B53] dark:text-emerald-400">
+                    <CheckCircle size={15} />
+                    <span>Evaluation Finalized by Management</span>
+                  </div>
+                )}
+                {!canEditManager && canEditSelf && (
+                  <button
+                    type="button"
+                    onClick={() => handleSaveEvaluation("self_submitted")}
+                    disabled={isSaving}
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                  >
+                    <CheckCircle size={14} />
+                    <span>{evaluationStatus === 'self_submitted' ? 'Update Self-Evaluation' : 'Submit Self-Evaluation'}</span>
+                  </button>
                 )}
 
                 {/* Manager actions */}
@@ -3099,6 +3430,7 @@ export default function AnnualEvaluationDashboard({
                     { id: "Younis", label: "Younis Kamal" },
                     { id: "Ankido", label: "Ankido Buya" },
                     { id: "Mohammed", label: "Mohammed Dlshad" },
+                    { id: "QA_Training", label: "QA & Training" },
                   ].map(t => (
                     <button
                       key={t.id}
