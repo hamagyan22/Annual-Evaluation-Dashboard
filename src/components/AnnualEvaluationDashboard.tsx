@@ -671,12 +671,12 @@ export default function AnnualEvaluationDashboard({
 
     const lines = pendingItems.map((item, idx) => {
       const pendingPeriods = [];
-      if (!item.semi.isCompleted) pendingPeriods.push("نصف سنوي (Semi-Annual)");
-      if (!item.annual.isCompleted) pendingPeriods.push("سنوي (Annual)");
-      return `${idx + 1}. ${toTitleCase(item.name)} (${item.knownId ? `ID: ${item.knownId}, ` : ''}${item.team.replace(' Team', '')}) -> متبقي: ${pendingPeriods.join(' + ')}`;
+      if (!item.semi.isCompleted) pendingPeriods.push("Semi-Annual");
+      if (!item.annual.isCompleted) pendingPeriods.push("Annual");
+      return `${idx + 1}. ${toTitleCase(item.name)} (${item.knownId ? `ID: ${item.knownId}, ` : ''}${item.team.replace(' Team', '')}) -> Pending: ${pendingPeriods.join(' & ')}`;
     });
 
-    const textToCopy = `📋 قائمة الموظفين المتبقين بدون تقييم (${selectedYear}):\n` + lines.join('\n');
+    const textToCopy = `📋 Pending Evaluations List (${selectedYear}):\n` + lines.join('\n');
     navigator.clipboard.writeText(textToCopy);
     setCoverageCopiedToast(true);
     setTimeout(() => setCoverageCopiedToast(false), 2500);
@@ -1243,12 +1243,12 @@ export default function AnnualEvaluationDashboard({
                 setShowCoverageModal(true);
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-emerald-800 dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100/90 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/50 border border-emerald-300/80 dark:border-emerald-700/60 transition active:scale-95 cursor-pointer shadow-2xs"
-              title="متابعة حالة التقييمات والموظفين المتبقين (منو باقي؟)"
+              title="Evaluation Coverage Tracker (Pending Reviews)"
             >
               <ClipboardList size={14} className="text-[#1C6B53] dark:text-emerald-400" />
-              <span className="font-extrabold hidden xs:inline">متابعة التقييمات</span>
+              <span className="font-extrabold hidden xs:inline">Pending Tracker</span>
               <span className="text-[10px] px-1.5 py-0.5 rounded-full font-black bg-[#1C6B53] text-white shadow-2xs">
-                {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount} متبقي
+                {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount} Pending
               </span>
             </button>
 
@@ -1387,10 +1387,10 @@ export default function AnnualEvaluationDashboard({
                   setShowCoverageModal(true);
                 }}
                 className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-amber-50 hover:bg-amber-100/90 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 text-xs font-black text-amber-900 dark:text-amber-200 transition active:scale-95 shadow-2xs cursor-pointer"
-                title="عرض الموظفين المتبقين بدون تقييم"
+                title="View Pending Employees"
               >
                 <ListChecks size={14} className="text-amber-600 dark:text-amber-400" />
-                <span>منو باقي ممتقيم؟</span>
+                <span>Who&apos;s Pending?</span>
                 <span className="px-1.5 py-0.5 bg-amber-200 dark:bg-amber-800 text-amber-950 dark:text-amber-100 rounded-full text-[10px] font-black">
                   {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount}
                 </span>
@@ -2792,14 +2792,14 @@ export default function AnnualEvaluationDashboard({
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-base sm:text-lg font-black tracking-tight">
-                      متابعة حالة التقييمات | Evaluation Coverage Tracker
+                      Evaluation Coverage Tracker
                     </h3>
                     <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-xs">
-                      سنة {selectedYear}
+                      Year {selectedYear}
                     </span>
                   </div>
                   <p className="text-xs text-emerald-100/90 font-medium mt-0.5">
-                    متابعة فورية للموظفين الذين تم تقييمهم ومن متبقي في التقييمين النصف سنوي والسنوي
+                    Real-time tracking of completed and pending semi-annual & annual evaluations
                   </p>
                 </div>
               </div>
@@ -2818,29 +2818,29 @@ export default function AnnualEvaluationDashboard({
               {/* Card 1: Total Employees */}
               <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-3.5 shadow-2xs">
                 <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
-                  <span>إجمالي الموظفين (Total Active)</span>
+                  <span>Total Active Members</span>
                   <Users size={15} className="text-gray-400" />
                 </div>
                 <div className="text-2xl font-black text-gray-900 dark:text-white">
-                  {coverageData.totalCount} <span className="text-xs font-semibold text-gray-500">موظف</span>
+                  {coverageData.totalCount} <span className="text-xs font-semibold text-gray-500">Employees</span>
                 </div>
                 <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                  موزعين على فرق (Younis, Ankido, Mohammed)
+                  Across 3 Contact Center Teams
                 </div>
               </div>
 
               {/* Card 2: Semi-Annual */}
               <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-3.5 shadow-2xs">
                 <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
-                  <span>التقييم النصف سنوي (Semi-Annual)</span>
+                  <span>Semi-Annual Review</span>
                   <Calendar size={15} className="text-[#1C6B53] dark:text-emerald-400" />
                 </div>
                 <div className="flex items-baseline justify-between">
                   <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
-                    {coverageData.semiCompletedCount} <span className="text-xs font-semibold text-gray-500">مكتمل</span>
+                    {coverageData.semiCompletedCount} <span className="text-xs font-semibold text-gray-500">Completed</span>
                   </div>
                   <span className="text-xs font-black text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
-                    {coverageData.semiPendingCount} متبقي
+                    {coverageData.semiPendingCount} Pending
                   </span>
                 </div>
                 <div className="w-full bg-gray-100 dark:bg-gray-700 h-2 rounded-full mt-2.5 overflow-hidden">
@@ -2850,22 +2850,22 @@ export default function AnnualEvaluationDashboard({
                   />
                 </div>
                 <div className="text-[10px] text-right font-bold text-gray-500 dark:text-gray-400 mt-1">
-                  {coverageData.semiPercent}% نسبة الإنجاز
+                  {coverageData.semiPercent}% Completed
                 </div>
               </div>
 
               {/* Card 3: Annual */}
               <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-3.5 shadow-2xs">
                 <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
-                  <span>التقييم السنوي (Annual)</span>
+                  <span>Annual Review</span>
                   <Award size={15} className="text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="flex items-baseline justify-between">
                   <div className="text-2xl font-black text-blue-700 dark:text-blue-400">
-                    {coverageData.annualCompletedCount} <span className="text-xs font-semibold text-gray-500">مكتمل</span>
+                    {coverageData.annualCompletedCount} <span className="text-xs font-semibold text-gray-500">Completed</span>
                   </div>
                   <span className="text-xs font-black text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
-                    {coverageData.annualPendingCount} متبقي
+                    {coverageData.annualPendingCount} Pending
                   </span>
                 </div>
                 <div className="w-full bg-gray-100 dark:bg-gray-700 h-2 rounded-full mt-2.5 overflow-hidden">
@@ -2875,7 +2875,7 @@ export default function AnnualEvaluationDashboard({
                   />
                 </div>
                 <div className="text-[10px] text-right font-bold text-gray-500 dark:text-gray-400 mt-1">
-                  {coverageData.annualPercent}% نسبة الإنجاز
+                  {coverageData.annualPercent}% Completed
                 </div>
               </div>
 
@@ -2898,7 +2898,7 @@ export default function AnnualEvaluationDashboard({
                     }`}
                   >
                     <AlertCircle size={13} />
-                    <span>المتبقين فقط</span>
+                    <span>Pending Only</span>
                     <span className="text-[10px] px-1.5 py-0.2 bg-white/25 rounded-md font-black">
                       {coveragePeriodFilter === "Semi-Annual" 
                         ? coverageData.semiPendingCount 
@@ -2918,7 +2918,7 @@ export default function AnnualEvaluationDashboard({
                     }`}
                   >
                     <CheckCircle2 size={13} />
-                    <span>المكتملين</span>
+                    <span>Completed</span>
                     <span className="text-[10px] px-1.5 py-0.2 bg-white/25 rounded-md font-black">
                       {coveragePeriodFilter === "Semi-Annual" 
                         ? coverageData.semiCompletedCount 
@@ -2937,13 +2937,13 @@ export default function AnnualEvaluationDashboard({
                         : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                     }`}
                   >
-                    <span>الكل ({coverageData.totalCount})</span>
+                    <span>All ({coverageData.totalCount})</span>
                   </button>
                 </div>
 
                 {/* Period View Filter */}
                 <div className="flex items-center gap-1 bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-2xl border border-gray-200/60 dark:border-gray-700/60 text-xs font-bold">
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400 px-2 font-medium">الفترة:</span>
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400 px-2 font-medium">Period:</span>
                   <button
                     type="button"
                     onClick={() => setCoveragePeriodFilter("all")}
@@ -2953,7 +2953,7 @@ export default function AnnualEvaluationDashboard({
                         : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                     }`}
                   >
-                    كلاهما
+                    Both
                   </button>
                   <button
                     type="button"
@@ -2964,7 +2964,7 @@ export default function AnnualEvaluationDashboard({
                         : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                     }`}
                   >
-                    نصف سنوي
+                    Semi-Annual
                   </button>
                   <button
                     type="button"
@@ -2975,7 +2975,7 @@ export default function AnnualEvaluationDashboard({
                         : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                     }`}
                   >
-                    سنوي
+                    Annual
                   </button>
                 </div>
 
@@ -2984,10 +2984,10 @@ export default function AnnualEvaluationDashboard({
                   type="button"
                   onClick={handleCopyPendingList}
                   className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-xs font-black text-gray-700 dark:text-gray-200 transition cursor-pointer shrink-0 border border-gray-200 dark:border-gray-700"
-                  title="نسخ قائمة الموظفين المتبقين بدون تقييم"
+                  title="Copy list of pending employees"
                 >
                   <Copy size={13} />
-                  <span>نسخ قائمة المتبقين</span>
+                  <span>Copy Pending List</span>
                 </button>
 
               </div>
@@ -2997,9 +2997,9 @@ export default function AnnualEvaluationDashboard({
                 
                 {/* Team Filter */}
                 <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400 mr-1">الفريق:</span>
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400 mr-1">Team:</span>
                   {[
-                    { id: "all", label: "جميع الفرق" },
+                    { id: "all", label: "All Teams" },
                     { id: "Younis", label: "Younis Kamal" },
                     { id: "Ankido", label: "Ankido Buya" },
                     { id: "Mohammed", label: "Mohammed Dlshad" },
@@ -3026,7 +3026,7 @@ export default function AnnualEvaluationDashboard({
                     type="text"
                     value={coverageSearchTerm}
                     onChange={(e) => setCoverageSearchTerm(e.target.value)}
-                    placeholder="بحث بالاسم أو الرقم الوظيفي..."
+                    placeholder="Search by name or employee ID..."
                     className="w-full pl-9 pr-8 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C6B53]"
                   />
                   {coverageSearchTerm && (
@@ -3050,12 +3050,12 @@ export default function AnnualEvaluationDashboard({
                 <div className="text-center py-16">
                   <CheckCircle2 size={44} className="mx-auto text-emerald-500 mb-3 opacity-80" />
                   <p className="text-sm font-black text-gray-800 dark:text-gray-200">
-                    لا يوجد موظفين يطابقون خيارات الفلترة المحددة
+                    No employees match the selected filter
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {coverageFilterStatus === "pending" 
-                      ? "ممتاز جداً! جميع الموظفين في هذا التصنيف تم تقييمهم بنجاح." 
-                      : "جرب تغيير خيارات الفلترة أو مسح حقل البحث."}
+                      ? "Great! All employees in this category have been evaluated." 
+                      : "Try adjusting your filter options or clearing the search query."}
                   </p>
                 </div>
               ) : (
@@ -3105,16 +3105,16 @@ export default function AnnualEvaluationDashboard({
                         {item.semi.isCompleted ? (
                           <>
                             <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            <span>نصف سنوي:</span>
+                            <span>Semi-Annual:</span>
                             <span className="font-black text-emerald-700 dark:text-emerald-300">
-                              {item.semi.score !== null ? item.semi.score.toFixed(2) : "مكتمل"}
+                              {item.semi.score !== null ? item.semi.score.toFixed(2) : "Completed"}
                             </span>
                           </>
                         ) : (
                           <>
                             <AlertCircle size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
-                            <span>نصف سنوي:</span>
-                            <span className="font-black text-amber-700 dark:text-amber-300">متبقي</span>
+                            <span>Semi-Annual:</span>
+                            <span className="font-black text-amber-700 dark:text-amber-300">Pending</span>
                           </>
                         )}
                       </div>
@@ -3128,16 +3128,16 @@ export default function AnnualEvaluationDashboard({
                         {item.annual.isCompleted ? (
                           <>
                             <CheckCircle2 size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                            <span>سنوي:</span>
+                            <span>Annual:</span>
                             <span className="font-black text-blue-700 dark:text-blue-300">
-                              {item.annual.score !== null ? item.annual.score.toFixed(2) : "مكتمل"}
+                              {item.annual.score !== null ? item.annual.score.toFixed(2) : "Completed"}
                             </span>
                           </>
                         ) : (
                           <>
                             <Clock size={13} className="text-gray-400 shrink-0" />
-                            <span>سنوي:</span>
-                            <span className="font-medium text-gray-500 dark:text-gray-400">متبقي</span>
+                            <span>Annual:</span>
+                            <span className="font-medium text-gray-500 dark:text-gray-400">Pending</span>
                           </>
                         )}
                       </div>
@@ -3148,7 +3148,7 @@ export default function AnnualEvaluationDashboard({
                         onClick={() => handleSelectForEvaluation(item.name, !item.semi.isCompleted ? "Semi-Annual" : "Annual")}
                         className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1C6B53] hover:bg-[#155340] text-white text-xs font-black transition active:scale-95 shadow-2xs cursor-pointer ml-auto md:ml-0"
                       >
-                        <span>تقييم الموظف</span>
+                        <span>Evaluate Employee</span>
                         <ExternalLink size={12} />
                       </button>
 
@@ -3161,7 +3161,7 @@ export default function AnnualEvaluationDashboard({
             {/* Modal Footer */}
             <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between shrink-0">
               <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
-                عرض {filteredCoverageList.length} من أصل {coverageData.totalCount} موظفاً
+                Showing {filteredCoverageList.length} of {coverageData.totalCount} employees
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -3170,14 +3170,14 @@ export default function AnnualEvaluationDashboard({
                   className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 transition cursor-pointer flex items-center gap-1.5"
                 >
                   <Copy size={13} />
-                  <span>نسخ القائمة</span>
+                  <span>Copy List</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowCoverageModal(false)}
                   className="px-5 py-2 rounded-xl text-xs font-bold bg-[#1C6B53] text-white hover:bg-[#155340] transition cursor-pointer"
                 >
-                  إغلاق
+                  Close
                 </button>
               </div>
             </div>
@@ -3190,7 +3190,7 @@ export default function AnnualEvaluationDashboard({
       {coverageCopiedToast && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-2xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 border border-gray-800 dark:border-gray-200 text-xs font-black animate-in fade-in slide-in-from-bottom-3 duration-200">
           <CheckCircle2 size={16} className="text-emerald-400 dark:text-emerald-600" />
-          <span>تم نسخ قائمة الموظفين المتبقين بنجاح! جاهزة للصق.</span>
+          <span>Pending list copied to clipboard!</span>
         </div>
       )}
 
