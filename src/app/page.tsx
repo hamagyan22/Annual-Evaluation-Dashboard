@@ -2893,6 +2893,7 @@ export default function Dashboard() {
         const isLara = emailLower === 'lara.kamil@agent.com';
         const isMohammedJihad = emailLower === 'mohammed.jihad@agent.com' || emailLower === 'mohammed.jihad.qa@agent.com' || emailLower.includes('mohammed.jihad');
         const isMohammedAzad = emailLower === 'mohammed.azad@agent.com' || emailLower === 'mohammed.azad.qa@agent.com' || emailLower.includes('mohammed.azad');
+        const isShireen = emailLower === 'shireen.waisi@agent.com' || emailLower.includes('shireen.waisi') || emailLower.includes('shireen');
         const isAgent = emailLower.endsWith('@agent.com');
 
         // Instant optimistic role identification: Mohammed Dlshad (The Admin) is EXEMPT
@@ -2963,6 +2964,10 @@ export default function Dashboard() {
             role = 'trainer';
             name = name || 'Mohammed Azad';
             team = 'All Call Teams';
+          } else if (isShireen) {
+            role = 'backoffice';
+            name = name || 'Shireen Waisi';
+            team = 'Back Office';
           } else if (!role) {
             role = isAgent ? 'agent' : 'tl';
           }
@@ -2980,6 +2985,8 @@ export default function Dashboard() {
             ? 'younis.kamal@agent.com'
             : isMohammedAzad
             ? 'mohammed.azad@agent.com'
+            : isShireen
+            ? 'shireen.waisi@agent.com'
             : user.email;
 
           const updatedProfile = {
@@ -4877,6 +4884,21 @@ export default function Dashboard() {
           {/* Mobile PWA Install Floating Banner */}
           <PwaInstallBanner />
         </div>
+      );
+    }
+
+    // Back Office / Shireen: Exclusively evaluation dashboard and NOTHING else
+    if (userProfile?.role === 'backoffice' || (userProfile?.email || '').toLowerCase().includes('shireen')) {
+      return (
+        <AnnualEvaluationDashboard
+          userProfile={userProfile}
+          allMembers={allMembers}
+          selectedYear={selectedYear}
+          onBack={handleLogout}
+          onLogout={handleLogout}
+          isDarkMode={isDarkMode}
+          toggleDarkMode={toggleDarkMode}
+        />
       );
     }
 

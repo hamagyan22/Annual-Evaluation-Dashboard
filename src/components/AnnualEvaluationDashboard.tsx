@@ -224,13 +224,21 @@ export const TL_KPIS: KpiItemDefinition[] = [
   { id: "team_improvement", name: "Team Development & Coaching", description: "Continuous coaching, one-on-one reviews, skill improvement, and reducing low-performance outliers." },
 ];
 
+export const BACKOFFICE_KPIS: KpiItemDefinition[] = [
+  { id: "accuracy", name: "Accuracy", description: "Ensuring zero-error rate, exact transaction processing, and data integrity." },
+  { id: "sla_compliance", name: "SLA Compliance", description: "Adherence to agreed turnaround time (TAT), operational deadlines, and SLA targets." },
+  { id: "followup_efficiency", name: "Follow-up Efficiency", description: "Proactive tracking of pending cases, timely resolution, and cross-department follow-ups." },
+  { id: "ticket_management", name: "Ticket Management", description: "Queue management, accurate ticket categorization, status documentation, and timely closure." },
+  { id: "attendance_commitment", name: "Attendance & Commitment", description: "Schedule adherence, punctuality, shift coverage, and high commitment to institutional banking standards." },
+];
+
 export interface SpecialStaffMember {
   id: string;
   agent_name: string;
   name: string;
   employee_id: string;
   team: string;
-  role_type: "trainer" | "qa" | "tl";
+  role_type: "trainer" | "qa" | "tl" | "backoffice";
   department: string;
   manager_name: string;
   is_special_staff?: boolean;
@@ -240,6 +248,7 @@ export const SPECIAL_STAFF_MEMBERS: SpecialStaffMember[] = [
   { id: "mohammed_azad", agent_name: "Mohammed Azad", name: "Mohammed Azad", employee_id: "353", team: "Training Team", role_type: "trainer", department: "Training", manager_name: "Jalal Burghol", is_special_staff: true },
   { id: "mohammed_jihad", agent_name: "Mohammed Jihad", name: "Mohammed Jihad", employee_id: "356", team: "Quality Assurance Team", role_type: "qa", department: "Call center - Quality", manager_name: "Jalal Burghol", is_special_staff: true },
   { id: "lara_kamil", agent_name: "Lara Kamil", name: "Lara Kamil", employee_id: "351", team: "Quality Assurance Team", role_type: "qa", department: "Quality", manager_name: "Jalal Burghol", is_special_staff: true },
+  { id: "shireen_waisi", agent_name: "Shireen Waisi", name: "Shireen Waisi", employee_id: "370", team: "Back Office", role_type: "backoffice", department: "Back Office", manager_name: "Jalal Burghol", is_special_staff: true },
   { id: "ankido_buya", agent_name: "Ankido Buya", name: "Ankido Buya", employee_id: "340", team: "Ankido Buya Team", role_type: "tl", department: "Contact Center", manager_name: "Jalal Burghol", is_special_staff: true },
   { id: "younis_kamal", agent_name: "Younis Kamal", name: "Younis Kamal", employee_id: "373", team: "Younis Kamal Team", role_type: "tl", department: "Contact Center", manager_name: "Jalal Burghol", is_special_staff: true },
   { id: "mohammed_dlshad", agent_name: "Mohammed Dilshad", name: "Mohammed Dilshad", employee_id: "338", team: "Mohammed Dlshad Team", role_type: "tl", department: "Contact Center", manager_name: "Jalal Burghol", is_special_staff: true },
@@ -249,6 +258,8 @@ export { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 
 export const KNOWN_EMPLOYEE_IDS: Record<string, string> = {
+  "shireen waisi": "370",
+  "shireen_waisi": "370",
   "kani sami": "349",
   "kani_sami": "349",
   "soma sherko": "371",
@@ -339,9 +350,10 @@ export default function AnnualEvaluationDashboard({
   const isUserLaraKamil = emailLower.includes("lara") || nameLower.includes("lara");
   const isUserAnkido = emailLower.includes("ankido") || nameLower.includes("ankido");
   const isUserYounis = emailLower.includes("younis") || nameLower.includes("younis");
+  const isUserShireenWaisi = emailLower.includes("shireen") || nameLower.includes("shireen") || roleLower === "backoffice";
 
-  // Single-user view for Trainer & QA (they only see their own evaluation)
-  const isUserSpecialStaffOnly = (isUserMohammedAzad || isUserMohammedJihad || isUserLaraKamil) && !isAdmin && !isManager;
+  // Single-user view for Trainer, QA & Back Office (they only see their own evaluation)
+  const isUserSpecialStaffOnly = (isUserMohammedAzad || isUserMohammedJihad || isUserLaraKamil || isUserShireenWaisi) && !isAdmin && !isManager;
 
   // Strict Team Leader team scope
   const tlAssignedTeam: "Younis" | "Ankido" | "Mohammed" | null = useMemo(() => {
@@ -420,6 +432,7 @@ export default function AnnualEvaluationDashboard({
     if (myEmail.includes("azad") && targetName.includes("azad")) return true;
     if (myEmail.includes("jihad") && targetName.includes("jihad")) return true;
     if (myEmail.includes("lara") && targetName.includes("lara")) return true;
+    if (myEmail.includes("shireen") && targetName.includes("shireen")) return true;
     if (myEmail.includes("ankido") && targetName.includes("ankido")) return true;
     if (myEmail.includes("younis") && targetName.includes("younis")) return true;
     if (myEmail.includes("dlshad") && targetName.includes("dlshad")) return true;
@@ -427,7 +440,7 @@ export default function AnnualEvaluationDashboard({
   }, [userProfile, selectedEmployeeName]);
 
   // Current member role type
-  const currentMemberRoleType: "trainer" | "qa" | "tl" | "agent" = useMemo(() => {
+  const currentMemberRoleType: "trainer" | "qa" | "tl" | "backoffice" | "agent" = useMemo(() => {
     const norm = normalizeAgentName(selectedEmployeeName || "");
     const special = SPECIAL_STAFF_MEMBERS.find(s => normalizeAgentName(s.agent_name) === norm);
     if (special) return special.role_type;
@@ -655,7 +668,7 @@ export default function AnnualEvaluationDashboard({
       Younis: activeMembers.filter(m => (m.team || "").toLowerCase().includes("younis")).length,
       Ankido: activeMembers.filter(m => (m.team || "").toLowerCase().includes("ankido")).length,
       Mohammed: activeMembers.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad")).length,
-      QA_Training: activeMembers.filter(m => (m.team || "").toLowerCase().includes("quality") || (m.team || "").toLowerCase().includes("training") || m.role_type === "trainer" || m.role_type === "qa").length,
+      QA_Training: activeMembers.filter(m => (m.team || "").toLowerCase().includes("quality") || (m.team || "").toLowerCase().includes("training") || (m.team || "").toLowerCase().includes("back office") || m.role_type === "trainer" || m.role_type === "qa" || m.role_type === "backoffice").length,
     };
   }, [effectiveAllMembers, selectedPeriod, selectedYear]);
 
@@ -663,7 +676,7 @@ export default function AnnualEvaluationDashboard({
   const filteredMembers = useMemo(() => {
     let list = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, selectedPeriod === "Semi-Annual" ? "H1" : "YEAR - AVG", String(selectedYear)));
     
-    // Special Staff (Mohammed Azad, Mohammed Jihad, Lara Kamil): strictly view only their own evaluation
+    // Special Staff (Mohammed Azad, Mohammed Jihad, Lara Kamil, Shireen Waisi): strictly view only their own evaluation
     // "هذا مال محمد ازاد الترينر خلي من يفتح التقيم بس يشوف مالته"
     // "و هذا مال محمد جهاد هم نفس الشي"
     // "زهذا مال لارا هم نفس الشي"
@@ -676,6 +689,9 @@ export default function AnnualEvaluationDashboard({
       }
       if (isUserLaraKamil) {
         return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("lara"));
+      }
+      if (isUserShireenWaisi) {
+        return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("shireen"));
       }
     }
 
@@ -731,7 +747,7 @@ export default function AnnualEvaluationDashboard({
     } else if (teamTabFilter === "Mohammed") {
       list = list.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad"));
     } else if (teamTabFilter === "QA_Training") {
-      list = list.filter(m => (m.team || "").toLowerCase().includes("quality") || (m.team || "").toLowerCase().includes("training") || m.role_type === "trainer" || m.role_type === "qa");
+      list = list.filter(m => (m.team || "").toLowerCase().includes("quality") || (m.team || "").toLowerCase().includes("training") || (m.team || "").toLowerCase().includes("back office") || m.role_type === "trainer" || m.role_type === "qa" || m.role_type === "backoffice");
     } else {
       // Default to Younis
       list = list.filter(m => (m.team || "").toLowerCase().includes("younis"));
@@ -742,7 +758,7 @@ export default function AnnualEvaluationDashboard({
       if (b.role_type === "tl" && a.role_type !== "tl") return 1;
       return (a.agent_name || "").localeCompare(b.agent_name || "");
     });
-  }, [effectiveAllMembers, employeeSearchTerm, teamTabFilter, isAgent, tlAssignedTeam, userProfile, selectedPeriod, selectedYear, isUserSpecialStaffOnly, isUserMohammedAzad, isUserMohammedJihad, isUserLaraKamil]);
+  }, [effectiveAllMembers, employeeSearchTerm, teamTabFilter, isAgent, tlAssignedTeam, userProfile, selectedPeriod, selectedYear, isUserSpecialStaffOnly, isUserMohammedAzad, isUserMohammedJihad, isUserLaraKamil, isUserShireenWaisi]);
 
   // Current selected member object
   const currentMember = useMemo(() => {
@@ -964,6 +980,11 @@ export default function AnnualEvaluationDashboard({
         setTeamTabFilter("QA_Training");
         return;
       }
+      if (isUserShireenWaisi) {
+        setSelectedEmployeeName("Shireen Waisi");
+        setTeamTabFilter("QA_Training");
+        return;
+      }
     }
 
     // 2. Regular Agent: strictly lock to their own self profile
@@ -1011,7 +1032,7 @@ export default function AnnualEvaluationDashboard({
       setSelectedEmployeeName(defaultMember.agent_name);
       setTeamTabFilter("Younis");
     }
-  }, [isAgent, isUserSpecialStaffOnly, isUserMohammedAzad, isUserMohammedJihad, isUserLaraKamil, userProfile, effectiveAllMembers, selectedEmployeeName, tlAssignedTeam]);
+  }, [isAgent, isUserSpecialStaffOnly, isUserMohammedAzad, isUserMohammedJihad, isUserLaraKamil, isUserShireenWaisi, userProfile, effectiveAllMembers, selectedEmployeeName, tlAssignedTeam]);
 
   // Auto-fill Employee info when currentMember changes
   useEffect(() => {
@@ -1027,7 +1048,7 @@ export default function AnnualEvaluationDashboard({
       // Sync team tab filter if not searching
       if (!employeeSearchTerm.trim()) {
         const t = (currentMember.team || "").toLowerCase();
-        if (currentMember.role_type === "trainer" || currentMember.role_type === "qa" || t.includes("training") || t.includes("quality")) {
+        if (currentMember.role_type === "trainer" || currentMember.role_type === "qa" || currentMember.role_type === "backoffice" || t.includes("training") || t.includes("quality") || t.includes("back office")) {
           if (teamTabFilter !== "QA_Training") setTeamTabFilter("QA_Training");
         } else if (t.includes("ankido") && teamTabFilter !== "Ankido") {
           setTeamTabFilter("Ankido");
@@ -1312,6 +1333,9 @@ export default function AnnualEvaluationDashboard({
     if (currentMemberRoleType === "tl") {
       return TL_KPIS;
     }
+    if (currentMemberRoleType === "backoffice") {
+      return BACKOFFICE_KPIS;
+    }
     if (isSelectedEmployeeChat) {
       return [
         { id: "qa", name: "Quality Assurance", actual: actualMetricsSummary?.qa },
@@ -1490,7 +1514,7 @@ export default function AnnualEvaluationDashboard({
         evaluation_date: autoDate,
         employee_name: selectedEmployeeName,
         employee_id: employeeId || "",
-        department: currentMember?.department || (currentMemberRoleType === "trainer" ? "Training" : currentMemberRoleType === "qa" ? "Quality" : "Contact Center"),
+        department: currentMember?.department || (currentMemberRoleType === "trainer" ? "Training" : currentMemberRoleType === "qa" ? "Quality" : currentMemberRoleType === "backoffice" ? "Back Office" : "Contact Center"),
         team: currentMember?.team || "Contact Center",
         team_leader: teamLeader || resolveTeamLeader(currentMember?.team),
         channel_type: currentMemberRoleType !== "agent" ? currentMemberRoleType : (isSelectedEmployeeChat ? "chat" : "calls"),
@@ -1652,10 +1676,10 @@ export default function AnnualEvaluationDashboard({
             <button
               onClick={onBack}
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white bg-white hover:bg-gray-100/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
-              title="Return to Main Dashboard"
+              title={isUserShireenWaisi ? "Sign Out" : "Return to Main Dashboard"}
             >
               <ArrowLeft size={14} />
-              <span>Back</span>
+              <span>{isUserShireenWaisi ? "Sign Out" : "Back"}</span>
             </button>
           </div>
         </div>
@@ -1771,7 +1795,7 @@ export default function AnnualEvaluationDashboard({
                   <div>
                     <div className="text-xs font-black text-gray-900 dark:text-white">{toTitleCase(selectedEmployeeName)}</div>
                     <div className="text-[10px] text-[#1C6B53] dark:text-emerald-400 font-bold">
-                      {currentMember?.role_type === 'trainer' ? 'Training • Trainer' : currentMember?.role_type === 'qa' ? 'Quality Assurance' : currentMember?.team?.replace(' Team', '') || 'Contact Center'}
+                      {currentMember?.role_type === 'trainer' ? 'Training • Trainer' : currentMember?.role_type === 'qa' ? 'Quality Assurance' : currentMember?.role_type === 'backoffice' ? 'Back Office' : currentMember?.team?.replace(' Team', '') || 'Contact Center'}
                     </div>
                   </div>
                 </div>
@@ -1803,6 +1827,8 @@ export default function AnnualEvaluationDashboard({
                           ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
                           : currentMemberRoleType === 'tl'
                           ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                          : currentMemberRoleType === 'backoffice'
+                          ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
                           : isSelectedEmployeeChat
                           ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
                           : "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
@@ -1810,11 +1836,13 @@ export default function AnnualEvaluationDashboard({
                         {currentMemberRoleType === 'trainer' ? <Award size={10} /> :
                          currentMemberRoleType === 'qa' ? <ShieldCheck size={10} /> :
                          currentMemberRoleType === 'tl' ? <Star size={10} /> :
+                         currentMemberRoleType === 'backoffice' ? <ListChecks size={10} /> :
                          isSelectedEmployeeChat ? <MessageSquare size={10} /> : <PhoneCall size={10} />}
                         <span>
                           {currentMemberRoleType === 'trainer' ? 'Trainer' :
                            currentMemberRoleType === 'qa' ? 'QA' :
                            currentMemberRoleType === 'tl' ? 'Team Leader' :
+                           currentMemberRoleType === 'backoffice' ? 'Back Office' :
                            isSelectedEmployeeChat ? 'Chat' : 'Calls'}
                         </span>
                       </span>
@@ -1871,7 +1899,7 @@ export default function AnnualEvaluationDashboard({
                             { id: "Younis", label: "Younis Kamal", count: teamCounts.Younis, icon: PhoneCall },
                             { id: "Ankido", label: "Ankido Buya", count: teamCounts.Ankido, icon: PhoneCall },
                             { id: "Mohammed", label: "Mohammed Dlshad", count: teamCounts.Mohammed, icon: MessageSquare },
-                            { id: "QA_Training", label: "QA & Training", count: teamCounts.QA_Training, icon: ShieldCheck },
+                            { id: "QA_Training", label: "QA & Back Office", count: teamCounts.QA_Training, icon: ShieldCheck },
                           ]
                           .filter(tab => !tlAssignedTeam || tab.id === tlAssignedTeam)
                           .map(tab => {
@@ -1892,7 +1920,7 @@ export default function AnnualEvaluationDashboard({
                                 }`}
                               >
                                 <TabIcon size={11} className={isActive ? 'text-emerald-200' : 'text-gray-400'} />
-                                <span className="truncate">{tab.id === 'QA_Training' ? 'QA & Training' : tab.label.split(' ')[0]}</span>
+                                <span className="truncate">{tab.id === 'QA_Training' ? 'QA & Back Office' : tab.label.split(' ')[0]}</span>
                                 <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
                                   isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                                 }`}>
@@ -2073,7 +2101,7 @@ export default function AnnualEvaluationDashboard({
                       <>
                         <span>•</span>
                         <span className="px-2 py-0.5 rounded-full bg-white/20 text-white font-black text-[10px] uppercase tracking-wider">
-                          {currentMemberRoleType === 'trainer' ? 'Trainer' : currentMemberRoleType === 'qa' ? 'Quality Assurance' : 'Team Leader'}
+                          {currentMemberRoleType === 'trainer' ? 'Trainer' : currentMemberRoleType === 'qa' ? 'Quality Assurance' : currentMemberRoleType === 'backoffice' ? 'Back Office' : 'Team Leader'}
                         </span>
                       </>
                     )}
@@ -2169,6 +2197,7 @@ export default function AnnualEvaluationDashboard({
                     {currentMemberRoleType === "trainer" ? "Training Performance KPI Evaluation" :
                      currentMemberRoleType === "qa" ? "Quality Assurance KPI Evaluation" :
                      currentMemberRoleType === "tl" ? "Leadership & Team Management KPI Evaluation" :
+                     currentMemberRoleType === "backoffice" ? "Back Office Operational KPI Evaluation" :
                      "Operational KPI Evaluation"}
                   </h3>
                 </div>
@@ -2531,7 +2560,7 @@ export default function AnnualEvaluationDashboard({
               {/* Employee Summary Card */}
               <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-blue-200 dark:border-blue-900/60 shadow-2xs">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-blue-700 dark:text-blue-300">Agent Self-Review</span>
+                  <span className="text-xs font-bold text-blue-700 dark:text-blue-300">{currentMemberRoleType === 'agent' ? 'Agent Self-Review' : 'Self-Review'}</span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">
                     Self
                   </span>
