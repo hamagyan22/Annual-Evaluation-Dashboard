@@ -263,6 +263,10 @@ export { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 
 export const KNOWN_EMPLOYEE_IDS: Record<string, string> = {
+  "alla satar": "339",
+  "alla_satar": "339",
+  "zhalla salam": "377",
+  "zhalla_salam": "377",
   "rabar mohammed": "364",
   "rabar_mohammed": "364",
   "taban sirwan": "372",
@@ -2385,6 +2389,11 @@ export default function AnnualEvaluationDashboard({
                                 {lvl}
                               </button>
                             ))}
+                            {selfVal > 0 && selfVal % 1 !== 0 && (
+                              <span className="ml-1 px-1.5 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-black">
+                                {selfVal}
+                              </span>
+                            )}
                           </div>
                         </td>
 
@@ -2415,6 +2424,11 @@ export default function AnnualEvaluationDashboard({
                                   {lvl}
                                 </button>
                               ))}
+                              {mgrVal > 0 && mgrVal % 1 !== 0 && (
+                                <span className="ml-1 px-1.5 py-0.5 rounded-md bg-[#1C6B53] text-white text-[10px] font-black">
+                                  {mgrVal}
+                                </span>
+                              )}
                             </div>
                           )}
                         </td>

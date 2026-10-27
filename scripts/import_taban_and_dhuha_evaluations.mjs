@@ -240,6 +240,146 @@ async function runImport() {
   await setDoc(doc(db, "annual_evaluations", rabarDocId), rabarData, { merge: true });
   console.log(`Successfully saved Rabar Mohammed to: annual_evaluations/${rabarDocId}`);
 
+  // 4. Alla Satar (Call Agent - Semi-Annual 2026)
+  const allaData = {
+    year: "2026",
+    period: "Semi-Annual",
+    review_period: "H1 2026",
+    employee_name: "Alla Satar",
+    employee_id: "339",
+    department: "Contact Center",
+    team: "Ankido Buya Team",
+    team_leader: "Ankido Buya",
+    channel_type: "calls",
+    role_type: "agent",
+    is_special_staff: false,
+    evaluation_date: "19/7/2026",
+    status: "manager_finalized",
+
+    self_kpis: {
+      qa: 3,
+      productivity: 2,
+      attendance: 3,
+      aht: 5,
+      knowledge: 2,
+      exam: 2
+    },
+    self_competencies: {
+      communication: 4,
+      problem_solving: 3,
+      accountability: 3,
+      initiative: 2,
+      responsibility: 5,
+      team_work: 5
+    },
+    self_kpi_avg: 3.00,
+    self_competency_avg: 3.67,
+    self_overall_score: 3.33,
+    self_comments: "",
+
+    manager_kpis: {
+      qa: 3,
+      productivity: 2,
+      attendance: 3,
+      aht: 5,
+      knowledge: 2,
+      exam: 2
+    },
+    manager_competencies: {
+      communication: 4,
+      problem_solving: 3,
+      accountability: 3,
+      initiative: 2,
+      responsibility: 5,
+      team_work: 5
+    },
+    manager_kpi_avg: 3.00,
+    manager_competency_avg: 3.67,
+    manager_overall_score: 3.33,
+    manager_strengths: "",
+    manager_improvements: "",
+    manager_comments: "",
+
+    manager_submitted_at: nowIso,
+    self_submitted_at: nowIso,
+    updated_at: nowIso,
+    last_modified_by: "Official Import (H1 2026 Excel Sheet)"
+  };
+
+  const allaDocId = "2026_Semi-Annual_alla_satar";
+  await setDoc(doc(db, "annual_evaluations", allaDocId), allaData, { merge: true });
+  console.log(`Successfully saved Alla Satar to: annual_evaluations/${allaDocId}`);
+
+  // 5. Zhalla Salam (Call Agent - Semi-Annual 2026)
+  const zhallaData = {
+    year: "2026",
+    period: "Semi-Annual",
+    review_period: "H1 2026",
+    employee_name: "Zhalla Salam",
+    employee_id: "377",
+    department: "Contact Center",
+    team: "Ankido Buya Team",
+    team_leader: "Ankido Buya",
+    channel_type: "calls",
+    role_type: "agent",
+    is_special_staff: false,
+    evaluation_date: "19/7/2026",
+    status: "manager_finalized",
+
+    self_kpis: {
+      qa: 5,
+      productivity: 3,
+      attendance: 3,
+      aht: 4,
+      knowledge: 4,
+      exam: 4
+    },
+    self_competencies: {
+      communication: 5,
+      problem_solving: 5,
+      accountability: 5,
+      initiative: 2,
+      responsibility: 5,
+      team_work: 5
+    },
+    self_kpi_avg: 3.70,
+    self_competency_avg: 4.50,
+    self_overall_score: 4.10,
+    self_comments: "",
+
+    manager_kpis: {
+      qa: 4,
+      productivity: 4,
+      attendance: 5,
+      aht: 4,
+      knowledge: 4,
+      exam: 4
+    },
+    manager_competencies: {
+      communication: 5,
+      problem_solving: 3.5,
+      accountability: 3.5,
+      initiative: 4,
+      responsibility: 4,
+      team_work: 5
+    },
+    manager_kpi_avg: 4.00,
+    manager_competency_avg: 4.17,
+    manager_overall_score: 4.08,
+    manager_strengths: "",
+    manager_improvements: "",
+    manager_comments: "",
+
+    manager_submitted_at: nowIso,
+    self_submitted_at: nowIso,
+    updated_at: nowIso,
+    last_modified_by: "Official Import (H1 2026 Excel Sheet)"
+  };
+
+  const zhallaDocId = "2026_Semi-Annual_zhalla_salam";
+  await setDoc(doc(db, "annual_evaluations", zhallaDocId), zhallaData, { merge: true });
+  console.log(`Successfully saved Zhalla Salam to: annual_evaluations/${zhallaDocId}`);
+
   console.log("All evaluations imported successfully!");
   process.exit(0);
 }
