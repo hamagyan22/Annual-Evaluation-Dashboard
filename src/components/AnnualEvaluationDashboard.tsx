@@ -1045,21 +1045,24 @@ export default function AnnualEvaluationDashboard({
       } else {
         setTeamLeader(resolveTeamLeader(currentMember.team));
       }
-      // Sync team tab filter if not searching
-      if (!employeeSearchTerm.trim()) {
-        const t = (currentMember.team || "").toLowerCase();
-        if (currentMember.role_type === "trainer" || currentMember.role_type === "qa" || currentMember.role_type === "backoffice" || t.includes("training") || t.includes("quality") || t.includes("back office")) {
-          if (teamTabFilter !== "QA_Training") setTeamTabFilter("QA_Training");
-        } else if (t.includes("ankido") && teamTabFilter !== "Ankido") {
-          setTeamTabFilter("Ankido");
-        } else if ((t.includes("mohammed") || t.includes("dlshad")) && teamTabFilter !== "Mohammed") {
-          setTeamTabFilter("Mohammed");
-        } else if (t.includes("younis") && teamTabFilter !== "Younis") {
-          setTeamTabFilter("Younis");
-        }
+    }
+  }, [currentMember]);
+
+  // Sync team tab filter when a newly selected employee changes (e.g. from search, direct select or modal)
+  useEffect(() => {
+    if (currentMember && !tlAssignedTeam) {
+      const t = (currentMember.team || "").toLowerCase();
+      if (currentMember.role_type === "trainer" || currentMember.role_type === "qa" || currentMember.role_type === "backoffice" || t.includes("training") || t.includes("quality") || t.includes("back office")) {
+        setTeamTabFilter("QA_Training");
+      } else if (t.includes("ankido")) {
+        setTeamTabFilter("Ankido");
+      } else if (t.includes("mohammed") || t.includes("dlshad")) {
+        setTeamTabFilter("Mohammed");
+      } else if (t.includes("younis")) {
+        setTeamTabFilter("Younis");
       }
     }
-  }, [currentMember, employeeSearchTerm, teamTabFilter]);
+  }, [selectedEmployeeName]);
 
   // Document ID in Firestore: `${year}_${period}_${cleanSlug}`
   const docId = useMemo(() => {
@@ -1853,7 +1856,7 @@ export default function AnnualEvaluationDashboard({
                   {employeeDropdownOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setEmployeeDropdownOpen(false)} />
-                      <div className="absolute right-0 top-full mt-2 w-full sm:w-[420px] bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-3xl shadow-2xl p-3 z-50 max-h-[460px] flex flex-col animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/10">
+                      <div className="absolute right-0 top-full mt-2 w-full sm:w-[460px] bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-3xl shadow-2xl p-3 z-50 max-h-[460px] flex flex-col animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/10">
                         
                         {/* Header */}
                         <div className="px-2 pt-1 pb-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
@@ -1894,12 +1897,12 @@ export default function AnnualEvaluationDashboard({
                         </div>
 
                         {/* Team Filter Pills: Younis Kamal, Ankido Buya, Mohammed Dlshad, QA & Training */}
-                        <div className={`grid ${tlAssignedTeam ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-4'} gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0`}>
+                        <div className={`grid ${tlAssignedTeam ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-4'} gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0`}>
                           {[
                             { id: "Younis", label: "Younis Kamal", count: teamCounts.Younis, icon: PhoneCall },
                             { id: "Ankido", label: "Ankido Buya", count: teamCounts.Ankido, icon: PhoneCall },
                             { id: "Mohammed", label: "Mohammed Dlshad", count: teamCounts.Mohammed, icon: MessageSquare },
-                            { id: "QA_Training", label: "QA & Back Office", count: teamCounts.QA_Training, icon: ShieldCheck },
+                            { id: "QA_Training", label: "QA, Training & Back Office", count: teamCounts.QA_Training, icon: ShieldCheck },
                           ]
                           .filter(tab => !tlAssignedTeam || tab.id === tlAssignedTeam)
                           .map(tab => {
@@ -1909,19 +1912,20 @@ export default function AnnualEvaluationDashboard({
                               <button
                                 key={tab.id}
                                 type="button"
+                                title={tab.label}
                                 onClick={() => {
                                   setTeamTabFilter(tab.id);
                                   setEmployeeSearchTerm("");
                                 }}
-                                className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-[10px] font-bold transition cursor-pointer ${
+                                className={`flex items-center justify-center gap-1 py-1.5 px-1.5 rounded-xl text-[10px] font-bold transition cursor-pointer ${
                                   isActive
                                     ? 'bg-[#1C6B53] text-white shadow-xs font-black'
                                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-700'
                                 }`}
                               >
-                                <TabIcon size={11} className={isActive ? 'text-emerald-200' : 'text-gray-400'} />
-                                <span className="truncate">{tab.id === 'QA_Training' ? 'QA & Back Office' : tab.label.split(' ')[0]}</span>
-                                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
+                                <TabIcon size={11} className={isActive ? 'text-emerald-200 shrink-0' : 'text-gray-400 shrink-0'} />
+                                <span className="truncate">{tab.id === 'QA_Training' ? 'QA & Ops' : tab.label.split(' ')[0]}</span>
+                                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black shrink-0 ${
                                   isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                                 }`}>
                                   {tab.count}
@@ -1936,7 +1940,7 @@ export default function AnnualEvaluationDashboard({
                           <span>
                             {employeeSearchTerm.trim() 
                               ? `${filteredMembers.length} Matching Search` 
-                              : `${filteredMembers.length} Members in ${teamTabFilter === 'QA_Training' ? 'QA & Training' : teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' : teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'}`}
+                              : `${filteredMembers.length} Members in ${teamTabFilter === 'QA_Training' ? 'QA, Training & Back Office' : teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' : teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'}`}
                           </span>
                           <span className="text-[9px] font-bold text-[#1C6B53] dark:text-emerald-400">
                             {teamTabFilter === 'QA_Training' ? 'Specialized Operations' : teamTabFilter === 'Mohammed' ? 'Digital Chat' : 'Voice Calls'}
