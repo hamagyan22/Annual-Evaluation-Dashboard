@@ -139,7 +139,7 @@ export function UnifiedTopNavbar({
   ].filter(item => item.show);
 
   return (
-    <div className={`flex items-center gap-1 sm:gap-1.5 p-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-sm flex-wrap w-full sm:w-auto justify-end ${className}`}>
+    <div className={`inline-flex items-center gap-1 sm:gap-1.5 p-1 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl shadow-xs flex-nowrap shrink-0 max-w-full overflow-x-auto scrollbar-none select-none ${className}`}>
       
       {/* Optional Back Button (if preview mode or explicit sub-view) */}
       {showBack && onBack && (
@@ -147,18 +147,18 @@ export function UnifiedTopNavbar({
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 h-8 px-2.5 rounded-xl text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
             title={backLabel}
           >
-            <ArrowLeft size={13.5} />
-            <span>{backLabel}</span>
+            <ArrowLeft size={13} />
+            <span className="leading-none">{backLabel}</span>
           </button>
-          <div className="h-4 w-px bg-gray-200 dark:bg-gray-700/80 mx-0.5 shrink-0" />
+          <div className="h-4 w-px bg-gray-200 dark:bg-gray-800 mx-0.5 shrink-0" />
         </>
       )}
 
       {/* Navigation Buttons */}
-      <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-0.5">
+      <div className="flex items-center gap-1 shrink-0">
         {navItems.map((item) => {
           const isActive = currentDashboard === item.id;
           const ItemIcon = item.icon;
@@ -172,36 +172,35 @@ export function UnifiedTopNavbar({
                   onNavigate(item.id);
                 }
               }}
-              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs transition-all shrink-0 cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 h-8 rounded-xl text-xs transition-all shrink-0 cursor-pointer ${
                 isActive
-                  ? 'bg-emerald-50/90 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-black border border-emerald-300/80 dark:border-emerald-700/60 shadow-xs ring-1 ring-emerald-400/20'
-                  : 'font-bold text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-gray-700/60'
+                  ? 'bg-[#1C6B53] text-white font-black shadow-xs ring-1 ring-[#1C6B53]/30'
+                  : 'font-bold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/90 dark:hover:bg-gray-800/80'
               }`}
               title={item.label}
             >
-              <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-transform shadow-2xs shrink-0 ${
-                isActive
-                  ? 'bg-[#1C6B53] dark:bg-emerald-500 text-white font-black'
-                  : `${item.iconBg} ${item.iconColor} group-hover:scale-105`
-              }`}>
-                <ItemIcon size={13.5} className={item.id === 'topstar' ? (isActive ? 'fill-white' : 'fill-amber-500/30') : ''} />
-              </div>
-              <span className="whitespace-nowrap">{item.label}</span>
+              <ItemIcon 
+                size={13.5} 
+                className={`shrink-0 transition-transform ${
+                  isActive ? 'text-white' : item.iconColor
+                } ${item.id === 'topstar' ? (isActive ? 'fill-white' : 'fill-amber-500/30') : ''}`} 
+              />
+              <span className="whitespace-nowrap leading-none">{item.label}</span>
             </button>
           );
         })}
       </div>
 
-      <div className="h-4 w-px bg-gray-200 dark:bg-gray-700/80 mx-0.5 shrink-0" />
+      <div className="h-4 w-px bg-gray-200 dark:bg-gray-800 mx-0.5 shrink-0" />
 
       {/* User Profile Pill */}
       <button 
         type="button"
         onClick={onOpenProfile}
-        className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-gray-700/60 transition-all group cursor-pointer shrink-0"
+        className="flex items-center gap-1.5 sm:gap-2 h-8 px-2 sm:px-2.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100/90 dark:hover:bg-gray-800/80 transition-all group cursor-pointer shrink-0"
         title="Profile Settings"
       >
-        <div className="w-6 sm:w-7 h-6 sm:h-7 rounded-full bg-gradient-to-tr from-[#1C6B53] to-emerald-400 flex items-center justify-center overflow-hidden ring-2 ring-[#1C6B53]/20 dark:ring-emerald-400/20 text-white font-black text-xs shadow-sm shrink-0">
+        <div className="w-5.5 h-5.5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-tr from-[#1C6B53] to-emerald-400 flex items-center justify-center overflow-hidden ring-1 ring-[#1C6B53]/30 dark:ring-emerald-400/30 text-white font-black text-[10px] sm:text-xs shadow-2xs shrink-0">
           {userProfile?.photo_url ? (
             <img src={userProfile.photo_url} alt="Profile" className="w-full h-full object-cover" />
           ) : (
@@ -209,27 +208,27 @@ export function UnifiedTopNavbar({
           )}
         </div>
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className="max-w-[70px] sm:max-w-[120px] truncate group-hover:text-[#1C6B53] dark:group-hover:text-emerald-400 transition-colors">
+          <span className="max-w-[75px] sm:max-w-[110px] truncate text-gray-900 dark:text-white font-black leading-none group-hover:text-[#1C6B53] dark:group-hover:text-emerald-400 transition-colors">
             {displayName}
           </span>
-          <span className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-wider ${roleBadgeClass}`}>
+          <span className={`text-[8px] sm:text-[8.5px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-wider leading-none shrink-0 ${roleBadgeClass}`}>
             {roleBadgeText}
           </span>
         </div>
       </button>
 
-      <div className="h-4 w-px bg-gray-200 dark:bg-gray-700/80 mx-0.5 shrink-0" />
+      <div className="h-4 w-px bg-gray-200 dark:bg-gray-800 mx-0.5 shrink-0" />
 
       {/* Utilities: Settings (Admin), Dark Mode, Theme, Logout */}
-      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+      <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
         {isAdmin && onOpenSettings && (
           <button
             type="button"
             onClick={onOpenSettings}
-            className="flex items-center justify-center w-8 h-8 rounded-xl text-gray-500 dark:text-gray-400 hover:text-[#1C6B53] dark:hover:text-emerald-400 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40 transition-all group cursor-pointer"
+            className="flex items-center justify-center w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-xl text-gray-500 hover:text-[#1C6B53] dark:text-gray-400 dark:hover:text-emerald-400 hover:bg-gray-100/90 dark:hover:bg-gray-800/80 transition-all group cursor-pointer shrink-0"
             title="Settings"
           >
-            <Settings size={15} className="group-hover:rotate-45 transition-transform duration-200" />
+            <Settings size={14} className="group-hover:rotate-45 transition-transform duration-200" />
           </button>
         )}
 
@@ -238,26 +237,26 @@ export function UnifiedTopNavbar({
           <button 
             type="button"
             onClick={toggleDarkMode} 
-            className="w-8 sm:w-8.5 h-8 sm:h-8.5 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors cursor-pointer shrink-0"
+            className="w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center text-gray-500 hover:text-amber-500 dark:text-gray-400 dark:hover:text-amber-400 hover:bg-gray-100/90 dark:hover:bg-gray-800/80 transition-colors cursor-pointer shrink-0"
             title="Toggle Dark Mode"
           >
-            {isDarkMode ? <Sun size={15} className="text-amber-500" /> : <Moon size={15} />}
+            {isDarkMode ? <Sun size={14} className="text-amber-500" /> : <Moon size={14} />}
           </button>
         )}
 
         {/* Theme Palette Selector */}
-        <ThemeSelectorModal />
+        <ThemeSelectorModal className="!w-7.5 !h-7.5 sm:!w-8 sm:!h-8 !rounded-xl" />
 
         {/* Logout Button */}
         {onLogout && (
           <button 
             type="button"
             onClick={onLogout} 
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/40 transition-all cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 h-7.5 sm:h-8 px-2 sm:px-2.5 rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/40 transition-all cursor-pointer shrink-0"
             title="Logout"
           >
-            <LogOut size={14} />
-            <span className="hidden xs:inline sm:inline">Logout</span>
+            <LogOut size={13.5} />
+            <span className="hidden sm:inline font-bold leading-none">Logout</span>
           </button>
         )}
       </div>

@@ -5088,19 +5088,17 @@ export default function Dashboard() {
       <div className="min-h-screen p-3.5 sm:p-6 md:p-10 font-sans transition-colors bg-[#F9F8F4] dark:bg-gray-900 dark:text-gray-100">
         <div className="max-w-[1400px] mx-auto">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-6 sm:mb-8 gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-gray-200/60 dark:border-gray-800 relative z-30">
-            <div className="flex items-center gap-3 sm:gap-5 w-full sm:w-auto justify-between sm:justify-start">
-              <div className="flex items-center gap-2.5 sm:gap-3">
-                <img src="/logo.webp" alt="FIB Logo" className="h-9 sm:h-12 w-auto object-contain" />
-                <div className="h-8 sm:h-10 w-[1.5px] bg-gray-200 dark:bg-gray-700" />
-                <div>
-                  <h1 className="text-lg sm:text-2xl font-black tracking-tight text-gray-900 dark:text-white leading-none">
-                    {isAdmin ? 'Administrator Dashboard' : isManager ? 'Manager Dashboard' : 'Team Leader Dashboard'}
-                  </h1>
-                  <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
-                    {isAdmin ? 'System Administration & Performance Analytics' : isManager ? 'Executive Oversight & Analytics' : 'Performance & Quality Analytics'}
-                  </p>
-                </div>
+          <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center w-full mb-6 sm:mb-8 gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-gray-200/60 dark:border-gray-800 relative z-30">
+            <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+              <img src="/logo.webp" alt="FIB Logo" className="h-9 sm:h-11 w-auto object-contain shrink-0" />
+              <div className="h-8 sm:h-9 w-[1.5px] bg-gray-200 dark:bg-gray-700 shrink-0" />
+              <div className="shrink-0">
+                <h1 className="text-base sm:text-xl font-black tracking-tight text-gray-900 dark:text-white leading-none">
+                  {isAdmin ? 'Administrator Dashboard' : isManager ? 'Manager Dashboard' : 'Team Leader Dashboard'}
+                </h1>
+                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
+                  {isAdmin ? 'System Administration & Performance Analytics' : isManager ? 'Executive Oversight & Analytics' : 'Performance & Quality Analytics'}
+                </p>
               </div>
             </div>
             
