@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { 
   X, Play, Pause, SkipForward, SkipBack, RotateCcw, Volume2, VolumeX, 
   Download, Sparkles, Film, CheckCircle2, Share2, RefreshCw, Upload, 
@@ -61,6 +62,11 @@ export default function TopStarCelebrationVideoModal({
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Photo management state
   const [showPhotoManager, setShowPhotoManager] = useState(false);
@@ -630,8 +636,9 @@ export default function TopStarCelebrationVideoModal({
   }, [top3Chat, top3Call, getPhoto]);
 
   if (!isOpen) return null;
+  if (!isClient || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200 font-['Plus_Jakarta_Sans',sans-serif]">
       
       {/* Hidden file input for photo upload */}
@@ -1083,6 +1090,7 @@ export default function TopStarCelebrationVideoModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

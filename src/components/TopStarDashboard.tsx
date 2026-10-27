@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { db, getSystemAuthor } from "@/lib/firebaseClient";
 import { collection, query, where, getDocs, doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 import { 
@@ -184,6 +185,11 @@ export default function TopStarDashboard({
 
   // Top 3 Celebration & Appreciation Video Modal state
   const [showCelebrationVideo, setShowCelebrationVideo] = useState<boolean>(false);
+  const [isClient, setIsClient] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Prevent background body scroll when any modal is open across the dashboard
   useEffect(() => {
@@ -765,7 +771,7 @@ export default function TopStarDashboard({
       )}
 
       {/* KPI Criteria Modal (With Edit Ability for Admin/Manager & 5-Star Rating Matrix) */}
-      {showCriteriaModal && (
+      {showCriteriaModal && isClient && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl max-w-3xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
             
@@ -1259,7 +1265,8 @@ export default function TopStarDashboard({
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Top 3 Celebration & Appreciation Video Modal */}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { db } from "@/lib/firebaseClient";
 import { collection, doc, getDocs, query, where, onSnapshot, setDoc } from "firebase/firestore";
 import { 
@@ -485,6 +486,11 @@ export default function AnnualEvaluationDashboard({
   const [coverageTeamFilter, setCoverageTeamFilter] = useState<string>("all");
   const [coverageSearchTerm, setCoverageSearchTerm] = useState<string>("");
   const [coverageCopiedToast, setCoverageCopiedToast] = useState<boolean>(false);
+  const [isClient, setIsClient] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Prevent background body scroll when any modal is open across the dashboard
   useEffect(() => {
@@ -2697,7 +2703,7 @@ export default function AnnualEvaluationDashboard({
       </div>
 
       {/* KPI Benchmark Informational Guide Modal */}
-      {showBenchmarkGuideModal && (
+      {showBenchmarkGuideModal && isClient && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             
@@ -3179,11 +3185,12 @@ export default function AnnualEvaluationDashboard({
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Evaluation Coverage & Tracking Modal (Who's Evaluated / Who's Pending) - Manager & Admin Only */}
-      {showCoverageModal && (isManager || isAdmin) && (
+      {showCoverageModal && (isManager || isAdmin) && isClient && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             
@@ -3571,7 +3578,8 @@ export default function AnnualEvaluationDashboard({
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Copied Toast Notification */}
