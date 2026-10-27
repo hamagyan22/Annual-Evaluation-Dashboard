@@ -135,10 +135,10 @@ export function UnifiedTopNavbar({
   ].filter(item => item.show);
 
   return (
-    <div className={`inline-flex items-center gap-1 sm:gap-1.5 p-1 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl shadow-xs flex-nowrap shrink-0 max-w-full overflow-x-auto scrollbar-none select-none ${className}`}>
+    <div className={`relative inline-flex items-center gap-1 sm:gap-1.5 p-1 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl shadow-xs flex-nowrap shrink-0 max-w-full overflow-visible select-none ${className}`}>
       
       {/* Navigation Buttons */}
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-1 shrink-0 overflow-x-auto scrollbar-none">
         {navItems.map((item) => {
           const isActive = currentDashboard === item.id;
           const ItemIcon = item.icon;

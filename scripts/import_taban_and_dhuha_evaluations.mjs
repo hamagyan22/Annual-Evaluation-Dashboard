@@ -170,6 +170,76 @@ async function runImport() {
   }, { merge: true });
   console.log(`Successfully saved Dhuha Khanjer Noori alias to: annual_evaluations/${dhuhaNooriDocId}`);
 
+  // 3. Rabar Mohammed (Call Agent - Semi-Annual 2026)
+  const rabarData = {
+    year: "2026",
+    period: "Semi-Annual",
+    review_period: "H1 2026",
+    employee_name: "Rabar Mohammed",
+    employee_id: "364",
+    department: "Contact Center",
+    team: "Younis Kamal Team",
+    team_leader: "Younis Kamal",
+    channel_type: "calls",
+    role_type: "agent",
+    is_special_staff: false,
+    evaluation_date: "19/7/2026",
+    status: "manager_finalized",
+
+    self_kpis: {
+      qa: 3,
+      productivity: 2,
+      attendance: 4,
+      aht: 5,
+      knowledge: 4,
+      exam: 4
+    },
+    self_competencies: {
+      communication: 5,
+      problem_solving: 3,
+      accountability: 3,
+      initiative: 4,
+      responsibility: 3,
+      team_work: 5
+    },
+    self_kpi_avg: 3.60,
+    self_competency_avg: 3.83,
+    self_overall_score: 3.72,
+    self_comments: "",
+
+    manager_kpis: {
+      qa: 3,
+      productivity: 2,
+      attendance: 5,
+      aht: 5,
+      knowledge: 4,
+      exam: 4
+    },
+    manager_competencies: {
+      communication: 5,
+      problem_solving: 4,
+      accountability: 5,
+      initiative: 5,
+      responsibility: 4,
+      team_work: 5
+    },
+    manager_kpi_avg: 3.80,
+    manager_competency_avg: 4.67,
+    manager_overall_score: 4.24,
+    manager_strengths: "",
+    manager_improvements: "",
+    manager_comments: "",
+
+    manager_submitted_at: nowIso,
+    self_submitted_at: nowIso,
+    updated_at: nowIso,
+    last_modified_by: "Official Import (H1 2026 Excel Sheet)"
+  };
+
+  const rabarDocId = "2026_Semi-Annual_rabar_mohammed";
+  await setDoc(doc(db, "annual_evaluations", rabarDocId), rabarData, { merge: true });
+  console.log(`Successfully saved Rabar Mohammed to: annual_evaluations/${rabarDocId}`);
+
   console.log("All evaluations imported successfully!");
   process.exit(0);
 }

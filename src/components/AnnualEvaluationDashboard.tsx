@@ -263,6 +263,8 @@ export { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 
 export const KNOWN_EMPLOYEE_IDS: Record<string, string> = {
+  "rabar mohammed": "364",
+  "rabar_mohammed": "364",
   "taban sirwan": "372",
   "taban_sirwan": "372",
   "dhuha khanjer": "344",
@@ -1631,32 +1633,32 @@ export default function AnnualEvaluationDashboard({
         {/* Main Container */}
         <main className="w-full">
           
-          {/* Top Control Toolbar: Modern Year Dropdown, Period Switcher, Who's Pending?, Print / PDF, and Employee Selector */}
-          <section className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-xs mb-6 print:hidden">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          {/* Top Control Toolbar: Sleek, Ultra-Modern Harmonized Control Bar */}
+          <section className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl p-1.5 sm:p-2 shadow-xs mb-6 print:hidden">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
               
-              {/* Left Controls: ModernDropdown Year & Harmonized Period Switcher & Who's Pending */}
-              <div className="flex flex-wrap items-center gap-2.5">
+              {/* Left Controls: Year & Harmonized Period Switcher & Who's Pending */}
+              <div className="flex flex-wrap items-center gap-2">
                 
-                {/* Year Dropdown using ModernDropdown matching the whole project */}
+                {/* Year Dropdown using ModernDropdown with refined styling */}
                 <ModernDropdown
                   value={selectedYear}
                   onChange={(val) => setSelectedYear(val)}
                   options={AVAILABLE_YEARS}
-                  variant="solid-green"
+                  variant="gray"
                   size="md"
                   ariaLabel="Select Year"
                 />
 
-                {/* Period Switcher: Harmonized height and styling */}
-                <div className="flex items-center bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-xl border border-gray-200/80 dark:border-gray-700/80 shrink-0">
+                {/* Period Switcher: Sleek iOS-style segmented pill */}
+                <div className="flex items-center p-0.5 bg-gray-100 dark:bg-gray-800/80 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shrink-0 h-8.5">
                   <button
                     type="button"
                     onClick={() => setSelectedPeriod("Semi-Annual")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3 h-7.5 rounded-lg text-xs transition-all cursor-pointer ${
                       selectedPeriod === "Semi-Annual"
-                        ? 'bg-[#1C6B53] text-white shadow-xs'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                        ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 font-black shadow-xs ring-1 ring-black/5 dark:ring-white/10'
+                        : 'font-bold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   >
                     <span>Semi-Annual</span>
@@ -1665,10 +1667,10 @@ export default function AnnualEvaluationDashboard({
                   <button
                     type="button"
                     onClick={() => setSelectedPeriod("Annual")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3 h-7.5 rounded-lg text-xs transition-all cursor-pointer ${
                       selectedPeriod === "Annual"
-                        ? 'bg-[#1C6B53] text-white shadow-xs'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                        ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 font-black shadow-xs ring-1 ring-black/5 dark:ring-white/10'
+                        : 'font-bold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   >
                     <span>Annual</span>
@@ -1683,12 +1685,12 @@ export default function AnnualEvaluationDashboard({
                       setCoverageFilterStatus("pending");
                       setShowCoverageModal(true);
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100/90 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 text-xs font-black text-amber-900 dark:text-amber-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
+                    className="flex items-center gap-1.5 h-8.5 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/15 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-500/25 text-xs font-bold text-amber-800 dark:text-amber-300 transition active:scale-95 cursor-pointer shrink-0"
                     title="View Pending Employees"
                   >
-                    <ListChecks size={14} className="text-amber-600 dark:text-amber-400" />
+                    <ListChecks size={13.5} className="text-amber-600 dark:text-amber-400" />
                     <span>Who&apos;s Pending?</span>
-                    <span className="px-1.5 py-0.5 bg-amber-500 text-white rounded-full text-[10px] font-black shadow-2xs">
+                    <span className="px-1.5 py-0.2 bg-amber-500 text-white rounded-full text-[10px] font-black shadow-2xs">
                       {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount}
                     </span>
                   </button>
@@ -1697,13 +1699,13 @@ export default function AnnualEvaluationDashboard({
               </div>
 
               {/* Right Side: Print PDF & Employee Selector */}
-              <div className="flex items-center gap-2.5 flex-1 sm:flex-initial justify-end">
+              <div className="flex items-center gap-2 flex-1 sm:flex-initial justify-end">
                 
-                {/* Print / Save PDF Button moved down into toolbar */}
+                {/* Print / Save PDF Button */}
                 <button
                   type="button"
                   onClick={handlePrint}
-                  className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
+                  className="flex items-center gap-1.5 h-8.5 px-3 rounded-xl bg-gray-100/80 hover:bg-gray-200/80 dark:bg-gray-800 dark:hover:bg-gray-700/80 border border-gray-200/70 dark:border-gray-700/70 text-xs font-bold text-gray-700 dark:text-gray-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
                   title="Print / Save PDF"
                 >
                   <Printer size={13.5} className="text-[#1C6B53] dark:text-emerald-400" />
@@ -1711,69 +1713,66 @@ export default function AnnualEvaluationDashboard({
                 </button>
 
                 {/* Employee Selector */}
-                <div className="relative min-w-[240px]">
+                <div className="relative min-w-[200px] sm:min-w-[240px]">
                   {(isAgent || isUserSpecialStaffOnly) ? (
-                    <div className="flex items-center gap-2.5 px-3.5 py-1.5 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
-                      <div className="w-7 h-7 rounded-full bg-[#1C6B53] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                    <div className="h-8.5 flex items-center gap-2 px-3 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/80 rounded-xl text-xs font-bold shrink-0">
+                      <div className="w-5.5 h-5.5 rounded-lg bg-[#1C6B53] text-white flex items-center justify-center font-black text-[10px] shrink-0 shadow-2xs">
                         {userProfile?.name?.charAt(0) || userProfile?.agent_name?.charAt(0) || "A"}
                       </div>
-                      <div>
-                        <div className="text-xs font-black text-gray-900 dark:text-white">{toTitleCase(selectedEmployeeName)}</div>
-                        <div className="text-[10px] text-[#1C6B53] dark:text-emerald-400 font-bold">
-                          {currentMember?.role_type === 'trainer' ? 'Training • Trainer' : currentMember?.role_type === 'qa' ? 'Quality Assurance' : currentMember?.role_type === 'backoffice' ? 'Back Office' : currentMember?.team?.replace(' Team', '') || 'Contact Center'}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setEmployeeDropdownOpen(!employeeDropdownOpen)}
-                    className="w-full flex items-center justify-between gap-3 px-3.5 py-1.5 bg-white hover:bg-gray-50/80 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-900 dark:text-white transition shadow-2xs cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5 truncate">
-                      <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#1C6B53] to-emerald-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-2xs">
-                        {selectedEmployeeName ? selectedEmployeeName.charAt(0).toUpperCase() : <Users size={13} />}
-                      </div>
-                      <div className="truncate text-left">
-                        <div className="truncate font-black text-gray-900 dark:text-white leading-tight">
-                          {toTitleCase(selectedEmployeeName) || "Select Employee..."}
-                        </div>
-                        <div className="text-[10px] text-gray-400 dark:text-gray-500 font-medium truncate">
-                          {currentMember?.team?.replace(' Team', '') || 'Contact Center'}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className={`text-[10px] px-2 py-0.5 rounded-lg border font-bold flex items-center gap-1 ${
-                        currentMemberRoleType === 'trainer'
-                          ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
-                          : currentMemberRoleType === 'qa'
-                          ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                          : currentMemberRoleType === 'tl'
-                          ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
-                          : currentMemberRoleType === 'backoffice'
-                          ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
-                          : isSelectedEmployeeChat
-                          ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                          : "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
-                      }`}>
-                        {currentMemberRoleType === 'trainer' ? <Award size={10} /> :
-                         currentMemberRoleType === 'qa' ? <ShieldCheck size={10} /> :
-                         currentMemberRoleType === 'tl' ? <Star size={10} /> :
-                         currentMemberRoleType === 'backoffice' ? <ListChecks size={10} /> :
-                         isSelectedEmployeeChat ? <MessageSquare size={10} /> : <PhoneCall size={10} />}
-                        <span>
-                          {currentMemberRoleType === 'trainer' ? 'Trainer' :
+                      <span className="font-black text-gray-900 dark:text-white truncate">
+                        {toTitleCase(selectedEmployeeName)}
+                      </span>
+                      <span className="text-[10px] text-[#1C6B53] dark:text-emerald-400 font-bold shrink-0">
+                        • {currentMemberRoleType === 'trainer' ? 'Trainer' :
                            currentMemberRoleType === 'qa' ? 'QA' :
                            currentMemberRoleType === 'tl' ? 'Team Leader' :
                            currentMemberRoleType === 'backoffice' ? 'Back Office' :
-                           isSelectedEmployeeChat ? 'Chat' : 'Calls'}
-                        </span>
+                           currentMember?.team?.replace(' Team', '') || 'Contact Center'}
                       </span>
-                      <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${employeeDropdownOpen ? 'rotate-180' : ''}`} />
                     </div>
-                  </button>
+                  ) : (
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setEmployeeDropdownOpen(!employeeDropdownOpen)}
+                        className="w-full h-8.5 flex items-center justify-between gap-2 px-3 bg-gray-100/80 hover:bg-gray-200/80 dark:bg-gray-800 dark:hover:bg-gray-700/80 border border-gray-200/70 dark:border-gray-700/70 rounded-xl text-xs font-bold text-gray-900 dark:text-white transition shadow-2xs cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <div className="w-5.5 h-5.5 rounded-lg bg-gradient-to-br from-[#1C6B53] to-emerald-600 text-white flex items-center justify-center text-[10px] font-black shrink-0 shadow-2xs">
+                            {selectedEmployeeName ? selectedEmployeeName.charAt(0).toUpperCase() : <Users size={11} />}
+                          </div>
+                          <div className="flex items-center gap-1.5 truncate text-left">
+                            <span className="truncate font-black text-xs text-gray-900 dark:text-white leading-tight">
+                              {toTitleCase(selectedEmployeeName) || "Select Employee..."}
+                            </span>
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium truncate">
+                              • {currentMember?.team?.replace(' Team', '') || 'Contact Center'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded-md border font-black flex items-center gap-1 ${
+                            currentMemberRoleType === 'trainer'
+                              ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                              : currentMemberRoleType === 'qa'
+                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                              : currentMemberRoleType === 'tl'
+                              ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                              : currentMemberRoleType === 'backoffice'
+                              ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                              : isSelectedEmployeeChat
+                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                              : "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
+                          }`}>
+                            {currentMemberRoleType === 'trainer' ? 'Trainer' :
+                             currentMemberRoleType === 'qa' ? 'QA' :
+                             currentMemberRoleType === 'tl' ? 'Team Leader' :
+                             currentMemberRoleType === 'backoffice' ? 'Back Office' :
+                             isSelectedEmployeeChat ? 'Chat' : 'Calls'}
+                          </span>
+                          <ChevronDown size={12} className={`text-gray-400 transition-transform ${employeeDropdownOpen ? 'rotate-180' : ''}`} />
+                        </div>
+                      </button>
 
                   {employeeDropdownOpen && (
                     <>

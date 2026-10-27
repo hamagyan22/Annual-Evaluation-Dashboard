@@ -1284,205 +1284,7 @@ function AgentDashboard({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 self-stretch sm:self-auto justify-end">
-            {/* Agent Selector Dropdown in Preview Mode */}
-            {previewMode && (
-              <div className="relative shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setAgentDropdownOpen(!agentDropdownOpen)}
-                  className="w-full sm:w-auto h-8 flex items-center justify-between gap-2 px-3 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 transition shadow-xs cursor-pointer shrink-0"
-                >
-                  <div className="w-5 h-5 rounded-md bg-[#1C6B53]/15 text-[#1C6B53] dark:text-emerald-300 flex items-center justify-center text-[10px] font-black shrink-0">
-                    {currentAgent?.agent_name ? currentAgent.agent_name.charAt(0).toUpperCase() : <Users size={11} />}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-left truncate">
-                    <span className="truncate max-w-[110px] sm:max-w-[150px] font-black text-xs text-gray-900 dark:text-white leading-none">
-                      {toTitleCase(currentAgent?.agent_name || "Select Agent")}
-                    </span>
-                    <span className="text-[9px] text-[#1C6B53] dark:text-emerald-400 font-bold leading-none shrink-0">
-                      • {currentAgent?.team?.replace(' Team', '') || 'CC'}
-                    </span>
-                  </div>
-                  <ChevronDown size={12} className={`text-gray-400 transition-transform duration-200 shrink-0 ml-0.5 ${agentDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {agentDropdownOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setAgentDropdownOpen(false)} />
-                    <div className="absolute right-0 top-full mt-2 w-[calc(100vw-32px)] sm:w-[420px] bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-3xl shadow-2xl p-3 z-50 max-h-[460px] flex flex-col animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/10">
-                      
-                      {/* Header */}
-                      <div className="px-2 pt-1 pb-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
-                        <div>
-                          <h4 className="text-xs font-black text-gray-900 dark:text-white">
-                            Select Employee
-                          </h4>
-                          <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
-                            {activeMembersList.length} Official Contact Center Agents
-                          </p>
-                        </div>
-                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                          {filteredAgentsList.length} Available
-                        </span>
-                      </div>
-
-                      {/* Search Input - Modern & Calm */}
-                      <div className="relative mt-2.5 mb-2">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
-                        <input
-                          type="text"
-                          placeholder="Search employee across all teams..."
-                          value={agentSearchTerm}
-                          onChange={(e) => setAgentSearchTerm(e.target.value)}
-                          className="w-full pl-9 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200/90 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-[#1C6B53]/20 focus:border-[#1C6B53] dark:focus:border-emerald-500 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 font-medium shadow-xs transition"
-                          autoFocus
-                        />
-                        {agentSearchTerm && (
-                          <button
-                            type="button"
-                            onClick={() => setAgentSearchTerm("")}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 rounded-md transition"
-                            title="Clear search"
-                          >
-                            <X size={12} />
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Team Filter Pills: Younis Kamal, Ankido Buya, Mohammed Dlshad (Strictly 3 tabs, No "All") */}
-                      <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0">
-                        {[
-                          { id: "Younis", label: "Younis Kamal", count: teamCounts.Younis, icon: PhoneCall },
-                          { id: "Ankido", label: "Ankido Buya", count: teamCounts.Ankido, icon: PhoneCall },
-                          { id: "Mohammed", label: "Mohammed Dlshad", count: teamCounts.Mohammed, icon: MessageSquare },
-                        ].map(tab => {
-                          const TabIcon = tab.icon;
-                          const isActive = teamTabFilter === tab.id;
-                          return (
-                            <button
-                              key={tab.id}
-                              type="button"
-                              onClick={() => {
-                                setTeamTabFilter(tab.id);
-                                setAgentSearchTerm("");
-                              }}
-                              className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-[10px] font-bold transition cursor-pointer ${
-                                isActive
-                                  ? 'bg-[#1C6B53] text-white shadow-xs font-black'
-                                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-700'
-                              }`}
-                            >
-                              <TabIcon size={11} className={isActive ? 'text-emerald-200' : 'text-gray-400'} />
-                              <span className="truncate">{tab.label.split(' ')[0]}</span>
-                              <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
-                                isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                              }`}>
-                                {tab.count}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Roster Count Summary */}
-                      <div className="px-2 py-1 text-[10px] font-bold text-gray-500 dark:text-gray-400 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 mb-1.5">
-                        <span>
-                          {agentSearchTerm.trim() 
-                            ? `${filteredAgentsList.length} Matching Search` 
-                            : `${filteredAgentsList.length} Agents in ${teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' : teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'}`}
-                        </span>
-                        <span className="text-[9px] font-bold text-[#1C6B53] dark:text-emerald-400">
-                          {teamTabFilter === 'Mohammed' ? 'Digital Chat' : 'Voice Calls'}
-                        </span>
-                      </div>
-
-                      {/* Scrollable Members List */}
-                      <div className="overflow-y-auto space-y-1.5 flex-1 pr-1 overscroll-contain max-h-64">
-                        {filteredAgentsList.length === 0 ? (
-                          <div className="py-8 px-3 text-center text-xs text-gray-400 dark:text-gray-500 font-medium flex flex-col items-center gap-2">
-                            <Users size={20} className="text-gray-300 dark:text-gray-600" />
-                            <span>{agentSearchTerm.trim() ? `No employees matching "${agentSearchTerm}"` : "No employees found"}</span>
-                          </div>
-                        ) : (
-                          filteredAgentsList.map(m => {
-                            const isSelected = m.agent_name === currentAgent?.agent_name;
-                            const teamStr = m.team || "Contact Center";
-                            const isYounis = teamStr.includes("Younis");
-                            const isAnkido = teamStr.includes("Ankido");
-                            const isDlshad = teamStr.includes("Mohammed") || teamStr.includes("Dlshad");
-                            
-                            const teamBadgeClass = isYounis
-                              ? "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
-                              : isAnkido
-                              ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
-                              : isDlshad
-                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                              : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700";
-
-                            return (
-                              <button
-                                key={m.id || m.agent_name}
-                                type="button"
-                                onClick={() => {
-                                  setCurrentAgent({
-                                    role: 'agent',
-                                    agent_name: m.agent_name,
-                                    team: m.team,
-                                    name: m.agent_name,
-                                    photo_url: m.photo_url || ""
-                                  });
-                                  setAgentDropdownOpen(false);
-                                  setAgentSearchTerm("");
-                                }}
-                                className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left text-xs transition-all cursor-pointer ${
-                                  isSelected
-                                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800'
-                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800/70 text-gray-700 dark:text-gray-200 font-medium'
-                                }`}
-                              >
-                                <div className="flex items-center gap-2.5 truncate">
-                                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-black shrink-0 ${
-                                    isSelected
-                                      ? 'bg-[#1C6B53] text-white shadow-2xs'
-                                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
-                                  }`}>
-                                    {m.agent_name?.charAt(0).toUpperCase()}
-                                  </div>
-                                  <div className="truncate">
-                                    <div className="font-bold truncate text-gray-900 dark:text-gray-100">
-                                      {toTitleCase(m.agent_name)}
-                                    </div>
-                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                      <span className={`text-[9px] px-1.5 py-0.2 rounded-md font-bold border ${teamBadgeClass}`}>
-                                        {teamStr.replace(' Team', '')}
-                                      </span>
-                                      <span className="text-[9px] font-semibold text-gray-400 dark:text-gray-500">
-                                        {isDlshad ? 'Chat' : 'Call'}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="shrink-0 ml-2">
-                                  {isSelected ? (
-                                    <span className="w-5 h-5 rounded-full bg-[#1C6B53] text-white flex items-center justify-center shadow-2xs">
-                                      <Check size={11} strokeWidth={3} />
-                                    </span>
-                                  ) : (
-                                    <span className="text-[10px] text-gray-400 group-hover:text-gray-600 font-medium">Select</span>
-                                  )}
-                                </div>
-                              </button>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
+          <div className="flex items-center shrink-0 self-stretch sm:self-auto justify-end">
             <UnifiedTopNavbar
               currentDashboard="agent"
               userProfile={userProfile}
@@ -1490,6 +1292,204 @@ function AgentDashboard({
               onLogout={onLogout}
               isDarkMode={isDarkMode}
               toggleDarkMode={toggleDarkMode}
+              extraActions={
+                previewMode ? (
+                  <div className="relative shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setAgentDropdownOpen(!agentDropdownOpen)}
+                      className="h-8 flex items-center justify-between gap-1.5 px-2.5 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 hover:bg-gray-100/90 dark:hover:bg-gray-800/80 transition cursor-pointer shrink-0"
+                    >
+                      <div className="w-5 h-5 rounded-md bg-[#1C6B53]/15 text-[#1C6B53] dark:text-emerald-300 flex items-center justify-center text-[10px] font-black shrink-0">
+                        {currentAgent?.agent_name ? currentAgent.agent_name.charAt(0).toUpperCase() : <Users size={11} />}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-left truncate">
+                        <span className="truncate max-w-[110px] sm:max-w-[140px] font-black text-xs text-gray-900 dark:text-white leading-none">
+                          {toTitleCase(currentAgent?.agent_name || "Select Agent")}
+                        </span>
+                        <span className="text-[9px] text-[#1C6B53] dark:text-emerald-400 font-bold leading-none shrink-0">
+                          • {currentAgent?.team?.replace(' Team', '') || 'CC'}
+                        </span>
+                      </div>
+                      <ChevronDown size={11} className={`text-gray-400 transition-transform duration-200 shrink-0 ml-0.5 ${agentDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {agentDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setAgentDropdownOpen(false)} />
+                        <div className="absolute right-0 top-full mt-2 w-[calc(100vw-32px)] sm:w-[420px] bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-3xl shadow-2xl p-3 z-50 max-h-[460px] flex flex-col animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/10">
+                          
+                          {/* Header */}
+                          <div className="px-2 pt-1 pb-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                            <div>
+                              <h4 className="text-xs font-black text-gray-900 dark:text-white">
+                                Select Employee
+                              </h4>
+                              <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                                {activeMembersList.length} Official Contact Center Agents
+                              </p>
+                            </div>
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                              {filteredAgentsList.length} Available
+                            </span>
+                          </div>
+
+                          {/* Search Input - Modern & Calm */}
+                          <div className="relative mt-2.5 mb-2">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                            <input
+                              type="text"
+                              placeholder="Search employee across all teams..."
+                              value={agentSearchTerm}
+                              onChange={(e) => setAgentSearchTerm(e.target.value)}
+                              className="w-full pl-9 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200/90 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-[#1C6B53]/20 focus:border-[#1C6B53] dark:focus:border-emerald-500 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 font-medium shadow-xs transition"
+                              autoFocus
+                            />
+                            {agentSearchTerm && (
+                              <button
+                                type="button"
+                                onClick={() => setAgentSearchTerm("")}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 rounded-md transition"
+                                title="Clear search"
+                              >
+                                <X size={12} />
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Team Filter Pills: Younis Kamal, Ankido Buya, Mohammed Dlshad (Strictly 3 tabs, No "All") */}
+                          <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0">
+                            {[
+                              { id: "Younis", label: "Younis Kamal", count: teamCounts.Younis, icon: PhoneCall },
+                              { id: "Ankido", label: "Ankido Buya", count: teamCounts.Ankido, icon: PhoneCall },
+                              { id: "Mohammed", label: "Mohammed Dlshad", count: teamCounts.Mohammed, icon: MessageSquare },
+                            ].map(tab => {
+                              const TabIcon = tab.icon;
+                              const isActive = teamTabFilter === tab.id;
+                              return (
+                                <button
+                                  key={tab.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setTeamTabFilter(tab.id);
+                                    setAgentSearchTerm("");
+                                  }}
+                                  className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-[10px] font-bold transition cursor-pointer ${
+                                    isActive
+                                      ? 'bg-[#1C6B53] text-white shadow-xs font-black'
+                                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-700'
+                                  }`}
+                                >
+                                  <TabIcon size={11} className={isActive ? 'text-emerald-200' : 'text-gray-400'} />
+                                  <span className="truncate">{tab.label.split(' ')[0]}</span>
+                                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
+                                    isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                                  }`}>
+                                    {tab.count}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Roster Count Summary */}
+                          <div className="px-2 py-1 text-[10px] font-bold text-gray-500 dark:text-gray-400 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 mb-1.5">
+                            <span>
+                              {agentSearchTerm.trim() 
+                                ? `${filteredAgentsList.length} Matching Search` 
+                                : `${filteredAgentsList.length} Agents in ${teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' : teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'}`}
+                            </span>
+                            <span className="text-[9px] font-bold text-[#1C6B53] dark:text-emerald-400">
+                              {teamTabFilter === 'Mohammed' ? 'Digital Chat' : 'Voice Calls'}
+                            </span>
+                          </div>
+
+                          {/* Scrollable Members List */}
+                          <div className="overflow-y-auto space-y-1.5 flex-1 pr-1 overscroll-contain max-h-64">
+                            {filteredAgentsList.length === 0 ? (
+                              <div className="py-8 px-3 text-center text-xs text-gray-400 dark:text-gray-500 font-medium flex flex-col items-center gap-2">
+                                <Users size={20} className="text-gray-300 dark:text-gray-600" />
+                                <span>{agentSearchTerm.trim() ? `No employees matching "${agentSearchTerm}"` : "No employees found"}</span>
+                              </div>
+                            ) : (
+                              filteredAgentsList.map(m => {
+                                const isSelected = m.agent_name === currentAgent?.agent_name;
+                                const teamStr = m.team || "Contact Center";
+                                const isYounis = teamStr.includes("Younis");
+                                const isAnkido = teamStr.includes("Ankido");
+                                const isDlshad = teamStr.includes("Mohammed") || teamStr.includes("Dlshad");
+                                
+                                const teamBadgeClass = isYounis
+                                  ? "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
+                                  : isAnkido
+                                  ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                                  : isDlshad
+                                  ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700";
+
+                                return (
+                                  <button
+                                    key={m.id || m.agent_name}
+                                    type="button"
+                                    onClick={() => {
+                                      setCurrentAgent({
+                                        role: 'agent',
+                                        agent_name: m.agent_name,
+                                        team: m.team,
+                                        name: m.agent_name,
+                                        photo_url: m.photo_url || ""
+                                      });
+                                      setAgentDropdownOpen(false);
+                                      setAgentSearchTerm("");
+                                    }}
+                                    className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left text-xs transition-all cursor-pointer ${
+                                      isSelected
+                                        ? 'bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800'
+                                        : 'hover:bg-gray-50 dark:hover:bg-gray-800/70 text-gray-700 dark:text-gray-200 font-medium'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2.5 truncate">
+                                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-black shrink-0 ${
+                                        isSelected
+                                          ? 'bg-[#1C6B53] text-white shadow-2xs'
+                                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                                      }`}>
+                                        {m.agent_name?.charAt(0).toUpperCase()}
+                                      </div>
+                                      <div className="truncate">
+                                        <div className="font-bold truncate text-gray-900 dark:text-gray-100">
+                                          {toTitleCase(m.agent_name)}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                          <span className={`text-[9px] px-1.5 py-0.2 rounded-md font-bold border ${teamBadgeClass}`}>
+                                            {teamStr.replace(' Team', '')}
+                                          </span>
+                                          <span className="text-[9px] font-semibold text-gray-400 dark:text-gray-500">
+                                            {isDlshad ? 'Chat' : 'Call'}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="shrink-0 ml-2">
+                                      {isSelected ? (
+                                        <span className="w-5 h-5 rounded-full bg-[#1C6B53] text-white flex items-center justify-center shadow-2xs">
+                                          <Check size={11} strokeWidth={3} />
+                                        </span>
+                                      ) : (
+                                        <span className="text-[10px] text-gray-400 group-hover:text-gray-600 font-medium">Select</span>
+                                      )}
+                                    </div>
+                                  </button>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : undefined
+              }
             />
           </div>
         </div>
