@@ -135,10 +135,10 @@ export function UnifiedTopNavbar({
   ].filter(item => item.show);
 
   return (
-    <div className={`relative inline-flex items-center gap-1 sm:gap-1.5 p-1 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl shadow-xs flex-nowrap shrink-0 max-w-full overflow-visible select-none ${className}`}>
+    <div className={`relative inline-flex items-center gap-1.5 sm:gap-2 p-1.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl shadow-sm flex-nowrap shrink-0 max-w-full overflow-visible select-none ${className}`}>
       
-      {/* Navigation Buttons: Ultra-Modern Segmented Control */}
-      <div className="flex items-center p-0.5 sm:p-1 bg-gray-100/90 dark:bg-gray-800/90 rounded-xl border border-gray-200/70 dark:border-gray-700/70 gap-0.5 sm:gap-1 shrink-0 overflow-x-auto scrollbar-none">
+      {/* Navigation Buttons: Ultra-Modern Premium Segmented Control */}
+      <div className="flex items-center p-1 bg-gray-100/80 dark:bg-gray-800/80 rounded-xl border border-gray-200/60 dark:border-gray-700/60 gap-1 shrink-0 overflow-x-auto scrollbar-none">
         {navItems.map((item) => {
           const isActive = currentDashboard === item.id;
           const ItemIcon = item.icon;
@@ -152,20 +152,20 @@ export function UnifiedTopNavbar({
                   onNavigate(item.id);
                 }
               }}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 h-7.5 rounded-lg text-xs transition-all shrink-0 cursor-pointer select-none ${
+              className={`flex items-center gap-2 px-3.5 sm:px-4 h-9 rounded-lg text-[13px] transition-all duration-200 shrink-0 cursor-pointer select-none ${
                 isActive
-                  ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 font-black shadow-xs ring-1 ring-[#1C6B53]/15 dark:ring-emerald-400/20'
-                  : 'font-bold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50'
+                  ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 font-black shadow-sm ring-1 ring-[#1C6B53]/20 dark:ring-emerald-400/25 scale-[1.01]'
+                  : 'font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/60 dark:hover:bg-gray-700/50'
               }`}
               title={item.label}
             >
               <ItemIcon 
-                size={13.5} 
-                className={`shrink-0 transition-transform ${
-                  isActive ? 'text-[#1C6B53] dark:text-emerald-400 scale-105' : item.iconColor
-                } ${item.id === 'topstar' ? (isActive ? 'fill-amber-500 text-amber-500' : 'fill-amber-500/30') : ''}`} 
+                size={15} 
+                className={`shrink-0 transition-all duration-200 ${
+                  isActive ? 'text-[#1C6B53] dark:text-emerald-400' : item.iconColor
+                } ${item.id === 'topstar' ? (isActive ? 'fill-amber-500 text-amber-500' : 'fill-amber-400/40') : ''}`} 
               />
-              <span className="whitespace-nowrap leading-none">{item.label}</span>
+              <span className="whitespace-nowrap leading-none tracking-tight">{item.label}</span>
             </button>
           );
         })}
@@ -181,33 +181,33 @@ export function UnifiedTopNavbar({
         </>
       )}
 
-      <div className="h-4 w-px bg-gray-200 dark:bg-gray-800 mx-0.5 shrink-0" />
+      <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
 
       {/* User Profile Pill */}
       <button 
         type="button"
         onClick={onOpenProfile}
-        className="flex items-center gap-1.5 sm:gap-2 h-8 px-2 sm:px-2.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100/90 dark:hover:bg-gray-800/80 transition-all group cursor-pointer shrink-0"
+        className="flex items-center gap-2 sm:gap-2.5 h-9 px-2.5 sm:px-3 rounded-xl text-[13px] font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/90 dark:hover:bg-gray-800/80 transition-all group cursor-pointer shrink-0"
         title="Profile Settings"
       >
-        <div className="w-5.5 h-5.5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-tr from-[#1C6B53] to-emerald-400 flex items-center justify-center overflow-hidden ring-1 ring-[#1C6B53]/30 dark:ring-emerald-400/30 text-white font-black text-[10px] sm:text-xs shadow-2xs shrink-0">
+        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-tr from-[#1C6B53] to-emerald-400 flex items-center justify-center overflow-hidden ring-2 ring-[#1C6B53]/20 dark:ring-emerald-400/25 text-white font-black text-[11px] sm:text-xs shadow-sm shrink-0">
           {userProfile?.photo_url ? (
             <img src={userProfile.photo_url} alt="Profile" className="w-full h-full object-cover" />
           ) : (
             displayName.charAt(0).toUpperCase()
           )}
         </div>
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="max-w-[130px] sm:max-w-[160px] truncate text-gray-900 dark:text-white font-bold leading-none group-hover:text-[#1C6B53] dark:group-hover:text-emerald-400 transition-colors">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="max-w-[130px] sm:max-w-[160px] truncate text-gray-900 dark:text-white font-semibold leading-none group-hover:text-[#1C6B53] dark:group-hover:text-emerald-400 transition-colors">
             {displayName}
           </span>
-          <span className={`text-[8px] sm:text-[8.5px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-wider leading-none shrink-0 ${roleBadgeClass}`}>
+          <span className={`text-[9px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-wider leading-none shrink-0 ${roleBadgeClass}`}>
             {roleBadgeText}
           </span>
         </div>
       </button>
 
-      <div className="h-4 w-px bg-gray-200 dark:bg-gray-800 mx-0.5 shrink-0" />
+      <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
 
       {/* Utilities: Settings (Admin), Dark Mode, Theme, Logout */}
       <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
@@ -215,10 +215,10 @@ export function UnifiedTopNavbar({
           <button
             type="button"
             onClick={onOpenSettings}
-            className="flex items-center justify-center w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-xl text-gray-500 hover:text-[#1C6B53] dark:text-gray-400 dark:hover:text-emerald-400 hover:bg-gray-100/90 dark:hover:bg-gray-800/80 transition-all group cursor-pointer shrink-0"
+            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-gray-500 hover:text-[#1C6B53] dark:text-gray-400 dark:hover:text-emerald-400 hover:bg-gray-100/90 dark:hover:bg-gray-800/80 transition-all group cursor-pointer shrink-0"
             title="Settings"
           >
-            <Settings size={14} className="group-hover:rotate-45 transition-transform duration-200" />
+            <Settings size={15} className="group-hover:rotate-45 transition-transform duration-200" />
           </button>
         )}
 
@@ -227,26 +227,26 @@ export function UnifiedTopNavbar({
           <button 
             type="button"
             onClick={toggleDarkMode} 
-            className="w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center text-gray-500 hover:text-amber-500 dark:text-gray-400 dark:hover:text-amber-400 hover:bg-gray-100/90 dark:hover:bg-gray-800/80 transition-colors cursor-pointer shrink-0"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-amber-500 dark:text-gray-400 dark:hover:text-amber-400 hover:bg-gray-100/90 dark:hover:bg-gray-800/80 transition-colors cursor-pointer shrink-0"
             title="Toggle Dark Mode"
           >
-            {isDarkMode ? <Sun size={14} className="text-amber-500" /> : <Moon size={14} />}
+            {isDarkMode ? <Sun size={15} className="text-amber-500" /> : <Moon size={15} />}
           </button>
         )}
 
         {/* Theme Palette Selector */}
-        <ThemeSelectorModal className="!w-7.5 !h-7.5 sm:!w-8 sm:!h-8 !rounded-xl" />
+        <ThemeSelectorModal className="!w-8 !h-8 sm:!w-9 sm:!h-9 !rounded-xl" />
 
         {/* Logout Button */}
         {onLogout && (
           <button 
             type="button"
             onClick={onLogout} 
-            className="flex items-center gap-1.5 h-7.5 sm:h-8 px-2 sm:px-2.5 rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/40 transition-all cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl text-[13px] font-semibold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/40 transition-all cursor-pointer shrink-0"
             title="Logout"
           >
-            <LogOut size={13.5} />
-            <span className="hidden sm:inline font-bold leading-none">Logout</span>
+            <LogOut size={14} />
+            <span className="hidden sm:inline font-semibold leading-none">Logout</span>
           </button>
         )}
       </div>

@@ -1334,15 +1334,15 @@ export default function TopStarDashboard({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+          <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto">
             {/* Criteria & Targets Button */}
             <button
               type="button"
               onClick={() => setShowCriteriaModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700/90 shadow-2xs transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-0 h-11 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-200 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700/90 shadow-sm transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer"
               title="View & Edit Evaluation Criteria"
             >
-              <Award size={14} className="text-amber-600 dark:text-amber-400" />
+              <Award size={16} className="text-amber-600 dark:text-amber-400" />
               <span>Criteria</span>
             </button>
 
@@ -1350,9 +1350,9 @@ export default function TopStarDashboard({
             <button
               type="button"
               onClick={() => setShowCelebrationVideo(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155340] shadow-md shadow-emerald-700/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-0 h-11 rounded-xl text-sm font-black text-white bg-[#1C6B53] hover:bg-[#155340] shadow-md shadow-emerald-700/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer"
             >
-              <Sparkles size={14} className="text-emerald-100" />
+              <Sparkles size={16} className="text-emerald-100" />
               <span>Generate Video</span>
             </button>
           </div>

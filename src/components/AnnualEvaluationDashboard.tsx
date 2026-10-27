@@ -1638,11 +1638,11 @@ export default function AnnualEvaluationDashboard({
         <main className="w-full">
           
           {/* Top Control Toolbar: Prominent, Spacious, Ultra-Modern Executive Control Bar */}
-          <section className="relative z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-sm mb-6 print:hidden">
+          <section className="relative z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm mb-6 print:hidden">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
               
               {/* Left Controls: Year & Harmonized Period Switcher & Who's Pending */}
-              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 
                 {/* Year Dropdown using ModernDropdown with prominent large styling */}
                 <ModernDropdown
@@ -1655,11 +1655,11 @@ export default function AnnualEvaluationDashboard({
                 />
 
                 {/* Period Switcher: Prominent, Sleek segmented pill */}
-                <div className="flex items-center p-1 bg-gray-100 dark:bg-gray-800/90 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shrink-0 h-10">
+                <div className="flex items-center p-1 bg-gray-100 dark:bg-gray-800/90 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shrink-0 h-11">
                   <button
                     type="button"
                     onClick={() => setSelectedPeriod("Semi-Annual")}
-                    className={`flex items-center gap-1.5 px-3.5 sm:px-4 h-8 rounded-lg text-xs sm:text-sm font-black transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-4 sm:px-5 h-9 rounded-lg text-sm font-black transition-all cursor-pointer ${
                       selectedPeriod === "Semi-Annual"
                         ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 shadow-xs ring-1 ring-black/5 dark:ring-white/10'
                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -1671,7 +1671,7 @@ export default function AnnualEvaluationDashboard({
                   <button
                     type="button"
                     onClick={() => setSelectedPeriod("Annual")}
-                    className={`flex items-center gap-1.5 px-3.5 sm:px-4 h-8 rounded-lg text-xs sm:text-sm font-black transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-4 sm:px-5 h-9 rounded-lg text-sm font-black transition-all cursor-pointer ${
                       selectedPeriod === "Annual"
                         ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 shadow-xs ring-1 ring-black/5 dark:ring-white/10'
                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -1689,10 +1689,10 @@ export default function AnnualEvaluationDashboard({
                       setCoverageFilterStatus("pending");
                       setShowCoverageModal(true);
                     }}
-                    className="flex items-center gap-2 h-10 px-3.5 sm:px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 border border-amber-500/30 text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200 transition active:scale-95 cursor-pointer shrink-0 shadow-2xs"
+                    className="flex items-center gap-2 h-11 px-4 sm:px-5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 border border-amber-500/30 text-sm font-bold text-amber-900 dark:text-amber-200 transition active:scale-95 cursor-pointer shrink-0 shadow-2xs"
                     title="View Pending Employees"
                   >
-                    <ListChecks size={16} className="text-amber-600 dark:text-amber-400" />
+                    <ListChecks size={17} className="text-amber-600 dark:text-amber-400" />
                     <span>Who&apos;s Pending?</span>
                     <span className="px-2 py-0.5 bg-amber-500 text-white rounded-full text-xs font-black shadow-2xs">
                       {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount}
@@ -1703,21 +1703,21 @@ export default function AnnualEvaluationDashboard({
               </div>
 
               {/* Right Side: Print PDF & Employee Selector */}
-              <div className="flex items-center gap-2.5 sm:gap-3 flex-1 sm:flex-initial justify-end">
+              <div className="flex items-center gap-3 flex-1 sm:flex-initial justify-end">
                 
                 {/* Print / Save PDF Button */}
                 <button
                   type="button"
                   onClick={handlePrint}
-                  className="flex items-center gap-2 h-10 px-3.5 sm:px-4 rounded-xl bg-gray-100/90 hover:bg-gray-200/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/80 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
+                  className="flex items-center gap-2 h-11 px-4 sm:px-5 rounded-xl bg-gray-100/90 hover:bg-gray-200/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/80 dark:border-gray-700 text-sm font-bold text-gray-800 dark:text-gray-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
                   title="Print / Save PDF"
                 >
-                  <Printer size={16} className="text-[#1C6B53] dark:text-emerald-400" />
+                  <Printer size={17} className="text-[#1C6B53] dark:text-emerald-400" />
                   <span className="hidden sm:inline">Print / PDF</span>
                 </button>
 
                 {/* Employee Selector */}
-                <div className="relative min-w-[220px] sm:min-w-[280px]">
+                <div className="relative min-w-[220px] sm:min-w-[300px]">
                   {(isAgent || isUserSpecialStaffOnly) ? (
                     <div className="h-10 flex items-center gap-2.5 px-3.5 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/80 rounded-xl text-xs sm:text-sm font-bold shrink-0">
                       <div className="w-6.5 h-6.5 rounded-lg bg-[#1C6B53] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-2xs">
@@ -2048,48 +2048,48 @@ export default function AnnualEvaluationDashboard({
                 </div>
               </div>
 
-              {/* Status Badge & Score Highlights: 100% Uniform, Symmetrical, Aligned */}
-              <div className="flex items-center gap-3 self-start lg:self-auto flex-wrap">
+              {/* Status Badge & Score Highlights — Right-aligned, larger, premium */}
+              <div className="flex items-stretch gap-3 self-start lg:self-auto">
                 {/* Final Score Card */}
-                <div className="w-[130px] sm:w-[145px] h-[78px] bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between items-center text-center shadow-xs">
-                  <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider leading-none">
+                <div className="w-[140px] sm:w-[160px] h-[90px] bg-white/12 backdrop-blur-md border border-white/25 rounded-2xl p-3 sm:p-4 flex flex-col justify-between items-center text-center shadow-sm">
+                  <div className="text-[10px] font-black text-emerald-200 uppercase tracking-widest leading-none">
                     Final Score
                   </div>
                   <div className="flex-1 flex items-center justify-center">
                     {isManagerDataVisible && officialOverallScore > 0 ? (
-                      <div className="text-2xl font-black text-white leading-none">
+                      <div className="text-3xl font-black text-white leading-none">
                         <span>{officialOverallScore.toFixed(2)}</span>
-                        <span className="text-xs text-emerald-200/80 font-normal"> / 5.0</span>
+                        <span className="text-sm text-emerald-200/80 font-normal"> / 5.0</span>
                       </div>
                     ) : (
-                      <span className="text-base font-bold text-white/50">--</span>
+                      <span className="text-xl font-bold text-white/40">--</span>
                     )}
                   </div>
                 </div>
 
                 {/* Rating Tier Card */}
-                <div className="min-w-[145px] sm:min-w-[175px] px-3 sm:px-4 h-[78px] bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl py-2.5 sm:py-3 flex flex-col justify-between items-center text-center shadow-xs">
-                  <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider leading-none">
+                <div className="min-w-[160px] sm:min-w-[190px] px-4 h-[90px] bg-white/12 backdrop-blur-md border border-white/25 rounded-2xl py-3 sm:py-4 flex flex-col justify-between items-center text-center shadow-sm">
+                  <div className="text-[10px] font-black text-emerald-200 uppercase tracking-widest leading-none">
                     Rating Tier
                   </div>
                   <div className="flex-1 flex items-center justify-center">
-                    <div className="text-xs sm:text-[13px] font-black text-white flex items-center gap-1.5 leading-none whitespace-nowrap">
-                      <Award size={15} className={isManagerDataVisible && officialOverallScore > 0 ? "text-amber-300 shrink-0" : "text-white/40 shrink-0"} />
+                    <div className="text-sm sm:text-[15px] font-black text-white flex items-center gap-2 leading-none whitespace-nowrap">
+                      <Award size={17} className={isManagerDataVisible && officialOverallScore > 0 ? "text-amber-300 shrink-0" : "text-white/40 shrink-0"} />
                       <span>{isManagerDataVisible && officialOverallScore > 0 ? ratingTier.label : "Pending"}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Status Card */}
-                <div className="w-[130px] sm:w-[145px] h-[78px] bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between items-center text-center shadow-xs">
-                  <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider leading-none">
+                <div className="w-[140px] sm:w-[155px] h-[90px] bg-white/12 backdrop-blur-md border border-white/25 rounded-2xl p-3 sm:p-4 flex flex-col justify-between items-center text-center shadow-sm">
+                  <div className="text-[10px] font-black text-emerald-200 uppercase tracking-widest leading-none">
                     Status
                   </div>
                   <div className="flex-1 flex items-center justify-center">
-                    <div className="text-xs font-bold text-white flex items-center gap-1.5 leading-none">
-                      <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                        evaluationStatus === 'manager_finalized' ? 'bg-emerald-400 ring-4 ring-emerald-400/20' :
-                        evaluationStatus === 'self_submitted' ? 'bg-amber-400 ring-4 ring-amber-400/20' : 
+                    <div className="text-sm font-bold text-white flex items-center gap-2 leading-none">
+                      <span className={`w-3 h-3 rounded-full shrink-0 ${
+                        evaluationStatus === 'manager_finalized' ? 'bg-emerald-400 ring-4 ring-emerald-400/25' :
+                        evaluationStatus === 'self_submitted' ? 'bg-amber-400 ring-4 ring-amber-400/25' : 
                         'bg-white/40 ring-4 ring-white/10'
                       }`} />
                       <span>
