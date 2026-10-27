@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
@@ -744,6 +745,18 @@ function AgentDashboard({
   const [currentAgent, setCurrentAgent] = useState<any>(initialAgent);
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<any[]>([]);
+  const [tlSyncRegistry, setTlSyncRegistry] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, "settings", "tl_agent_sync_status"), (snap) => {
+      if (snap.exists()) {
+        setTlSyncRegistry(snap.data()?.synced_months || {});
+      } else {
+        setTlSyncRegistry({});
+      }
+    }, () => {});
+    return () => unsub();
+  }, []);
   
   const [memberDoc, setMemberDoc] = useState<any>(null);
   const [agentDropdownOpen, setAgentDropdownOpen] = useState(false);
@@ -1179,16 +1192,47 @@ function AgentDashboard({
     return parseFloat(rawVal) || 0; // plain number
   };
 
+  const selectedUpper = (selectedMonth || '').toUpperCase();
+  const isMonthSelected = months.includes(selectedUpper);
+  const selectedMonthData: any = isMonthSelected
+    ? (metrics.find(r => (r.month || '').toUpperCase() === selectedUpper) || {})
+    : {};
+
+  const agentTeam = currentAgent?.team || '';
+  const syncKey = `${selectedYear}_${selectedUpper}_${agentTeam}`;
+  const combinedKey = `${selectedYear}_${selectedUpper}_Call Center Combined`;
+  const isHistorical = Number(selectedYear) < 2026 || (Number(selectedYear) === 2026 && MONTHS.indexOf(selectedUpper) < 8);
+  const isMonthSyncedByTl = isHistorical || Boolean(tlSyncRegistry[syncKey]?.isSynced || (agentTeam !== 'Mohammed Dlshad Team' && tlSyncRegistry[combinedKey]?.isSynced));
+  const currentSyncDetails = tlSyncRegistry[syncKey] || (agentTeam !== 'Mohammed Dlshad Team' ? tlSyncRegistry[combinedKey] : null) || null;
+
   const chartData = months.map(m => {
     const row = metrics.find(r => (r.month || '').toUpperCase() === m.toUpperCase());
+    const mSyncKey = `${selectedYear}_${m.toUpperCase()}_${agentTeam}`;
+    const mCombinedKey = `${selectedYear}_${m.toUpperCase()}_Call Center Combined`;
+    const mIsHistorical = Number(selectedYear) < 2026 || (Number(selectedYear) === 2026 && MONTHS.indexOf(m.toUpperCase()) < 8);
+    const mIsSynced = mIsHistorical || Boolean(tlSyncRegistry[mSyncKey]?.isSynced || (agentTeam !== 'Mohammed Dlshad Team' && tlSyncRegistry[mCombinedKey]?.isSynced));
+
     const dataObj: any = { month: m };
-    teamCols.forEach((col: any) => { dataObj[col.id] = parseVal(col, row); });
+    teamCols.forEach((col: any) => { 
+      if (!mIsSynced && !previewMode) {
+        dataObj[col.id] = null;
+      } else {
+        dataObj[col.id] = parseVal(col, row); 
+      }
+    });
     return dataObj;
   });
 
   // Smart aggregation — respects format (mm:ss vs plain) and aggregation type (sum vs average)
   const avgCols = (monthList: string[], col: any) => {
     const rowsWithVals = monthList
+      .filter(m => {
+        if (previewMode) return true;
+        const mSyncKey = `${selectedYear}_${m.toUpperCase()}_${agentTeam}`;
+        const mCombinedKey = `${selectedYear}_${m.toUpperCase()}_Call Center Combined`;
+        const mIsHistorical = Number(selectedYear) < 2026 || (Number(selectedYear) === 2026 && MONTHS.indexOf(m.toUpperCase()) < 8);
+        return mIsHistorical || Boolean(tlSyncRegistry[mSyncKey]?.isSynced || (agentTeam !== 'Mohammed Dlshad Team' && tlSyncRegistry[mCombinedKey]?.isSynced));
+      })
       .map(m => {
         const r = metrics.find(row => (row.month || '').toUpperCase() === m.toUpperCase());
         const val = getRowValForCol(r, col.id);
@@ -1233,13 +1277,7 @@ function AgentDashboard({
     { label: 'H2', months: ['JUL','AUG','SEP','OCT','NOV','DEC'] },
   ];
 
-  // selectedPeriod: either a month name or a period label
-  const isMonthSelected = months.includes((selectedMonth || '').toUpperCase());
-  const selectedMonthData: any = isMonthSelected
-    ? (metrics.find(r => (r.month || '').toUpperCase() === (selectedMonth || '').toUpperCase()) || {})
-    : {};
-
-  const currentMonthIdx = months.findIndex(m => m.toUpperCase() === (selectedMonth || '').toUpperCase());
+  const currentMonthIdx = months.findIndex(m => m.toUpperCase() === selectedUpper);
   const prevMonthName = currentMonthIdx > 0 ? months[currentMonthIdx - 1] : null;
   const prevMonthData: any = prevMonthName
     ? (metrics.find(r => (r.month || '').toUpperCase() === prevMonthName.toUpperCase()) || null)
@@ -1253,6 +1291,9 @@ function AgentDashboard({
 
   const getDisplayVal = (col: any) => {
     if (isMonthSelected) {
+      if (!isMonthSyncedByTl && !previewMode) {
+        return '-';
+      }
       const v = getRowValForCol(selectedMonthData, col.id);
       return v !== "" ? v : (selectedMonthData[col.id] || '-');
     }
@@ -1755,6 +1796,72 @@ function AgentDashboard({
                 </div>
               </div>
             </div>
+
+            {/* Sync / Verification Status Banner for live months */}
+            {isMonthSelected && (
+              !isMonthSyncedByTl ? (
+                previewMode ? (
+                  <div className="bg-amber-500/10 dark:bg-amber-950/40 border border-amber-500/30 dark:border-amber-700/50 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 text-amber-900 dark:text-amber-200 shadow-xs animate-fadeIn">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <Clock size={16} />
+                      </div>
+                      <div className="text-xs">
+                        <div className="font-extrabold flex items-center gap-1.5">
+                          <span>معاينة المسودة (Draft Preview)</span>
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 font-bold">غير منشور</span>
+                        </div>
+                        <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                          بيانات شهر {selectedMonth} {selectedYear} لم يتم اعتمادها ومزامنتها بعد من مسؤول الفريق. الأرقام تظهر لك فقط كمعاينة ولن تظهر في حساب الموظف حتى يتم الضغط على <strong>Sync Data</strong> في داشبورد التيم ليدر.
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-800 dark:text-amber-200 px-2.5 py-1 rounded-lg shrink-0 border border-amber-400/40 hidden sm:inline-block">
+                      Unpublished Draft
+                    </span>
+                  </div>
+                ) : (
+                  <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent dark:from-amber-950/40 dark:via-amber-950/20 dark:to-transparent border border-amber-300/80 dark:border-amber-800/60 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-fadeIn">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-amber-500/15 dark:bg-amber-500/25 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-2xs">
+                        <Clock size={18} className="animate-spin" style={{ animationDuration: '6s' }} />
+                      </div>
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-black text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                          <span>بيانات شهر {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear} قيد التدقيق والمراجعة</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 border border-amber-300/50">
+                            قيد التدقيق
+                          </span>
+                        </h4>
+                        <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium">
+                          التقييمات الشهرية قيد التدقيق والاعتماد من قبل مسؤول الفريق (Team Leader)، وستظهر نتائجك فور اكتمال المراجعة ومزامنتها.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-900/50 px-3 py-1.5 rounded-xl shrink-0 self-end sm:self-auto border border-amber-300/40">
+                      <RefreshCw size={12} className="animate-spin" style={{ animationDuration: '4s' }} />
+                      <span>بانتظار مزامنة التيم ليدر</span>
+                    </div>
+                  </div>
+                )
+              ) : !isHistorical && (
+                <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/50 rounded-2xl px-4 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-xs animate-fadeIn">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-5 h-5 rounded-full bg-[#1C6B53] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                      <Check size={12} strokeWidth={3} />
+                    </div>
+                    <span className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
+                      تم اعتماد وتدقيق بيانات هذا الشهر رسمياً ونشرها من قبل مسؤول الفريق{currentSyncDetails?.syncedBy ? ` (${currentSyncDetails.syncedBy})` : ''}
+                    </span>
+                  </div>
+                  {currentSyncDetails?.syncedAt && (
+                    <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-900/60 px-2.5 py-0.5 rounded-full shrink-0 border border-emerald-300/40">
+                      تاريخ الاعتماد: {new Date(currentSyncDetails.syncedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  )}
+                </div>
+              )
+            )}
 
             {/* Top 3 Performers Section (Visible to all employees) */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-gray-200/80 dark:border-gray-700 shadow-sm relative overflow-hidden">
@@ -2647,9 +2754,249 @@ export default function Dashboard() {
 
   const isCurrentMonthLocked = Boolean(prevMonthIncompleteInfo && !adminBypassMonthLock);
 
+  const aggregateMap = AGGREGATE_MAP;
+  const isAggregate = Object.keys(AGGREGATE_MAP).includes(selectedMonth);
+
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Team Leader -> Agent Dashboard Sync state
+  const [tlSyncRegistry, setTlSyncRegistry] = useState<Record<string, any>>({});
+  const [isSyncingData, setIsSyncingData] = useState(false);
+  const [showIncompleteSyncModal, setShowIncompleteSyncModal] = useState(false);
+  const [showSyncedDetailsModal, setShowSyncedDetailsModal] = useState(false);
+  const [syncSuccessToast, setSyncSuccessToast] = useState(false);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, "settings", "tl_agent_sync_status"), (snap) => {
+      if (snap.exists()) {
+        setTlSyncRegistry(snap.data()?.synced_months || {});
+      } else {
+        setTlSyncRegistry({});
+      }
+    }, (err) => {
+      console.warn("tl_agent_sync_status snapshot error:", err);
+    });
+    return () => unsub();
+  }, []);
+
+  const currentSyncKey = useMemo(() => {
+    const upperMonth = (selectedMonth || "").toUpperCase();
+    if (isCombinedCallCenter) {
+      return `${selectedYear}_${upperMonth}_Call Center Combined`;
+    }
+    return `${selectedYear}_${upperMonth}_${selectedTeam}`;
+  }, [selectedYear, selectedMonth, isCombinedCallCenter, selectedTeam]);
+
+  const isCurrentMonthSynced = useMemo(() => {
+    if (isAggregate) return false;
+    const upperMonth = (selectedMonth || "").toUpperCase();
+    const isHistorical = Number(selectedYear) < 2026 || (Number(selectedYear) === 2026 && MONTHS.indexOf(upperMonth) < 8);
+    if (isHistorical) return true;
+
+    if (isCombinedCallCenter) {
+      const yKey = `${selectedYear}_${upperMonth}_Younis Kamal Team`;
+      const aKey = `${selectedYear}_${upperMonth}_Ankido Buya Team`;
+      return Boolean(tlSyncRegistry[currentSyncKey]?.isSynced || (tlSyncRegistry[yKey]?.isSynced && tlSyncRegistry[aKey]?.isSynced));
+    }
+    return Boolean(tlSyncRegistry[currentSyncKey]?.isSynced);
+  }, [selectedYear, selectedMonth, isCombinedCallCenter, selectedTeam, isAggregate, tlSyncRegistry, currentSyncKey]);
+
+  const currentMonthSyncDetails = useMemo(() => {
+    if (isCombinedCallCenter) {
+      return tlSyncRegistry[currentSyncKey] || tlSyncRegistry[`${selectedYear}_${(selectedMonth || "").toUpperCase()}_Younis Kamal Team`] || null;
+    }
+    return tlSyncRegistry[currentSyncKey] || null;
+  }, [tlSyncRegistry, currentSyncKey, isCombinedCallCenter, selectedYear, selectedMonth]);
+
+  const currentMonthCompleteness = useMemo(() => {
+    if (isAggregate) return null;
+    const upperMonth = (selectedMonth || "").toUpperCase();
+    if (!MONTHS.includes(upperMonth)) return null;
+
+    if (!rows || rows.length === 0) {
+      return {
+        isComplete: false,
+        totalAgents: 0,
+        completedAgents: 0,
+        incompleteAgents: []
+      };
+    }
+
+    const isFilled = (v: any) => {
+      if (v === undefined || v === null) return false;
+      const s = String(v).trim();
+      return s !== "" && s !== "-" && s !== "–";
+    };
+
+    const incompleteAgents: { name: string; missingFields: string[] }[] = [];
+
+    rows.forEach(r => {
+      const rTeam = r.team || selectedTeam;
+      const isChat = rTeam === 'Mohammed Dlshad Team';
+      const missing: string[] = [];
+
+      if (isChat) {
+        if (!isFilled(r.chat_handled)) missing.push("Chat Handled");
+        if (!isFilled(r.exam)) missing.push("Exam");
+        if (!isFilled(r.aht)) missing.push("AHT");
+        if (!isFilled(r.art)) missing.push("ART");
+        if (!isFilled(r.productivity ?? r.prod)) missing.push("Prod");
+        if (!isQualitySyncEnabled(selectedYear, upperMonth) && !isFilled(r.quality)) {
+          missing.push("Quality");
+        }
+      } else {
+        if (!isFilled(r.exam)) missing.push("Exam");
+        if (!isFilled(r.productivity ?? r.prod)) missing.push("Prod");
+        if (!isFilled(r.aht)) missing.push("AHT");
+        if (!isFilled(r.hold)) missing.push("Hold");
+        if (!isFilled(r.wrapup)) missing.push("Wrapup");
+        const handledVal = getRowValForCol(r, 'handled') || getRowValForCol(r, 'call_handled');
+        if (!isFilled(handledVal)) missing.push("Handled");
+        if (!isQualitySyncEnabled(selectedYear, upperMonth) && !isFilled(r.quality)) {
+          missing.push("Quality");
+        }
+      }
+
+      if (missing.length > 0) {
+        incompleteAgents.push({
+          name: r.display_name || r.agent_name || "Agent",
+          missingFields: missing
+        });
+      }
+    });
+
+    const total = rows.length;
+    const completed = total - incompleteAgents.length;
+
+    return {
+      isComplete: incompleteAgents.length === 0,
+      totalAgents: total,
+      completedAgents: completed,
+      incompleteAgents
+    };
+  }, [isAggregate, selectedMonth, selectedYear, rows, selectedTeam]);
+
+  const handleSyncData = async () => {
+    if (isSyncingData || isAggregate) return;
+    if (!currentMonthCompleteness || !currentMonthCompleteness.isComplete) {
+      setShowIncompleteSyncModal(true);
+      return;
+    }
+
+    setIsSyncingData(true);
+    try {
+      const syncDocRef = doc(db, "settings", "tl_agent_sync_status");
+      const syncSnap = await getDoc(syncDocRef);
+      const existing = syncSnap.exists() ? (syncSnap.data()?.synced_months || {}) : {};
+
+      const upperMonth = (selectedMonth || "").toUpperCase();
+      const syncTime = new Date().toISOString();
+      const syncedBy = userProfile?.name || userProfile?.display_name || userProfile?.email || "Team Leader";
+
+      const updated = { ...existing };
+
+      if (isCombinedCallCenter) {
+        const teams = ['Younis Kamal Team', 'Ankido Buya Team', 'Call Center Combined'];
+        teams.forEach(t => {
+          const key = `${selectedYear}_${upperMonth}_${t}`;
+          updated[key] = {
+            isSynced: true,
+            isComplete: true,
+            syncedAt: syncTime,
+            syncedBy,
+            agentCount: currentMonthCompleteness.totalAgents,
+            team: t,
+            month: upperMonth,
+            year: selectedYear
+          };
+        });
+      } else {
+        const key = `${selectedYear}_${upperMonth}_${selectedTeam}`;
+        updated[key] = {
+          isSynced: true,
+          isComplete: true,
+          syncedAt: syncTime,
+          syncedBy,
+          agentCount: currentMonthCompleteness.totalAgents,
+          team: selectedTeam,
+          month: upperMonth,
+          year: selectedYear
+        };
+      }
+
+      await setDoc(syncDocRef, { synced_months: updated, updatedAt: syncTime }, { merge: true });
+
+      // Also sync top_star_status so Top Star podium stays in lockstep
+      try {
+        const topStarDocRef = doc(db, "settings", "top_star_status");
+        const topStarSnap = await getDoc(topStarDocRef);
+        const tsExisting = topStarSnap.exists() ? (topStarSnap.data()?.synced_months || {}) : {};
+        const tsUpdated = { ...tsExisting };
+        if (isCombinedCallCenter) {
+          tsUpdated[`${selectedYear}_${upperMonth}_call`] = { isSynced: true, syncedAt: syncTime, syncedBy };
+        } else if (selectedTeam === 'Mohammed Dlshad Team') {
+          tsUpdated[`${selectedYear}_${upperMonth}_chat`] = { isSynced: true, syncedAt: syncTime, syncedBy };
+        } else {
+          tsUpdated[`${selectedYear}_${upperMonth}_call`] = { isSynced: true, syncedAt: syncTime, syncedBy };
+        }
+        await setDoc(topStarDocRef, { synced_months: tsUpdated, updatedAt: syncTime }, { merge: true });
+      } catch (e) {
+        console.warn("Could not sync top_star_status:", e);
+      }
+
+      setShowSyncedDetailsModal(false);
+      setSyncSuccessToast(true);
+      setTimeout(() => setSyncSuccessToast(false), 4500);
+    } catch (err: any) {
+      console.error("Error syncing data:", err);
+      alert("حدث خطأ أثناء مزامنة البيانات: " + (err.message || "Unknown error"));
+    } finally {
+      setIsSyncingData(false);
+    }
+  };
+
+  const handleUnsyncData = async () => {
+    if (isSyncingData || isAggregate) return;
+    setIsSyncingData(true);
+    try {
+      const syncDocRef = doc(db, "settings", "tl_agent_sync_status");
+      const syncSnap = await getDoc(syncDocRef);
+      const existing = syncSnap.exists() ? (syncSnap.data()?.synced_months || {}) : {};
+
+      const upperMonth = (selectedMonth || "").toUpperCase();
+      const updated = { ...existing };
+
+      if (isCombinedCallCenter) {
+        const teams = ['Younis Kamal Team', 'Ankido Buya Team', 'Call Center Combined'];
+        teams.forEach(t => {
+          const key = `${selectedYear}_${upperMonth}_${t}`;
+          if (updated[key]) {
+            updated[key] = { ...updated[key], isSynced: false, unSyncedAt: new Date().toISOString() };
+          }
+        });
+      } else {
+        const key = `${selectedYear}_${upperMonth}_${selectedTeam}`;
+        if (updated[key]) {
+          updated[key] = { ...updated[key], isSynced: false, unSyncedAt: new Date().toISOString() };
+        }
+      }
+
+      await setDoc(syncDocRef, { synced_months: updated, updatedAt: new Date().toISOString() }, { merge: true });
+      setShowSyncedDetailsModal(false);
+    } catch (err: any) {
+      console.error("Error un-syncing data:", err);
+      alert("حدث خطأ أثناء إلغاء المزامنة: " + (err.message || "Unknown error"));
+    } finally {
+      setIsSyncingData(false);
+    }
+  };
+
   // Prevent background scroll when modal is open
   useEffect(() => {
-    if (showManageMembers || showProfileModal || deleteTarget || showForgotModal || showMonthLockModal || showCcBreakdownModal) {
+    if (showManageMembers || showProfileModal || deleteTarget || showForgotModal || showMonthLockModal || showCcBreakdownModal || showIncompleteSyncModal || showSyncedDetailsModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -2657,7 +3004,7 @@ export default function Dashboard() {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [showManageMembers, showProfileModal, deleteTarget, showForgotModal, showMonthLockModal, showCcBreakdownModal]);
+  }, [showManageMembers, showProfileModal, deleteTarget, showForgotModal, showMonthLockModal, showCcBreakdownModal, showIncompleteSyncModal, showSyncedDetailsModal]);
 
   // Real-time columns synchronization across all teams, TLs, and Agents
   useEffect(() => {
@@ -2726,10 +3073,6 @@ export default function Dashboard() {
     "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
   ];
   const periods = ["Q1", "Q2", "Q3", "Q4", "H1", "H2"];
-
-  const aggregateMap = AGGREGATE_MAP;
-
-  const isAggregate = Object.keys(aggregateMap).includes(selectedMonth);
 
   const tableName =
     selectedTeam === 'Younis Kamal Team' ? 'younis_metrics' :
@@ -5434,6 +5777,45 @@ export default function Dashboard() {
               />
               <span>CC (Y+A)</span>
             </button>
+
+            {/* Sync Data Button (Right next to CC (Y+A)) */}
+            {!isAggregate && currentMonthCompleteness && (
+              <>
+                <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5 flex-shrink-0" />
+                {!currentMonthCompleteness.isComplete ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowIncompleteSyncModal(true)}
+                    className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 border cursor-pointer whitespace-nowrap bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-300/80 dark:border-amber-700/60 shadow-2xs shrink-0 active:scale-95"
+                    title={`بيانات ${selectedMonth} غير مكتملة (${currentMonthCompleteness.completedAgents}/${currentMonthCompleteness.totalAgents}). اضغط لعرض الحقول الناقصة.`}
+                  >
+                    <Clock size={11} className="text-amber-600 dark:text-amber-400" />
+                    <span>Sync ({currentMonthCompleteness.completedAgents}/{currentMonthCompleteness.totalAgents})</span>
+                  </button>
+                ) : isCurrentMonthSynced ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowSyncedDetailsModal(true)}
+                    className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg text-[11px] font-black transition flex items-center gap-1.5 border cursor-pointer whitespace-nowrap bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/70 shadow-2xs shrink-0 active:scale-95"
+                    title="البيانات معتمدة ومنشورة على لوحة تحكم الموظفين. اضغط لإدارة المزامنة."
+                  >
+                    <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400" />
+                    <span>Synced ✓</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSyncData}
+                    disabled={isSyncingData}
+                    className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-[#1C6B53] hover:from-emerald-700 hover:to-[#155a45] shadow-md shadow-emerald-600/25 ring-2 ring-emerald-400/40 animate-pulse shrink-0 active:scale-95 disabled:opacity-50"
+                    title="اكتملت 100% من بيانات الموظفين! اضغط لمزامنة ونشر البيانات على لوحة تحكم الموظف."
+                  >
+                    <RefreshCw size={11} className={isSyncingData ? "animate-spin" : ""} />
+                    <span>{isSyncingData ? "جاري المزامنة..." : "Sync Data"}</span>
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -6410,9 +6792,9 @@ export default function Dashboard() {
       })()}
 
       {/* Previous Month Incomplete Lock Modal */}
-      {showMonthLockModal && prevMonthIncompleteInfo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800/80 overflow-hidden text-left">
+      {isMounted && showMonthLockModal && prevMonthIncompleteInfo && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800/80 overflow-hidden text-left animate-in zoom-in-95 duration-150">
             <div className="p-6 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border-b border-amber-100 dark:border-amber-900/50 flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shrink-0">
@@ -6506,7 +6888,194 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Incomplete Sync Data Modal */}
+      {isMounted && showIncompleteSyncModal && currentMonthCompleteness && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800/80 overflow-hidden text-left animate-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="p-6 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border-b border-amber-100 dark:border-amber-900/50 flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shrink-0">
+                  <Clock size={22} />
+                </div>
+                <div>
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300/60 dark:border-amber-700/60 mb-1">
+                    بيانات غير مكتملة
+                  </span>
+                  <h3 className="text-base font-black text-gray-900 dark:text-white">
+                    اكتمال بيانات شهر {selectedMonth} {selectedYear}
+                  </h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowIncompleteSyncModal(false)}
+                className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 transition shadow-2xs cursor-pointer shrink-0"
+                title="إغلاق"
+              >
+                <X size={18} strokeWidth={2.5} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              <div className="p-4 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-xs sm:text-sm text-amber-950 dark:text-amber-200 leading-relaxed font-medium">
+                لا يمكن مزامنة ونشر بيانات هذا الشهر على <strong>لوحة تحكم الموظفين (Agent Dashboard)</strong> حتى يتم إدخال 100% من بيانات جميع الموظفين المدرجين أدناه.
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
+                  <span>نسبة الإنجاز واكتمال الإدخال:</span>
+                  <span className="text-amber-700 dark:text-amber-300 font-mono font-extrabold">
+                    {currentMonthCompleteness.completedAgents} من {currentMonthCompleteness.totalAgents} موظف ({Math.round((currentMonthCompleteness.completedAgents / Math.max(1, currentMonthCompleteness.totalAgents)) * 100)}%)
+                  </span>
+                </div>
+                <div className="w-full h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.round((currentMonthCompleteness.completedAgents / Math.max(1, currentMonthCompleteness.totalAgents)) * 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center justify-between">
+                  <span>الموظفون الذين لديهم حقول ناقصة:</span>
+                  <span className="text-[11px] font-black text-amber-600 dark:text-amber-400">
+                    {currentMonthCompleteness.incompleteAgents.length} موظف متبقي
+                  </span>
+                </div>
+                <div className="max-h-52 overflow-y-auto space-y-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+                  {currentMonthCompleteness.incompleteAgents.map((ag, i) => (
+                    <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-gray-800 text-xs shadow-xs border border-gray-100 dark:border-gray-700/60">
+                      <span className="font-bold text-gray-900 dark:text-gray-100 truncate max-w-[170px]">{ag.name}</span>
+                      <div className="flex flex-wrap gap-1 justify-end max-w-[200px]">
+                        {ag.missingFields.map((f, j) => (
+                          <span key={j} className="text-[10px] px-1.5 py-0.5 rounded-md bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-300 font-bold border border-red-200/60 dark:border-red-800/60">
+                            {f}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowIncompleteSyncModal(false)}
+                  className="w-full py-2.5 px-4 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-md transition cursor-pointer active:scale-95"
+                >
+                  الرجوع وإكمال البيانات الناقصة
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Synced Details & Actions Modal */}
+      {isMounted && showSyncedDetailsModal && currentMonthSyncDetails && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-emerald-200 dark:border-emerald-800/80 overflow-hidden text-left animate-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="p-6 bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-transparent border-b border-emerald-100 dark:border-emerald-900/50 flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#1C6B53] text-white flex items-center justify-center shadow-md shrink-0">
+                  <CheckCircle2 size={24} />
+                </div>
+                <div>
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-700/60 mb-1">
+                    بيانات معتمدة ومنشورة
+                  </span>
+                  <h3 className="text-base font-black text-gray-900 dark:text-white">
+                    مزامنة شهر {selectedMonth} {selectedYear}
+                  </h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSyncedDetailsModal(false)}
+                className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 transition shadow-2xs cursor-pointer shrink-0"
+                title="إغلاق"
+              >
+                <X size={18} strokeWidth={2.5} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-xs sm:text-sm text-emerald-950 dark:text-emerald-200 font-medium leading-relaxed">
+                بيانات هذا الشهر منشورة حالياً وتظهر بجميع أرقامها وتقييماتها لجميع الموظفين على <strong>لوحة تحكم الموظفين (Agent Dashboard)</strong>.
+              </div>
+
+              <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800/60 rounded-2xl border border-gray-100 dark:border-gray-800 text-xs">
+                <div className="flex items-center justify-between py-1 border-b border-gray-200/60 dark:border-gray-700/60">
+                  <span className="text-gray-500 dark:text-gray-400">تاريخ آخر مزامنة:</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100 font-mono">
+                    {currentMonthSyncDetails.syncedAt ? new Date(currentMonthSyncDetails.syncedAt).toLocaleString('en-GB') : '-'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-1 border-b border-gray-200/60 dark:border-gray-700/60">
+                  <span className="text-gray-500 dark:text-gray-400">تم الاعتماد بواسطة:</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">
+                    {currentMonthSyncDetails.syncedBy || 'Team Leader'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-gray-500 dark:text-gray-400">عدد الموظفين المشمولين:</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100 font-mono">
+                    {currentMonthSyncDetails.agentCount || (currentMonthCompleteness?.totalAgents ?? '-')} موظف
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-2 pt-2">
+                <button
+                  type="button"
+                  onClick={handleSyncData}
+                  disabled={isSyncingData}
+                  className="w-full py-2.5 px-4 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-md flex items-center justify-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={isSyncingData ? "animate-spin" : ""} />
+                  <span>{isSyncingData ? "جاري التحديث..." : "إعادة المزامنة ونشر آخر التعديلات (Re-sync)"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleUnsyncData}
+                  disabled={isSyncingData}
+                  className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800/60 flex items-center justify-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
+                >
+                  <RotateCcw size={14} />
+                  <span>إلغاء النشر مؤقتاً (إرجاع كمسودة قيد المراجعة)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Toast Notification for Sync Success */}
+      {isMounted && syncSuccessToast && createPortal(
+        <div className="fixed top-6 right-6 z-[9999] flex items-center gap-3 px-4 py-3 bg-[#1C6B53] text-white rounded-2xl shadow-2xl text-xs font-bold animate-fadeIn border border-emerald-400/30">
+          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+            <Check size={14} strokeWidth={3} />
+          </div>
+          <div>
+            <div className="font-extrabold text-sm">تمت المزامنة بنجاح!</div>
+            <div className="text-[11px] text-white/80 font-normal">أصبحت بيانات شهر {selectedMonth} {selectedYear} ظاهرة الآن على لوحة تحكم الموظفين.</div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* Toast Notification for Copy/Paste */}
