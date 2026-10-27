@@ -4818,11 +4818,11 @@ export default function QualityDashboard({
   };
 
   return (
-    <div className="min-h-screen p-3.5 sm:p-6 md:p-10 font-sans transition-colors bg-[#F9F8F4] dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen p-3.5 sm:p-6 md:p-8 font-sans transition-colors bg-[#F9F8F4] dark:bg-gray-950 text-gray-900 dark:text-gray-100">
       <div className="max-w-[1700px] mx-auto space-y-6">
 
         {/* Top Header & Brand Bar */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center w-full mb-6 sm:mb-8 gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-gray-200/60 dark:border-gray-800 relative z-30">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-6 sm:mb-8 gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-gray-200/60 dark:border-gray-800 relative z-30">
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             <img src="/logo.webp" alt="FIB Logo" className="h-9 sm:h-11 w-auto object-contain shrink-0" />
             <div className="h-8 sm:h-9 w-[1.5px] bg-gray-200 dark:bg-gray-700 shrink-0" />
@@ -4843,28 +4843,7 @@ export default function QualityDashboard({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 self-stretch xl:self-auto justify-end">
-            {/* Real-time Save Status */}
-            {saveStatus !== "idle" && (
-              <div className={`flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-bold transition shadow-xs shrink-0 ${
-                saveStatus === "saving" 
-                  ? "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
-                  : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-              }`}>
-                {saveStatus === "saving" ? (
-                  <>
-                    <RefreshCw size={12} className="animate-spin text-amber-600" />
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCheck size={13} className="text-emerald-600" />
-                    <span>Saved</span>
-                  </>
-                )}
-              </div>
-            )}
-
+          <div className="flex items-center shrink-0 self-stretch sm:self-auto justify-end">
             <UnifiedTopNavbar
               currentDashboard="quality"
               userProfile={currentUserProfile || userProfile}
@@ -4874,6 +4853,27 @@ export default function QualityDashboard({
               onOpenSettings={onOpenSettings}
               isDarkMode={isDarkMode}
               toggleDarkMode={toggleDarkMode}
+              extraActions={
+                saveStatus !== "idle" ? (
+                  <div className={`flex items-center gap-1.5 h-7 px-2 rounded-lg text-[11px] font-bold transition shrink-0 ${
+                    saveStatus === "saving" 
+                      ? "text-amber-600 dark:text-amber-400" 
+                      : "text-emerald-600 dark:text-emerald-400"
+                  }`}>
+                    {saveStatus === "saving" ? (
+                      <>
+                        <RefreshCw size={11} className="animate-spin text-amber-600" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCheck size={12} className="text-emerald-600" />
+                        <span>Saved</span>
+                      </>
+                    )}
+                  </div>
+                ) : undefined
+              }
             />
           </div>
         </div>

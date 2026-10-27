@@ -19,6 +19,7 @@ export interface UnifiedTopNavbarProps {
   onOpenSettings?: () => void;
   isDarkMode?: boolean;
   toggleDarkMode?: () => void;
+  extraActions?: React.ReactNode;
   className?: string;
 }
 
@@ -31,6 +32,7 @@ export function UnifiedTopNavbar({
   onOpenSettings,
   isDarkMode = false,
   toggleDarkMode,
+  extraActions,
   className = ""
 }: UnifiedTopNavbarProps) {
   const emailLower = (userProfile?.email || "").toLowerCase().trim();
@@ -168,6 +170,16 @@ export function UnifiedTopNavbar({
           );
         })}
       </div>
+
+      {/* Extra Dashboard Actions (e.g. Criteria, Save indicator, etc.) */}
+      {extraActions && (
+        <>
+          <div className="h-4 w-px bg-gray-200 dark:bg-gray-800 mx-0.5 shrink-0" />
+          <div className="flex items-center gap-1 shrink-0">
+            {extraActions}
+          </div>
+        </>
+      )}
 
       <div className="h-4 w-px bg-gray-200 dark:bg-gray-800 mx-0.5 shrink-0" />
 

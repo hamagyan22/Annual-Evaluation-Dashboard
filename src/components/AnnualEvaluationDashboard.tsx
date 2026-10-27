@@ -360,19 +360,12 @@ export default function AnnualEvaluationDashboard({
   const isUserYounis = emailLower.includes("younis") || nameLower.includes("younis");
   const isUserShireenWaisi = emailLower.includes("shireen") || nameLower.includes("shireen") || roleLower === "backoffice";
 
-  // Single-user view for Trainer, QA & Back Office (they only see their own evaluation)
-  const isUserSpecialStaffOnly = (isUserMohammedAzad || isUserMohammedJihad || isUserLaraKamil || isUserShireenWaisi) && !isAdmin && !isManager;
+  // Single-user self view only for Trainer, QA, Back Office, and Team Leaders:
+  // "التيم ليدر خلي بس يشوفون تقييمهم و ليس مال تيمهم"
+  const isUserSpecialStaffOnly = (isUserMohammedAzad || isUserMohammedJihad || isUserLaraKamil || isUserShireenWaisi || isTL || isUserAnkido || isUserYounis) && !isAdmin && !isManager;
 
-  // Strict Team Leader team scope
-  const tlAssignedTeam: "Younis" | "Ankido" | "Mohammed" | null = useMemo(() => {
-    if (isAdmin || isManager) return null;
-    if (isTL || isUserAnkido || isUserYounis) {
-      if (userTeamLower.includes("ankido") || isUserAnkido) return "Ankido";
-      if (userTeamLower.includes("mohammed") || userTeamLower.includes("dlshad")) return "Mohammed";
-      if (userTeamLower.includes("younis") || isUserYounis) return "Younis";
-    }
-    return null;
-  }, [isTL, isAdmin, isManager, userTeamLower, isUserAnkido, isUserYounis]);
+  // Strict Team Leader team scope (null for TLs now because they only view their own evaluation)
+  const tlAssignedTeam: "Younis" | "Ankido" | "Mohammed" | null = null;
 
   // Selected filters: Year (2026-2030) and Period (Semi-Annual & Annual only)
   const [selectedYear, setSelectedYear] = useState<string>(initialYear || "2026");
@@ -684,10 +677,8 @@ export default function AnnualEvaluationDashboard({
   const filteredMembers = useMemo(() => {
     let list = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, selectedPeriod === "Semi-Annual" ? "H1" : "YEAR - AVG", String(selectedYear)));
     
-    // Special Staff (Mohammed Azad, Mohammed Jihad, Lara Kamil, Shireen Waisi): strictly view only their own evaluation
-    // "هذا مال محمد ازاد الترينر خلي من يفتح التقيم بس يشوف مالته"
-    // "و هذا مال محمد جهاد هم نفس الشي"
-    // "زهذا مال لارا هم نفس الشي"
+    // Special Staff & Team Leaders: strictly view only their own evaluation:
+    // "التيم ليدر خلي بس يشوفون تقييمهم و ليس مال تيمهم"
     if (isUserSpecialStaffOnly) {
       if (isUserMohammedAzad) {
         return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("azad"));
@@ -700,6 +691,19 @@ export default function AnnualEvaluationDashboard({
       }
       if (isUserShireenWaisi) {
         return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("shireen"));
+      }
+      if (isUserAnkido || (isTL && userTeamLower.includes("ankido"))) {
+        return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("ankido"));
+      }
+      if (isUserYounis || (isTL && userTeamLower.includes("younis"))) {
+        return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("younis"));
+      }
+      const myName = normalizeAgentName(userProfile?.name || userProfile?.agent_name || "");
+      if (myName) {
+        return effectiveAllMembers.filter(m => {
+          const aName = normalizeAgentName(m.agent_name || "");
+          return aName === myName || aName.includes(myName) || myName.includes(aName);
+        });
       }
     }
 
@@ -971,7 +975,8 @@ export default function AnnualEvaluationDashboard({
 
   // Initialize selected employee on load
   useEffect(() => {
-    // 1. Trainer & QA: strictly lock to their own self profile
+    // 1. Trainer, QA, Back Office, and Team Leaders: strictly lock to their own self profile
+    // "التيم ليدر خلي بس يشوفون تقييمهم و ليس مال تيمهم"
     if (isUserSpecialStaffOnly) {
       if (isUserMohammedAzad) {
         setSelectedEmployeeName("Mohammed Azad");
@@ -990,7 +995,22 @@ export default function AnnualEvaluationDashboard({
       }
       if (isUserShireenWaisi) {
         setSelectedEmployeeName("Shireen Waisi");
-        setTeamTabFilter("QA_Training");
+        setTeamTabFilter("Special_Staff");
+        return;
+      }
+      if (isUserAnkido || (isTL && userTeamLower.includes("ankido"))) {
+        setSelectedEmployeeName("Ankido Buya");
+        setTeamTabFilter("Ankido");
+        return;
+      }
+      if (isUserYounis || (isTL && userTeamLower.includes("younis"))) {
+        setSelectedEmployeeName("Younis Kamal");
+        setTeamTabFilter("Younis");
+        return;
+      }
+      const myName = toTitleCase(userProfile?.name || userProfile?.agent_name || "");
+      if (myName) {
+        setSelectedEmployeeName(myName);
         return;
       }
     }
@@ -1000,36 +1020,6 @@ export default function AnnualEvaluationDashboard({
       const agentName = userProfile?.agent_name || userProfile?.name || "";
       if (agentName && selectedEmployeeName !== agentName) {
         setSelectedEmployeeName(agentName);
-      }
-      return;
-    }
-
-    // 3. Team Leader: default to the Team Leader themselves, then stay within team
-    if (tlAssignedTeam && effectiveAllMembers.length > 0) {
-      setTeamTabFilter(tlAssignedTeam);
-      const isCurrentInMyTeam = effectiveAllMembers.some(
-        m => m.agent_name === selectedEmployeeName && (
-          tlAssignedTeam === "Ankido" ? (m.team || "").toLowerCase().includes("ankido") :
-          tlAssignedTeam === "Mohammed" ? ((m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad")) :
-          (m.team || "").toLowerCase().includes("younis")
-        )
-      );
-      if (!isCurrentInMyTeam) {
-        // Prefer Team Leader themselves first if available
-        const tlName = tlAssignedTeam === "Ankido" ? "Ankido Buya" : tlAssignedTeam === "Mohammed" ? "Mohammed Dilshad" : "Younis Kamal";
-        const tlMatch = effectiveAllMembers.find(m => normalizeAgentName(m.agent_name) === normalizeAgentName(tlName));
-        if (tlMatch) {
-          setSelectedEmployeeName(tlMatch.agent_name);
-        } else {
-          const teamMember = effectiveAllMembers.find(m => 
-            tlAssignedTeam === "Ankido" ? (m.team || "").toLowerCase().includes("ankido") :
-            tlAssignedTeam === "Mohammed" ? ((m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad")) :
-            (m.team || "").toLowerCase().includes("younis")
-          );
-          if (teamMember) {
-            setSelectedEmployeeName(teamMember.agent_name);
-          }
-        }
       }
       return;
     }
@@ -1588,7 +1578,7 @@ export default function AnnualEvaluationDashboard({
   };
 
   return (
-    <div className="min-h-screen font-sans bg-[#F9F8F4] dark:bg-gray-950 text-gray-800 dark:text-gray-100 transition-colors pb-16 print:bg-white print:text-black print:pb-0">
+    <div className="min-h-screen p-3.5 sm:p-6 md:p-8 font-sans bg-[#F9F8F4] dark:bg-gray-950 text-gray-800 dark:text-gray-100 transition-colors pb-16 print:bg-white print:text-black print:p-0">
       
       {/* Toast Notification */}
       {saveToast && (
@@ -1602,40 +1592,23 @@ export default function AnnualEvaluationDashboard({
         </div>
       )}
 
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-800 shadow-2xs print:hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 sm:gap-4">
-          
+      <div className="max-w-[1400px] mx-auto">
+        {/* Top Header - Unified Level & Spacing Matching All Dashboards */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-6 sm:mb-8 gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-gray-200/60 dark:border-gray-800 relative z-30 print:hidden">
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             <img src="/logo.webp" alt="FIB Logo" className="h-9 sm:h-11 w-auto object-contain shrink-0" />
             <div className="h-8 sm:h-9 w-[1.5px] bg-gray-200 dark:bg-gray-700 shrink-0" />
             <div className="shrink-0">
-              <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-xl font-black tracking-tight text-gray-900 dark:text-white leading-none">
-                  Performance Evaluation
-                </h1>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1C6B53]/10 text-[#1C6B53] dark:bg-emerald-400/10 dark:text-emerald-400 border border-[#1C6B53]/20 dark:border-emerald-400/20">
-                  {currentMember?.team?.replace(' Team', '') || "Contact Center"}
-                </span>
-              </div>
+              <h1 className="text-base sm:text-xl font-black tracking-tight text-gray-900 dark:text-white leading-none">
+                Performance Evaluation
+              </h1>
               <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
                 Semi-Annual & Annual Performance Review
               </p>
             </div>
           </div>
 
-          {/* Unified Header Navigation: UnifiedTopNavbar with matching design across all dashboards */}
-          <div className="flex items-center gap-2 shrink-0 self-stretch xl:self-auto justify-end">
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 cursor-pointer shadow-2xs shrink-0"
-              title="Print / Save PDF"
-            >
-              <Printer size={13.5} />
-              <span className="hidden sm:inline">Print / PDF</span>
-            </button>
-
+          <div className="flex items-center shrink-0 self-stretch sm:self-auto justify-end">
             <UnifiedTopNavbar
               currentDashboard="evaluation"
               userProfile={userProfile}
@@ -1648,91 +1621,104 @@ export default function AnnualEvaluationDashboard({
             />
           </div>
         </div>
-      </header>
 
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 pt-5">
-        
-        {/* Top Control Toolbar: Modern Year Dropdown (2026-2030), Period Switcher (Semi-Annual & Annual only), and Employee Selector */}
-        <section className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-xs mb-6 print:hidden">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-            
-            {/* Left Controls: ModernDropdown Year & Harmonized Period Switcher & Who's Pending */}
-            <div className="flex flex-wrap items-center gap-2.5">
+        {/* Main Container */}
+        <main className="w-full">
+          
+          {/* Top Control Toolbar: Modern Year Dropdown, Period Switcher, Who's Pending?, Print / PDF, and Employee Selector */}
+          <section className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-xs mb-6 print:hidden">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
               
-              {/* Year Dropdown using ModernDropdown matching the whole project */}
-              <ModernDropdown
-                value={selectedYear}
-                onChange={(val) => setSelectedYear(val)}
-                options={AVAILABLE_YEARS}
-                variant="solid-green"
-                size="md"
-                ariaLabel="Select Year"
-              />
+              {/* Left Controls: ModernDropdown Year & Harmonized Period Switcher & Who's Pending */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                
+                {/* Year Dropdown using ModernDropdown matching the whole project */}
+                <ModernDropdown
+                  value={selectedYear}
+                  onChange={(val) => setSelectedYear(val)}
+                  options={AVAILABLE_YEARS}
+                  variant="solid-green"
+                  size="md"
+                  ariaLabel="Select Year"
+                />
 
-              {/* Period Switcher: Harmonized height and styling */}
-              <div className="flex items-center bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-xl border border-gray-200/80 dark:border-gray-700/80 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setSelectedPeriod("Semi-Annual")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
-                    selectedPeriod === "Semi-Annual"
-                      ? 'bg-[#1C6B53] text-white shadow-xs'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  <span>Semi-Annual</span>
-                </button>
+                {/* Period Switcher: Harmonized height and styling */}
+                <div className="flex items-center bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-xl border border-gray-200/80 dark:border-gray-700/80 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPeriod("Semi-Annual")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
+                      selectedPeriod === "Semi-Annual"
+                        ? 'bg-[#1C6B53] text-white shadow-xs'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <span>Semi-Annual</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setSelectedPeriod("Annual")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
-                    selectedPeriod === "Annual"
-                      ? 'bg-[#1C6B53] text-white shadow-xs'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  <span>Annual</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPeriod("Annual")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
+                      selectedPeriod === "Annual"
+                        ? 'bg-[#1C6B53] text-white shadow-xs'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <span>Annual</span>
+                  </button>
+                </div>
+
+                {/* Quick Button: Who's Pending - Manager & Admin Only */}
+                {(isManager || isAdmin) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoverageFilterStatus("pending");
+                      setShowCoverageModal(true);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100/90 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 text-xs font-black text-amber-900 dark:text-amber-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
+                    title="View Pending Employees"
+                  >
+                    <ListChecks size={14} className="text-amber-600 dark:text-amber-400" />
+                    <span>Who&apos;s Pending?</span>
+                    <span className="px-1.5 py-0.5 bg-amber-500 text-white rounded-full text-[10px] font-black shadow-2xs">
+                      {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount}
+                    </span>
+                  </button>
+                )}
+
               </div>
 
-              {/* Quick Button: Who's Pending - Manager & Admin Only */}
-              {(isManager || isAdmin) && (
+              {/* Right Side: Print PDF & Employee Selector */}
+              <div className="flex items-center gap-2.5 flex-1 sm:flex-initial justify-end">
+                
+                {/* Print / Save PDF Button moved down into toolbar */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setCoverageFilterStatus("pending");
-                    setShowCoverageModal(true);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100/90 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 text-xs font-black text-amber-900 dark:text-amber-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
-                  title="View Pending Employees"
+                  onClick={handlePrint}
+                  className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
+                  title="Print / Save PDF"
                 >
-                  <ListChecks size={14} className="text-amber-600 dark:text-amber-400" />
-                  <span>Who&apos;s Pending?</span>
-                  <span className="px-1.5 py-0.5 bg-amber-500 text-white rounded-full text-[10px] font-black shadow-2xs">
-                    {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount}
-                  </span>
+                  <Printer size={13.5} className="text-[#1C6B53] dark:text-emerald-400" />
+                  <span className="hidden sm:inline">Print / PDF</span>
                 </button>
-              )}
 
-            </div>
-
-            {/* Right Side: Employee Selector (All Employees) */}
-            <div className="relative flex-1 sm:flex-initial min-w-[260px]">
-              {(isAgent || isUserSpecialStaffOnly) ? (
-                <div className="flex items-center gap-2.5 px-3.5 py-1.5 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
-                  <div className="w-7 h-7 rounded-full bg-[#1C6B53] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-                    {userProfile?.name?.charAt(0) || userProfile?.agent_name?.charAt(0) || "A"}
-                  </div>
-                  <div>
-                    <div className="text-xs font-black text-gray-900 dark:text-white">{toTitleCase(selectedEmployeeName)}</div>
-                    <div className="text-[10px] text-[#1C6B53] dark:text-emerald-400 font-bold">
-                      {currentMember?.role_type === 'trainer' ? 'Training • Trainer' : currentMember?.role_type === 'qa' ? 'Quality Assurance' : currentMember?.role_type === 'backoffice' ? 'Back Office' : currentMember?.team?.replace(' Team', '') || 'Contact Center'}
+                {/* Employee Selector */}
+                <div className="relative min-w-[240px]">
+                  {(isAgent || isUserSpecialStaffOnly) ? (
+                    <div className="flex items-center gap-2.5 px-3.5 py-1.5 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+                      <div className="w-7 h-7 rounded-full bg-[#1C6B53] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                        {userProfile?.name?.charAt(0) || userProfile?.agent_name?.charAt(0) || "A"}
+                      </div>
+                      <div>
+                        <div className="text-xs font-black text-gray-900 dark:text-white">{toTitleCase(selectedEmployeeName)}</div>
+                        <div className="text-[10px] text-[#1C6B53] dark:text-emerald-400 font-bold">
+                          {currentMember?.role_type === 'trainer' ? 'Training • Trainer' : currentMember?.role_type === 'qa' ? 'Quality Assurance' : currentMember?.role_type === 'backoffice' ? 'Back Office' : currentMember?.team?.replace(' Team', '') || 'Contact Center'}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ) : (
+                  ) : (
                 <div className="relative">
                   <button
                     type="button"
@@ -1976,9 +1962,10 @@ export default function AnnualEvaluationDashboard({
                 </div>
               )}
             </div>
-
           </div>
-        </section>
+
+        </div>
+      </section>
 
         {/* Unified Evaluation Card */}
         <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl shadow-xs overflow-hidden print:border-none print:shadow-none print:p-0">
@@ -2679,6 +2666,7 @@ export default function AnnualEvaluationDashboard({
         </div>
 
       </main>
+      </div>
 
       {/* KPI Benchmark Informational Guide Modal */}
       {showBenchmarkGuideModal && (
