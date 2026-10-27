@@ -15,7 +15,7 @@ export interface ModernDropdownProps {
   onChange: (value: string) => void;
   options: (string | DropdownOption)[];
   variant?: "solid-green" | "tinted-green" | "white" | "gray" | "theme";
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   align?: "left" | "right";
   className?: string;
   ariaLabel?: string;
@@ -107,7 +107,9 @@ export const ModernDropdown: React.FC<ModernDropdownProps> = ({
   // Button styles based on variant
   const getButtonStyles = () => {
     const sizeClasses =
-      size === "sm"
+      size === "lg"
+        ? "h-10 px-4 text-sm font-black gap-2.5 rounded-xl"
+        : size === "sm"
         ? "px-2.5 py-1 text-xs font-bold gap-1.5 rounded-lg"
         : "px-3 py-1.5 text-xs font-black gap-2 rounded-xl";
 
@@ -141,7 +143,7 @@ export const ModernDropdown: React.FC<ModernDropdownProps> = ({
       >
         <span className="truncate">{selectedOption.label}</span>
         <ChevronDown
-          size={size === "sm" ? 11 : 13}
+          size={size === "lg" ? 15 : size === "sm" ? 11 : 13}
           className={`transition-transform duration-200 shrink-0 ${
             variant === "solid-green" || variant === "theme"
               ? "text-white/80"
