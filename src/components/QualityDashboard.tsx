@@ -18,12 +18,15 @@ import { getCanonicalAgentName as getCanonicalNameAuthority } from "@/lib/canoni
 import { ModernDropdown } from "@/components/ModernDropdown";
 import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 import { TrendBadge } from "@/components/TrendBadge";
+import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
 
 interface QualityDashboardProps {
   userProfile: any;
   onBack: () => void;
   onLogout?: () => void;
   onOpenProfile?: () => void;
+  onOpenSettings?: () => void;
+  onNavigate?: (target: ActiveDashboardType) => void;
   isDarkMode?: boolean;
   toggleDarkMode?: () => void;
   onOpenAnnualEval?: () => void;
@@ -500,6 +503,8 @@ export default function QualityDashboard({
   onBack,
   onLogout,
   onOpenProfile,
+  onOpenSettings,
+  onNavigate,
   isDarkMode = false,
   toggleDarkMode,
   onOpenAnnualEval
@@ -4862,113 +4867,16 @@ export default function QualityDashboard({
               </div>
             )}
 
-            {canSwitchTeams ? (
-              <div className="flex items-center gap-1.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-1.5 rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-xs justify-end">
-                {/* Dark Mode Toggle */}
-                {toggleDarkMode && (
-                  <button
-                    onClick={toggleDarkMode}
-                    className="w-8 sm:w-8.5 h-8 sm:h-8.5 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300 transition shrink-0 cursor-pointer"
-                    title="Toggle Dark Mode"
-                  >
-                    {isDarkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
-                  </button>
-                )}
-
-                {/* Theme Selector right beside Back */}
-                <ThemeSelectorModal />
-
-                {/* Back Button (Always First on the Far Right) */}
-                <button
-                  onClick={onBack}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white bg-white hover:bg-gray-100/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
-                  title="Return to Main Dashboard"
-                >
-                  <ArrowLeft size={14} /> <span>Back</span>
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-1.5 rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-xs justify-end">
-                {/* Evaluation View for Quality Team */}
-                {onOpenAnnualEval && (
-                  <button
-                    onClick={onOpenAnnualEval}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-[#1C6B53] dark:hover:text-emerald-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition shadow-xs cursor-pointer"
-                    title="Annual & Semi-Annual Performance Evaluation"
-                  >
-                    <ClipboardCheck size={14} className="text-[#1C6B53] dark:text-emerald-400" />
-                    <span>Evaluation</span>
-                  </button>
-                )}
-
-                <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
-
-                {/* Dark Mode Toggle */}
-                {toggleDarkMode && (
-                  <button 
-                    onClick={toggleDarkMode} 
-                    className="w-8 sm:w-8.5 h-8 sm:h-8.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300 transition shadow-xs cursor-pointer"
-                    title="Toggle Dark Mode"
-                  >
-                    {isDarkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
-                  </button>
-                )}
-
-                {/* Theme Selector */}
-                <ThemeSelectorModal />
-
-                <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-0.5" />
-
-                {/* Profile Button (Placed right next to Sign Out) */}
-                <button 
-                  onClick={handleOpenProfile}
-                  className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-gray-700/60 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition shadow-xs group cursor-pointer"
-                  title="Profile Settings"
-                >
-                  <div className="w-6 sm:w-7 h-6 sm:h-7 rounded-full bg-gradient-to-tr from-[#1C6B53] to-emerald-400 flex items-center justify-center overflow-hidden ring-2 ring-[#1C6B53]/20 dark:ring-emerald-400/20 text-white font-black text-xs shadow-xs shrink-0">
-                    {(currentUserProfile?.photo_url || userProfile?.photo_url) ? (
-                      <img src={currentUserProfile?.photo_url || userProfile?.photo_url} alt="Profile" className="w-full h-full object-cover" />
-                    ) : (
-                      (currentUserProfile?.name || userProfile?.name) ? (currentUserProfile?.name || userProfile?.name).charAt(0).toUpperCase() : <Users size={12} />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="max-w-[70px] sm:max-w-[120px] truncate group-hover:text-[#1C6B53] dark:group-hover:text-emerald-400 transition-colors">
-                      {currentUserProfile?.name || userProfile?.name || (isYounis ? "Younis Kamal" : (isAnkido ? "Ankido Buya" : "QA Evaluator"))}
-                    </span>
-                    <span className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-wider ${
-                      isTlViewer
-                        ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700/60"
-                        : "bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 border-emerald-300 dark:border-emerald-700/60"
-                    }`}>
-                      {isTlViewer ? "TL" : isTrainerUser ? "Trainer" : isAdmin ? "Admin" : isManager ? "Manager" : "QA"}
-                    </span>
-                  </div>
-                </button>
-
-                {/* Back Button for Team Leader Viewers */}
-                {isTlViewer && onBack && (
-                  <button
-                    onClick={onBack}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white bg-white hover:bg-gray-100/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
-                    title="Return to Main Dashboard"
-                  >
-                    <ArrowLeft size={14} />
-                    <span>Back</span>
-                  </button>
-                )}
-
-                {/* Sign Out (Logout) Button */}
-                <button
-                  onClick={onLogout || onBack}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 bg-white hover:bg-red-50 dark:bg-gray-800 dark:hover:bg-red-950/40 border border-gray-200 dark:border-gray-700 transition shadow-xs cursor-pointer"
-                  title="Sign Out"
-                >
-                  <LogOut size={14} />
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            )}
+            <UnifiedTopNavbar
+              currentDashboard="quality"
+              userProfile={currentUserProfile || userProfile}
+              onNavigate={onNavigate}
+              onLogout={onLogout || onBack}
+              onOpenProfile={handleOpenProfile}
+              onOpenSettings={onOpenSettings}
+              isDarkMode={isDarkMode}
+              toggleDarkMode={toggleDarkMode}
+            />
           </div>
         </div>
 

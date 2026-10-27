@@ -16,6 +16,8 @@ import {
 import { getCanonicalAgentName } from "@/lib/canonicalAgents";
 import { isMemberActiveInPeriod } from "@/lib/companyRoster";
 import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
+import { ModernDropdown } from "@/components/ModernDropdown";
+import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
 
 export interface AnnualEvaluationDashboardProps {
   userProfile: any;
@@ -23,6 +25,9 @@ export interface AnnualEvaluationDashboardProps {
   selectedYear?: string;
   onBack: () => void;
   onLogout?: () => void;
+  onNavigate?: (target: ActiveDashboardType) => void;
+  onOpenProfile?: () => void;
+  onOpenSettings?: () => void;
   isDarkMode?: boolean;
   toggleDarkMode?: () => void;
 }
@@ -330,6 +335,9 @@ export default function AnnualEvaluationDashboard({
   selectedYear: initialYear = "2026",
   onBack,
   onLogout,
+  onNavigate,
+  onOpenProfile,
+  onOpenSettings,
   isDarkMode = false,
   toggleDarkMode
 }: AnnualEvaluationDashboardProps) {
@@ -1617,73 +1625,28 @@ export default function AnnualEvaluationDashboard({
             </div>
           </div>
 
-          {/* Unified Header Navigation: Features, Divider, Dark Mode, Themes, Back (Far Right) */}
-          <div className="flex items-center gap-1.5 p-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-xs self-stretch sm:self-auto justify-end">
-            {/* Evaluation Coverage Quick View (Pending Tracker) - Manager & Admin Only */}
-            {(isManager || isAdmin) && (
-              <button
-                type="button"
-                onClick={() => {
-                  setCoverageFilterStatus("pending");
-                  setShowCoverageModal(true);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-emerald-800 dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100/90 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/50 border border-emerald-300/80 dark:border-emerald-700/60 transition active:scale-95 cursor-pointer shadow-2xs"
-                title="Evaluation Coverage Tracker (Pending Reviews)"
-              >
-                <ClipboardList size={14} className="text-[#1C6B53] dark:text-emerald-400" />
-                <span className="font-extrabold hidden xs:inline">Pending Tracker</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-black bg-[#1C6B53] text-white shadow-2xs">
-                  {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount} Pending
-                </span>
-              </button>
-            )}
-
-            {currentMemberRoleType === "agent" && (
-              <button
-                onClick={openBenchmarkGuide}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-50 hover:bg-amber-100/80 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 transition active:scale-95 cursor-pointer shadow-2xs"
-                title="KPI & Competency Benchmark Guide"
-              >
-                <BookOpen size={14} className="text-amber-600 dark:text-amber-400" />
-                <span className="hidden xs:inline">Benchmark Guide</span>
-                <span className="text-[9px] px-1 bg-amber-200/60 dark:bg-amber-800/60 rounded font-black">Info</span>
-              </button>
-            )}
-
+          {/* Unified Header Navigation: UnifiedTopNavbar with matching design across all dashboards */}
+          <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 cursor-pointer shadow-2xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 cursor-pointer shadow-2xs shrink-0"
               title="Print / Save PDF"
             >
               <Printer size={14} />
               <span className="hidden sm:inline">Print / PDF</span>
             </button>
 
-            <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
-
-            {/* Dark Mode Toggle */}
-            {toggleDarkMode && (
-              <button
-                onClick={toggleDarkMode}
-                className="w-8 sm:w-8.5 h-8 sm:h-8.5 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition cursor-pointer shrink-0"
-                title="Toggle Dark Mode"
-              >
-                {isDarkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
-              </button>
-            )}
-
-            {/* Theme Selector right beside Back */}
-            <ThemeSelectorModal />
-
-            {/* Back Button (Always First on the Far Right) */}
-            <button
-              onClick={onBack}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white bg-white hover:bg-gray-100/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
-              title={isUserShireenWaisi ? "Sign Out" : "Return to Main Dashboard"}
-            >
-              <ArrowLeft size={14} />
-              <span>{isUserShireenWaisi ? "Sign Out" : "Back"}</span>
-            </button>
+            <UnifiedTopNavbar
+              currentDashboard="evaluation"
+              userProfile={userProfile}
+              onNavigate={onNavigate}
+              onLogout={onLogout || onBack}
+              onOpenProfile={onOpenProfile}
+              onOpenSettings={onOpenSettings}
+              isDarkMode={isDarkMode}
+              toggleDarkMode={toggleDarkMode}
+            />
           </div>
         </div>
       </header>
@@ -1695,57 +1658,25 @@ export default function AnnualEvaluationDashboard({
         <section className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl p-4 sm:p-5 shadow-xs mb-6 print:hidden">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             
-            {/* Left Controls: Custom Modern Year Dropdown & Period Switcher */}
-            <div className="flex flex-wrap items-center gap-3">
+            {/* Left Controls: ModernDropdown Year & Harmonized Period Switcher & Who's Pending */}
+            <div className="flex flex-wrap items-center gap-2.5">
               
-              {/* Custom Modern Year Dropdown (2026-2030) */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setYearDropdownOpen(!yearDropdownOpen)}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 text-xs font-black text-gray-800 dark:text-gray-100 transition shadow-2xs cursor-pointer"
-                >
-                  <Calendar size={13} className="text-[#1C6B53] dark:text-emerald-400" />
-                  <span>{selectedYear}</span>
-                  <ChevronDown size={13} className={`text-gray-400 transition-transform duration-200 ${yearDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
+              {/* Year Dropdown using ModernDropdown matching the whole project */}
+              <ModernDropdown
+                value={selectedYear}
+                onChange={(val) => setSelectedYear(val)}
+                options={AVAILABLE_YEARS}
+                variant="solid-green"
+                size="md"
+                ariaLabel="Select Year"
+              />
 
-                {yearDropdownOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setYearDropdownOpen(false)} />
-                    <div className="absolute left-0 top-full mt-2 w-40 bg-white/95 dark:bg-gray-900/95 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md ring-1 ring-black/5">
-                      {AVAILABLE_YEARS.map(y => {
-                        const isSelected = selectedYear === y;
-                        return (
-                          <button
-                            key={y}
-                            type="button"
-                            onClick={() => {
-                              setSelectedYear(y);
-                              setYearDropdownOpen(false);
-                            }}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                              isSelected
-                                ? 'bg-[#1C6B53]/10 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 font-black'
-                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                            }`}
-                          >
-                            <span>{y}</span>
-                            {isSelected && <Check size={13} className="text-[#1C6B53] dark:text-emerald-400" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Period Switcher: Only Semi-Annual & Annual (as requested) */}
-              <div className="flex items-center bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-2xl border border-gray-200/60 dark:border-gray-700/60">
+              {/* Period Switcher: Harmonized height and styling */}
+              <div className="flex items-center bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-xl border border-gray-200/80 dark:border-gray-700/80 shrink-0">
                 <button
                   type="button"
                   onClick={() => setSelectedPeriod("Semi-Annual")}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
                     selectedPeriod === "Semi-Annual"
                       ? 'bg-[#1C6B53] text-white shadow-xs'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -1757,7 +1688,7 @@ export default function AnnualEvaluationDashboard({
                 <button
                   type="button"
                   onClick={() => setSelectedPeriod("Annual")}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
                     selectedPeriod === "Annual"
                       ? 'bg-[#1C6B53] text-white shadow-xs'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -1775,12 +1706,12 @@ export default function AnnualEvaluationDashboard({
                     setCoverageFilterStatus("pending");
                     setShowCoverageModal(true);
                   }}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-amber-50 hover:bg-amber-100/90 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 text-xs font-black text-amber-900 dark:text-amber-200 transition active:scale-95 shadow-2xs cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100/90 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 border border-amber-300/80 dark:border-amber-700/60 text-xs font-black text-amber-900 dark:text-amber-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
                   title="View Pending Employees"
                 >
                   <ListChecks size={14} className="text-amber-600 dark:text-amber-400" />
                   <span>Who&apos;s Pending?</span>
-                  <span className="px-1.5 py-0.5 bg-amber-200 dark:bg-amber-800 text-amber-950 dark:text-amber-100 rounded-full text-[10px] font-black">
+                  <span className="px-1.5 py-0.5 bg-amber-500 text-white rounded-full text-[10px] font-black shadow-2xs">
                     {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount}
                   </span>
                 </button>
@@ -1791,7 +1722,7 @@ export default function AnnualEvaluationDashboard({
             {/* Right Side: Employee Selector (All Employees) */}
             <div className="relative flex-1 sm:flex-initial min-w-[260px]">
               {(isAgent || isUserSpecialStaffOnly) ? (
-                <div className="flex items-center gap-2.5 px-3.5 py-2 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
+                <div className="flex items-center gap-2.5 px-3.5 py-1.5 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
                   <div className="w-7 h-7 rounded-full bg-[#1C6B53] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                     {userProfile?.name?.charAt(0) || userProfile?.agent_name?.charAt(0) || "A"}
                   </div>
@@ -1807,7 +1738,7 @@ export default function AnnualEvaluationDashboard({
                   <button
                     type="button"
                     onClick={() => setEmployeeDropdownOpen(!employeeDropdownOpen)}
-                    className="w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-white hover:bg-gray-50/80 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 rounded-2xl text-xs font-bold text-gray-900 dark:text-white transition shadow-2xs cursor-pointer"
+                    className="w-full flex items-center justify-between gap-3 px-3.5 py-1.5 bg-white hover:bg-gray-50/80 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-900 dark:text-white transition shadow-2xs cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5 truncate">
                       <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#1C6B53] to-emerald-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-2xs">

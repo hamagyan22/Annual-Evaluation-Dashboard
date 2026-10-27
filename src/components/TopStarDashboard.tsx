@@ -18,6 +18,7 @@ import TopStarCelebrationVideoModal from "./TopStarCelebrationVideoModal";
 import { ModernDropdown } from "@/components/ModernDropdown";
 import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 import { TrendBadge } from "@/components/TrendBadge";
+import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
 
 interface TopStarDashboardProps {
   userProfile: any;
@@ -26,6 +27,9 @@ interface TopStarDashboardProps {
   selectedMonth?: string;
   onBack: () => void;
   onLogout?: () => void;
+  onNavigate?: (target: ActiveDashboardType) => void;
+  onOpenProfile?: () => void;
+  onOpenSettings?: () => void;
   isDarkMode?: boolean;
   toggleDarkMode?: () => void;
 }
@@ -106,6 +110,9 @@ export default function TopStarDashboard({
   selectedMonth: initialMonth = "SEP",
   onBack,
   onLogout,
+  onNavigate,
+  onOpenProfile,
+  onOpenSettings,
   isDarkMode = false,
   toggleDarkMode
 }: TopStarDashboardProps) {
@@ -1291,8 +1298,8 @@ export default function TopStarDashboard({
             </div>
           </div>
 
-          {/* Right Header Navigation: Features, Divider, Dark Mode, Themes, Back (Far Right) */}
-          <div className="flex items-center gap-1.5 p-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-xs self-stretch sm:self-auto justify-end">
+          {/* Right Header Navigation: Features, Divider, Unified Top Navbar */}
+          <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
             
             {/* Criteria & Targets Button */}
             <button
@@ -1314,31 +1321,16 @@ export default function TopStarDashboard({
               <span>Celebration Video</span>
             </button>
 
-            <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
-
-            {/* Dark Mode Toggle */}
-            {toggleDarkMode && (
-              <button
-                onClick={toggleDarkMode}
-                className="w-8 sm:w-8.5 h-8 sm:h-8.5 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition cursor-pointer shrink-0"
-                title="Toggle Dark Mode"
-              >
-                {isDarkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
-              </button>
-            )}
-
-            {/* Theme Selector right beside Back */}
-            <ThemeSelectorModal />
-
-            {/* Back Button (Always First on the Far Right) */}
-            <button
-              onClick={onBack}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white bg-white hover:bg-gray-100/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
-              title="Return to Main Dashboard"
-            >
-              <ArrowLeft size={14} />
-              <span>Back</span>
-            </button>
+            <UnifiedTopNavbar
+              currentDashboard="topstar"
+              userProfile={userProfile}
+              onNavigate={onNavigate}
+              onLogout={onLogout || onBack}
+              onOpenProfile={onOpenProfile}
+              onOpenSettings={onOpenSettings}
+              isDarkMode={isDarkMode}
+              toggleDarkMode={toggleDarkMode}
+            />
           </div>
         </div>
 

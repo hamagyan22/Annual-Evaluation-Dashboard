@@ -13,6 +13,7 @@ import { ModernDropdown } from "@/components/ModernDropdown";
 import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 import { useAppTheme, applyThemeToDocument, getCurrentThemeId } from "@/lib/themeManager";
 import { TrendBadge, isLowerBetterMetric } from "@/components/TrendBadge";
+import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
 const TEAMS: TeamName[] = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team'];
@@ -715,7 +716,8 @@ function AgentDashboard({
   onExitPreview,
   isDarkMode = false,
   toggleDarkMode,
-  onOpenAnnualEval
+  onOpenAnnualEval,
+  onNavigate
 }: { 
   userProfile: any; 
   onLogout: () => void; 
@@ -726,6 +728,7 @@ function AgentDashboard({
   isDarkMode?: boolean;
   toggleDarkMode?: () => void;
   onOpenAnnualEval?: () => void;
+  onNavigate?: (target: ActiveDashboardType) => void;
 }) {
   const defaultPeriod = getPreviousMonthAndYear();
   const [selectedYear, setSelectedYear] = useState(defaultPeriod.year);
@@ -1482,60 +1485,17 @@ function AgentDashboard({
               </div>
             )}
 
-            {/* Annual & Semi-Annual Evaluation Button */}
-            {onOpenAnnualEval && (
-              <button
-                type="button"
-                onClick={onOpenAnnualEval}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-[#1C6B53] dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100/80 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 border border-emerald-200/80 dark:border-emerald-800/60 shadow-xs transition active:scale-95 shrink-0 cursor-pointer"
-                title="Performance Evaluation"
-              >
-                <ClipboardCheck size={13} />
-                <span className="text-xs font-bold">Evaluation</span>
-              </button>
-            )}
-
-            {(onOpenAnnualEval || toggleDarkMode) && (
-              <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
-            )}
-
-            {/* Dark Mode Toggle */}
-            {toggleDarkMode && (
-              <button 
-                onClick={toggleDarkMode} 
-                className="w-8 sm:w-8.5 h-8 sm:h-8.5 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors shrink-0 cursor-pointer"
-                title="Toggle Dark Mode"
-              >
-                {isDarkMode ? <Sun size={15} className="text-amber-500" /> : <Moon size={15} />}
-              </button>
-            )}
-
-            {/* Theme Selector Modal right beside Back */}
-            <ThemeSelectorModal />
-
-            {/* Back to Dashboard Button in Preview Mode (Always First on the Far Right) */}
-            {previewMode && onExitPreview && (
-              <button
-                onClick={onExitPreview}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white bg-white hover:bg-gray-100/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
-                title="Return to Main Dashboard"
-              >
-                <ArrowLeft size={14} />
-                <span>Back</span>
-              </button>
-            )}
-
-            {!previewMode && (
-              <>
-                <div className="w-[1px] h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
-                <button 
-                  onClick={onLogout} 
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition shrink-0"
-                >
-                  <LogOut size={14} /> <span>Logout</span>
-                </button>
-              </>
-            )}
+            <UnifiedTopNavbar
+              currentDashboard="agent"
+              userProfile={userProfile}
+              onNavigate={onNavigate}
+              onLogout={onLogout}
+              isDarkMode={isDarkMode}
+              toggleDarkMode={toggleDarkMode}
+              showBack={previewMode}
+              onBack={onExitPreview}
+              backLabel="Back to Dashboard"
+            />
           </div>
         </div>
         
@@ -3118,6 +3078,25 @@ export default function Dashboard() {
       localStorage.removeItem("app_show_agent_preview");
     } catch (e) {}
     await signOut(auth);
+  };
+
+  const handleNavigateDashboard = (target: ActiveDashboardType) => {
+    setShowAnnualEvalView(false);
+    setShowQualityView(false);
+    setShowTopStarView(false);
+    setShowAgentPreview(false);
+
+    if (target === 'cc') {
+      fetchData(true);
+    } else if (target === 'agent') {
+      setShowAgentPreview(true);
+    } else if (target === 'quality') {
+      setShowQualityView(true);
+    } else if (target === 'topstar') {
+      setShowTopStarView(true);
+    } else if (target === 'evaluation') {
+      setShowAnnualEvalView(true);
+    }
   };
 
   const timeToSec = (timeStr: string) => {
@@ -4896,6 +4875,9 @@ export default function Dashboard() {
           selectedYear={selectedYear}
           onBack={handleLogout}
           onLogout={handleLogout}
+          onNavigate={handleNavigateDashboard}
+          onOpenProfile={openProfileModal}
+          onOpenSettings={openManageModal}
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
         />
@@ -4912,6 +4894,9 @@ export default function Dashboard() {
             setShowAnnualEvalView(false);
           }}
           onLogout={handleLogout}
+          onNavigate={handleNavigateDashboard}
+          onOpenProfile={openProfileModal}
+          onOpenSettings={openManageModal}
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
         />
@@ -4927,6 +4912,7 @@ export default function Dashboard() {
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
           onOpenAnnualEval={() => setShowAnnualEvalView(true)}
+          onNavigate={handleNavigateDashboard}
         />
       );
     }
@@ -4943,6 +4929,7 @@ export default function Dashboard() {
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
           onOpenAnnualEval={() => setShowAnnualEvalView(true)}
+          onNavigate={handleNavigateDashboard}
         />
       );
     }
@@ -4953,6 +4940,9 @@ export default function Dashboard() {
           userProfile={userProfile} 
           onBack={handleLogout} 
           onLogout={handleLogout}
+          onOpenProfile={openProfileModal}
+          onOpenSettings={openManageModal}
+          onNavigate={handleNavigateDashboard}
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
           onOpenAnnualEval={() => setShowAnnualEvalView(true)}
@@ -4971,6 +4961,9 @@ export default function Dashboard() {
             fetchData(true);
           }} 
           onLogout={handleLogout}
+          onOpenProfile={openProfileModal}
+          onOpenSettings={openManageModal}
+          onNavigate={handleNavigateDashboard}
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
           onOpenAnnualEval={() => setShowAnnualEvalView(true)}
@@ -4990,6 +4983,9 @@ export default function Dashboard() {
             fetchData(true);
           }}
           onLogout={handleLogout}
+          onOpenProfile={openProfileModal}
+          onOpenSettings={openManageModal}
+          onNavigate={handleNavigateDashboard}
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
         />
@@ -5108,128 +5104,16 @@ export default function Dashboard() {
               </div>
             </div>
             
-            <div className="flex items-center gap-1 sm:gap-1.5 p-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-sm flex-wrap w-full sm:w-auto justify-end">
-              {/* Navigation Items (Agent View, Settings, Quality) */}
-              <div className="flex items-center gap-1">
-                {isManager && (
-                  <button
-                    onClick={() => setShowAgentPreview(true)}
-                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-sky-800 dark:hover:text-sky-300 hover:bg-sky-50/80 dark:hover:bg-sky-950/40 transition-all group cursor-pointer shrink-0"
-                    title="Agent View"
-                  >
-                    <div className="w-6 h-6 rounded-lg bg-sky-500/15 dark:bg-sky-400/20 text-sky-700 dark:text-sky-300 flex items-center justify-center group-hover:scale-105 transition-transform shadow-2xs">
-                      <LayoutDashboard size={13.5} />
-                    </div>
-                    <span className="font-bold text-xs whitespace-nowrap">Agent View</span>
-                  </button>
-                )}
-
-                {canAccessQuality && (
-                  <button
-                    onClick={() => setShowQualityView(true)}
-                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50/80 dark:hover:bg-purple-950/40 transition-all group cursor-pointer shrink-0"
-                    title={isYounis || isAnkido ? "Quality Assurance Dashboard (View Only)" : "Quality Assurance Dashboard"}
-                  >
-                    <div className="w-6 h-6 rounded-lg bg-purple-500/15 dark:bg-purple-400/20 text-purple-700 dark:text-purple-300 flex items-center justify-center group-hover:scale-105 transition-transform shadow-2xs">
-                      <Award size={13.5} />
-                    </div>
-                    <span className="font-bold text-xs whitespace-nowrap">Quality</span>
-                  </button>
-                )}
-
-                {(isAdmin || isManager || userProfile?.role === 'tl') && (
-                  <button
-                    onClick={() => setShowTopStarView(true)}
-                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-amber-50/80 dark:hover:bg-amber-950/40 transition-all group cursor-pointer shrink-0"
-                    title="Top Star KPI Leaderboard"
-                  >
-                    <div className="w-6 h-6 rounded-lg bg-amber-500/20 dark:bg-amber-400/25 text-amber-700 dark:text-amber-400 flex items-center justify-center group-hover:scale-105 transition-transform shadow-2xs">
-                      <Star size={13.5} className="fill-amber-500/20" />
-                    </div>
-                    <span className="font-bold text-xs whitespace-nowrap">Top Star</span>
-                  </button>
-                )}
-
-                <button
-                  onClick={() => setShowAnnualEvalView(true)}
-                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40 transition-all group cursor-pointer shrink-0"
-                  title="Annual & Semi-Annual Performance Evaluation"
-                >
-                  <div className="w-6 h-6 rounded-lg bg-emerald-500/15 dark:bg-emerald-400/20 text-emerald-700 dark:text-emerald-300 flex items-center justify-center group-hover:scale-105 transition-transform shadow-2xs">
-                    <ClipboardCheck size={13.5} />
-                  </div>
-                  <span className="font-bold text-xs whitespace-nowrap">Evaluation</span>
-                </button>
-              </div>
-
-              <div className="h-4 w-px bg-gray-200 dark:bg-gray-700/80 mx-0.5" />
-
-              {/* Profile Button */}
-              <button 
-                onClick={openProfileModal}
-                className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-gray-700/60 transition-all group cursor-pointer"
-                title="Profile Settings"
-              >
-                <div className="w-6 sm:w-7 h-6 sm:h-7 rounded-full bg-gradient-to-tr from-[#1C6B53] to-emerald-400 flex items-center justify-center overflow-hidden ring-2 ring-[#1C6B53]/20 dark:ring-emerald-400/20 text-white font-black text-xs shadow-sm flex-shrink-0">
-                  {userProfile?.photo_url ? (
-                    <img src={userProfile.photo_url} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : <Users size={12} />
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="max-w-[70px] sm:max-w-[120px] truncate group-hover:text-[#1C6B53] dark:group-hover:text-emerald-400 transition-colors">
-                    {userProfile?.name || (isAdmin ? 'Mohammed Dlshad' : (isManager ? 'Jalal Burghol' : 'Team Lead'))}
-                  </span>
-                  <span className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-wider ${
-                    isAdmin 
-                      ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700/60' 
-                      : isManager 
-                      ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-700/60'
-                      : 'bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 border-emerald-300 dark:border-emerald-700/60'
-                  }`}>
-                    {isAdmin ? 'Admin' : isManager ? 'Manager' : 'TL'}
-                  </span>
-                </div>
-              </button>
-
-              <div className="h-4 w-px bg-gray-200 dark:bg-gray-700/80 mx-0.5" />
-
-              {/* Utility Controls & Exit: Settings, Dark Mode, Themes, Logout */}
-              <div className="flex items-center gap-1 sm:gap-1.5">
-                {isAdmin && (
-                  <button
-                    onClick={openManageModal}
-                    className="flex items-center justify-center w-8 h-8 rounded-xl text-gray-500 dark:text-gray-400 hover:text-[#1C6B53] dark:hover:text-emerald-400 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40 transition-all group cursor-pointer"
-                    title="Settings"
-                  >
-                    <Settings size={15} className="group-hover:rotate-45 transition-transform duration-200" />
-                  </button>
-                )}
-
-                {/* Dark Mode Toggle */}
-                <button 
-                  onClick={toggleDarkMode} 
-                  className="w-8 sm:w-8.5 h-8 sm:h-8.5 rounded-xl flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors cursor-pointer shrink-0"
-                  title="Toggle Dark Mode"
-                >
-                  {isDarkMode ? <Sun size={15} className="text-amber-500" /> : <Moon size={15} />}
-                </button>
-
-                {/* Theme Palette Selector (Beside Logout) */}
-                <ThemeSelectorModal />
-
-                {/* Logout Button (At the Far Right) */}
-                <button 
-                  onClick={handleLogout} 
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/40 transition-all cursor-pointer shrink-0"
-                  title="Logout"
-                >
-                  <LogOut size={14} />
-                  <span className="hidden xs:inline sm:inline">Logout</span>
-                </button>
-              </div>
-            </div>
+            <UnifiedTopNavbar
+              currentDashboard="cc"
+              userProfile={userProfile}
+              onNavigate={handleNavigateDashboard}
+              onLogout={handleLogout}
+              onOpenProfile={openProfileModal}
+              onOpenSettings={openManageModal}
+              isDarkMode={isDarkMode}
+              toggleDarkMode={toggleDarkMode}
+            />
           </div>
 
         {/* Team Cards */}
