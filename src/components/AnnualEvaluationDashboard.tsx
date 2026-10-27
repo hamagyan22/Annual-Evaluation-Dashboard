@@ -1638,7 +1638,7 @@ export default function AnnualEvaluationDashboard({
         <main className="w-full">
           
           {/* Top Control Toolbar: Prominent, Spacious, Ultra-Modern Executive Control Bar */}
-          <section className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-sm mb-6 print:hidden">
+          <section className="relative z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-sm mb-6 print:hidden">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
               
               {/* Left Controls: Year & Harmonized Period Switcher & Who's Pending */}
@@ -3385,17 +3385,6 @@ export default function AnnualEvaluationDashboard({
                   </button>
                 </div>
 
-                {/* Copy Pending Button */}
-                <button
-                  type="button"
-                  onClick={handleCopyPendingList}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-xs font-black text-gray-700 dark:text-gray-200 transition cursor-pointer shrink-0 border border-gray-200 dark:border-gray-700"
-                  title="Copy list of pending employees"
-                >
-                  <Copy size={13} />
-                  <span>Copy Pending List</span>
-                </button>
-
               </div>
 
               {/* Second Row: Team Filter Tabs and Live Search */}
@@ -3571,14 +3560,6 @@ export default function AnnualEvaluationDashboard({
                 Showing {filteredCoverageList.length} of {coverageData.totalCount} employees
               </span>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleCopyPendingList}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 transition cursor-pointer flex items-center gap-1.5"
-                >
-                  <Copy size={13} />
-                  <span>Copy List</span>
-                </button>
                 <button
                   type="button"
                   onClick={() => setShowCoverageModal(false)}

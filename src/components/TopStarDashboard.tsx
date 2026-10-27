@@ -1298,7 +1298,7 @@ export default function TopStarDashboard({
             </div>
           </div>
 
-          {/* Right Header Navigation: Unified Top Navbar with Criteria integrated inside */}
+          {/* Right Header Navigation: Unified Top Navbar */}
           <div className="flex items-center shrink-0 self-stretch sm:self-auto justify-end">
             <UnifiedTopNavbar
               currentDashboard="topstar"
@@ -1309,17 +1309,6 @@ export default function TopStarDashboard({
               onOpenSettings={onOpenSettings}
               isDarkMode={isDarkMode}
               toggleDarkMode={toggleDarkMode}
-              extraActions={
-                <button
-                  type="button"
-                  onClick={() => setShowCriteriaModal(true)}
-                  className="flex items-center gap-1.5 h-8 px-2.5 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/60 transition-colors cursor-pointer shrink-0"
-                  title="View & Edit Evaluation Criteria"
-                >
-                  <Award size={13.5} className="text-amber-600 dark:text-amber-400" />
-                  <span className="font-extrabold leading-none">Criteria</span>
-                </button>
-              }
             />
           </div>
         </div>
@@ -1345,13 +1334,28 @@ export default function TopStarDashboard({
             </div>
           </div>
 
-          <button
-            onClick={() => setShowCelebrationVideo(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155340] shadow-md shadow-emerald-700/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0 self-end sm:self-auto"
-          >
-            <Sparkles size={14} className="text-emerald-100" />
-            <span>Generate Video</span>
-          </button>
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+            {/* Criteria & Targets Button */}
+            <button
+              type="button"
+              onClick={() => setShowCriteriaModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700/90 shadow-2xs transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer"
+              title="View & Edit Evaluation Criteria"
+            >
+              <Award size={14} className="text-amber-600 dark:text-amber-400" />
+              <span>Criteria</span>
+            </button>
+
+            {/* Generate Video Button */}
+            <button
+              type="button"
+              onClick={() => setShowCelebrationVideo(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155340] shadow-md shadow-emerald-700/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer"
+            >
+              <Sparkles size={14} className="text-emerald-100" />
+              <span>Generate Video</span>
+            </button>
+          </div>
         </div>
 
         {/* Top 3 Vibrant Podium Cards (Both cards styled with matching Emerald color as requested) */}

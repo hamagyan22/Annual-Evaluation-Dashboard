@@ -137,8 +137,8 @@ export function UnifiedTopNavbar({
   return (
     <div className={`relative inline-flex items-center gap-1 sm:gap-1.5 p-1 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl shadow-xs flex-nowrap shrink-0 max-w-full overflow-visible select-none ${className}`}>
       
-      {/* Navigation Buttons */}
-      <div className="flex items-center gap-1 shrink-0 overflow-x-auto scrollbar-none">
+      {/* Navigation Buttons: Ultra-Modern Segmented Control */}
+      <div className="flex items-center p-0.5 sm:p-1 bg-gray-100/90 dark:bg-gray-800/90 rounded-xl border border-gray-200/70 dark:border-gray-700/70 gap-0.5 sm:gap-1 shrink-0 overflow-x-auto scrollbar-none">
         {navItems.map((item) => {
           const isActive = currentDashboard === item.id;
           const ItemIcon = item.icon;
@@ -152,18 +152,18 @@ export function UnifiedTopNavbar({
                   onNavigate(item.id);
                 }
               }}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 h-8 rounded-xl text-xs transition-all shrink-0 cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 h-7.5 rounded-lg text-xs transition-all shrink-0 cursor-pointer select-none ${
                 isActive
-                  ? 'bg-[#1C6B53] text-white font-black shadow-xs ring-1 ring-[#1C6B53]/30'
-                  : 'font-bold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/90 dark:hover:bg-gray-800/80'
+                  ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 font-black shadow-xs ring-1 ring-[#1C6B53]/15 dark:ring-emerald-400/20'
+                  : 'font-bold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50'
               }`}
               title={item.label}
             >
               <ItemIcon 
                 size={13.5} 
                 className={`shrink-0 transition-transform ${
-                  isActive ? 'text-white' : item.iconColor
-                } ${item.id === 'topstar' ? (isActive ? 'fill-white' : 'fill-amber-500/30') : ''}`} 
+                  isActive ? 'text-[#1C6B53] dark:text-emerald-400 scale-105' : item.iconColor
+                } ${item.id === 'topstar' ? (isActive ? 'fill-amber-500 text-amber-500' : 'fill-amber-500/30') : ''}`} 
               />
               <span className="whitespace-nowrap leading-none">{item.label}</span>
             </button>
