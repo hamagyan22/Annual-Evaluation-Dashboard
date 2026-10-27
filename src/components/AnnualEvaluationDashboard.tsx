@@ -1638,13 +1638,13 @@ export default function AnnualEvaluationDashboard({
         <main className="w-full">
           
           {/* Top Control Toolbar: Prominent, Spacious, Ultra-Modern Executive Control Bar */}
-          <section className="relative z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm mb-6 print:hidden">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+          <section className="relative z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl sm:rounded-3xl p-2.5 sm:p-3.5 shadow-sm mb-5 print:hidden">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
               
               {/* Left Controls: Year & Harmonized Period Switcher & Who's Pending */}
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2">
                 
-                {/* Year Dropdown using ModernDropdown with prominent large styling */}
+                {/* Year Dropdown using ModernDropdown */}
                 <ModernDropdown
                   value={selectedYear}
                   onChange={(val) => setSelectedYear(val)}
@@ -1654,12 +1654,12 @@ export default function AnnualEvaluationDashboard({
                   ariaLabel="Select Year"
                 />
 
-                {/* Period Switcher: Prominent, Sleek segmented pill */}
-                <div className="flex items-center p-1 bg-gray-100 dark:bg-gray-800/90 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shrink-0 h-11">
+                {/* Period Switcher */}
+                <div className="flex items-center p-0.5 bg-gray-100 dark:bg-gray-800/90 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shrink-0 h-9">
                   <button
                     type="button"
                     onClick={() => setSelectedPeriod("Semi-Annual")}
-                    className={`flex items-center gap-1.5 px-4 sm:px-5 h-9 rounded-lg text-sm font-black transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3.5 sm:px-4 h-8 rounded-[10px] text-xs sm:text-sm font-black transition-all cursor-pointer ${
                       selectedPeriod === "Semi-Annual"
                         ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 shadow-xs ring-1 ring-black/5 dark:ring-white/10'
                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -1671,7 +1671,7 @@ export default function AnnualEvaluationDashboard({
                   <button
                     type="button"
                     onClick={() => setSelectedPeriod("Annual")}
-                    className={`flex items-center gap-1.5 px-4 sm:px-5 h-9 rounded-lg text-sm font-black transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3.5 sm:px-4 h-8 rounded-[10px] text-xs sm:text-sm font-black transition-all cursor-pointer ${
                       selectedPeriod === "Annual"
                         ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 shadow-xs ring-1 ring-black/5 dark:ring-white/10'
                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -1689,12 +1689,12 @@ export default function AnnualEvaluationDashboard({
                       setCoverageFilterStatus("pending");
                       setShowCoverageModal(true);
                     }}
-                    className="flex items-center gap-2 h-11 px-4 sm:px-5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 border border-amber-500/30 text-sm font-bold text-amber-900 dark:text-amber-200 transition active:scale-95 cursor-pointer shrink-0 shadow-2xs"
+                    className="flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 border border-amber-500/30 text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200 transition active:scale-95 cursor-pointer shrink-0 shadow-2xs"
                     title="View Pending Employees"
                   >
-                    <ListChecks size={17} className="text-amber-600 dark:text-amber-400" />
+                    <ListChecks size={15} className="text-amber-600 dark:text-amber-400" />
                     <span>Who&apos;s Pending?</span>
-                    <span className="px-2 py-0.5 bg-amber-500 text-white rounded-full text-xs font-black shadow-2xs">
+                    <span className="px-1.5 py-0.5 bg-amber-500 text-white rounded-full text-xs font-black shadow-2xs">
                       {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount}
                     </span>
                   </button>
@@ -1703,16 +1703,16 @@ export default function AnnualEvaluationDashboard({
               </div>
 
               {/* Right Side: Print PDF & Employee Selector */}
-              <div className="flex items-center gap-3 flex-1 sm:flex-initial justify-end">
+              <div className="flex items-center gap-2 flex-1 sm:flex-initial justify-end">
                 
                 {/* Print / Save PDF Button */}
                 <button
                   type="button"
                   onClick={handlePrint}
-                  className="flex items-center gap-2 h-11 px-4 sm:px-5 rounded-xl bg-gray-100/90 hover:bg-gray-200/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/80 dark:border-gray-700 text-sm font-bold text-gray-800 dark:text-gray-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
+                  className="flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-xl bg-gray-100/90 hover:bg-gray-200/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/80 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
                   title="Print / Save PDF"
                 >
-                  <Printer size={17} className="text-[#1C6B53] dark:text-emerald-400" />
+                  <Printer size={15} className="text-[#1C6B53] dark:text-emerald-400" />
                   <span className="hidden sm:inline">Print / PDF</span>
                 </button>
 

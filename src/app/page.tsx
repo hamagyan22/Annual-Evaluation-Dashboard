@@ -2234,6 +2234,7 @@ export default function Dashboard() {
     }
     return false;
   });
+  const [isPageTransitioning, setIsPageTransitioning] = useState<boolean>(false);
   const [isCombinedCallCenter, setIsCombinedCallCenter] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("app_combined_call_center") === "true";
@@ -3076,22 +3077,28 @@ export default function Dashboard() {
   };
 
   const handleNavigateDashboard = (target: ActiveDashboardType) => {
-    setShowAnnualEvalView(false);
-    setShowQualityView(false);
-    setShowTopStarView(false);
-    setShowAgentPreview(false);
+    // Smooth fade-out → update → fade-in transition
+    setIsPageTransitioning(true);
+    setTimeout(() => {
+      setShowAnnualEvalView(false);
+      setShowQualityView(false);
+      setShowTopStarView(false);
+      setShowAgentPreview(false);
 
-    if (target === 'cc') {
-      fetchData(true);
-    } else if (target === 'agent') {
-      setShowAgentPreview(true);
-    } else if (target === 'quality') {
-      setShowQualityView(true);
-    } else if (target === 'topstar') {
-      setShowTopStarView(true);
-    } else if (target === 'evaluation') {
-      setShowAnnualEvalView(true);
-    }
+      if (target === 'cc') {
+        fetchData(true);
+      } else if (target === 'agent') {
+        setShowAgentPreview(true);
+      } else if (target === 'quality') {
+        setShowQualityView(true);
+      } else if (target === 'topstar') {
+        setShowTopStarView(true);
+      } else if (target === 'evaluation') {
+        setShowAnnualEvalView(true);
+      }
+      // Fade back in
+      setTimeout(() => setIsPageTransitioning(false), 80);
+    }, 180);
   };
 
   const timeToSec = (timeStr: string) => {
@@ -4881,109 +4888,121 @@ export default function Dashboard() {
 
     if (showAnnualEvalView) {
       return (
-        <AnnualEvaluationDashboard
-          userProfile={userProfile}
-          allMembers={allMembers}
-          selectedYear={selectedYear}
-          onBack={() => {
-            setShowAnnualEvalView(false);
-          }}
-          onLogout={handleLogout}
-          onNavigate={handleNavigateDashboard}
-          onOpenProfile={openProfileModal}
-          onOpenSettings={openManageModal}
-          isDarkMode={isDarkMode}
-          toggleDarkMode={toggleDarkMode}
-        />
+        <div key="eval" className={isPageTransitioning ? "page-exit" : "page-enter"}>
+          <AnnualEvaluationDashboard
+            userProfile={userProfile}
+            allMembers={allMembers}
+            selectedYear={selectedYear}
+            onBack={() => {
+              setShowAnnualEvalView(false);
+            }}
+            onLogout={handleLogout}
+            onNavigate={handleNavigateDashboard}
+            onOpenProfile={openProfileModal}
+            onOpenSettings={openManageModal}
+            isDarkMode={isDarkMode}
+            toggleDarkMode={toggleDarkMode}
+          />
+        </div>
       );
     }
 
     if (userProfile?.role === 'agent') {
       return (
-        <AgentDashboard 
-          userProfile={userProfile} 
-          onLogout={handleLogout} 
-          columnsMap={columnsMap} 
-          isDarkMode={isDarkMode}
-          toggleDarkMode={toggleDarkMode}
-          onOpenAnnualEval={() => setShowAnnualEvalView(true)}
-          onNavigate={handleNavigateDashboard}
-        />
+        <div key="agent" className={isPageTransitioning ? "page-exit" : "page-enter"}>
+          <AgentDashboard 
+            userProfile={userProfile} 
+            onLogout={handleLogout} 
+            columnsMap={columnsMap} 
+            isDarkMode={isDarkMode}
+            toggleDarkMode={toggleDarkMode}
+            onOpenAnnualEval={() => setShowAnnualEvalView(true)}
+            onNavigate={handleNavigateDashboard}
+          />
+        </div>
       );
     }
 
     if (showAgentPreview) {
       return (
-        <AgentDashboard 
-          userProfile={userProfile} 
-          onLogout={handleLogout} 
-          columnsMap={columnsMap} 
-          previewMode={true} 
-          allMembers={allMembers} 
-          onExitPreview={() => setShowAgentPreview(false)} 
-          isDarkMode={isDarkMode}
-          toggleDarkMode={toggleDarkMode}
-          onOpenAnnualEval={() => setShowAnnualEvalView(true)}
-          onNavigate={handleNavigateDashboard}
-        />
+        <div key="agent-preview" className={isPageTransitioning ? "page-exit" : "page-enter"}>
+          <AgentDashboard 
+            userProfile={userProfile} 
+            onLogout={handleLogout} 
+            columnsMap={columnsMap} 
+            previewMode={true} 
+            allMembers={allMembers} 
+            onExitPreview={() => setShowAgentPreview(false)} 
+            isDarkMode={isDarkMode}
+            toggleDarkMode={toggleDarkMode}
+            onOpenAnnualEval={() => setShowAnnualEvalView(true)}
+            onNavigate={handleNavigateDashboard}
+          />
+        </div>
       );
     }
 
     if (userProfile?.role === 'qa' || userProfile?.role === 'trainer') {
       return (
-        <QualityDashboard 
-          userProfile={userProfile} 
-          onBack={handleLogout} 
-          onLogout={handleLogout}
-          onOpenProfile={openProfileModal}
-          onOpenSettings={openManageModal}
-          onNavigate={handleNavigateDashboard}
-          isDarkMode={isDarkMode}
-          toggleDarkMode={toggleDarkMode}
-          onOpenAnnualEval={() => setShowAnnualEvalView(true)}
-        />
+        <div key="quality-role" className={isPageTransitioning ? "page-exit" : "page-enter"}>
+          <QualityDashboard 
+            userProfile={userProfile} 
+            onBack={handleLogout} 
+            onLogout={handleLogout}
+            onOpenProfile={openProfileModal}
+            onOpenSettings={openManageModal}
+            onNavigate={handleNavigateDashboard}
+            isDarkMode={isDarkMode}
+            toggleDarkMode={toggleDarkMode}
+            onOpenAnnualEval={() => setShowAnnualEvalView(true)}
+          />
+        </div>
       );
     }
 
     if (showQualityView && canAccessQuality) {
       return (
-        <QualityDashboard 
-          userProfile={userProfile} 
-          onBack={() => {
-            teamDataCacheRef.current = {};
-            qaCacheRef.current = {};
-            setShowQualityView(false);
-            fetchData(true);
-          }} 
-          onLogout={handleLogout}
-          onOpenProfile={openProfileModal}
-          onOpenSettings={openManageModal}
-          onNavigate={handleNavigateDashboard}
-          isDarkMode={isDarkMode}
-          toggleDarkMode={toggleDarkMode}
-          onOpenAnnualEval={() => setShowAnnualEvalView(true)}
-        />
+        <div key="quality" className={isPageTransitioning ? "page-exit" : "page-enter"}>
+          <QualityDashboard 
+            userProfile={userProfile} 
+            onBack={() => {
+              teamDataCacheRef.current = {};
+              qaCacheRef.current = {};
+              setShowQualityView(false);
+              fetchData(true);
+            }} 
+            onLogout={handleLogout}
+            onOpenProfile={openProfileModal}
+            onOpenSettings={openManageModal}
+            onNavigate={handleNavigateDashboard}
+            isDarkMode={isDarkMode}
+            toggleDarkMode={toggleDarkMode}
+            onOpenAnnualEval={() => setShowAnnualEvalView(true)}
+          />
+        </div>
       );
     }
 
     if (showTopStarView && (isAdmin || isManager || userProfile?.role === 'tl')) {
       return (
-        <TopStarDashboard
-          userProfile={userProfile}
-          allMembers={allMembers}
-          selectedYear={selectedYear}
-          selectedMonth={selectedMonth}
-          onBack={() => {
-            setShowTopStarView(false);
-            fetchData(true);
-          }}
-          onLogout={handleLogout}
-          onOpenProfile={openProfileModal}
-          onOpenSettings={openManageModal}
-          onNavigate={handleNavigateDashboard}
+        <div key="topstar" className={isPageTransitioning ? "page-exit" : "page-enter"}>
+          <TopStarDashboard
+            userProfile={userProfile}
+            allMembers={allMembers}
+            selectedYear={selectedYear}
+            selectedMonth={selectedMonth}
+            onBack={() => {
+              setShowTopStarView(false);
+              fetchData(true);
+            }}
+            onLogout={handleLogout}
+            onOpenProfile={openProfileModal}
+            onOpenSettings={openManageModal}
+            onNavigate={handleNavigateDashboard}
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
         />
+        </div>
       );
     }
 
