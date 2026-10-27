@@ -1279,17 +1279,17 @@ export default function TopStarDashboard({
       <div className="max-w-[1400px] mx-auto">
         
         {/* Top Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-6 gap-3 pb-4 border-b border-gray-200/70 dark:border-gray-800 relative z-30">
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center w-full mb-6 sm:mb-8 gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-gray-200/60 dark:border-gray-800 relative z-30">
           
-          <div className="flex items-center gap-3 sm:gap-4">
-            <img src="/logo.webp" alt="FIB Logo" className="h-9 sm:h-11 w-auto object-contain" />
-            <div className="h-8 sm:h-9 w-[1.5px] bg-gray-200 dark:bg-gray-700" />
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            <img src="/logo.webp" alt="FIB Logo" className="h-9 sm:h-11 w-auto object-contain shrink-0" />
+            <div className="h-8 sm:h-9 w-[1.5px] bg-gray-200 dark:bg-gray-700 shrink-0" />
             
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-gray-900 dark:text-white leading-none flex items-center gap-2">
+            <div className="shrink-0">
+              <h1 className="text-base sm:text-xl font-black tracking-tight text-gray-900 dark:text-white leading-none flex items-center gap-2">
                 <span>Top Star Dashboard</span>
-                <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shadow-xs">
-                  <Star size={13} className="fill-white text-white" />
+                <div className="w-5.5 h-5.5 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shadow-xs">
+                  <Star size={12} className="fill-white text-white" />
                 </div>
               </h1>
               <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
@@ -1299,25 +1299,25 @@ export default function TopStarDashboard({
           </div>
 
           {/* Right Header Navigation: Features, Divider, Unified Top Navbar */}
-          <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+          <div className="flex items-center gap-2 shrink-0 self-stretch xl:self-auto justify-end">
             
             {/* Criteria & Targets Button */}
             <button
               onClick={() => setShowCriteriaModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50/90 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 border border-amber-200/80 dark:border-amber-800/60 transition active:scale-95 cursor-pointer shadow-2xs"
+              className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50/90 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 border border-amber-200/80 dark:border-amber-800/60 transition active:scale-95 cursor-pointer shadow-2xs shrink-0"
               title="View & Edit Evaluation Criteria"
             >
-              <Award size={14} />
+              <Award size={13.5} />
               <span>Criteria</span>
             </button>
 
             {/* Celebration Video Button */}
             <button
               onClick={() => setShowCelebrationVideo(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155340] shadow-md shadow-emerald-500/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155340] shadow-xs transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0"
               title="Generate Motivational & Appreciation Celebration Video for Top 3"
             >
-              <Film size={14} className="text-white shrink-0" />
+              <Film size={13.5} className="text-white shrink-0" />
               <span>Celebration Video</span>
             </button>
 

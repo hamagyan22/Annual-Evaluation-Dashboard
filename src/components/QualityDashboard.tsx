@@ -4822,17 +4822,15 @@ export default function QualityDashboard({
       <div className="max-w-[1700px] mx-auto space-y-6">
 
         {/* Top Header & Brand Bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 sm:pb-6 border-b border-gray-200 dark:border-gray-800 relative z-30">
-          <div className="flex items-center gap-3.5">
-            <img src="/logo.webp" alt="FIB Logo" className="h-10 sm:h-12 w-auto object-contain" />
-            <div className="h-8 sm:h-10 w-[1.5px] bg-gray-200 dark:bg-gray-700" />
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center w-full mb-6 sm:mb-8 gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-gray-200/60 dark:border-gray-800 relative z-30">
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            <img src="/logo.webp" alt="FIB Logo" className="h-9 sm:h-11 w-auto object-contain shrink-0" />
+            <div className="h-8 sm:h-9 w-[1.5px] bg-gray-200 dark:bg-gray-700 shrink-0" />
             
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white leading-none">
-                  Quality Assurance Dashboard
-                </h1>
-              </div>
+            <div className="shrink-0">
+              <h1 className="text-base sm:text-xl font-black tracking-tight text-gray-900 dark:text-white leading-none">
+                Quality Assurance Dashboard
+              </h1>
               <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
                 {isTrainer
                   ? "Mohammed Azad — Call Training Evaluations (Open Count)"
@@ -4845,10 +4843,10 @@ export default function QualityDashboard({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end flex-wrap">
+          <div className="flex items-center gap-2 shrink-0 self-stretch xl:self-auto justify-end">
             {/* Real-time Save Status */}
             {saveStatus !== "idle" && (
-              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-xs ${
+              <div className={`flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-bold transition shadow-xs shrink-0 ${
                 saveStatus === "saving" 
                   ? "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
                   : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"

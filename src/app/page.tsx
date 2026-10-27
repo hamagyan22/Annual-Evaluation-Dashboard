@@ -1286,27 +1286,27 @@ function AgentDashboard({
             </div>
           </div>
 
-          <div className="relative z-50 flex items-center gap-1.5 sm:gap-2 p-1.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-xs flex-wrap w-full sm:w-auto justify-between sm:justify-end">
+          <div className="flex items-center gap-2 shrink-0 self-stretch xl:self-auto justify-end">
             {/* Agent Selector Dropdown in Preview Mode */}
             {previewMode && (
-              <div className="relative flex-1 sm:flex-initial min-w-[130px]">
+              <div className="relative shrink-0">
                 <button
                   type="button"
                   onClick={() => setAgentDropdownOpen(!agentDropdownOpen)}
-                  className="w-full sm:w-auto flex items-center justify-between gap-2.5 px-3 py-1.5 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 transition shadow-xs cursor-pointer"
+                  className="w-full sm:w-auto h-8 flex items-center justify-between gap-2 px-3 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 transition shadow-xs cursor-pointer shrink-0"
                 >
-                  <div className="w-6 h-6 rounded-lg bg-[#1C6B53]/15 text-[#1C6B53] dark:text-emerald-300 flex items-center justify-center text-[11px] font-black shrink-0">
-                    {currentAgent?.agent_name ? currentAgent.agent_name.charAt(0).toUpperCase() : <Users size={12} />}
+                  <div className="w-5 h-5 rounded-md bg-[#1C6B53]/15 text-[#1C6B53] dark:text-emerald-300 flex items-center justify-center text-[10px] font-black shrink-0">
+                    {currentAgent?.agent_name ? currentAgent.agent_name.charAt(0).toUpperCase() : <Users size={11} />}
                   </div>
-                  <div className="flex flex-col text-left truncate">
-                    <span className="truncate max-w-[110px] sm:max-w-[160px] font-black leading-tight text-gray-900 dark:text-white">
+                  <div className="flex items-center gap-1.5 text-left truncate">
+                    <span className="truncate max-w-[110px] sm:max-w-[150px] font-black text-xs text-gray-900 dark:text-white leading-none">
                       {toTitleCase(currentAgent?.agent_name || "Select Agent")}
                     </span>
-                    <span className="text-[9px] text-gray-500 dark:text-gray-400 font-semibold leading-none mt-0.5 truncate">
-                      {currentAgent?.team?.replace(' Team', '') || 'Contact Center'}
+                    <span className="text-[9px] text-[#1C6B53] dark:text-emerald-400 font-bold leading-none shrink-0">
+                      • {currentAgent?.team?.replace(' Team', '') || 'CC'}
                     </span>
                   </div>
-                  <ChevronDown size={13} className={`text-gray-400 dark:text-gray-400 transition-transform duration-200 shrink-0 ml-0.5 ${agentDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={12} className={`text-gray-400 transition-transform duration-200 shrink-0 ml-0.5 ${agentDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {agentDropdownOpen && (
@@ -1492,9 +1492,6 @@ function AgentDashboard({
               onLogout={onLogout}
               isDarkMode={isDarkMode}
               toggleDarkMode={toggleDarkMode}
-              showBack={previewMode}
-              onBack={onExitPreview}
-              backLabel="Back to Dashboard"
             />
           </div>
         </div>

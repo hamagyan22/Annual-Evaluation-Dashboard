@@ -1604,36 +1604,35 @@ export default function AnnualEvaluationDashboard({
 
       {/* Top Navigation Bar */}
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-800 shadow-2xs print:hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 sm:gap-4">
           
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#1C6B53] flex items-center justify-center text-white shadow-xs">
-              <Award size={16} />
-            </div>
-            <div>
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            <img src="/logo.webp" alt="FIB Logo" className="h-9 sm:h-11 w-auto object-contain shrink-0" />
+            <div className="h-8 sm:h-9 w-[1.5px] bg-gray-200 dark:bg-gray-700 shrink-0" />
+            <div className="shrink-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-sm sm:text-base font-black text-gray-900 dark:text-white tracking-tight">
+                <h1 className="text-base sm:text-xl font-black tracking-tight text-gray-900 dark:text-white leading-none">
                   Performance Evaluation
                 </h1>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1C6B53]/10 text-[#1C6B53] dark:bg-emerald-400/10 dark:text-emerald-400 border border-[#1C6B53]/20 dark:border-emerald-400/20">
                   {currentMember?.team?.replace(' Team', '') || "Contact Center"}
                 </span>
               </div>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium hidden sm:block">
+              <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
                 Semi-Annual & Annual Performance Review
               </p>
             </div>
           </div>
 
           {/* Unified Header Navigation: UnifiedTopNavbar with matching design across all dashboards */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0 self-stretch xl:self-auto justify-end">
             <button
               type="button"
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 cursor-pointer shadow-2xs shrink-0"
+              className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 cursor-pointer shadow-2xs shrink-0"
               title="Print / Save PDF"
             >
-              <Printer size={14} />
+              <Printer size={13.5} />
               <span className="hidden sm:inline">Print / PDF</span>
             </button>
 

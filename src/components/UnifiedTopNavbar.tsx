@@ -19,9 +19,6 @@ export interface UnifiedTopNavbarProps {
   onOpenSettings?: () => void;
   isDarkMode?: boolean;
   toggleDarkMode?: () => void;
-  showBack?: boolean;
-  onBack?: () => void;
-  backLabel?: string;
   className?: string;
 }
 
@@ -34,9 +31,6 @@ export function UnifiedTopNavbar({
   onOpenSettings,
   isDarkMode = false,
   toggleDarkMode,
-  showBack = false,
-  onBack,
-  backLabel = "Back",
   className = ""
 }: UnifiedTopNavbarProps) {
   const emailLower = (userProfile?.email || "").toLowerCase().trim();
@@ -141,22 +135,6 @@ export function UnifiedTopNavbar({
   return (
     <div className={`inline-flex items-center gap-1 sm:gap-1.5 p-1 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl shadow-xs flex-nowrap shrink-0 max-w-full overflow-x-auto scrollbar-none select-none ${className}`}>
       
-      {/* Optional Back Button (if preview mode or explicit sub-view) */}
-      {showBack && onBack && (
-        <>
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center gap-1.5 h-8 px-2.5 rounded-xl text-xs font-bold text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/90 dark:border-gray-700 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
-            title={backLabel}
-          >
-            <ArrowLeft size={13} />
-            <span className="leading-none">{backLabel}</span>
-          </button>
-          <div className="h-4 w-px bg-gray-200 dark:bg-gray-800 mx-0.5 shrink-0" />
-        </>
-      )}
-
       {/* Navigation Buttons */}
       <div className="flex items-center gap-1 shrink-0">
         {navItems.map((item) => {
@@ -208,7 +186,7 @@ export function UnifiedTopNavbar({
           )}
         </div>
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className="max-w-[75px] sm:max-w-[110px] truncate text-gray-900 dark:text-white font-black leading-none group-hover:text-[#1C6B53] dark:group-hover:text-emerald-400 transition-colors">
+          <span className="max-w-[130px] sm:max-w-[160px] truncate text-gray-900 dark:text-white font-bold leading-none group-hover:text-[#1C6B53] dark:group-hover:text-emerald-400 transition-colors">
             {displayName}
           </span>
           <span className={`text-[8px] sm:text-[8.5px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-wider leading-none shrink-0 ${roleBadgeClass}`}>
