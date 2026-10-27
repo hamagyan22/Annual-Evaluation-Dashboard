@@ -263,6 +263,12 @@ export { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
 
 export const KNOWN_EMPLOYEE_IDS: Record<string, string> = {
+  "taban sirwan": "372",
+  "taban_sirwan": "372",
+  "dhuha khanjer": "344",
+  "dhuha_khanjer": "344",
+  "dhuha khanjer noori": "344",
+  "dhuha_khanjer_noori": "344",
   "shireen waisi": "370",
   "shireen_waisi": "370",
   "kani sami": "349",
