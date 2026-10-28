@@ -209,9 +209,9 @@ export function UnifiedTopNavbar({
 
       <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
 
-      {/* Utilities: Settings (Admin), Dark Mode, Theme, Logout */}
+      {/* Utilities: Settings, Dark Mode, Theme, Logout */}
       <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-        {isAdmin && onOpenSettings && (
+        {(isAdmin || isManager || isTL) && onOpenSettings && (
           <button
             type="button"
             onClick={onOpenSettings}

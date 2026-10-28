@@ -5981,7 +5981,7 @@ export default function QualityDashboard({
 
                             return (
                               <QualityScoreCell
-                                key={cNum}
+                                key={`callmon_${trainerMonth}_${cNum}_${key}`}
                                 id={`qa_cell_${agentIdx}_${cIdx}`}
                                 targetKey={`${csrName.trim().toLowerCase()}|${key}`}
                                 value={val}
@@ -6092,7 +6092,7 @@ export default function QualityDashboard({
 
                             return (
                               <QualityScoreCell
-                                key={cNum}
+                                key={`trainer_${trainerMonth}_${cNum}_${key}`}
                                 id={`qa_cell_${agentIdx}_${cIdx}`}
                                 targetKey={`${csrName.trim().toLowerCase()}|${key}`}
                                 value={val}
@@ -6180,7 +6180,7 @@ export default function QualityDashboard({
 
                             return (
                               <QualityScoreCell
-                                key={cNum}
+                                key={`cshift_${selectedWeek}_${cNum}_${key}`}
                                 id={`qa_cell_${agentIdx}_${cIdx}`}
                                 targetKey={`${csrName.trim().toLowerCase()}|${key}`}
                                 value={val}
@@ -6308,7 +6308,7 @@ export default function QualityDashboard({
 
                             return (
                               <QualityScoreCell
-                                key={cNum}
+                                key={`bonus_${cNum}_${key}`}
                                 id={`qa_cell_${agentIdx}_${cIdx}`}
                                 targetKey={`${csrName.trim().toLowerCase()}|${key}`}
                                 value={val}
@@ -6386,8 +6386,8 @@ export default function QualityDashboard({
                           const key = isChatTeam ? `w${selectedWeek}_chat_${cNum}` : `w${selectedWeek}_call_${callIndex}`;
                           const rawVal = currentScores[key] ?? (isChatTeam ? (currentScores[`w${selectedWeek}_call_${cNum}`] ?? currentScores[`w${selectedWeek}_call_${callIndex}`] ?? (cNum === 7 && !showOutbound ? currentScores[`w${selectedWeek}_outbound`] : undefined) ?? "") : "");
                           const val = String(rawVal || "");
-                          const note = getCellNote(currentNotes, key, selectedWeek, isChatTeam) || (isChatTeam ? (currentNotes[`w${selectedWeek}_call_${cNum}`] ?? currentNotes[`w${selectedWeek}_call_${callIndex}`] ?? (cNum === 7 && !showOutbound ? currentNotes[`w${selectedWeek}_outbound`] : undefined) ?? "") : "");
-                          const link = getCellLink(currentLinks, key, selectedWeek, isChatTeam) || (isChatTeam ? (currentLinks[`w${selectedWeek}_call_${cNum}`] ?? currentLinks[`w${selectedWeek}_call_${callIndex}`] ?? (cNum === 7 && !showOutbound ? currentLinks[`w${selectedWeek}_outbound`] : undefined) ?? "") : "");
+                          const note = getCellNote(currentNotes, key, selectedWeek, isChatTeam);
+                          const link = getCellLink(currentLinks, key, selectedWeek, isChatTeam);
                           const hasNote = Boolean(note.trim());
                           const hasLink = Boolean(link.trim());
                           const isV = val.toUpperCase() === "V";
@@ -6399,7 +6399,7 @@ export default function QualityDashboard({
 
                           return (
                             <QualityScoreCell
-                              key={cNum}
+                              key={`std_${selectedWeek}_${cNum}_${key}`}
                               id={`qa_cell_${agentIdx}_${cIdx}`}
                               targetKey={`${csrName.trim().toLowerCase()}|${key}`}
                               value={val}
@@ -6441,6 +6441,7 @@ export default function QualityDashboard({
 
                           return (
                             <QualityScoreCell
+                              key={`outbound_${selectedWeek}_${key}`}
                               id={`qa_cell_${agentIdx}_${standardColCount}`}
                               targetKey={`${csrName.trim().toLowerCase()}|${key}`}
                               value={val}

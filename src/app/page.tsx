@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
-import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal, BarChart3, ClipboardCheck, RefreshCw, RotateCcw } from "lucide-react";
+import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal, BarChart3, ClipboardCheck, RefreshCw, RotateCcw, AlertCircle } from "lucide-react";
 import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesAndSeconds, getTopStarMotivationalQuote } from "@/lib/topStarUtils";
 import { DEFAULT_COMPANY_EMPLOYEES, isMemberActiveInPeriod, getNextMonthAndYear, getCurrentEffectiveMonth } from "@/lib/companyRoster";
 import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
@@ -718,7 +718,9 @@ function AgentDashboard({
   isDarkMode = false,
   toggleDarkMode,
   onOpenAnnualEval,
-  onNavigate
+  onNavigate,
+  onOpenProfile,
+  onOpenSettings
 }: { 
   userProfile: any; 
   onLogout: () => void; 
@@ -730,6 +732,8 @@ function AgentDashboard({
   toggleDarkMode?: () => void;
   onOpenAnnualEval?: () => void;
   onNavigate?: (target: ActiveDashboardType) => void;
+  onOpenProfile?: () => void;
+  onOpenSettings?: () => void;
 }) {
   const defaultPeriod = getPreviousMonthAndYear();
   const [selectedYear, setSelectedYear] = useState(defaultPeriod.year);
@@ -1331,6 +1335,8 @@ function AgentDashboard({
               userProfile={userProfile}
               onNavigate={onNavigate}
               onLogout={onLogout}
+              onOpenProfile={onOpenProfile}
+              onOpenSettings={onOpenSettings}
               isDarkMode={isDarkMode}
               toggleDarkMode={toggleDarkMode}
               extraActions={
@@ -1797,71 +1803,7 @@ function AgentDashboard({
               </div>
             </div>
 
-            {/* Sync / Verification Status Banner for live months */}
-            {isMonthSelected && (
-              !isMonthSyncedByTl ? (
-                previewMode ? (
-                  <div className="bg-amber-500/10 dark:bg-amber-950/40 border border-amber-500/30 dark:border-amber-700/50 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 text-amber-900 dark:text-amber-200 shadow-xs animate-fadeIn">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                        <Clock size={16} />
-                      </div>
-                      <div className="text-xs">
-                        <div className="font-extrabold flex items-center gap-1.5">
-                          <span>معاينة المسودة (Draft Preview)</span>
-                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 font-bold">غير منشور</span>
-                        </div>
-                        <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80 mt-0.5">
-                          بيانات شهر {selectedMonth} {selectedYear} لم يتم اعتمادها ومزامنتها بعد من مسؤول الفريق. الأرقام تظهر لك فقط كمعاينة ولن تظهر في حساب الموظف حتى يتم الضغط على <strong>Sync Data</strong> في داشبورد التيم ليدر.
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-800 dark:text-amber-200 px-2.5 py-1 rounded-lg shrink-0 border border-amber-400/40 hidden sm:inline-block">
-                      Unpublished Draft
-                    </span>
-                  </div>
-                ) : (
-                  <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent dark:from-amber-950/40 dark:via-amber-950/20 dark:to-transparent border border-amber-300/80 dark:border-amber-800/60 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-fadeIn">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-amber-500/15 dark:bg-amber-500/25 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-2xs">
-                        <Clock size={18} className="animate-spin" style={{ animationDuration: '6s' }} />
-                      </div>
-                      <div>
-                        <h4 className="text-xs sm:text-sm font-black text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                          <span>بيانات شهر {selectedMonth.charAt(0) + selectedMonth.slice(1).toLowerCase()} {selectedYear} قيد التدقيق والمراجعة</span>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 border border-amber-300/50">
-                            قيد التدقيق
-                          </span>
-                        </h4>
-                        <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium">
-                          التقييمات الشهرية قيد التدقيق والاعتماد من قبل مسؤول الفريق (Team Leader)، وستظهر نتائجك فور اكتمال المراجعة ومزامنتها.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-900/50 px-3 py-1.5 rounded-xl shrink-0 self-end sm:self-auto border border-amber-300/40">
-                      <RefreshCw size={12} className="animate-spin" style={{ animationDuration: '4s' }} />
-                      <span>بانتظار مزامنة التيم ليدر</span>
-                    </div>
-                  </div>
-                )
-              ) : !isHistorical && (
-                <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/50 rounded-2xl px-4 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-xs animate-fadeIn">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-5 h-5 rounded-full bg-[#1C6B53] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                      <Check size={12} strokeWidth={3} />
-                    </div>
-                    <span className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
-                      تم اعتماد وتدقيق بيانات هذا الشهر رسمياً ونشرها من قبل مسؤول الفريق{currentSyncDetails?.syncedBy ? ` (${currentSyncDetails.syncedBy})` : ''}
-                    </span>
-                  </div>
-                  {currentSyncDetails?.syncedAt && (
-                    <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-900/60 px-2.5 py-0.5 rounded-full shrink-0 border border-emerald-300/40">
-                      تاريخ الاعتماد: {new Date(currentSyncDetails.syncedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
-                  )}
-                </div>
-              )
-            )}
+
 
             {/* Top 3 Performers Section (Visible to all employees) */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-gray-200/80 dark:border-gray-700 shadow-sm relative overflow-hidden">
@@ -4265,7 +4207,7 @@ export default function Dashboard() {
   };
 
   const openManageModal = () => {
-    if (!isAdmin) return;
+    if (!isAdmin && !isManager && userProfile?.role !== 'tl') return;
     setManageColsTeam(selectedTeam);
     setNewMemberTeam(selectedTeam);
     fetchAllMembers();
@@ -5211,21 +5153,655 @@ export default function Dashboard() {
       );
     }
 
+    const activeTeams = userProfile?.role === 'tl' && userProfile?.team 
+      ? TEAMS.filter(t => t === userProfile.team) 
+      : TEAMS;
+
+    const displayedMembers = userProfile?.role === 'tl' && userProfile?.team
+      ? allMembers.filter(m => m.team === userProfile.team)
+      : allMembers;
+
+    const activeDisplayedMembers = displayedMembers.filter(m => !m.is_deleted && m.is_active !== false);
+    const resignedDisplayedMembers = displayedMembers.filter(m => m.is_deleted === true || m.is_active === false);
+
+    const manageCols = manageColsTeam === 'ALL'
+      ? (columnsMap[selectedTeam] || columnsMap['Ankido Buya Team'] || columnsMap['Younis Kamal Team'] || [])
+      : (columnsMap[manageColsTeam] || []);
+
+    const renderUniversalModals = () => {
+      if (!isMounted) return null;
+      return (
+        <>
+          {/* Manage Settings Modal (System Configuration) */}
+          {showManageMembers && (isAdmin || isManager || userProfile?.role === 'tl') && createPortal(
+            <div className="fixed inset-0 z-[80] flex items-start justify-center p-3 sm:p-4 pt-6 sm:pt-10 overflow-y-auto overscroll-contain">
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowManageMembers(false)} />
+              <div className="relative bg-[#F9F8F4] dark:bg-gray-900 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-8 w-full border border-transparent dark:border-gray-700 mb-10 transition-all overscroll-contain max-w-5xl">
+                
+                <div className="flex justify-between items-start mb-4 sm:mb-6">
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+                      System Settings
+                    </h2>
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1">
+                      {isAdmin ? 'Add or remove agents and table columns across the system.' : 'Manage agents and team members.'}
+                    </p>
+                  </div>
+                  <button onClick={() => setShowManageMembers(false)} className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 transition shadow-2xs shrink-0" title="Close" aria-label="Close">
+                     <X size={20} strokeWidth={2.5} />
+                  </button>
+                </div>
+
+                <div className={`grid gap-4 sm:gap-6 grid-cols-1 ${isAdmin ? 'md:grid-cols-2' : 'max-w-xl mx-auto'}`}>
+                  
+                  {/* Agents Card */}
+                  <div className="bg-[#F1EFE8] dark:bg-gray-800/50 rounded-2xl p-4 sm:p-6 flex flex-col h-[460px] sm:h-[550px] border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Users size={18} className="text-gray-600 dark:text-gray-300" />
+                        <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm sm:text-base">
+                          {userProfile?.role === 'tl' ? `${userProfile?.team?.replace(' Team', '') || 'My Team'} Agents` : 'Agents'}
+                        </h3>
+                      </div>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300">
+                        {activeDisplayedMembers.length} Active Agents
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2 mb-3">
+                      <input
+                        type="text"
+                        placeholder="New agent name"
+                        value={newMemberName}
+                        onChange={(e) => setNewMemberName(e.target.value)}
+                        className="flex-1 px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 outline-none focus:border-[#1C6B53] font-medium"
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddMember()}
+                      />
+                    </div>
+
+                    {(isAdmin || userProfile?.role === 'manager' || userProfile?.role === 'admin') && (
+                      <div className="mb-3">
+                        <ModernDropdown
+                          value={newMemberTeam}
+                          onChange={(val) => setNewMemberTeam(val as TeamName)}
+                          options={activeTeams.map(t => ({ value: t, label: t, icon: Briefcase }))}
+                          variant="solid-green"
+                          className="w-full"
+                        />
+                      </div>
+                    )}
+
+                    <button
+                      onClick={handleAddMember}
+                      className="w-full bg-[#1C6B53] hover:bg-[#155a45] text-white py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-sm mb-4 sm:mb-5 flex items-center justify-center gap-2"
+                    >
+                      <UserPlus size={16}/> Add Agent
+                    </button>
+
+                    <div className="flex-1 overflow-y-auto overscroll-contain flex flex-col gap-2 pr-1">
+                      {activeDisplayedMembers.length === 0 && <div className="text-xs text-gray-400 text-center mt-6">No active agents found in this team.</div>}
+                      {activeDisplayedMembers.map((member) => (
+                        <div key={member.id} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-2.5 sm:p-3 flex justify-between items-center shadow-sm">
+                          
+                          {editingMemberId === member.id ? (
+                            <div className="flex-1 flex gap-2 items-center">
+                              <input 
+                                type="text" 
+                                value={editMemberName} 
+                                onChange={(e) => setEditMemberName(e.target.value)} 
+                                className="flex-1 px-2 py-1 text-xs sm:text-sm border rounded outline-none focus:border-[#1C6B53] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                              />
+                              {(isAdmin || userProfile?.role === 'manager' || userProfile?.role === 'admin') && (
+                                <select 
+                                  value={editMemberTeam} 
+                                  onChange={(e: any) => setEditMemberTeam(e.target.value)} 
+                                  className="w-28 sm:w-32 px-1.5 py-1 text-[10px] border rounded outline-none focus:border-[#1C6B53] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                >
+                                  {activeTeams.map(t => <option key={t} value={t}>{t.replace(' Team', '')}</option>)}
+                                </select>
+                              )}
+                              <button onClick={() => handleSaveMember(member.id)} className="text-[#1C6B53] hover:text-emerald-700 p-1">
+                                <Save size={14}/>
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-200 truncate max-w-[130px] sm:max-w-none">{member.agent_name}</span>
+                              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                                <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md uppercase tracking-wider whitespace-nowrap">
+                                  {member.team.replace(' Team', '')}
+                                </span>
+                                <div className="flex gap-1.5 sm:gap-2">
+                                  <button onClick={() => handleEditMemberStart(member)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition" title="Edit">
+                                    <Edit2 size={13} />
+                                  </button>
+                                  <button onClick={() => setDeleteTarget({ memberId: member.id, name: member.agent_name, team: member.team })} className="text-red-400 hover:text-red-600 transition" title="Delete">
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ))}
+
+                      {resignedDisplayedMembers.length > 0 && (
+                        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Former / Resigned Agents ({resignedDisplayedMembers.length})
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            {resignedDisplayedMembers.map((member) => (
+                              <div key={member.id} className="bg-gray-50/80 dark:bg-gray-800/50 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-2.5 sm:p-3 flex justify-between items-center opacity-85 hover:opacity-100 transition">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-300 truncate">
+                                    {member.agent_name}
+                                  </span>
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                    Resigned: {member.resigned_month || 'N/A'} {member.resigned_year || '2026'}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                                    {member.team.replace(' Team', '')}
+                                  </span>
+                                  <button
+                                    onClick={() => handleRestoreMember(member)}
+                                    className="text-xs font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition cursor-pointer"
+                                    title="Restore / Re-activate Agent"
+                                  >
+                                    <RotateCcw size={12} />
+                                    <span>Restore</span>
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Columns Card - Admin Only */}
+                  {isAdmin && (
+                    <div className="bg-[#F1EFE8] dark:bg-gray-800/50 rounded-2xl p-4 sm:p-6 flex flex-col h-[460px] sm:h-[550px] border border-gray-200 dark:border-gray-700 shadow-sm">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Columns size={18} className="text-gray-600 dark:text-gray-300" />
+                          <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm sm:text-base">Table Columns & KPIs</h3>
+                        </div>
+                        <ModernDropdown 
+                          value={manageColsTeam} 
+                          onChange={(val) => setManageColsTeam(val)}
+                          options={[
+                            { value: "ALL", label: "🌐 All Teams" },
+                            ...activeTeams.map(t => ({ value: t, label: t }))
+                          ]}
+                          variant="white"
+                          size="sm"
+                          align="right"
+                          ariaLabel="Select Team for Columns"
+                        />
+                      </div>
+
+                      {manageColsTeam === 'ALL' && (
+                        <div className="mb-3 px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/50 rounded-xl text-[10px] sm:text-[11px] text-[#1C6B53] dark:text-emerald-300 font-semibold flex items-center gap-1.5">
+                          <span>✓ Syncs Across All Team Leaders & Agent Dashboards</span>
+                        </div>
+                      )}
+                      
+                      <input
+                        type="text"
+                        placeholder="KPI Name (e.g. Quality, Exam, Prod)"
+                        value={newColLabel}
+                        onChange={(e) => setNewColLabel(e.target.value)}
+                        className="w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 outline-none focus:border-[#1C6B53] mb-2 font-medium"
+                      />
+
+                      <div className="grid grid-cols-2 gap-2 mb-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] sm:text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Format</label>
+                          <div className="flex rounded-xl overflow-hidden border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-0.5">
+                            <button
+                              type="button"
+                              onClick={() => setNewColType('number')}
+                              className={`flex-1 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition ${newColType === 'number' ? 'bg-[#1C6B53] text-white' : 'text-gray-600 dark:text-gray-400'}`}
+                            >
+                              Number / %
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setNewColType('time')}
+                              className={`flex-1 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition ${newColType === 'time' ? 'bg-[#1C6B53] text-white' : 'text-gray-600 dark:text-gray-400'}`}
+                            >
+                              Time (mm:ss)
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] sm:text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aggregation</label>
+                          <div className="flex rounded-xl overflow-hidden border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-0.5">
+                            <button
+                              type="button"
+                              onClick={() => setNewColAgg('average')}
+                              className={`flex-1 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition ${newColAgg === 'average' ? 'bg-[#1C6B53] text-white' : 'text-gray-600 dark:text-gray-400'}`}
+                            >
+                              Average
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setNewColAgg('sum')}
+                              className={`flex-1 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition ${newColAgg === 'sum' ? 'bg-[#1C6B53] text-white' : 'text-gray-600 dark:text-gray-400'}`}
+                            >
+                              Sum
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleAddColumn}
+                        className="w-full bg-[#1C6B53] hover:bg-[#155a45] text-white py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-sm mb-4 sm:mb-5 flex items-center justify-center gap-2"
+                      >
+                        <Plus size={16} /> Add KPI
+                      </button>
+
+                      <div className="flex-1 overflow-y-auto overscroll-contain flex flex-col gap-2 pr-1">
+                        {manageCols.map((col) => (
+                          <div key={col.id} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-2.5 sm:p-3 flex justify-between items-center shadow-sm">
+                            {editingColId === col.id ? (
+                              <div className="flex-1 flex flex-col gap-2 p-1">
+                                <div className="flex gap-2 items-center">
+                                  <input
+                                    type="text"
+                                    value={editColLabel}
+                                    onChange={(e) => setEditColLabel(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveColumn();
+                                      if (e.key === 'Escape') setEditingColId(null);
+                                    }}
+                                    placeholder="KPI Name"
+                                    className="flex-1 px-2.5 py-1 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1C6B53] dark:bg-gray-700 dark:text-white font-medium"
+                                    autoFocus
+                                  />
+                                  <button 
+                                    onClick={handleSaveColumn} 
+                                    className="bg-[#1C6B53] hover:bg-[#155a45] text-white px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs transition"
+                                    title="Save Changes"
+                                  >
+                                    <Save size={13} />
+                                    <span>Save</span>
+                                  </button>
+                                  <button 
+                                    onClick={() => setEditingColId(null)} 
+                                    className="border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 p-1 rounded-lg text-xs transition"
+                                    title="Cancel"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </div>
+
+                                {/* Format & Aggregation controls */}
+                                <div className="grid grid-cols-2 gap-2 pt-1.5 border-t border-gray-100 dark:border-gray-700">
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-[9px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Format</label>
+                                    <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 p-0.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditColType('number')}
+                                        className={`flex-1 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded transition ${editColType === 'number' ? 'bg-[#1C6B53] text-white shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'}`}
+                                      >
+                                        Number / %
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditColType('time')}
+                                        className={`flex-1 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded transition ${editColType === 'time' ? 'bg-[#1C6B53] text-white shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'}`}
+                                      >
+                                        Time (mm:ss)
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-[9px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aggregation</label>
+                                    <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 p-0.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditColAgg('average')}
+                                        className={`flex-1 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded transition ${editColAgg === 'average' ? 'bg-[#1C6B53] text-white shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'}`}
+                                      >
+                                        Average
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditColAgg('sum')}
+                                        className={`flex-1 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded transition ${editColAgg === 'sum' ? 'bg-[#1C6B53] text-white shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'}`}
+                                      >
+                                        Sum
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-200">{col.label || col.id}</span>
+                                <div className="flex items-center gap-2 sm:gap-2.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleEditColumnStart(col)}
+                                    className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md transition cursor-pointer flex items-center gap-1"
+                                    title="Click to edit format and aggregation"
+                                  >
+                                    <span>{toTitleCase(col.type)} • {toTitleCase(col.aggregation)}</span>
+                                  </button>
+                                  <div className="flex gap-1 sm:gap-1.5">
+                                    <button onClick={() => handleEditColumnStart(col)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1" title="Edit KPI">
+                                      <Edit2 size={13} />
+                                    </button>
+                                    <button onClick={() => handleRemoveColumn(col.id)} className="text-red-400 hover:text-red-600 p-1" title="Delete KPI">
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+
+          {/* TL & Manager Profile Modal */}
+          {showProfileModal && createPortal(
+            <div className="fixed inset-0 z-[85] flex items-center justify-center p-3 sm:p-4">
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowProfileModal(false)} />
+              <div className="relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-7 max-w-md w-full border border-gray-100 dark:border-gray-800 max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Profile Settings</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Update Your Display Name, Profile Photo & Password</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowProfileModal(false)}
+                    className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 transition"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveTLProfile} className="space-y-4">
+                  {profileSuccess && (
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-[#1C6B53] dark:text-emerald-300 rounded-xl text-xs font-semibold flex items-center gap-2">
+                      <Check size={16} />
+                      {profileSuccess}
+                    </div>
+                  )}
+
+                  {profileError && (
+                    <div className="p-3 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 rounded-xl text-xs font-semibold flex items-center gap-2">
+                      <AlertCircle size={16} />
+                      {profileError}
+                    </div>
+                  )}
+
+                  {/* Profile Photo */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#1C6B53] to-emerald-400 flex items-center justify-center overflow-hidden ring-4 ring-[#1C6B53]/15 text-white font-black text-xl shadow-md shrink-0">
+                      {profilePhoto ? (
+                        <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        (profileName || userProfile?.name || 'U').charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Profile Photo</label>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleProfilePhotoUpload} 
+                        className="text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#1C6B53]/10 file:text-[#1C6B53] hover:file:bg-[#1C6B53]/20 dark:file:bg-emerald-950/60 dark:file:text-emerald-300 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Display Name */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Display Name</label>
+                    <input
+                      type="text"
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/70 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-[#1C6B53] text-sm font-medium"
+                    />
+                  </div>
+
+                  {/* Role & Email info (Assigned Team removed) */}
+                  <div className="p-3.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-700 text-xs text-gray-500 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-gray-600 dark:text-gray-300">Account Role</span>
+                      <span className="font-bold text-gray-800 dark:text-white">{isAdmin ? 'Administrator' : userProfile?.role === 'manager' ? 'Manager' : userProfile?.role === 'agent' ? 'Agent' : 'Team Leader'}</span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-700">
+                      <span className="font-semibold text-gray-600 dark:text-gray-300">Email Address</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-200">{session?.email}</span>
+                    </div>
+                  </div>
+
+                  {/* Change Password */}
+                  <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+                    <span className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">Change Password (Optional)</span>
+                    <div className="space-y-2.5">
+                      <input
+                        type="password"
+                        placeholder="New Password (At least 6 characters)"
+                        value={newProfilePassword}
+                        onChange={(e) => setNewProfilePassword(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/70 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-[#1C6B53] text-sm font-medium"
+                      />
+                      <input
+                        type="password"
+                        placeholder="Confirm New Password"
+                        value={confirmProfilePassword}
+                        onChange={(e) => setConfirmProfilePassword(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/70 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-[#1C6B53] text-sm font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowProfileModal(false)}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingProfile}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-[#1C6B53] hover:bg-[#155a45] transition shadow-md shadow-[#1C6B53]/20 disabled:opacity-50"
+                    >
+                      {savingProfile ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>,
+            document.body
+          )}
+
+          {/* Delete / Resign Member Confirmation Modal */}
+          {deleteTarget && (() => {
+            const curEffective = getCurrentEffectiveMonth(selectedMonth, selectedYear);
+            const nextEffective = getNextMonthAndYear(curEffective.month, curEffective.year);
+
+            return createPortal(
+              <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+                <div 
+                  className="absolute inset-0 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" 
+                  onClick={() => !isDeletingMember && setDeleteTarget(null)} 
+                />
+                <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-6 sm:p-7 max-w-lg w-full border border-gray-200/80 dark:border-gray-800 animate-in fade-in zoom-in-95 duration-150">
+                  
+                  {/* Top Header */}
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200/80 dark:border-rose-800/60 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0 shadow-xs">
+                      <UserMinus size={22} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
+                          Remove / Resign Member
+                        </h3>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                          {deleteTarget.team.replace(' Team', '')}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Select effective timeline for <strong className="text-gray-800 dark:text-gray-200">{deleteTarget.name}</strong>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Timing Choices */}
+                  <div className="mb-6">
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2.5">
+                      Effective Date
+                    </label>
+
+                    <div className="space-y-2.5">
+                      {/* Option 1: Next Month (Recommended) */}
+                      <div
+                        onClick={() => setDeleteTiming("next")}
+                        className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 select-none ${
+                          deleteTiming === "next"
+                            ? "border-[#1C6B53] bg-emerald-50/40 dark:bg-emerald-950/30 ring-1 ring-[#1C6B53]/20"
+                            : "border-gray-200 dark:border-gray-700/80 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800/40"
+                        }`}
+                      >
+                        <div className="mt-0.5 shrink-0">
+                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition ${
+                            deleteTiming === "next" 
+                              ? "border-[#1C6B53] bg-[#1C6B53]" 
+                              : "border-gray-300 dark:border-gray-600"
+                          }`}>
+                            {deleteTiming === "next" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 justify-between">
+                            <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
+                              Next Month ({nextEffective.displayLabel})
+                            </span>
+                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+                              Recommended
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-normal">
+                            The employee remains active in the current month ({curEffective.displayLabel}) with all metrics saved. Removal starts from next month ({nextEffective.displayLabel}) onwards.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Option 2: Current Month */}
+                      <div
+                        onClick={() => setDeleteTiming("current")}
+                        className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 select-none ${
+                          deleteTiming === "current"
+                            ? "border-rose-500 bg-rose-50/40 dark:bg-rose-950/30 ring-1 ring-rose-500/20"
+                            : "border-gray-200 dark:border-gray-700/80 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800/40"
+                        }`}
+                      >
+                        <div className="mt-0.5 shrink-0">
+                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition ${
+                            deleteTiming === "current" 
+                              ? "border-rose-500 bg-rose-500" 
+                              : "border-gray-300 dark:border-gray-600"
+                          }`}>
+                            {deleteTiming === "current" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 justify-between">
+                            <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
+                              Current Month ({curEffective.displayLabel})
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-normal">
+                            The employee is removed starting from {curEffective.displayLabel} immediately. All historical data from previous months (January through the preceding month) is 100% preserved and untouched.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-3 pt-2">
+                    <button
+                      type="button"
+                      disabled={isDeletingMember}
+                      onClick={() => setDeleteTarget(null)}
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 transition active:scale-95 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isDeletingMember}
+                      onClick={confirmDelete}
+                      className="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs sm:text-sm font-bold text-white transition active:scale-95 shadow-md shadow-rose-600/20 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      {isDeletingMember ? (
+                        <>
+                          <RefreshCw size={14} className="animate-spin" />
+                          <span>Removing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 size={14} />
+                          <span>Confirm Removal</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>,
+              document.body
+            );
+          })()}
+        </>
+      );
+    };
+
     // Back Office / Shireen: Exclusively evaluation dashboard and NOTHING else
     if (userProfile?.role === 'backoffice' || (userProfile?.email || '').toLowerCase().includes('shireen')) {
       return (
-        <AnnualEvaluationDashboard
-          userProfile={userProfile}
-          allMembers={allMembers}
-          selectedYear={selectedYear}
-          onBack={handleLogout}
-          onLogout={handleLogout}
-          onNavigate={handleNavigateDashboard}
-          onOpenProfile={openProfileModal}
-          onOpenSettings={openManageModal}
-          isDarkMode={isDarkMode}
-          toggleDarkMode={toggleDarkMode}
-        />
+        <>
+          <AnnualEvaluationDashboard
+            userProfile={userProfile}
+            allMembers={allMembers}
+            selectedYear={selectedYear}
+            onBack={handleLogout}
+            onLogout={handleLogout}
+            onNavigate={handleNavigateDashboard}
+            onOpenProfile={openProfileModal}
+            onOpenSettings={openManageModal}
+            isDarkMode={isDarkMode}
+            toggleDarkMode={toggleDarkMode}
+          />
+          {renderUniversalModals()}
+        </>
       );
     }
 
@@ -5246,6 +5822,7 @@ export default function Dashboard() {
             isDarkMode={isDarkMode}
             toggleDarkMode={toggleDarkMode}
           />
+          {renderUniversalModals()}
         </div>
       );
     }
@@ -5261,7 +5838,9 @@ export default function Dashboard() {
             toggleDarkMode={toggleDarkMode}
             onOpenAnnualEval={() => setShowAnnualEvalView(true)}
             onNavigate={handleNavigateDashboard}
+            onOpenProfile={openProfileModal}
           />
+          {renderUniversalModals()}
         </div>
       );
     }
@@ -5280,7 +5859,10 @@ export default function Dashboard() {
             toggleDarkMode={toggleDarkMode}
             onOpenAnnualEval={() => setShowAnnualEvalView(true)}
             onNavigate={handleNavigateDashboard}
+            onOpenProfile={openProfileModal}
+            onOpenSettings={openManageModal}
           />
+          {renderUniversalModals()}
         </div>
       );
     }
@@ -5299,6 +5881,7 @@ export default function Dashboard() {
             toggleDarkMode={toggleDarkMode}
             onOpenAnnualEval={() => setShowAnnualEvalView(true)}
           />
+          {renderUniversalModals()}
         </div>
       );
     }
@@ -5322,6 +5905,7 @@ export default function Dashboard() {
             toggleDarkMode={toggleDarkMode}
             onOpenAnnualEval={() => setShowAnnualEvalView(true)}
           />
+          {renderUniversalModals()}
         </div>
       );
     }
@@ -5345,27 +5929,14 @@ export default function Dashboard() {
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
         />
+        {renderUniversalModals()}
         </div>
       );
     }
 
-    const activeTeams = userProfile?.role === 'tl' && userProfile?.team 
-      ? TEAMS.filter(t => t === userProfile.team) 
-      : TEAMS;
-
-    const displayedMembers = userProfile?.role === 'tl' && userProfile?.team
-      ? allMembers.filter(m => m.team === userProfile.team)
-      : allMembers;
-
-    const activeDisplayedMembers = displayedMembers.filter(m => !m.is_deleted && m.is_active !== false);
-    const resignedDisplayedMembers = displayedMembers.filter(m => m.is_deleted === true || m.is_active === false);
-
     const activeCols = isCombinedCallCenter
       ? getEffectiveColumns('Ankido Buya Team', selectedMonth, selectedYear, columnsMap['Ankido Buya Team'] || columnsMap['Younis Kamal Team'] || DEFAULT_OTHER_COLUMNS)
       : getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
-    const manageCols = manageColsTeam === 'ALL'
-      ? (columnsMap[selectedTeam] || columnsMap['Ankido Buya Team'] || columnsMap['Younis Kamal Team'] || [])
-      : (columnsMap[manageColsTeam] || []);
 
     const handleCellKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, rowIndex: number, colIndex: number) => {
       if (isAggregate) return;
@@ -6175,621 +6746,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Manage Settings Modal (System Configuration) */}
-      {showManageMembers && isAdmin && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-4 pt-6 sm:pt-10 overflow-y-auto overscroll-contain">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowManageMembers(false)} />
-          <div className="relative bg-[#F9F8F4] dark:bg-gray-900 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-8 w-full border border-transparent dark:border-gray-700 mb-10 transition-all overscroll-contain max-w-5xl">
-            
-            <div className="flex justify-between items-start mb-4 sm:mb-6">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight">
-                  System Settings
-                </h2>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1">
-                  Add or remove agents and table columns across the system.
-                </p>
-              </div>
-              <button onClick={() => setShowManageMembers(false)} className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 transition shadow-2xs shrink-0" title="Close" aria-label="Close">
-                 <X size={20} strokeWidth={2.5} />
-              </button>
-            </div>
-
-            <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
-              
-              {/* Agents Card */}
-              <div className="bg-[#F1EFE8] dark:bg-gray-800/50 rounded-2xl p-4 sm:p-6 flex flex-col h-[460px] sm:h-[550px] border border-gray-200 dark:border-gray-700 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Users size={18} className="text-gray-600 dark:text-gray-300" />
-                    <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm sm:text-base">
-                      {userProfile?.role === 'tl' ? `${userProfile?.team?.replace(' Team', '') || 'My Team'} Agents` : 'Agents'}
-                    </h3>
-                  </div>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300">
-                    {activeDisplayedMembers.length} Active Agents
-                  </span>
-                </div>
-
-                <div className="flex gap-2 mb-3">
-                  <input
-                    type="text"
-                    placeholder="New agent name"
-                    value={newMemberName}
-                    onChange={(e) => setNewMemberName(e.target.value)}
-                    className="flex-1 px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 outline-none focus:border-[#1C6B53] font-medium"
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddMember()}
-                  />
-                </div>
-
-                {(isAdmin || userProfile?.role === 'manager' || userProfile?.role === 'admin') && (
-                  <div className="mb-3">
-                    <ModernDropdown
-                      value={newMemberTeam}
-                      onChange={(val) => setNewMemberTeam(val as TeamName)}
-                      options={activeTeams.map(t => ({ value: t, label: t, icon: Briefcase }))}
-                      variant="solid-green"
-                      className="w-full"
-                    />
-                  </div>
-                )}
-
-                <button
-                  onClick={handleAddMember}
-                  className="w-full bg-[#1C6B53] hover:bg-[#155a45] text-white py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-sm mb-4 sm:mb-5 flex items-center justify-center gap-2"
-                >
-                  <UserPlus size={16}/> Add Agent
-                </button>
-
-                <div className="flex-1 overflow-y-auto overscroll-contain flex flex-col gap-2 pr-1">
-                  {activeDisplayedMembers.length === 0 && <div className="text-xs text-gray-400 text-center mt-6">No active agents found in this team.</div>}
-                  {activeDisplayedMembers.map((member) => (
-                    <div key={member.id} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-2.5 sm:p-3 flex justify-between items-center shadow-sm">
-                      
-                      {editingMemberId === member.id ? (
-                        <div className="flex-1 flex gap-2 items-center">
-                          <input 
-                            type="text" 
-                            value={editMemberName} 
-                            onChange={(e) => setEditMemberName(e.target.value)} 
-                            className="flex-1 px-2 py-1 text-xs sm:text-sm border rounded outline-none focus:border-[#1C6B53] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                          />
-                          {(isAdmin || userProfile?.role === 'manager' || userProfile?.role === 'admin') && (
-                            <select 
-                              value={editMemberTeam} 
-                              onChange={(e: any) => setEditMemberTeam(e.target.value)} 
-                              className="w-28 sm:w-32 px-1.5 py-1 text-[10px] border rounded outline-none focus:border-[#1C6B53] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            >
-                              {activeTeams.map(t => <option key={t} value={t}>{t.replace(' Team', '')}</option>)}
-                            </select>
-                          )}
-                          <button onClick={() => handleSaveMember(member.id)} className="text-[#1C6B53] hover:text-emerald-700 p-1">
-                            <Save size={14}/>
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-200 truncate max-w-[130px] sm:max-w-none">{member.agent_name}</span>
-                          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                            <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md uppercase tracking-wider whitespace-nowrap">
-                              {member.team.replace(' Team', '')}
-                            </span>
-                            <div className="flex gap-1.5 sm:gap-2">
-                              <button onClick={() => handleEditMemberStart(member)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition" title="Edit">
-                                <Edit2 size={13} />
-                              </button>
-                              <button onClick={() => setDeleteTarget({ memberId: member.id, name: member.agent_name, team: member.team })} className="text-red-400 hover:text-red-600 transition" title="Delete">
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
-
-                  {resignedDisplayedMembers.length > 0 && (
-                    <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Former / Resigned Agents ({resignedDisplayedMembers.length})
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        {resignedDisplayedMembers.map((member) => (
-                          <div key={member.id} className="bg-gray-50/80 dark:bg-gray-800/50 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-2.5 sm:p-3 flex justify-between items-center opacity-85 hover:opacity-100 transition">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-300 truncate">
-                                {member.agent_name}
-                              </span>
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                                Resigned: {member.resigned_month || 'N/A'} {member.resigned_year || '2026'}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
-                                {member.team.replace(' Team', '')}
-                              </span>
-                              <button
-                                onClick={() => handleRestoreMember(member)}
-                                className="text-xs font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition cursor-pointer"
-                                title="Restore / Re-activate Agent"
-                              >
-                                <RotateCcw size={12} />
-                                <span>Restore</span>
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Columns Card - Admin Only */}
-              <div className="bg-[#F1EFE8] dark:bg-gray-800/50 rounded-2xl p-4 sm:p-6 flex flex-col h-[460px] sm:h-[550px] border border-gray-200 dark:border-gray-700 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Columns size={18} className="text-gray-600 dark:text-gray-300" />
-                    <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm sm:text-base">Table Columns & KPIs</h3>
-                  </div>
-                  <ModernDropdown 
-                    value={manageColsTeam} 
-                    onChange={(val) => setManageColsTeam(val)}
-                    options={[
-                      { value: "ALL", label: "🌐 All Teams" },
-                      ...activeTeams.map(t => ({ value: t, label: t }))
-                    ]}
-                    variant="white"
-                    size="sm"
-                    align="right"
-                    ariaLabel="Select Team for Columns"
-                  />
-                </div>
-
-                {manageColsTeam === 'ALL' && (
-                  <div className="mb-3 px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/50 rounded-xl text-[10px] sm:text-[11px] text-[#1C6B53] dark:text-emerald-300 font-semibold flex items-center gap-1.5">
-                    <span>✓ Syncs Across All Team Leaders & Agent Dashboards</span>
-                  </div>
-                )}
-                
-                <input
-                  type="text"
-                  placeholder="KPI Name (e.g. Quality, Exam, Prod)"
-                  value={newColLabel}
-                  onChange={(e) => setNewColLabel(e.target.value)}
-                  className="w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 outline-none focus:border-[#1C6B53] mb-2 font-medium"
-                />
-
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] sm:text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Format</label>
-                    <div className="flex rounded-xl overflow-hidden border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-0.5">
-                      <button
-                        type="button"
-                        onClick={() => setNewColType('number')}
-                        className={`flex-1 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition ${newColType === 'number' ? 'bg-[#1C6B53] text-white' : 'text-gray-600 dark:text-gray-400'}`}
-                      >
-                        Number / %
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setNewColType('time')}
-                        className={`flex-1 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition ${newColType === 'time' ? 'bg-[#1C6B53] text-white' : 'text-gray-600 dark:text-gray-400'}`}
-                      >
-                        Time (mm:ss)
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] sm:text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aggregation</label>
-                    <div className="flex rounded-xl overflow-hidden border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-0.5">
-                      <button
-                        type="button"
-                        onClick={() => setNewColAgg('average')}
-                        className={`flex-1 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition ${newColAgg === 'average' ? 'bg-[#1C6B53] text-white' : 'text-gray-600 dark:text-gray-400'}`}
-                      >
-                        Average
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setNewColAgg('sum')}
-                        className={`flex-1 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition ${newColAgg === 'sum' ? 'bg-[#1C6B53] text-white' : 'text-gray-600 dark:text-gray-400'}`}
-                      >
-                        Sum
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleAddColumn}
-                  className="w-full bg-[#1C6B53] hover:bg-[#155a45] text-white py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-sm mb-4 sm:mb-5 flex items-center justify-center gap-2"
-                >
-                  <Plus size={16} /> Add KPI
-                </button>
-
-                <div className="flex-1 overflow-y-auto overscroll-contain flex flex-col gap-2 pr-1">
-                  {manageCols.map((col) => (
-                    <div key={col.id} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-2.5 sm:p-3 flex justify-between items-center shadow-sm">
-                      {editingColId === col.id ? (
-                        <div className="flex-1 flex flex-col gap-2 p-1">
-                          <div className="flex gap-2 items-center">
-                            <input
-                              type="text"
-                              value={editColLabel}
-                              onChange={(e) => setEditColLabel(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSaveColumn();
-                                if (e.key === 'Escape') setEditingColId(null);
-                              }}
-                              placeholder="KPI Name"
-                              className="flex-1 px-2.5 py-1 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1C6B53] dark:bg-gray-700 dark:text-white font-medium"
-                              autoFocus
-                            />
-                            <button 
-                              onClick={handleSaveColumn} 
-                              className="bg-[#1C6B53] hover:bg-[#155a45] text-white px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs transition"
-                              title="Save Changes"
-                            >
-                              <Save size={13} />
-                              <span>Save</span>
-                            </button>
-                            <button 
-                              onClick={() => setEditingColId(null)} 
-                              className="border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 p-1 rounded-lg text-xs transition"
-                              title="Cancel"
-                            >
-                              <X size={14} />
-                            </button>
-                          </div>
-
-                          {/* Format & Aggregation controls */}
-                          <div className="grid grid-cols-2 gap-2 pt-1.5 border-t border-gray-100 dark:border-gray-700">
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[9px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Format</label>
-                              <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 p-0.5">
-                                <button
-                                  type="button"
-                                  onClick={() => setEditColType('number')}
-                                  className={`flex-1 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded transition ${editColType === 'number' ? 'bg-[#1C6B53] text-white shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'}`}
-                                >
-                                  Number / %
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setEditColType('time')}
-                                  className={`flex-1 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded transition ${editColType === 'time' ? 'bg-[#1C6B53] text-white shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'}`}
-                                >
-                                  Time (mm:ss)
-                                </button>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[9px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aggregation</label>
-                              <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 p-0.5">
-                                <button
-                                  type="button"
-                                  onClick={() => setEditColAgg('average')}
-                                  className={`flex-1 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded transition ${editColAgg === 'average' ? 'bg-[#1C6B53] text-white shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'}`}
-                                >
-                                  Average
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setEditColAgg('sum')}
-                                  className={`flex-1 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded transition ${editColAgg === 'sum' ? 'bg-[#1C6B53] text-white shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'}`}
-                                >
-                                  Sum
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-200">{col.label || col.id}</span>
-                          <div className="flex items-center gap-2 sm:gap-2.5">
-                            <button
-                              type="button"
-                              onClick={() => handleEditColumnStart(col)}
-                              className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md transition cursor-pointer flex items-center gap-1"
-                              title="Click to edit format and aggregation"
-                            >
-                              <span>{toTitleCase(col.type)} • {toTitleCase(col.aggregation)}</span>
-                            </button>
-                            <div className="flex gap-1 sm:gap-1.5">
-                              <button onClick={() => handleEditColumnStart(col)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1" title="Edit KPI">
-                                <Edit2 size={13} />
-                              </button>
-                              <button onClick={() => handleRemoveColumn(col.id)} className="text-red-400 hover:text-red-600 p-1" title="Delete KPI">
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TL & Manager Profile Modal */}
-      {showProfileModal && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowProfileModal(false)} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-7 max-w-md w-full border border-gray-100 dark:border-gray-800 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Profile Settings</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Update Your Display Name, Profile Photo & Password</p>
-              </div>
-              <button onClick={() => setShowProfileModal(false)} className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 transition shadow-2xs shrink-0" title="Close" aria-label="Close">
-                <X size={20} strokeWidth={2.5} />
-              </button>
-            </div>
-
-            {profileError && (
-              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-semibold rounded-xl">
-                {profileError}
-              </div>
-            )}
-
-            {profileSuccess && (
-              <div className="mb-4 p-3 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-[#1C6B53] dark:text-emerald-400 text-xs font-semibold rounded-xl">
-                {profileSuccess}
-              </div>
-            )}
-
-            <form onSubmit={handleSaveTLProfile} className="space-y-4">
-              {/* Photo Upload */}
-              <div className="flex flex-col items-center justify-center mb-4">
-                <div className="w-24 h-24 rounded-full bg-gray-100 dark:bg-gray-800 mb-2 overflow-hidden border-2 border-gray-200 dark:border-gray-700 relative group flex items-center justify-center shadow-inner">
-                  {profilePhoto ? (
-                    <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <Users size={32} className="text-gray-400" />
-                  )}
-                  <label className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 cursor-pointer transition rounded-full">
-                    <Camera size={20} className="mb-1" />
-                    <span className="text-[10px] font-bold">Change</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={handleProfilePhotoUpload} />
-                  </label>
-                </div>
-                <span className="text-[11px] text-gray-400 font-medium">Click Photo To Upload New Image</span>
-              </div>
-
-              {/* Display Name */}
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider mb-1.5 text-gray-500 dark:text-gray-400">Display Name / Username</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Your Full Name"
-                  value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/70 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-[#1C6B53] text-sm font-medium"
-                />
-              </div>
-
-              {/* Role & Email info (Assigned Team removed) */}
-              <div className="p-3.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-700 text-xs text-gray-500 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-gray-600 dark:text-gray-300">Account Role</span>
-                  <span className="font-bold text-gray-800 dark:text-white">{isAdmin ? 'Administrator' : userProfile?.role === 'manager' ? 'Manager' : userProfile?.role === 'agent' ? 'Agent' : 'Team Leader'}</span>
-                </div>
-                <div className="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-700">
-                  <span className="font-semibold text-gray-600 dark:text-gray-300">Email Address</span>
-                  <span className="font-medium text-gray-700 dark:text-gray-200">{session?.email}</span>
-                </div>
-              </div>
-
-              {/* Change Password */}
-              <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
-                <span className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">Change Password (Optional)</span>
-                <div className="space-y-2.5">
-                  <input
-                    type="password"
-                    placeholder="New Password (At least 6 characters)"
-                    value={newProfilePassword}
-                    onChange={(e) => setNewProfilePassword(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/70 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-[#1C6B53] text-sm font-medium"
-                  />
-                  <input
-                    type="password"
-                    placeholder="Confirm New Password"
-                    value={confirmProfilePassword}
-                    onChange={(e) => setConfirmProfilePassword(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/70 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-[#1C6B53] text-sm font-medium"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowProfileModal(false)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingProfile}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-[#1C6B53] hover:bg-[#155a45] transition shadow-md shadow-[#1C6B53]/20 disabled:opacity-50"
-                >
-                  {savingProfile ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete / Resign Member Confirmation Modal */}
-      {deleteTarget && (() => {
-        const curEffective = getCurrentEffectiveMonth(selectedMonth, selectedYear);
-        const nextEffective = getNextMonthAndYear(curEffective.month, curEffective.year);
-
-        return (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <div 
-              className="absolute inset-0 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" 
-              onClick={() => !isDeletingMember && setDeleteTarget(null)} 
-            />
-            <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-6 sm:p-7 max-w-lg w-full border border-gray-200/80 dark:border-gray-800 animate-in fade-in zoom-in-95 duration-150">
-              
-              {/* Top Header */}
-              <div className="flex items-start gap-4 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200/80 dark:border-rose-800/60 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0 shadow-xs">
-                  <UserMinus size={22} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                      Remove / Resign Member
-                    </h3>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                      Employee Resignation
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                      {deleteTarget.name}
-                    </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-                      {deleteTarget.team.replace(' Team', '')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 🛡️ Historical Data Protection Banner */}
-              <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 flex items-start gap-3">
-                <ShieldCheck size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                <div className="text-xs text-emerald-900 dark:text-emerald-200 leading-relaxed">
-                  <p className="font-bold mb-0.5">
-                    Historical Data is 100% Protected & Preserved
-                  </p>
-                  <p className="text-[11px] opacity-90">
-                    All performance metrics, evaluations, and records from past months will remain permanently saved in all dashboards and reports. The member will only be excluded from future active rosters.
-                  </p>
-                </div>
-              </div>
-
-              {/* Removal Effective Date Options */}
-              <div className="mb-5">
-                <label className="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
-                  When should removal take effect?
-                </label>
-
-                <div className="space-y-2.5">
-                  {/* Option 1: Next Month (Recommended) */}
-                  <div
-                    onClick={() => setDeleteTiming("next")}
-                    className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 select-none ${
-                      deleteTiming === "next"
-                        ? "border-[#1C6B53] bg-emerald-50/40 dark:bg-emerald-950/30 ring-1 ring-[#1C6B53]/20"
-                        : "border-gray-200 dark:border-gray-700/80 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800/40"
-                    }`}
-                  >
-                    <div className="mt-0.5 shrink-0">
-                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition ${
-                        deleteTiming === "next" 
-                          ? "border-[#1C6B53] bg-[#1C6B53]" 
-                          : "border-gray-300 dark:border-gray-600"
-                      }`}>
-                        {deleteTiming === "next" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 justify-between">
-                        <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                          Next Month ({nextEffective.displayLabel})
-                        </span>
-                        <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
-                          Recommended
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-normal">
-                        The employee remains active in the current month ({curEffective.displayLabel}) with all metrics saved. Removal starts from next month ({nextEffective.displayLabel}) onwards.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Option 2: Current Month */}
-                  <div
-                    onClick={() => setDeleteTiming("current")}
-                    className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 select-none ${
-                      deleteTiming === "current"
-                        ? "border-rose-500 bg-rose-50/40 dark:bg-rose-950/30 ring-1 ring-rose-500/20"
-                        : "border-gray-200 dark:border-gray-700/80 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800/40"
-                    }`}
-                  >
-                    <div className="mt-0.5 shrink-0">
-                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition ${
-                        deleteTiming === "current" 
-                          ? "border-rose-500 bg-rose-500" 
-                          : "border-gray-300 dark:border-gray-600"
-                      }`}>
-                        {deleteTiming === "current" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 justify-between">
-                        <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                          Current Month ({curEffective.displayLabel})
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-normal">
-                        The employee is removed starting from {curEffective.displayLabel} immediately. All historical data from previous months (January through the preceding month) is 100% preserved and untouched.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  disabled={isDeletingMember}
-                  onClick={() => setDeleteTarget(null)}
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 transition active:scale-95 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={isDeletingMember}
-                  onClick={confirmDelete}
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs sm:text-sm font-bold text-white transition active:scale-95 shadow-md shadow-rose-600/20 cursor-pointer flex items-center justify-center gap-2"
-                >
-                  {isDeletingMember ? (
-                    <>
-                      <RefreshCw size={14} className="animate-spin" />
-                      <span>Removing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 size={14} />
-                      <span>Confirm Removal</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {renderUniversalModals()}
 
       {/* Previous Month Incomplete Lock Modal */}
       {isMounted && showMonthLockModal && prevMonthIncompleteInfo && createPortal(
