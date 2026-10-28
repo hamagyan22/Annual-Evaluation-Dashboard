@@ -366,7 +366,7 @@ export default function AnnualEvaluationDashboard({
   const userTeamLower = (userProfile?.team || userProfile?.name || userProfile?.email || "").toLowerCase();
 
   // Role detection for specific special staff users
-  const isUserMohammedAzad = emailLower.includes("azad") || nameLower.includes("azad") || roleLower === "trainer";
+  const isUserMohammedAzad = (emailLower.includes("mohammed.azad") || nameLower.includes("mohammed azad") || roleLower === "trainer") && !emailLower.includes("azad.muhammad") && !emailLower.includes("azad.mohammed") && !nameLower.includes("azad muhammad") && !nameLower.includes("azad mohammed");
   const isUserMohammedJihad = (emailLower.includes("jihad") || nameLower.includes("jihad")) && !nameLower.includes("younis");
   const isUserLaraKamil = emailLower.includes("lara") || nameLower.includes("lara");
   const isUserAnkido = emailLower.includes("ankido") || nameLower.includes("ankido");
@@ -443,7 +443,8 @@ export default function AnnualEvaluationDashboard({
     if (!myName || !targetName) return false;
     if (myName === targetName || myName.includes(targetName) || targetName.includes(myName)) return true;
     const myEmail = (userProfile?.email || "").toLowerCase();
-    if (myEmail.includes("azad") && targetName.includes("azad")) return true;
+    if ((myEmail.includes("mohammed.azad") || roleLower === "trainer") && targetName.includes("mohammed azad")) return true;
+    if ((myEmail.includes("azad.muhammad") || myEmail.includes("azad.mohammed") || myName.includes("azad muhammad") || myName.includes("azad mohammed")) && (targetName.includes("azad muhammad") || targetName.includes("azad mohammed"))) return true;
     if (myEmail.includes("jihad") && targetName.includes("jihad")) return true;
     if (myEmail.includes("lara") && targetName.includes("lara")) return true;
     if (myEmail.includes("shireen") && targetName.includes("shireen")) return true;
@@ -699,7 +700,7 @@ export default function AnnualEvaluationDashboard({
     // "التيم ليدر خلي بس يشوفون تقييمهم و ليس مال تيمهم"
     if (isUserSpecialStaffOnly) {
       if (isUserMohammedAzad) {
-        return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("azad"));
+        return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("mohammed azad"));
       }
       if (isUserMohammedJihad) {
         return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("jihad"));
@@ -1039,6 +1040,10 @@ export default function AnnualEvaluationDashboard({
       if (agentName && selectedEmployeeName !== agentName) {
         setSelectedEmployeeName(agentName);
       }
+      const myTeam = (userProfile?.team || "").toLowerCase();
+      if (myTeam.includes("younis")) setTeamTabFilter("Younis");
+      else if (myTeam.includes("ankido")) setTeamTabFilter("Ankido");
+      else if (myTeam.includes("mohammed") || myTeam.includes("dlshad")) setTeamTabFilter("Mohammed");
       return;
     }
 

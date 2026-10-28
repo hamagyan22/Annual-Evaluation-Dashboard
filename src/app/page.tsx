@@ -3382,7 +3382,9 @@ export default function Dashboard() {
       if (target === 'cc') {
         fetchData(true);
       } else if (target === 'agent') {
-        setShowAgentPreview(true);
+        if (userProfile?.role !== 'agent') {
+          setShowAgentPreview(true);
+        }
       } else if (target === 'quality') {
         setShowQualityView(true);
       } else if (target === 'topstar') {

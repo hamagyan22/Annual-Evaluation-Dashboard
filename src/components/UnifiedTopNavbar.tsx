@@ -43,13 +43,13 @@ export function UnifiedTopNavbar({
   const isManager = isAdmin || roleLower === "manager" || emailLower === "jalal.burghol@agent.com";
   const isTL = roleLower === "tl" || emailLower.includes("younis.kamal") || emailLower.includes("ankido.buya");
   const isQA = roleLower === "qa" || emailLower.includes("lara.kamil") || emailLower.includes("mohammed.jihad");
-  const isTrainer = roleLower === "trainer" || emailLower.includes("mohammed.azad");
+  const isTrainer = roleLower === "trainer" || (emailLower.includes("mohammed.azad") && !emailLower.includes("azad.muhammad"));
   const isBackOffice = roleLower === "backoffice" || emailLower.includes("shireen");
   const isAgent = roleLower === "agent";
 
   // Dashboard Access Permissions
   const canAccessCC = isAdmin || isManager || isTL;
-  const canAccessAgentView = isManager || isAdmin;
+  const canAccessAgentView = isManager || isAdmin || isAgent;
   const canAccessQuality = isAdmin || isManager || isTL || isQA;
   const canAccessTopStar = isAdmin || isManager || isTL;
   const canAccessEvaluation = true; // All staff have evaluation access (self or full review)
