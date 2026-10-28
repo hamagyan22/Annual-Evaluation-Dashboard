@@ -2894,7 +2894,7 @@ export default function Dashboard() {
       setTimeout(() => setSyncSuccessToast(false), 4500);
     } catch (err: any) {
       console.error("Error syncing data:", err);
-      alert("حدث خطأ أثناء مزامنة البيانات: " + (err.message || "Unknown error"));
+      alert("Error syncing data: " + (err.message || "Unknown error"));
     } finally {
       setIsSyncingData(false);
     }
@@ -2930,7 +2930,7 @@ export default function Dashboard() {
       setShowSyncedDetailsModal(false);
     } catch (err: any) {
       console.error("Error un-syncing data:", err);
-      alert("حدث خطأ أثناء إلغاء المزامنة: " + (err.message || "Unknown error"));
+      alert("Error un-syncing data: " + (err.message || "Unknown error"));
     } finally {
       setIsSyncingData(false);
     }
@@ -6340,7 +6340,7 @@ export default function Dashboard() {
                   ? 'text-white border-transparent shadow-md shadow-[var(--brand-glow)] ring-2 ring-[var(--brand-glow)]'
                   : 'bg-[var(--brand-bg-light)] dark:bg-gray-800 text-[var(--brand-text-light)] dark:text-[var(--brand-dark-text-light)] border-[var(--brand-border-light)] dark:border-gray-700 hover:opacity-90'
               }`}
-              title="عرض داتا تيم يونس وتيم انكيدو معاً (Call Center Combined: Younis + Ankido)"
+              title="View combined data for Younis and Ankido teams (Call Center Combined: Younis + Ankido)"
             >
               <Users
                 size={11}
@@ -6358,7 +6358,7 @@ export default function Dashboard() {
                     type="button"
                     onClick={() => setShowIncompleteSyncModal(true)}
                     className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 border cursor-pointer whitespace-nowrap bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-300/80 dark:border-amber-700/60 shadow-2xs shrink-0 active:scale-95"
-                    title={`بيانات ${selectedMonth} غير مكتملة (${currentMonthCompleteness.completedAgents}/${currentMonthCompleteness.totalAgents}). اضغط لعرض الحقول الناقصة.`}
+                    title={`${selectedMonth} data is incomplete (${currentMonthCompleteness.completedAgents}/${currentMonthCompleteness.totalAgents}). Click to view missing fields.`}
                   >
                     <Clock size={11} className="text-amber-600 dark:text-amber-400" />
                     <span>Sync ({currentMonthCompleteness.completedAgents}/{currentMonthCompleteness.totalAgents})</span>
@@ -6368,7 +6368,7 @@ export default function Dashboard() {
                     type="button"
                     onClick={() => setShowSyncedDetailsModal(true)}
                     className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg text-[11px] font-black transition flex items-center gap-1.5 border cursor-pointer whitespace-nowrap bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/70 shadow-2xs shrink-0 active:scale-95"
-                    title="البيانات معتمدة ومنشورة على لوحة تحكم الموظفين. اضغط لإدارة المزامنة."
+                    title="Data is published and live on Agent Dashboard. Click to manage sync."
                   >
                     <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400" />
                     <span>Synced ✓</span>
@@ -6379,10 +6379,10 @@ export default function Dashboard() {
                     onClick={handleSyncData}
                     disabled={isSyncingData}
                     className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-[#1C6B53] hover:from-emerald-700 hover:to-[#155a45] shadow-md shadow-emerald-600/25 ring-2 ring-emerald-400/40 animate-pulse shrink-0 active:scale-95 disabled:opacity-50"
-                    title="اكتملت 100% من بيانات الموظفين! اضغط لمزامنة ونشر البيانات على لوحة تحكم الموظف."
+                    title="100% data complete! Click to sync and publish to Agent Dashboard."
                   >
                     <RefreshCw size={11} className={isSyncingData ? "animate-spin" : ""} />
-                    <span>{isSyncingData ? "جاري المزامنة..." : "Sync Data"}</span>
+                    <span>{isSyncingData ? "Syncing..." : "Sync Data"}</span>
                   </button>
                 )}
               </>
@@ -6861,10 +6861,10 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300/60 dark:border-amber-700/60 mb-1">
-                    بيانات غير مكتملة
+                    Incomplete Data
                   </span>
                   <h3 className="text-base font-black text-gray-900 dark:text-white">
-                    اكتمال بيانات شهر {selectedMonth} {selectedYear}
+                    {selectedMonth} {selectedYear} Data Completeness
                   </h3>
                 </div>
               </div>
@@ -6872,7 +6872,7 @@ export default function Dashboard() {
                 type="button"
                 onClick={() => setShowIncompleteSyncModal(false)}
                 className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 transition shadow-2xs cursor-pointer shrink-0"
-                title="إغلاق"
+                title="Close"
               >
                 <X size={18} strokeWidth={2.5} />
               </button>
@@ -6881,14 +6881,14 @@ export default function Dashboard() {
             {/* Body */}
             <div className="p-6 space-y-4">
               <div className="p-4 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-xs sm:text-sm text-amber-950 dark:text-amber-200 leading-relaxed font-medium">
-                لا يمكن مزامنة ونشر بيانات هذا الشهر على <strong>لوحة تحكم الموظفين (Agent Dashboard)</strong> حتى يتم إدخال 100% من بيانات جميع الموظفين المدرجين أدناه.
+                Data for this month cannot be synced or published to the <strong>Agent Dashboard</strong> until 100% of all metrics are filled for every team member listed below.
               </div>
 
               <div>
                 <div className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
-                  <span>نسبة الإنجاز واكتمال الإدخال:</span>
+                  <span>Entry Completion Progress:</span>
                   <span className="text-amber-700 dark:text-amber-300 font-mono font-extrabold">
-                    {currentMonthCompleteness.completedAgents} من {currentMonthCompleteness.totalAgents} موظف ({Math.round((currentMonthCompleteness.completedAgents / Math.max(1, currentMonthCompleteness.totalAgents)) * 100)}%)
+                    {currentMonthCompleteness.completedAgents} of {currentMonthCompleteness.totalAgents} employees ({Math.round((currentMonthCompleteness.completedAgents / Math.max(1, currentMonthCompleteness.totalAgents)) * 100)}%)
                   </span>
                 </div>
                 <div className="w-full h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -6901,9 +6901,9 @@ export default function Dashboard() {
 
               <div>
                 <div className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center justify-between">
-                  <span>الموظفون الذين لديهم حقول ناقصة:</span>
+                  <span>Team members with pending fields:</span>
                   <span className="text-[11px] font-black text-amber-600 dark:text-amber-400">
-                    {currentMonthCompleteness.incompleteAgents.length} موظف متبقي
+                    {currentMonthCompleteness.incompleteAgents.length} remaining
                   </span>
                 </div>
                 <div className="max-h-52 overflow-y-auto space-y-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800">
@@ -6928,7 +6928,7 @@ export default function Dashboard() {
                   onClick={() => setShowIncompleteSyncModal(false)}
                   className="w-full py-2.5 px-4 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-md transition cursor-pointer active:scale-95"
                 >
-                  الرجوع وإكمال البيانات الناقصة
+                  Return & Complete Pending Data
                 </button>
               </div>
             </div>
@@ -6949,10 +6949,10 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-700/60 mb-1">
-                    بيانات معتمدة ومنشورة
+                    Approved & Published
                   </span>
                   <h3 className="text-base font-black text-gray-900 dark:text-white">
-                    مزامنة شهر {selectedMonth} {selectedYear}
+                    {selectedMonth} {selectedYear} Sync Status
                   </h3>
                 </div>
               </div>
@@ -6960,7 +6960,7 @@ export default function Dashboard() {
                 type="button"
                 onClick={() => setShowSyncedDetailsModal(false)}
                 className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 transition shadow-2xs cursor-pointer shrink-0"
-                title="إغلاق"
+                title="Close"
               >
                 <X size={18} strokeWidth={2.5} />
               </button>
@@ -6969,26 +6969,26 @@ export default function Dashboard() {
             {/* Body */}
             <div className="p-6 space-y-4">
               <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-xs sm:text-sm text-emerald-950 dark:text-emerald-200 font-medium leading-relaxed">
-                بيانات هذا الشهر منشورة حالياً وتظهر بجميع أرقامها وتقييماتها لجميع الموظفين على <strong>لوحة تحكم الموظفين (Agent Dashboard)</strong>.
+                This month&apos;s data is currently published and visible with all scores and metrics on the <strong>Agent Dashboard</strong>.
               </div>
 
               <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800/60 rounded-2xl border border-gray-100 dark:border-gray-800 text-xs">
                 <div className="flex items-center justify-between py-1 border-b border-gray-200/60 dark:border-gray-700/60">
-                  <span className="text-gray-500 dark:text-gray-400">تاريخ آخر مزامنة:</span>
+                  <span className="text-gray-500 dark:text-gray-400">Last Synced:</span>
                   <span className="font-bold text-gray-900 dark:text-gray-100 font-mono">
                     {currentMonthSyncDetails.syncedAt ? new Date(currentMonthSyncDetails.syncedAt).toLocaleString('en-GB') : '-'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-1 border-b border-gray-200/60 dark:border-gray-700/60">
-                  <span className="text-gray-500 dark:text-gray-400">تم الاعتماد بواسطة:</span>
+                  <span className="text-gray-500 dark:text-gray-400">Approved By:</span>
                   <span className="font-bold text-gray-900 dark:text-gray-100">
                     {currentMonthSyncDetails.syncedBy || 'Team Leader'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-1">
-                  <span className="text-gray-500 dark:text-gray-400">عدد الموظفين المشمولين:</span>
+                  <span className="text-gray-500 dark:text-gray-400">Employees Included:</span>
                   <span className="font-bold text-gray-900 dark:text-gray-100 font-mono">
-                    {currentMonthSyncDetails.agentCount || (currentMonthCompleteness?.totalAgents ?? '-')} موظف
+                    {currentMonthSyncDetails.agentCount || (currentMonthCompleteness?.totalAgents ?? '-')} members
                   </span>
                 </div>
               </div>
@@ -7002,7 +7002,7 @@ export default function Dashboard() {
                   className="w-full py-2.5 px-4 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-md flex items-center justify-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
                 >
                   <RefreshCw size={14} className={isSyncingData ? "animate-spin" : ""} />
-                  <span>{isSyncingData ? "جاري التحديث..." : "إعادة المزامنة ونشر آخر التعديلات (Re-sync)"}</span>
+                  <span>{isSyncingData ? "Updating..." : "Re-sync & Publish Changes"}</span>
                 </button>
 
                 <button
@@ -7012,7 +7012,7 @@ export default function Dashboard() {
                   className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800/60 flex items-center justify-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
                 >
                   <RotateCcw size={14} />
-                  <span>إلغاء النشر مؤقتاً (إرجاع كمسودة قيد المراجعة)</span>
+                  <span>Unpublish (Revert to Draft)</span>
                 </button>
               </div>
             </div>
@@ -7028,8 +7028,8 @@ export default function Dashboard() {
             <Check size={14} strokeWidth={3} />
           </div>
           <div>
-            <div className="font-extrabold text-sm">تمت المزامنة بنجاح!</div>
-            <div className="text-[11px] text-white/80 font-normal">أصبحت بيانات شهر {selectedMonth} {selectedYear} ظاهرة الآن على لوحة تحكم الموظفين.</div>
+            <div className="font-extrabold text-sm">Data Synced Successfully!</div>
+            <div className="text-[11px] text-white/80 font-normal">{selectedMonth} {selectedYear} data is now live on the Agent Dashboard.</div>
           </div>
         </div>,
         document.body
