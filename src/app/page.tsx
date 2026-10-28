@@ -3134,6 +3134,7 @@ export default function Dashboard() {
         const isLara = emailLower === 'lara.kamil@agent.com';
         const isMohammedJihad = emailLower === 'mohammed.jihad@agent.com' || emailLower === 'mohammed.jihad.qa@agent.com' || emailLower.includes('mohammed.jihad');
         const isMohammedAzad = emailLower === 'mohammed.azad@agent.com' || emailLower === 'mohammed.azad.qa@agent.com' || emailLower.includes('mohammed.azad');
+        const isAzad = (emailLower === 'azad.muhammad@agent.com' || emailLower === 'azad.mohammed@agent.com' || emailLower === 'azad.muhammad.reset@agent.com' || emailLower.startsWith('azad.muhammad') || emailLower.startsWith('azad.mohammed')) && !isMohammedAzad;
         const isShireen = emailLower === 'shireen.waisi@agent.com' || emailLower.includes('shireen.waisi') || emailLower.includes('shireen');
         const isAgent = emailLower.endsWith('@agent.com');
 
@@ -3209,6 +3210,10 @@ export default function Dashboard() {
             role = 'backoffice';
             name = name || 'Shireen Waisi';
             team = 'Back Office';
+          } else if (isAzad) {
+            role = 'agent';
+            name = name || 'Azad Muhammad';
+            team = team || 'Younis Kamal Team';
           } else if (!role) {
             role = isAgent ? 'agent' : 'tl';
           }
@@ -3228,6 +3233,8 @@ export default function Dashboard() {
             ? 'mohammed.azad@agent.com'
             : isShireen
             ? 'shireen.waisi@agent.com'
+            : isAzad
+            ? 'azad.muhammad@agent.com'
             : user.email;
 
           const updatedProfile = {
@@ -3256,12 +3263,12 @@ export default function Dashboard() {
 
         } catch (e) {
           console.error("Error fetching user profile:", e);
-          const fallbackRole = isJalal ? 'manager' : (isYounis || isAnkido ? 'tl' : (isLara || isMohammedJihad ? 'qa' : (isMohammedAzad ? 'trainer' : (isAgent ? 'agent' : 'tl'))));
+          const fallbackRole = isJalal ? 'manager' : (isYounis || isAnkido ? 'tl' : (isLara || isMohammedJihad ? 'qa' : (isMohammedAzad ? 'trainer' : (isShireen ? 'backoffice' : (isAgent ? 'agent' : 'tl')))));
           setUserProfile({
             role: fallbackRole,
-            name: isJalal ? 'Jalal Burghol' : (isYounis ? 'Younis Kamal' : (isAnkido ? 'Ankido Buya' : (isLara ? 'Lara Kamil' : (isMohammedJihad ? 'Mohammed Jihad' : (isMohammedAzad ? 'Mohammed Azad' : user.email?.split('@')[0]))))),
-            team: isYounis ? 'Younis Kamal Team' : (isAnkido ? 'Ankido Buya Team' : (isLara ? 'Ankido Buya Team' : (isMohammedJihad ? 'Younis Kamal Team' : (isMohammedAzad ? 'All Call Teams' : (isJalal ? 'All' : undefined))))),
-            email: isMohammedJihad ? 'mohammed.jihad@agent.com' : (isYounis ? 'younis.kamal@agent.com' : (isMohammedAzad ? 'mohammed.azad@agent.com' : user.email)),
+            name: isJalal ? 'Jalal Burghol' : (isYounis ? 'Younis Kamal' : (isAnkido ? 'Ankido Buya' : (isLara ? 'Lara Kamil' : (isMohammedJihad ? 'Mohammed Jihad' : (isMohammedAzad ? 'Mohammed Azad' : (isShireen ? 'Shireen Waisi' : (isAzad ? 'Azad Muhammad' : user.email?.split('@')[0]))))))),
+            team: isYounis ? 'Younis Kamal Team' : (isAnkido ? 'Ankido Buya Team' : (isLara ? 'Ankido Buya Team' : (isMohammedJihad ? 'Younis Kamal Team' : (isMohammedAzad ? 'All Call Teams' : (isShireen ? 'Back Office' : (isAzad ? 'Younis Kamal Team' : (isJalal ? 'All' : undefined))))))),
+            email: isMohammedJihad ? 'mohammed.jihad@agent.com' : (isYounis ? 'younis.kamal@agent.com' : (isMohammedAzad ? 'mohammed.azad@agent.com' : (isShireen ? 'shireen.waisi@agent.com' : (isAzad ? 'azad.muhammad@agent.com' : user.email)))),
             isAdmin: false,
             passwordUpdated: false,
             mustChangePassword: true,
@@ -3321,6 +3328,8 @@ export default function Dashboard() {
           await signInWithEmailAndPassword(auth, 'mohammed.jihad.qa@agent.com', password);
         } else if (cleanEmail === 'mohammed.azad@agent.com') {
           await signInWithEmailAndPassword(auth, 'mohammed.azad.qa@agent.com', password);
+        } else if (cleanEmail === 'azad.muhammad@agent.com' || cleanEmail === 'azad.mohammed@agent.com' || cleanEmail.startsWith('azad.muhammad') || cleanEmail.startsWith('azad.mohammed')) {
+          await signInWithEmailAndPassword(auth, 'azad.muhammad.reset@agent.com', password);
         } else {
           throw firstErr;
         }
