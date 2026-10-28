@@ -547,13 +547,29 @@ export async function fetchTopStarData(
   const inactiveSet = new Set<string>();
   membersSnap?.docs.forEach(d => {
     const data = d.data();
-    if (!isMemberActiveInPeriod(data, month, year)) {
-      inactiveSet.add(normalizeName(data.agent_name || data.name || ""));
+    const isInactive = data.is_deleted === true || 
+                       data.is_active === false || 
+                       !isMemberActiveInPeriod(data, month, year);
+    if (isInactive) {
+      const raw = (data.agent_name || data.name || "").trim().toLowerCase();
+      if (raw) inactiveSet.add(raw);
+      const norm = normalizeName(data.agent_name || data.name || "").trim().toLowerCase();
+      if (norm) inactiveSet.add(norm);
+      const canon = getCanonicalAgentName(data.agent_name || data.name || "").trim().toLowerCase();
+      if (canon) inactiveSet.add(canon);
     }
   });
 
-  const activeChatAgents = DEFAULT_CHAT_AGENTS.filter(name => !inactiveSet.has(normalizeName(name)));
-  const activeCallAgents = DEFAULT_CALL_AGENTS.filter(name => !inactiveSet.has(normalizeName(name)));
+  const isInactiveName = (name: string) => {
+    if (!name) return true;
+    const clean = name.trim().toLowerCase();
+    const norm = normalizeName(name).trim().toLowerCase();
+    const canon = getCanonicalAgentName(name).trim().toLowerCase();
+    return inactiveSet.has(clean) || inactiveSet.has(norm) || inactiveSet.has(canon);
+  };
+
+  const activeChatAgents = DEFAULT_CHAT_AGENTS.filter(name => !isInactiveName(name));
+  const activeCallAgents = DEFAULT_CALL_AGENTS.filter(name => !isInactiveName(name));
 
   const chatMap: Record<string, any> = {};
   const baselineChat = BASELINE_TEAM_METRICS.filter(
@@ -597,7 +613,7 @@ export async function fetchTopStarData(
 
   const discoveredCallAgents = Object.keys(callMap);
   const allCallAgentsList = Array.from(new Set([...activeCallAgents, ...discoveredCallAgents]))
-    .filter(name => !inactiveSet.has(normalizeName(name)));
+    .filter(name => !isInactiveName(name));
 
   const finalCall: Record<string, any> = {};
   allCallAgentsList.forEach(name => {

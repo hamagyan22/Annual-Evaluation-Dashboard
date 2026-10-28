@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { db, getSystemAuthor } from "@/lib/firebaseClient";
-import { collection, query, where, getDocs, doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, setDoc, getDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import { 
   Star, Trophy, Medal, ArrowLeft, Search, Users, Check, Save, Download, 
   Sun, Moon, ChevronDown, RefreshCw, Calendar, Sparkles, Shield,
@@ -203,13 +203,47 @@ export default function TopStarDashboard({
     }
   }, [showCriteriaModal, showCelebrationVideo]);
   const [membersList, setMembersList] = useState<any[]>(() => {
-    const base = allMembers && allMembers.length > 0 ? allMembers : DEFAULT_COMPANY_EMPLOYEES;
-    return base.filter(m => m.is_deleted !== true && m.is_active !== false);
+    return allMembers && allMembers.length > 0 ? allMembers : DEFAULT_COMPANY_EMPLOYEES;
   });
 
   useEffect(() => {
-    const base = allMembers && allMembers.length > 0 ? allMembers : DEFAULT_COMPANY_EMPLOYEES;
-    setMembersList(base.filter(m => m.is_deleted !== true && m.is_active !== false));
+    if (allMembers && allMembers.length > 0) {
+      setMembersList(allMembers);
+    }
+  }, [allMembers]);
+
+  // Keep members list in real-time sync with Firestore team_members to instantly pick up deleted / resigned members
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "team_members"), (snap) => {
+      setMembersList(prev => {
+        const map = new Map<string, any>();
+        (allMembers && allMembers.length > 0 ? allMembers : DEFAULT_COMPANY_EMPLOYEES).forEach(m => {
+          const canon = getCanonicalAgentName(m.agent_name || m.name || "");
+          map.set(canon.toLowerCase().trim(), { ...m, agent_name: canon, name: canon });
+        });
+        snap.docs.forEach(d => {
+          const data = d.data();
+          const rawName = (data.agent_name || data.name || "").trim();
+          if (rawName) {
+            const canonName = getCanonicalAgentName(rawName);
+            const k = canonName.toLowerCase().trim();
+            const existing = map.get(k) || {};
+            map.set(k, {
+              ...existing,
+              ...data,
+              id: d.id,
+              agent_name: canonName,
+              name: canonName,
+              team: data.team || existing.team || ""
+            });
+          }
+        });
+        return Array.from(map.values());
+      });
+    }, (err) => {
+      console.warn("TopStar team_members listener error:", err);
+    });
+    return () => unsub();
   }, [allMembers]);
 
   const handlePhotoUpdated = (agentName: string, photoUrl: string) => {
@@ -223,26 +257,56 @@ export default function TopStarDashboard({
     });
   };
 
+  // Comprehensive inactive agents set for the selected period
+  const inactiveSet = useMemo(() => {
+    const set = new Set<string>();
+    const rosterSource = membersList.length > 0 ? membersList : (allMembers.length > 0 ? allMembers : DEFAULT_COMPANY_EMPLOYEES);
+
+    rosterSource.forEach(m => {
+      const isInactive = m.is_deleted === true || 
+                         m.is_active === false || 
+                         !isMemberActiveInPeriod(m, selectedMonth, selectedYear);
+      if (isInactive) {
+        const raw = (m.agent_name || m.name || "").trim().toLowerCase();
+        if (raw) set.add(raw);
+        const norm = normalizeName(m.agent_name || m.name || "").trim().toLowerCase();
+        if (norm) set.add(norm);
+        const canon = getCanonicalAgentName(m.agent_name || m.name || "").trim().toLowerCase();
+        if (canon) set.add(canon);
+      }
+    });
+
+    return set;
+  }, [membersList, allMembers, selectedMonth, selectedYear]);
+
+  const isAgentInactive = useCallback((name: string) => {
+    if (!name) return true;
+    const clean = name.trim().toLowerCase();
+    const norm = normalizeName(name).trim().toLowerCase();
+    const canon = getCanonicalAgentName(name).trim().toLowerCase();
+    return inactiveSet.has(clean) || inactiveSet.has(norm) || inactiveSet.has(canon);
+  }, [inactiveSet]);
+
   // Active rosters (strictly excluding deleted / resigned agents for the selected period and scoped for TL)
   const chatRoster = useMemo(() => {
-    const inactiveSet = new Set(
-      membersList
-        .filter(m => m.is_deleted === true || m.is_active === false || !isMemberActiveInPeriod(m, selectedMonth, selectedYear))
-        .map(m => normalizeName(m.agent_name || m.name))
-    );
     const fromProps = membersList
-      .filter(m => m.team === "Mohammed Dlshad Team" && m.is_deleted !== true && m.is_active !== false && isMemberActiveInPeriod(m, selectedMonth, selectedYear))
+      .filter(m => {
+        if (m.team !== "Mohammed Dlshad Team") return false;
+        if (m.is_deleted === true || m.is_active === false) return false;
+        if (!isMemberActiveInPeriod(m, selectedMonth, selectedYear)) return false;
+        return true;
+      })
       .map(m => normalizeName(m.agent_name || m.name));
-    const combined = Array.from(new Set([...fromProps, ...DEFAULT_CHAT_AGENTS])).filter(n => !inactiveSet.has(n));
+
+    const defaults = DEFAULT_CHAT_AGENTS
+      .map(n => normalizeName(n))
+      .filter(n => !isAgentInactive(n));
+
+    const combined = Array.from(new Set([...fromProps, ...defaults])).filter(n => !isAgentInactive(n));
     return combined.sort((a, b) => a.localeCompare(b));
-  }, [membersList, selectedMonth, selectedYear]);
+  }, [membersList, selectedMonth, selectedYear, isAgentInactive]);
 
   const callRoster = useMemo(() => {
-    const inactiveSet = new Set(
-      membersList
-        .filter(m => m.is_deleted === true || m.is_active === false || !isMemberActiveInPeriod(m, selectedMonth, selectedYear))
-        .map(m => normalizeName(m.agent_name || m.name))
-    );
     const fromProps = membersList
       .filter(m => {
         if (m.is_deleted === true || m.is_active === false) return false;
@@ -260,19 +324,23 @@ export default function TopStarDashboard({
     let baseDefault = DEFAULT_CALL_AGENTS;
     if (tlAssignedTeam === "Younis") {
       baseDefault = DEFAULT_CALL_AGENTS.filter(n => {
-        const found = membersList.find(m => normalizeName(m.agent_name || m.name) === n);
+        const found = membersList.find(m => normalizeName(m.agent_name || m.name) === normalizeName(n));
         return found ? (found.team || "").toLowerCase().includes("younis") : true;
       });
     } else if (tlAssignedTeam === "Ankido") {
       baseDefault = DEFAULT_CALL_AGENTS.filter(n => {
-        const found = membersList.find(m => normalizeName(m.agent_name || m.name) === n);
+        const found = membersList.find(m => normalizeName(m.agent_name || m.name) === normalizeName(n));
         return found ? (found.team || "").toLowerCase().includes("ankido") : false;
       });
     }
 
-    const combined = Array.from(new Set([...fromProps, ...baseDefault])).filter(n => !inactiveSet.has(n));
+    const defaults = baseDefault
+      .map(n => normalizeName(n))
+      .filter(n => !isAgentInactive(n));
+
+    const combined = Array.from(new Set([...fromProps, ...defaults])).filter(n => !isAgentInactive(n));
     return combined.sort((a, b) => a.localeCompare(b));
-  }, [membersList, selectedMonth, selectedYear, tlAssignedTeam]);
+  }, [membersList, selectedMonth, selectedYear, tlAssignedTeam, isAgentInactive]);
 
   // Load Criteria & Sync Status from Firestore
   useEffect(() => {
