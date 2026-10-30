@@ -51,7 +51,7 @@ export function UnifiedTopNavbar({
   const canAccessCC = isAdmin || isManager || isTL;
   const canAccessAgentView = isManager || isAdmin || isAgent;
   const canAccessQuality = isAdmin || isManager || isTL || isQA;
-  const canAccessTopStar = isAdmin || isManager || isTL;
+  const canAccessTopStar = isAdmin || isManager || isTL || isAgent;
   const canAccessEvaluation = true; // All staff have evaluation access (self or full review)
 
   // Role Badge Display

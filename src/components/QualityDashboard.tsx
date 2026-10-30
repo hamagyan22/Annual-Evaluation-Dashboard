@@ -4796,7 +4796,7 @@ export default function QualityDashboard({
         setSyncedMonthsRegistry(nextSyncedRegistry);
         setSyncReminderModal(null);
         setSyncToast({
-          message: `Synced ${syncedMonthNames.join(", ")} (${syncedCount} agent records) to Team Leader & Agent Dashboards!`,
+          message: `Synced ${syncedMonthNames.join(", ")} (${syncedCount} agent records) to Team Leader Dashboard only!`,
           type: "success"
         });
       } else {
@@ -5624,15 +5624,15 @@ export default function QualityDashboard({
                       ? "bg-amber-600 hover:bg-amber-700 ring-2 ring-amber-400/50 animate-pulse"
                       : "hover:opacity-90"
                   }`}
-                  title="Sync Completed Quality Scores to Dashboards"
+                  title="Sync Completed Quality Scores to Team Leader Dashboard only"
                 >
                   <RefreshCw size={13} className={syncingMetrics ? "animate-spin" : ""} />
                   <span>
                     {syncingMetrics
                       ? "Syncing..."
                       : unsyncedPreviousMonth
-                      ? `Sync ${unsyncedPreviousMonth.monthName} First!`
-                      : "Sync to Dashboards"}
+                      ? `Sync ${unsyncedPreviousMonth.monthName} to TL First!`
+                      : "Sync to Team Leader"}
                   </span>
                 </button>
               )}
@@ -5658,7 +5658,7 @@ export default function QualityDashboard({
                     </span>
                   </div>
                   <p className="text-xs text-amber-900/90 dark:text-amber-300/90 mt-1 font-medium leading-relaxed">
-                    Evaluations for <strong>{unsyncedPreviousMonth.monthName} {selectedYear}</strong> are completed ({Object.keys(unsyncedPreviousMonth.agentScores).length} agents). Please sync to the Team Leader & Agent dashboards before entering <strong>{MONTH_NAMES[activeTableMonthIdx]}</strong>.
+                    Evaluations for <strong>{unsyncedPreviousMonth.monthName} {selectedYear}</strong> are completed ({Object.keys(unsyncedPreviousMonth.agentScores).length} agents). Please sync to the Team Leader dashboard before entering <strong>{MONTH_NAMES[activeTableMonthIdx]}</strong>.
                   </p>
                 </div>
               </div>
@@ -5682,7 +5682,7 @@ export default function QualityDashboard({
                   className="px-4 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155340] shadow-xs flex items-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
                 >
                   <RefreshCw size={13} className={syncingMetrics ? "animate-spin" : ""} />
-                  <span>{syncingMetrics ? "Syncing..." : `Sync ${unsyncedPreviousMonth.monthName} Now`}</span>
+                  <span>{syncingMetrics ? "Syncing..." : `Sync ${unsyncedPreviousMonth.monthName} to TL`}</span>
                 </button>
               </div>
             </div>
@@ -5696,7 +5696,7 @@ export default function QualityDashboard({
               <div className="flex items-center gap-2.5">
                 <CheckCircle2 size={18} className="text-[#1C6B53] dark:text-emerald-400 shrink-0" />
                 <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
-                  All weeks for <strong>{currentMonthSyncStatus.monthName} {selectedYear}</strong> are 100% completed! Please click <strong>Sync to Dashboards</strong> to publish the official scores before moving to the next month.
+                  All weeks for <strong>{currentMonthSyncStatus.monthName} {selectedYear}</strong> are 100% completed! Please click <strong>Sync to Team Leader</strong> to update the official scores before moving to the next month.
                 </p>
               </div>
               <button
@@ -5707,7 +5707,7 @@ export default function QualityDashboard({
                 className="px-4 py-2 rounded-xl text-xs font-black text-white hover:opacity-90 shadow-xs flex items-center gap-2 transition cursor-pointer shrink-0 w-full md:w-auto justify-center"
               >
                 <RefreshCw size={12} className={syncingMetrics ? "animate-spin" : ""} />
-                <span>{syncingMetrics ? "Syncing..." : `Sync ${currentMonthSyncStatus.monthName} Now`}</span>
+                <span>{syncingMetrics ? "Syncing..." : `Sync ${currentMonthSyncStatus.monthName} to TL`}</span>
               </button>
             </div>
           )}
@@ -7707,7 +7707,7 @@ export default function QualityDashboard({
 
             <div className="p-6 space-y-4">
               <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 text-xs sm:text-sm text-amber-950 dark:text-amber-200 font-medium leading-relaxed">
-                You have completed evaluations for <strong>{syncReminderModal.monthName} {selectedYear}</strong> ({Object.keys(syncReminderModal.agentScores).length} agents). Please sync scores to the Team Leader & Agent dashboards first before entering data for <strong>{MONTH_NAMES[activeTableMonthIdx]}</strong>.
+                You have completed evaluations for <strong>{syncReminderModal.monthName} {selectedYear}</strong> ({Object.keys(syncReminderModal.agentScores).length} agents). Please sync scores to the Team Leader dashboard first before entering data for <strong>{MONTH_NAMES[activeTableMonthIdx]}</strong>.
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
@@ -7721,7 +7721,7 @@ export default function QualityDashboard({
                   <span>
                     {syncingMetrics
                       ? `Syncing...`
-                      : `Sync ${syncReminderModal.monthName} & Unlock`}
+                      : `Sync ${syncReminderModal.monthName} to TL & Unlock`}
                   </span>
                 </button>
                 <button

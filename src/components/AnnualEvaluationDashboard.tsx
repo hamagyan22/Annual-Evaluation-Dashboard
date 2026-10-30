@@ -19,6 +19,7 @@ import { isMemberActiveInPeriod } from "@/lib/companyRoster";
 import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 import { ModernDropdown } from "@/components/ModernDropdown";
 import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
+import { BASELINE_ANNUAL_EVALUATIONS } from "@/lib/baselineAnnualEvaluations";
 
 export interface AnnualEvaluationDashboardProps {
   userProfile: any;
@@ -526,13 +527,14 @@ export default function AnnualEvaluationDashboard({
     let isMounted = true;
     const unsub = onSnapshot(collection(db, "annual_evaluations"), (snap) => {
       if (!isMounted) return;
-      const map: Record<string, any> = {};
+      const map: Record<string, any> = { ...BASELINE_ANNUAL_EVALUATIONS };
       snap.docs.forEach(d => {
         map[d.id] = { id: d.id, ...d.data() };
       });
       setAllEvaluationsMap(map);
     }, (err) => {
       console.warn("annual_evaluations collection listener warning:", err);
+      if (isMounted) setAllEvaluationsMap({ ...BASELINE_ANNUAL_EVALUATIONS });
     });
 
     return () => {
@@ -1127,17 +1129,47 @@ export default function AnnualEvaluationDashboard({
         setEvaluationStatus(data.status || "draft");
         setLastSavedAt(data.updated_at || "");
       } else {
-        setEvaluationDate("");
-        setSelfKpis({});
-        setManagerKpis({});
-        setSelfCompetencies({});
-        setManagerCompetencies({});
-        setKeyStrengths("");
-        setAreasForDevelopment("");
-        setManagerComments("");
-        setEmployeeComments("");
-        setEvaluationStatus("draft");
-        setLastSavedAt("");
+        const baselineData = BASELINE_ANNUAL_EVALUATIONS[docId] || 
+          Object.values(BASELINE_ANNUAL_EVALUATIONS).find(b => 
+            String(b.year) === String(selectedYear) && 
+            b.period === selectedPeriod && 
+            (
+              normalizeAgentName(b.employee_name || "") === norm ||
+              (b.employee_id && (b.employee_id === knownId || b.employee_id === currentMember?.id))
+            )
+          );
+
+        if (baselineData) {
+          setEvaluationDate(baselineData.evaluation_date || "");
+          setEmployeeId(baselineData.employee_id || knownId || "");
+          setTeamLeader(baselineData.team_leader || resolveTeamLeader(currentMember?.team));
+          setSelfKpis(baselineData.self_kpis || {});
+          setManagerKpis(baselineData.manager_kpis || {});
+          setSelfCompetencies(baselineData.self_competencies || {});
+          setManagerCompetencies(baselineData.manager_competencies || {});
+          setKeyStrengths(baselineData.manager_strengths || "");
+          setAreasForDevelopment(baselineData.manager_improvements || "");
+          setManagerComments(baselineData.manager_comments || "");
+          setEmployeeComments(baselineData.self_comments || "");
+          setEvaluationStatus(baselineData.status || "manager_finalized");
+          setLastSavedAt(baselineData.updated_at || "");
+
+          try {
+            setDoc(doc(db, "annual_evaluations", docId), baselineData, { merge: true }).catch(() => null);
+          } catch (e) {}
+        } else {
+          setEvaluationDate("");
+          setSelfKpis({});
+          setManagerKpis({});
+          setSelfCompetencies({});
+          setManagerCompetencies({});
+          setKeyStrengths("");
+          setAreasForDevelopment("");
+          setManagerComments("");
+          setEmployeeComments("");
+          setEvaluationStatus("draft");
+          setLastSavedAt("");
+        }
       }
     }, (error) => {
       console.error("Error fetching evaluation:", error);

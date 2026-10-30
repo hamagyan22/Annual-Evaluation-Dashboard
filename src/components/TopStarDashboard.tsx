@@ -9,7 +9,7 @@ import {
   Sun, Moon, ChevronDown, RefreshCw, Calendar, Sparkles, Shield,
   ShieldCheck, AlertCircle, TrendingUp, Clock, Activity, MessageSquare, PhoneCall,
   CheckCircle2, Flame, Award, Filter, Edit3, X, Eye, BarChart3, HelpCircle,
-  SlidersHorizontal, CheckCircle, Film
+  SlidersHorizontal, CheckCircle, Film, Share2
 } from "lucide-react";
 import { formatDuration, checkTeamCompleteness, fetchTopStarSyncStatus, invalidateTopStarCache } from "@/lib/topStarUtils";
 import { DEFAULT_COMPANY_EMPLOYEES, isMemberActiveInPeriod } from "@/lib/companyRoster";
@@ -378,6 +378,17 @@ export default function TopStarDashboard({
 
   const currentCompleteness = team === "chat" ? chatCompleteness : callCompleteness;
 
+  const isAgent = (userProfile?.role || "").toLowerCase() === "agent";
+  const upperSelectedMonth = (selectedMonth || "").toUpperCase();
+  const yearNum = parseInt(selectedYear || "2026", 10);
+  const monthIdx = MONTHS.indexOf(upperSelectedMonth as any);
+  const isHistoricalTopStar = yearNum < 2026 || (yearNum === 2026 && monthIdx < 8);
+  const currentSyncKey = `${selectedYear}_${upperSelectedMonth}_${team}`;
+  const isPublished = isHistoricalTopStar || Boolean(
+    syncStatusRegistry?.[currentSyncKey]?.isPublished === true || 
+    syncStatusRegistry?.[currentSyncKey]?.isSynced === true
+  );
+
   // Fetch metrics data from Firestore
   const fetchDashboardMetrics = async (isManualSync = false) => {
     if (isManualSync) setIsSyncing(true);
@@ -547,12 +558,14 @@ export default function TopStarDashboard({
           return;
         }
 
-        // All agents are 100% complete: proceed with official sync and publish
-        const syncKey = `${selectedYear}_${selectedMonth}_${team}`;
+        // All agents are 100% complete: proceed with official publish to everyone
+        const upperMonth = (selectedMonth || "").toUpperCase();
+        const syncKey = `${selectedYear}_${upperMonth}_${team}`;
         await setDoc(doc(db, "settings", "top_star_status"), {
           synced_months: {
             [syncKey]: {
               isSynced: true,
+              isPublished: true,
               isComplete: true,
               syncedAt: new Date().toISOString(),
               syncedBy: userProfile?.email || "admin",
@@ -567,6 +580,7 @@ export default function TopStarDashboard({
           ...prev,
           [syncKey]: {
             isSynced: true,
+            isPublished: true,
             isComplete: true,
             syncedAt: new Date().toISOString(),
             syncedBy: userProfile?.email || "admin",
@@ -576,7 +590,7 @@ export default function TopStarDashboard({
 
         setSyncNotice({
           type: "success",
-          message: `Sync successful! All ${completeness.totalAgents} agents for ${selectedMonth} ${selectedYear} are 100% complete and rankings are published.`
+          message: `Top Star results for ${selectedMonth} ${selectedYear} have been published to everyone successfully!`
         });
         setTimeout(() => setSyncNotice(null), 5500);
         setMetricsData({ chat: finalChat, call: finalCall });
@@ -1433,8 +1447,25 @@ export default function TopStarDashboard({
           </div>
         </div>
 
-        {/* Top 3 Vibrant Podium Cards (Both cards styled with matching Emerald color as requested) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 mb-5">
+        {/* Agent Pending Notice when month results are unpublished */}
+        {isAgent && !isPublished ? (
+          <div className="mb-6 p-6 sm:p-8 rounded-3xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 shadow-sm flex flex-col items-center justify-center text-center gap-3 animate-fadeIn">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-inner">
+              <Clock size={28} />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-amber-950 dark:text-amber-200">
+                Top Star Results Pending Official Publication
+              </h3>
+              <p className="text-xs sm:text-sm text-amber-800/80 dark:text-amber-300/80 mt-1 max-w-md mx-auto">
+                The Top Star rankings and podium standings for <strong>{selectedMonth} {selectedYear}</strong> have not been officially published yet. Results will appear here as soon as management publishes the final standings.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Top 3 Vibrant Podium Cards (Both cards styled with matching Emerald color as requested) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 mb-5">
           
           {/* Top 3 Chat Agents Card: Dynamically styled with active theme gradient */}
           <div 
@@ -1648,24 +1679,44 @@ export default function TopStarDashboard({
                 />
               </div>
 
-              {/* Sync Button: Pulls live data from TL Dashboard with validation */}
-              <button
-                onClick={() => fetchDashboardMetrics(true)}
-                disabled={isSyncing}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer ${
-                  !currentCompleteness.isComplete
-                    ? "bg-amber-600/90 hover:bg-amber-600 text-white"
-                    : "bg-[#1C6B53] hover:bg-[#155340] text-white"
-                }`}
-                title={
-                  !currentCompleteness.isComplete
-                    ? `Cannot sync: Data incomplete (${currentCompleteness.completedAgents}/${currentCompleteness.totalAgents})`
-                    : `Sync ${selectedMonth} Data from TL Dashboard`
-                }
-              >
-                <RefreshCw size={13} className={isSyncing ? "animate-spin" : ""} />
-                <span>{isSyncing ? "Checking..." : !currentCompleteness.isComplete ? "Sync (Incomplete)" : "Sync Data"}</span>
-              </button>
+              {/* Publish Button: Publishes rankings & podium to everyone */}
+              {!isAgent && (
+                <button
+                  onClick={() => fetchDashboardMetrics(true)}
+                  disabled={isSyncing}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer ${
+                    !currentCompleteness.isComplete
+                      ? "bg-amber-600/90 hover:bg-amber-600 text-white"
+                      : isPublished
+                      ? "bg-emerald-700 hover:bg-emerald-800 text-white"
+                      : "bg-[#1C6B53] hover:bg-[#155340] text-white"
+                  }`}
+                  title={
+                    !currentCompleteness.isComplete
+                      ? `Cannot publish: Data incomplete (${currentCompleteness.completedAgents}/${currentCompleteness.totalAgents} agents ready)`
+                      : isPublished
+                      ? `Results are published! Click to re-publish ${selectedMonth} Top Star`
+                      : `Publish ${selectedMonth} Top Star Results to Everyone`
+                  }
+                >
+                  {isSyncing ? (
+                    <RefreshCw size={13} className="animate-spin" />
+                  ) : isPublished ? (
+                    <CheckCircle2 size={13} />
+                  ) : (
+                    <Share2 size={13} />
+                  )}
+                  <span>
+                    {isSyncing
+                      ? "Publishing..."
+                      : !currentCompleteness.isComplete
+                      ? "Publish (Incomplete Data)"
+                      : isPublished
+                      ? "Published ✓"
+                      : "Publish Top Star"}
+                  </span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -1869,6 +1920,8 @@ export default function TopStarDashboard({
             </table>
           </div>
         </div>
+        </>
+        )}
 
       </div>
     </div>

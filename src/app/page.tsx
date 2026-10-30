@@ -6,7 +6,7 @@ import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
 import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal, BarChart3, ClipboardCheck, RefreshCw, RotateCcw, AlertCircle } from "lucide-react";
-import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesAndSeconds, getTopStarMotivationalQuote } from "@/lib/topStarUtils";
+import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesAndSeconds, getTopStarMotivationalQuote, invalidateTopStarCache } from "@/lib/topStarUtils";
 import { DEFAULT_COMPANY_EMPLOYEES, isMemberActiveInPeriod, getNextMonthAndYear, getCurrentEffectiveMonth } from "@/lib/companyRoster";
 import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
 import { getCanonicalAgentName, getCanonicalAgent, getCanonicalSlug, getAllAgentSlugs, isSameAgent } from "@/lib/canonicalAgents";
@@ -943,52 +943,11 @@ function AgentDashboard({
         }
       });
 
-      // Process Quality for all 12 months
+      // Process metrics for all 12 months (Quality strictly comes from TL table as synced)
       const finalRows = months.map(mKey => {
         const row = { ...(metricsMap.get(mKey) || {}) };
         row.month = mKey;
         row.agent_name = canonicalTarget;
-
-        // If quality sync is enabled for this month (SEP 2026 onwards)
-        if (isQualitySyncEnabled(selectedYear, mKey) && syncedRegistry) {
-          const syncKey = `${selectedYear}_${mKey}_${sectionSlug}`;
-          if (syncedRegistry[syncKey] === false) {
-            row.quality = "";
-          }
-        }
-
-        // If quality is empty/missing/dash, attempt to populate from QA evaluations
-        if (!row.quality || row.quality === "" || row.quality === "-") {
-          const wr = getQualityWeekRange(mKey);
-          if (wr) {
-            const targetSlugs = getAllAgentSlugs(targetName);
-            let qaDoc: any = null;
-            for (const s of targetSlugs) {
-              const docId = `${selectedYear}_${wr.quarter}_${sectionSlug}_${s}`;
-              if (qaLiveMap.has(docId)) {
-                qaDoc = qaLiveMap.get(docId);
-                break;
-              }
-              if (BASELINE_QUALITY_EVALUATIONS[docId]) {
-                qaDoc = BASELINE_QUALITY_EVALUATIONS[docId];
-                break;
-              }
-              const found = getQualityEvalDoc(BASELINE_QUALITY_EVALUATIONS, docId);
-              if (found) {
-                qaDoc = found;
-                break;
-              }
-            }
-
-            if (qaDoc && qaDoc.scores) {
-              const { isComplete, qualityAvg } = computeVerifiedMonthlyQuality(qaDoc.scores, wr, isChatT, selectedYear);
-              if (isComplete && qualityAvg && qualityAvg !== "V") {
-                row.quality = qualityAvg;
-              }
-            }
-          }
-        }
-
         return row;
       });
 
@@ -1145,13 +1104,28 @@ function AgentDashboard({
   const yearNum = parseInt(selectedYear || "2026", 10);
   const isSepOrLater = yearNum > 2026 || (yearNum === 2026 && (monthIndex >= 8 || selectedMonth === "Q4" || selectedMonth === "H2"));
 
+  // Check if Top Star results are officially published for the selected month
+  const upperSelectedMonth = (selectedMonth || "").toUpperCase();
+  const isHistoricalTopStar = yearNum < 2026 || (yearNum === 2026 && monthIndex < 8);
+  const myTeamSyncKey = `${selectedYear}_${upperSelectedMonth}_${isChatTeam ? 'chat' : 'call'}`;
+  const podiumSyncKey = `${selectedYear}_${upperSelectedMonth}_${activePodiumTeam}`;
+
+  const isMyTeamTopStarPublished = isHistoricalTopStar || Boolean(
+    topStarData?.syncStatus?.[myTeamSyncKey]?.isPublished === true || 
+    topStarData?.syncStatus?.[myTeamSyncKey]?.isSynced === true
+  );
+  const isPodiumTopStarPublished = isHistoricalTopStar || Boolean(
+    topStarData?.syncStatus?.[podiumSyncKey]?.isPublished === true || 
+    topStarData?.syncStatus?.[podiumSyncKey]?.isSynced === true
+  );
+
   // Team completeness check for current agent's team
   const myTeamCompleteness = isChatTeam ? topStarData?.chatCompleteness : topStarData?.callCompleteness;
   const isMonthComplete = myTeamCompleteness?.isComplete === true;
 
-  // Active podium team completeness check (Only appears to employees when data is 100% complete)
+  // Active podium team completeness check (Only appears to employees when data is 100% complete and published)
   const activePodiumCompleteness = activePodiumTeam === "chat" ? topStarData?.chatCompleteness : topStarData?.callCompleteness;
-  const isPodiumComplete = activePodiumCompleteness?.isComplete === true;
+  const isPodiumComplete = activePodiumCompleteness?.isComplete === true && isPodiumTopStarPublished;
 
   const agentRankInfo = useMemo(() => {
     if (!topStarData) return null;
@@ -1172,7 +1146,7 @@ function AgentDashboard({
     return teamList.find(matchAgent) || allRanked.find(matchAgent) || null;
   }, [topStarData, isChatTeam, currentAgentCanonicalName, rawAgentName]);
 
-  const myRank = agentRankInfo?.rank ?? null;
+  const myRank = (previewMode || isMyTeamTopStarPublished) ? (agentRankInfo?.rank ?? null) : null;
   const myScore = agentRankInfo?.scoreStr ?? null;
   const isTop3 = isSepOrLater && myRank !== null && myRank <= 3;
 
@@ -1663,7 +1637,7 @@ function AgentDashboard({
                     <span>Top Star</span>
                   </div>
                   <span className="text-xs font-bold text-gray-600 dark:text-gray-300">
-                    Pending month data
+                    {!isMonthComplete ? "Pending month data" : "Results pending publication"}
                   </span>
                 </div>
               </div>
@@ -2871,22 +2845,18 @@ export default function Dashboard() {
 
       await setDoc(syncDocRef, { synced_months: updated, updatedAt: syncTime }, { merge: true });
 
-      // Also sync top_star_status so Top Star podium stays in lockstep
+      // Invalidate Top Star cache so Top Star calculates rankings from latest TL data
+      invalidateTopStarCache();
       try {
         const topStarDocRef = doc(db, "settings", "top_star_status");
         const topStarSnap = await getDoc(topStarDocRef);
         const tsExisting = topStarSnap.exists() ? (topStarSnap.data()?.synced_months || {}) : {};
         const tsUpdated = { ...tsExisting };
-        if (isCombinedCallCenter) {
-          tsUpdated[`${selectedYear}_${upperMonth}_call`] = { isSynced: true, syncedAt: syncTime, syncedBy };
-        } else if (selectedTeam === 'Mohammed Dlshad Team') {
-          tsUpdated[`${selectedYear}_${upperMonth}_chat`] = { isSynced: true, syncedAt: syncTime, syncedBy };
-        } else {
-          tsUpdated[`${selectedYear}_${upperMonth}_call`] = { isSynced: true, syncedAt: syncTime, syncedBy };
-        }
+        const teamSuffix = isCombinedCallCenter || selectedTeam !== 'Mohammed Dlshad Team' ? 'call' : 'chat';
+        tsUpdated[`${selectedYear}_${upperMonth}_${teamSuffix}_tl_ready`] = { isReady: true, readyAt: syncTime, syncedBy };
         await setDoc(topStarDocRef, { synced_months: tsUpdated, updatedAt: syncTime }, { merge: true });
       } catch (e) {
-        console.warn("Could not sync top_star_status:", e);
+        console.warn("Could not sync top_star tl_ready status:", e);
       }
 
       setShowSyncedDetailsModal(false);
@@ -5921,7 +5891,7 @@ export default function Dashboard() {
       );
     }
 
-    if (showTopStarView && (isAdmin || isManager || userProfile?.role === 'tl')) {
+    if (showTopStarView && (isAdmin || isManager || userProfile?.role === 'tl' || userProfile?.role === 'agent')) {
       return (
         <div key="topstar" className={isPageTransitioning ? "page-exit" : "page-enter"}>
           <TopStarDashboard
@@ -6390,10 +6360,10 @@ export default function Dashboard() {
                     onClick={handleSyncData}
                     disabled={isSyncingData}
                     className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-[#1C6B53] hover:from-emerald-700 hover:to-[#155a45] shadow-md shadow-emerald-600/25 ring-2 ring-emerald-400/40 animate-pulse shrink-0 active:scale-95 disabled:opacity-50"
-                    title="100% data complete! Click to sync and publish to Agent Dashboard."
+                    title="100% data complete! Click to sync to Agent Dashboard & update Top Star."
                   >
                     <RefreshCw size={11} className={isSyncingData ? "animate-spin" : ""} />
-                    <span>{isSyncingData ? "Syncing..." : "Sync Data"}</span>
+                    <span>{isSyncingData ? "Syncing..." : "Sync to Agent & Top Star"}</span>
                   </button>
                 )}
               </>
@@ -7013,7 +6983,7 @@ export default function Dashboard() {
                   className="w-full py-2.5 px-4 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-md flex items-center justify-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
                 >
                   <RefreshCw size={14} className={isSyncingData ? "animate-spin" : ""} />
-                  <span>{isSyncingData ? "Updating..." : "Re-sync & Publish Changes"}</span>
+                  <span>{isSyncingData ? "Updating..." : "Re-sync to Agent & Top Star"}</span>
                 </button>
 
                 <button
@@ -7040,7 +7010,7 @@ export default function Dashboard() {
           </div>
           <div>
             <div className="font-extrabold text-sm">Data Synced Successfully!</div>
-            <div className="text-[11px] text-white/80 font-normal">{selectedMonth} {selectedYear} data is now live on the Agent Dashboard.</div>
+            <div className="text-[11px] text-white/80 font-normal">{selectedMonth} {selectedYear} data is now live on Agent Dashboard and updated in Top Star.</div>
           </div>
         </div>,
         document.body
