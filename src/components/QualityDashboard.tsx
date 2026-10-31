@@ -19,6 +19,7 @@ import { ModernDropdown } from "@/components/ModernDropdown";
 import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 import { TrendBadge } from "@/components/TrendBadge";
 import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
+import { useBodyScrollLock, initGlobalModalScrollLock } from "@/lib/scrollLock";
 
 interface QualityDashboardProps {
   userProfile: any;
@@ -1630,6 +1631,22 @@ export default function QualityDashboard({
     else if (nextStr === yesterdayLocalStr) setActivityFilterMode("yesterday");
     else setActivityFilterMode("custom");
   };
+
+  // Lock background scrolling when any modal is open
+  useEffect(() => {
+    initGlobalModalScrollLock();
+  }, []);
+
+  const isAnyQualityModalOpen = Boolean(
+    showActivityLogModal ||
+    activeNoteModal ||
+    showAddCShiftModal ||
+    showAddCallMonModal ||
+    showProfileModal ||
+    syncReminderModal ||
+    forcePasswordChange
+  );
+  useBodyScrollLock(isAnyQualityModalOpen);
 
   // Navigate directly from an Activity Log chip to the exact cell on the Quality Dashboard
   const handleJumpToActivityItem = useCallback((item: {
@@ -6783,7 +6800,7 @@ export default function QualityDashboard({
 
       {/* Note & Conversation Link Modal */}
       {activeNoteModal && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center p-3">
+        <div data-modal="true" className="fixed inset-0 z-[80] flex items-center justify-center p-3 overscroll-contain">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-2xs" onClick={() => setActiveNoteModal(null)} />
           <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-5 w-80 sm:w-96 border border-gray-100 dark:border-gray-800 animate-in fade-in zoom-in-95 duration-100">
             
@@ -6935,7 +6952,7 @@ export default function QualityDashboard({
 
       {/* Add C Shift Agent Modal (Evening Call Team only) */}
       {showAddCShiftModal && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+        <div data-modal="true" className="fixed inset-0 z-[80] flex items-center justify-center p-4 overscroll-contain">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-2xs" onClick={() => setShowAddCShiftModal(false)} />
           <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-5 w-full max-w-md border border-gray-100 dark:border-gray-800 animate-in fade-in zoom-in-95 duration-150 max-h-[85vh] flex flex-col">
             <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
@@ -7042,7 +7059,7 @@ export default function QualityDashboard({
 
       {/* Add Call Mon Agent Modal (Younis + Ankido Teams) */}
       {showAddCallMonModal && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+        <div data-modal="true" className="fixed inset-0 z-[80] flex items-center justify-center p-4 overscroll-contain">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-2xs" onClick={() => setShowAddCallMonModal(false)} />
           <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-5 w-full max-w-md border border-gray-100 dark:border-gray-800 animate-in fade-in zoom-in-95 duration-150 max-h-[85vh] flex flex-col">
             <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
@@ -7150,7 +7167,7 @@ export default function QualityDashboard({
 
       {/* Self-Contained Profile Modal */}
       {showProfileModal && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4">
+        <div data-modal="true" className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 overscroll-contain">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowProfileModal(false)} />
           <div className="relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-7 max-w-md w-full border border-gray-100 dark:border-gray-800 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
@@ -7351,11 +7368,12 @@ export default function QualityDashboard({
       {/* Activity Log Modal — Strictly Restricted to Admin & Manager (canSwitchTeams) */}
       {showActivityLogModal && canSwitchTeams && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150"
+          data-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150 overscroll-contain"
           onClick={() => setShowActivityLogModal(false)}
         >
           <div
-            className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-4xl max-h-[88vh] flex flex-col shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden"
+            className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-4xl max-h-[88vh] flex flex-col shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden overscroll-contain"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -7680,7 +7698,7 @@ export default function QualityDashboard({
 
       {/* Mandatory Sync Reminder Modal when trying to enter a new month before syncing a completed previous month */}
       {!isTlViewer && syncReminderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+        <div data-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain">
           <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800/80 overflow-hidden text-left">
             <div className="p-6 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border-b border-amber-100 dark:border-amber-900/50 flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">

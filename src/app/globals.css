@@ -499,3 +499,22 @@ input::-ms-clear {
   transition: opacity 140ms ease;
   pointer-events: none;
 }
+
+/* ── Universal Modal Scroll Lock & Background Freeze ── */
+html.modal-open,
+body.modal-open {
+  overflow: hidden !important;
+  touch-action: none;
+  -webkit-overflow-scrolling: auto;
+}
+
+/* Contain overscroll inside modal backdrops and containers so scroll never chains to background */
+.fixed.inset-0,
+[data-modal="true"] {
+  overscroll-behavior: contain !important;
+}
+
+[data-modal="true"] > *,
+.fixed.inset-0 > * {
+  overscroll-behavior: contain !important;
+}

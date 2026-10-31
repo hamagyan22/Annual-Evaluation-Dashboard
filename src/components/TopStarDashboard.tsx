@@ -20,6 +20,7 @@ import { ModernDropdown } from "@/components/ModernDropdown";
 import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 import { TrendBadge } from "@/components/TrendBadge";
 import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
+import { useBodyScrollLock } from "@/lib/scrollLock";
 
 interface TopStarDashboardProps {
   userProfile: any;
@@ -192,16 +193,7 @@ export default function TopStarDashboard({
   }, []);
 
   // Prevent background body scroll when any modal is open across the dashboard
-  useEffect(() => {
-    const isAnyModalOpen = showCriteriaModal || showCelebrationVideo;
-    if (isAnyModalOpen) {
-      const prevOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = prevOverflow || "unset";
-      };
-    }
-  }, [showCriteriaModal, showCelebrationVideo]);
+  useBodyScrollLock(Boolean(showCriteriaModal || showCelebrationVideo));
   const [membersList, setMembersList] = useState<any[]>(() => {
     return allMembers && allMembers.length > 0 ? allMembers : DEFAULT_COMPANY_EMPLOYEES;
   });
@@ -854,8 +846,8 @@ export default function TopStarDashboard({
 
       {/* KPI Criteria Modal (With Edit Ability for Admin/Manager & 5-Star Rating Matrix) */}
       {showCriteriaModal && isClient && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl max-w-3xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <div data-modal="true" className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150 overscroll-contain">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl max-w-3xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar overscroll-contain">
             
             <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-2.5">

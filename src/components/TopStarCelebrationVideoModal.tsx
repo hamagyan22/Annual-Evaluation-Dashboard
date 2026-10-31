@@ -12,6 +12,7 @@ import { getTopStarMotivationalQuote, normalizeName } from "@/lib/topStarUtils";
 import { compressImageFile } from "@/lib/imageUtils";
 import { db } from "@/lib/firebaseClient";
 import { collection, query, where, getDocs, doc, updateDoc, addDoc } from "firebase/firestore";
+import { useBodyScrollLock } from "@/lib/scrollLock";
 
 /* ────────────────────────────────────────────────────────────
    THEME DEFINITIONS
@@ -171,6 +172,7 @@ export default function TopStarCelebrationVideoModal({
   allMembers = [],
   onPhotoUpdated
 }: TopStarCelebrationVideoModalProps) {
+  useBodyScrollLock(isOpen);
   const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
@@ -523,7 +525,7 @@ export default function TopStarCelebrationVideoModal({
     rank === 1 ? "🥇 1st Place" : rank === 2 ? "🥈 2nd Place" : "🥉 3rd Place";
 
   return createPortal(
-    <div className="fixed inset-0 z-50 bg-black/88 backdrop-blur-xl flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200 font-['Plus_Jakarta_Sans',sans-serif]">
+    <div data-modal="true" className="fixed inset-0 z-50 bg-black/88 backdrop-blur-xl flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200 font-['Plus_Jakarta_Sans',sans-serif] overscroll-contain">
 
       {/* Hidden file input */}
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileInputChange} />

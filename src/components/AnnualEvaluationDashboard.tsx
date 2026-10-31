@@ -20,6 +20,7 @@ import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 import { ModernDropdown } from "@/components/ModernDropdown";
 import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
 import { BASELINE_ANNUAL_EVALUATIONS } from "@/lib/baselineAnnualEvaluations";
+import { useBodyScrollLock } from "@/lib/scrollLock";
 
 export interface AnnualEvaluationDashboardProps {
   userProfile: any;
@@ -504,16 +505,7 @@ export default function AnnualEvaluationDashboard({
   }, []);
 
   // Prevent background body scroll when any modal is open across the dashboard
-  useEffect(() => {
-    const isAnyModalOpen = showCoverageModal || showBenchmarkGuideModal;
-    if (isAnyModalOpen) {
-      const prevOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = prevOverflow || "unset";
-      };
-    }
-  }, [showCoverageModal, showBenchmarkGuideModal]);
+  useBodyScrollLock(Boolean(showCoverageModal || showBenchmarkGuideModal));
 
   // Lock team tab filter for Team Leaders to their team only
   useEffect(() => {
@@ -2750,8 +2742,8 @@ export default function AnnualEvaluationDashboard({
 
       {/* KPI Benchmark Informational Guide Modal */}
       {showBenchmarkGuideModal && isClient && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <div data-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 overscroll-contain">
             
             {/* Modal Header */}
             <div 
@@ -3237,8 +3229,8 @@ export default function AnnualEvaluationDashboard({
 
       {/* Evaluation Coverage & Tracking Modal (Who's Evaluated / Who's Pending) - Manager & Admin Only */}
       {showCoverageModal && (isManager || isAdmin) && isClient && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <div data-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 overscroll-contain">
             
             {/* Modal Header */}
             <div className="p-4 sm:p-5 bg-[#1C6B53] bg-gradient-to-r from-[#1C6B53] via-emerald-800 to-[#124636] text-white flex items-center justify-between shrink-0 shadow-xs">

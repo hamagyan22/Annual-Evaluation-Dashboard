@@ -15,6 +15,7 @@ import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 import { useAppTheme, applyThemeToDocument, getCurrentThemeId } from "@/lib/themeManager";
 import { TrendBadge, isLowerBetterMetric } from "@/components/TrendBadge";
 import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
+import { useBodyScrollLock, initGlobalModalScrollLock } from "@/lib/scrollLock";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
 const TEAMS: TeamName[] = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team'];
@@ -572,6 +573,8 @@ function PwaInstallBanner() {
   const [isIos, setIsIos] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
+  useBodyScrollLock(showIosModal);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -656,7 +659,7 @@ function PwaInstallBanner() {
 
       {/* iOS Safari Home Screen Guide Modal */}
       {showIosModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs">
+        <div data-modal="true" className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overscroll-contain">
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-5 sm:p-6 w-full max-w-sm shadow-2xl animate-fadeIn text-right" dir="rtl">
             <div className="flex justify-between items-start mb-4 flex-row-reverse">
               <button onClick={() => setShowIosModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
@@ -817,6 +820,8 @@ function AgentDashboard({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+
+  useBodyScrollLock(Boolean(showEditProfile || forcePasswordChange));
 
   useEffect(() => {
     if (previewMode && activeMembersList && activeMembersList.length > 0 && (!currentAgent?.agent_name || !activeMembersList.some(m => m.agent_name === currentAgent?.agent_name))) {
@@ -2032,9 +2037,9 @@ function AgentDashboard({
 
       {/* Edit Profile Modal */}
       {showEditProfile && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div data-modal="true" className="fixed inset-0 z-[60] flex items-center justify-center p-4 overscroll-contain">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowEditProfile(false)} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6 max-w-sm w-full border border-gray-100 dark:border-gray-800">
+          <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6 max-w-sm w-full border border-gray-100 dark:border-gray-800 overscroll-contain">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Edit Profile</h3>
             
             <div className="flex flex-col items-center mb-6">
@@ -2063,7 +2068,7 @@ function AgentDashboard({
 
       {/* Force Change Password Modal for First-Time Login */}
       {forcePasswordChange && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md overscroll-contain">
+        <div data-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md overscroll-contain">
           <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-7 sm:p-8 max-w-md w-full border border-gray-100 dark:border-gray-800 relative">
             <div className="flex flex-col items-center text-center mb-6">
               <div className="w-16 h-16 rounded-2xl bg-[#1C6B53]/10 dark:bg-emerald-950 flex items-center justify-center text-[#1C6B53] dark:text-emerald-400 mb-4 shadow-inner">
@@ -2676,6 +2681,7 @@ export default function Dashboard() {
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
+    initGlobalModalScrollLock();
   }, []);
 
   // Team Leader -> Agent Dashboard Sync state
@@ -2684,6 +2690,18 @@ export default function Dashboard() {
   const [showIncompleteSyncModal, setShowIncompleteSyncModal] = useState(false);
   const [showSyncedDetailsModal, setShowSyncedDetailsModal] = useState(false);
   const [syncSuccessToast, setSyncSuccessToast] = useState(false);
+
+  const isAnyDashboardModalOpen = Boolean(
+    showManageMembers ||
+    showProfileModal ||
+    showForgotModal ||
+    showCcBreakdownModal ||
+    showMonthLockModal ||
+    showIncompleteSyncModal ||
+    showSyncedDetailsModal ||
+    deleteTarget
+  );
+  useBodyScrollLock(isAnyDashboardModalOpen);
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "settings", "tl_agent_sync_status"), (snap) => {
@@ -5068,7 +5086,7 @@ export default function Dashboard() {
 
           {/* Forgot Password Modal */}
           {showForgotModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+            <div data-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overscroll-contain">
               <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-7 max-w-md w-full border border-gray-100 dark:border-gray-800 relative">
                 <div className="flex justify-between items-start mb-5">
                   <div>
@@ -5155,7 +5173,7 @@ export default function Dashboard() {
         <>
           {/* Manage Settings Modal (System Configuration) */}
           {showManageMembers && (isAdmin || isManager || userProfile?.role === 'tl') && createPortal(
-            <div className="fixed inset-0 z-[80] flex items-start justify-center p-3 sm:p-4 pt-6 sm:pt-10 overflow-y-auto overscroll-contain">
+            <div data-modal="true" className="fixed inset-0 z-[80] flex items-start justify-center p-3 sm:p-4 pt-6 sm:pt-10 overflow-y-auto overscroll-contain">
               <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowManageMembers(false)} />
               <div className="relative bg-[#F9F8F4] dark:bg-gray-900 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-8 w-full border border-transparent dark:border-gray-700 mb-10 transition-all overscroll-contain max-w-5xl">
                 
@@ -5505,7 +5523,7 @@ export default function Dashboard() {
 
           {/* TL & Manager Profile Modal */}
           {showProfileModal && createPortal(
-            <div className="fixed inset-0 z-[85] flex items-center justify-center p-3 sm:p-4">
+            <div data-modal="true" className="fixed inset-0 z-[85] flex items-center justify-center p-3 sm:p-4 overscroll-contain">
               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowProfileModal(false)} />
               <div className="relative bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-7 max-w-md w-full border border-gray-100 dark:border-gray-800 max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
@@ -5628,7 +5646,7 @@ export default function Dashboard() {
             const nextEffective = getNextMonthAndYear(curEffective.month, curEffective.year);
 
             return createPortal(
-              <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+              <div data-modal="true" className="fixed inset-0 z-[90] flex items-center justify-center p-4 overscroll-contain">
                 <div 
                   className="absolute inset-0 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" 
                   onClick={() => !isDeletingMember && setDeleteTarget(null)} 
@@ -6636,7 +6654,7 @@ export default function Dashboard() {
 
       {/* Side-by-Side Call Center Comparison Breakdown Modal */}
       {showCcBreakdownModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+        <div data-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overscroll-contain">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCcBreakdownModal(false)} />
           <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-5 sm:p-7 w-full max-w-2xl border border-gray-200 dark:border-gray-800 z-10 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-start justify-between mb-5 pb-4 border-b border-gray-200/80 dark:border-gray-800">
@@ -6731,7 +6749,7 @@ export default function Dashboard() {
 
       {/* Previous Month Incomplete Lock Modal */}
       {isMounted && showMonthLockModal && prevMonthIncompleteInfo && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+        <div data-modal="true" className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain">
           <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800/80 overflow-hidden text-left animate-in zoom-in-95 duration-150">
             <div className="p-6 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border-b border-amber-100 dark:border-amber-900/50 flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -6832,7 +6850,7 @@ export default function Dashboard() {
 
       {/* Incomplete Sync Data Modal */}
       {isMounted && showIncompleteSyncModal && currentMonthCompleteness && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+        <div data-modal="true" className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain">
           <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800/80 overflow-hidden text-left animate-in zoom-in-95 duration-150">
             {/* Header */}
             <div className="p-6 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border-b border-amber-100 dark:border-amber-900/50 flex items-start justify-between gap-3">
@@ -6920,7 +6938,7 @@ export default function Dashboard() {
 
       {/* Synced Details & Actions Modal */}
       {isMounted && showSyncedDetailsModal && currentMonthSyncDetails && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+        <div data-modal="true" className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain">
           <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-emerald-200 dark:border-emerald-800/80 overflow-hidden text-left animate-in zoom-in-95 duration-150">
             {/* Header */}
             <div className="p-6 bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-transparent border-b border-emerald-100 dark:border-emerald-900/50 flex items-start justify-between gap-3">
