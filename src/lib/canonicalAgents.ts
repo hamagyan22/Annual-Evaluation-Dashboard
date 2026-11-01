@@ -53,6 +53,8 @@ const EXACT_ALIASES: Record<string, string> = {
   "alla satar": "Alla Satar",
   "alla sattar": "Alla Satar",
   "aya yasin": "Aya Yasin",
+  "aya yaseen": "Aya Yasin",
+  "aya yassin": "Aya Yasin",
   "frmesk younis": "Frmesk Younis",
   "frmesk yunis": "Frmesk Younis",
 
@@ -70,6 +72,9 @@ const EXACT_ALIASES: Record<string, string> = {
 
   "marwa khalil": "Marwa Khalil",
   "marwa khaleel": "Marwa Khalil",
+  "marwa shalaan": "Marwa Shalaan",
+  "marwa shaalan": "Marwa Shalaan",
+  "marwa shalan": "Marwa Shalaan",
 
   "muzhda omar": "Muzhda Omar Ali",
   "muzhda omar ali": "Muzhda Omar Ali",

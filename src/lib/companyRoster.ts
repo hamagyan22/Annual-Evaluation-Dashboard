@@ -31,6 +31,7 @@ export const DEFAULT_COMPANY_EMPLOYEES: CompanyEmployee[] = [
   { id: "kani_sami", agent_name: "Kani Sami", name: "Kani Sami", team: "Ankido Buya Team" },
   { id: "lana_halmat_rafeeq", agent_name: "Lana Halmat Rafeeq", name: "Lana Halmat Rafeeq", team: "Ankido Buya Team" },
   { id: "marwa_khalil", agent_name: "Marwa Khalil", name: "Marwa Khalil", team: "Ankido Buya Team" },
+  { id: "marwa_shalaan", agent_name: "Marwa Shalaan", name: "Marwa Shalaan", team: "Ankido Buya Team" },
   { id: "muzhda_omar_ali", agent_name: "Muzhda Omar Ali", name: "Muzhda Omar Ali", team: "Ankido Buya Team" },
   { id: "saja_bashar_anwar", agent_name: "Saja Bashar Anwar", name: "Saja Bashar Anwar", team: "Ankido Buya Team" },
   { id: "taban_sirwan", agent_name: "Taban Sirwan", name: "Taban Sirwan", team: "Ankido Buya Team" },
