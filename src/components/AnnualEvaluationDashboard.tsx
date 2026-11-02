@@ -349,6 +349,10 @@ export const KNOWN_EMPLOYEE_IDS: Record<string, string> = {
   "mohammed_dlshad": "338",
   "mohammed dilshad": "338",
   "mohammed_dilshad": "338",
+  "nawen maadh": "360",
+  "nawen_maadh": "360",
+  "bana ahmed": "343",
+  "bana_ahmed": "343",
 };
 
 const AVAILABLE_YEARS = ["2026", "2027", "2028", "2029", "2030"];

@@ -247,5 +247,127 @@ export const BASELINE_ANNUAL_EVALUATIONS: Record<string, any> = {
     status: "manager_finalized",
     updated_at: "2026-07-15T12:00:00.000Z",
     last_modified_by: "Ankido Buya"
+  },
+  "2026_Semi-Annual_nawen_maadh": {
+    id: "2026_Semi-Annual_nawen_maadh",
+    year: "2026",
+    period: "Semi-Annual",
+    period_type: "Semi-Annual",
+    evaluation_date: "",
+    employee_name: "Nawen Maadh",
+    employee_id: "360",
+    department: "Contact Center",
+    team: "Mohammed Dlshad Team",
+    team_leader: "Mohammed Dilshad",
+    channel_type: "chat",
+    role_type: "agent",
+    is_special_staff: false,
+
+    self_kpis: {
+      qa: 4,
+      art: 4,
+      attendance: 4,
+      aht: 4,
+      knowledge: 3
+    },
+    self_competencies: {
+      communication: 5,
+      problem_solving: 4,
+      accountability: 4,
+      initiative: 3,
+      responsibility: 4,
+      team_work: 5
+    },
+    self_kpi_avg: 3.80,
+    self_competency_avg: 4.17,
+    self_overall_score: 3.99,
+    self_comments: "",
+
+    manager_kpis: {
+      qa: 4,
+      art: 3,
+      attendance: 3,
+      aht: 3,
+      knowledge: 3
+    },
+    manager_competencies: {
+      communication: 5,
+      problem_solving: 3,
+      accountability: 4,
+      initiative: 2,
+      responsibility: 4,
+      team_work: 5
+    },
+    manager_kpi_avg: 3.20,
+    manager_competency_avg: 3.83,
+    manager_overall_score: 3.52,
+    manager_strengths: "",
+    manager_improvements: "",
+    manager_comments: "",
+
+    status: "manager_finalized",
+    updated_at: "2026-07-15T12:00:00.000Z",
+    last_modified_by: "Mohammed Dilshad"
+  },
+  "2026_Semi-Annual_bana_ahmed": {
+    id: "2026_Semi-Annual_bana_ahmed",
+    year: "2026",
+    period: "Semi-Annual",
+    period_type: "Semi-Annual",
+    evaluation_date: "14/07/2026",
+    employee_name: "Bana Ahmed",
+    employee_id: "343",
+    department: "Contact Center",
+    team: "Mohammed Dlshad Team",
+    team_leader: "Mohammed Dilshad",
+    channel_type: "chat",
+    role_type: "agent",
+    is_special_staff: false,
+
+    self_kpis: {
+      qa: 4,
+      art: 4,
+      attendance: 4,
+      aht: 4,
+      knowledge: 4
+    },
+    self_competencies: {
+      communication: 5,
+      problem_solving: 5,
+      accountability: 4,
+      initiative: 3,
+      responsibility: 4,
+      team_work: 5
+    },
+    self_kpi_avg: 4.00,
+    self_competency_avg: 4.33,
+    self_overall_score: 4.17,
+    self_comments: "",
+
+    manager_kpis: {
+      qa: 4,
+      art: 4,
+      attendance: 3,
+      aht: 2,
+      knowledge: 4
+    },
+    manager_competencies: {
+      communication: 3,
+      problem_solving: 3,
+      accountability: 4,
+      initiative: 2,
+      responsibility: 4,
+      team_work: 5
+    },
+    manager_kpi_avg: 3.40,
+    manager_competency_avg: 3.50,
+    manager_overall_score: 3.45,
+    manager_strengths: "",
+    manager_improvements: "",
+    manager_comments: "",
+
+    status: "manager_finalized",
+    updated_at: "2026-07-14T12:00:00.000Z",
+    last_modified_by: "Mohammed Dilshad"
   }
 };
