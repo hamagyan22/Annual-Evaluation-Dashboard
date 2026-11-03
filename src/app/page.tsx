@@ -1181,19 +1181,37 @@ function AgentDashboard({
     ? (metrics.find(r => (r.month || '').toUpperCase() === selectedUpper) || {})
     : {};
 
-  const agentTeam = currentAgent?.team || '';
-  const syncKey = `${selectedYear}_${selectedUpper}_${agentTeam}`;
+  const rawTeam = (currentAgent?.team || '').toLowerCase();
+  const canonicalAgentTeam = rawTeam.includes('younis')
+    ? 'Younis Kamal Team'
+    : rawTeam.includes('ankido')
+    ? 'Ankido Buya Team'
+    : rawTeam.includes('mohammed') || rawTeam.includes('dlshad')
+    ? 'Mohammed Dlshad Team'
+    : (currentAgent?.team || '');
+
+  const syncKey = `${selectedYear}_${selectedUpper}_${canonicalAgentTeam}`;
   const combinedKey = `${selectedYear}_${selectedUpper}_Call Center Combined`;
+  const allKey = `${selectedYear}_${selectedUpper}_all`;
   const isHistorical = Number(selectedYear) < 2026 || (Number(selectedYear) === 2026 && MONTHS.indexOf(selectedUpper) < 8);
-  const isMonthSyncedByTl = isHistorical || Boolean(tlSyncRegistry[syncKey]?.isSynced || (agentTeam !== 'Mohammed Dlshad Team' && tlSyncRegistry[combinedKey]?.isSynced));
-  const currentSyncDetails = tlSyncRegistry[syncKey] || (agentTeam !== 'Mohammed Dlshad Team' ? tlSyncRegistry[combinedKey] : null) || null;
+  const isMonthSyncedByTl = isHistorical || Boolean(
+    tlSyncRegistry[syncKey]?.isSynced ||
+    tlSyncRegistry[allKey]?.isSynced ||
+    (canonicalAgentTeam !== 'Mohammed Dlshad Team' && tlSyncRegistry[combinedKey]?.isSynced)
+  );
+  const currentSyncDetails = tlSyncRegistry[syncKey] || (canonicalAgentTeam !== 'Mohammed Dlshad Team' ? tlSyncRegistry[combinedKey] : null) || tlSyncRegistry[allKey] || null;
 
   const chartData = months.map(m => {
     const row = metrics.find(r => (r.month || '').toUpperCase() === m.toUpperCase());
-    const mSyncKey = `${selectedYear}_${m.toUpperCase()}_${agentTeam}`;
+    const mSyncKey = `${selectedYear}_${m.toUpperCase()}_${canonicalAgentTeam}`;
     const mCombinedKey = `${selectedYear}_${m.toUpperCase()}_Call Center Combined`;
+    const mAllKey = `${selectedYear}_${m.toUpperCase()}_all`;
     const mIsHistorical = Number(selectedYear) < 2026 || (Number(selectedYear) === 2026 && MONTHS.indexOf(m.toUpperCase()) < 8);
-    const mIsSynced = mIsHistorical || Boolean(tlSyncRegistry[mSyncKey]?.isSynced || (agentTeam !== 'Mohammed Dlshad Team' && tlSyncRegistry[mCombinedKey]?.isSynced));
+    const mIsSynced = mIsHistorical || Boolean(
+      tlSyncRegistry[mSyncKey]?.isSynced ||
+      tlSyncRegistry[mAllKey]?.isSynced ||
+      (canonicalAgentTeam !== 'Mohammed Dlshad Team' && tlSyncRegistry[mCombinedKey]?.isSynced)
+    );
 
     const dataObj: any = { month: m };
     teamCols.forEach((col: any) => { 
@@ -1211,10 +1229,15 @@ function AgentDashboard({
     const rowsWithVals = monthList
       .filter(m => {
         if (previewMode) return true;
-        const mSyncKey = `${selectedYear}_${m.toUpperCase()}_${agentTeam}`;
+        const mSyncKey = `${selectedYear}_${m.toUpperCase()}_${canonicalAgentTeam}`;
         const mCombinedKey = `${selectedYear}_${m.toUpperCase()}_Call Center Combined`;
+        const mAllKey = `${selectedYear}_${m.toUpperCase()}_all`;
         const mIsHistorical = Number(selectedYear) < 2026 || (Number(selectedYear) === 2026 && MONTHS.indexOf(m.toUpperCase()) < 8);
-        return mIsHistorical || Boolean(tlSyncRegistry[mSyncKey]?.isSynced || (agentTeam !== 'Mohammed Dlshad Team' && tlSyncRegistry[mCombinedKey]?.isSynced));
+        return mIsHistorical || Boolean(
+          tlSyncRegistry[mSyncKey]?.isSynced ||
+          tlSyncRegistry[mAllKey]?.isSynced ||
+          (canonicalAgentTeam !== 'Mohammed Dlshad Team' && tlSyncRegistry[mCombinedKey]?.isSynced)
+        );
       })
       .map(m => {
         const r = metrics.find(row => (row.month || '').toUpperCase() === m.toUpperCase());
@@ -2832,49 +2855,125 @@ export default function Dashboard() {
 
       const updated = { ...existing };
 
-      if (isCombinedCallCenter) {
-        const teams = ['Younis Kamal Team', 'Ankido Buya Team', 'Call Center Combined'];
-        teams.forEach(t => {
+      if (isAdmin || isManager) {
+        // ADMIN / MANAGER: Syncs for EVERYONE (all teams + call center combined)
+        const allTeams = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team', 'Call Center Combined'];
+        allTeams.forEach(t => {
           const key = `${selectedYear}_${upperMonth}_${t}`;
           updated[key] = {
             isSynced: true,
             isComplete: true,
             syncedAt: syncTime,
-            syncedBy,
+            syncedBy: `${syncedBy} (Manager/Admin)`,
             agentCount: currentMonthCompleteness.totalAgents,
             team: t,
             month: upperMonth,
             year: selectedYear
           };
         });
+        // Global all key
+        updated[`${selectedYear}_${upperMonth}_all`] = {
+          isSynced: true,
+          isComplete: true,
+          syncedAt: syncTime,
+          syncedBy: `${syncedBy} (Manager/Admin)`,
+          month: upperMonth,
+          year: selectedYear
+        };
+
+        await setDoc(syncDocRef, { synced_months: updated, updatedAt: syncTime }, { merge: true });
+
+        // Invalidate Top Star cache so Top Star calculates rankings from latest TL data
+        invalidateTopStarCache();
+        try {
+          const topStarDocRef = doc(db, "settings", "top_star_status");
+          const topStarSnap = await getDoc(topStarDocRef);
+          const tsExisting = topStarSnap.exists() ? (topStarSnap.data()?.synced_months || {}) : {};
+          const tsUpdated = { ...tsExisting };
+          tsUpdated[`${selectedYear}_${upperMonth}_call_tl_ready`] = { isReady: true, readyAt: syncTime, syncedBy };
+          tsUpdated[`${selectedYear}_${upperMonth}_chat_tl_ready`] = { isReady: true, readyAt: syncTime, syncedBy };
+          tsUpdated[`${selectedYear}_${upperMonth}_younis_tl_ready`] = { isReady: true, readyAt: syncTime, syncedBy };
+          tsUpdated[`${selectedYear}_${upperMonth}_ankido_tl_ready`] = { isReady: true, readyAt: syncTime, syncedBy };
+          await setDoc(topStarDocRef, { synced_months: tsUpdated, updatedAt: syncTime }, { merge: true });
+        } catch (e) {
+          console.warn("Could not sync top_star tl_ready status:", e);
+        }
       } else {
-        const key = `${selectedYear}_${upperMonth}_${selectedTeam}`;
+        // TEAM LEADER: Only syncs for THEIR OWN TEAM
+        let tlTeam: TeamName = selectedTeam;
+        if (isYounis || userProfile?.team === 'Younis Kamal Team') {
+          tlTeam = 'Younis Kamal Team';
+        } else if (isAnkido || userProfile?.team === 'Ankido Buya Team') {
+          tlTeam = 'Ankido Buya Team';
+        } else if (userProfile?.team === 'Mohammed Dlshad Team' || emailLower.includes('mohammed.dlshad')) {
+          tlTeam = 'Mohammed Dlshad Team';
+        }
+
+        const key = `${selectedYear}_${upperMonth}_${tlTeam}`;
         updated[key] = {
           isSynced: true,
           isComplete: true,
           syncedAt: syncTime,
           syncedBy,
           agentCount: currentMonthCompleteness.totalAgents,
-          team: selectedTeam,
+          team: tlTeam,
           month: upperMonth,
           year: selectedYear
         };
-      }
 
-      await setDoc(syncDocRef, { synced_months: updated, updatedAt: syncTime }, { merge: true });
+        // If Call Center team, check if both Younis and Ankido have synced before activating Combined
+        if (tlTeam === 'Younis Kamal Team' || tlTeam === 'Ankido Buya Team') {
+          const yKey = `${selectedYear}_${upperMonth}_Younis Kamal Team`;
+          const aKey = `${selectedYear}_${upperMonth}_Ankido Buya Team`;
+          const isYounisSynced = tlTeam === 'Younis Kamal Team' ? true : Boolean(updated[yKey]?.isSynced);
+          const isAnkidoSynced = tlTeam === 'Ankido Buya Team' ? true : Boolean(updated[aKey]?.isSynced);
 
-      // Invalidate Top Star cache so Top Star calculates rankings from latest TL data
-      invalidateTopStarCache();
-      try {
-        const topStarDocRef = doc(db, "settings", "top_star_status");
-        const topStarSnap = await getDoc(topStarDocRef);
-        const tsExisting = topStarSnap.exists() ? (topStarSnap.data()?.synced_months || {}) : {};
-        const tsUpdated = { ...tsExisting };
-        const teamSuffix = isCombinedCallCenter || selectedTeam !== 'Mohammed Dlshad Team' ? 'call' : 'chat';
-        tsUpdated[`${selectedYear}_${upperMonth}_${teamSuffix}_tl_ready`] = { isReady: true, readyAt: syncTime, syncedBy };
-        await setDoc(topStarDocRef, { synced_months: tsUpdated, updatedAt: syncTime }, { merge: true });
-      } catch (e) {
-        console.warn("Could not sync top_star tl_ready status:", e);
+          if (isYounisSynced && isAnkidoSynced) {
+            updated[`${selectedYear}_${upperMonth}_Call Center Combined`] = {
+              isSynced: true,
+              isComplete: true,
+              syncedAt: syncTime,
+              syncedBy: "Both Team Leaders",
+              month: upperMonth,
+              year: selectedYear
+            };
+          } else {
+            if (updated[`${selectedYear}_${upperMonth}_Call Center Combined`]) {
+              updated[`${selectedYear}_${upperMonth}_Call Center Combined`] = {
+                ...updated[`${selectedYear}_${upperMonth}_Call Center Combined`],
+                isSynced: false
+              };
+            }
+          }
+        }
+
+        await setDoc(syncDocRef, { synced_months: updated, updatedAt: syncTime }, { merge: true });
+
+        // Invalidate Top Star cache so Top Star calculates rankings from latest TL data
+        invalidateTopStarCache();
+        try {
+          const topStarDocRef = doc(db, "settings", "top_star_status");
+          const topStarSnap = await getDoc(topStarDocRef);
+          const tsExisting = topStarSnap.exists() ? (topStarSnap.data()?.synced_months || {}) : {};
+          const tsUpdated = { ...tsExisting };
+
+          if (tlTeam === 'Mohammed Dlshad Team') {
+            tsUpdated[`${selectedYear}_${upperMonth}_chat_tl_ready`] = { isReady: true, readyAt: syncTime, syncedBy };
+          } else if (tlTeam === 'Younis Kamal Team') {
+            tsUpdated[`${selectedYear}_${upperMonth}_younis_tl_ready`] = { isReady: true, readyAt: syncTime, syncedBy };
+            if (Boolean(tsExisting[`${selectedYear}_${upperMonth}_ankido_tl_ready`]?.isReady)) {
+              tsUpdated[`${selectedYear}_${upperMonth}_call_tl_ready`] = { isReady: true, readyAt: syncTime, syncedBy: "Both Team Leaders" };
+            }
+          } else if (tlTeam === 'Ankido Buya Team') {
+            tsUpdated[`${selectedYear}_${upperMonth}_ankido_tl_ready`] = { isReady: true, readyAt: syncTime, syncedBy };
+            if (Boolean(tsExisting[`${selectedYear}_${upperMonth}_younis_tl_ready`]?.isReady)) {
+              tsUpdated[`${selectedYear}_${upperMonth}_call_tl_ready`] = { isReady: true, readyAt: syncTime, syncedBy: "Both Team Leaders" };
+            }
+          }
+          await setDoc(topStarDocRef, { synced_months: tsUpdated, updatedAt: syncTime }, { merge: true });
+        } catch (e) {
+          console.warn("Could not sync top_star tl_ready status:", e);
+        }
       }
 
       setShowSyncedDetailsModal(false);
@@ -2899,18 +2998,40 @@ export default function Dashboard() {
       const upperMonth = (selectedMonth || "").toUpperCase();
       const updated = { ...existing };
 
-      if (isCombinedCallCenter) {
-        const teams = ['Younis Kamal Team', 'Ankido Buya Team', 'Call Center Combined'];
-        teams.forEach(t => {
-          const key = `${selectedYear}_${upperMonth}_${t}`;
+      if (isAdmin || isManager) {
+        const teamsToUnsync = isCombinedCallCenter
+          ? ['Younis Kamal Team', 'Ankido Buya Team', 'Call Center Combined', 'all']
+          : [selectedTeam];
+        teamsToUnsync.forEach(t => {
+          const key = t === 'all' ? `${selectedYear}_${upperMonth}_all` : `${selectedYear}_${upperMonth}_${t}`;
           if (updated[key]) {
             updated[key] = { ...updated[key], isSynced: false, unSyncedAt: new Date().toISOString() };
           }
         });
+        if (!isCombinedCallCenter && updated[`${selectedYear}_${upperMonth}_Call Center Combined`]) {
+          updated[`${selectedYear}_${upperMonth}_Call Center Combined`] = {
+            ...updated[`${selectedYear}_${upperMonth}_Call Center Combined`],
+            isSynced: false,
+            unSyncedAt: new Date().toISOString()
+          };
+        }
       } else {
-        const key = `${selectedYear}_${upperMonth}_${selectedTeam}`;
+        let tlTeam: TeamName = selectedTeam;
+        if (isYounis || userProfile?.team === 'Younis Kamal Team') {
+          tlTeam = 'Younis Kamal Team';
+        } else if (isAnkido || userProfile?.team === 'Ankido Buya Team') {
+          tlTeam = 'Ankido Buya Team';
+        } else if (userProfile?.team === 'Mohammed Dlshad Team' || emailLower.includes('mohammed.dlshad')) {
+          tlTeam = 'Mohammed Dlshad Team';
+        }
+
+        const key = `${selectedYear}_${upperMonth}_${tlTeam}`;
         if (updated[key]) {
           updated[key] = { ...updated[key], isSynced: false, unSyncedAt: new Date().toISOString() };
+        }
+        const cKey = `${selectedYear}_${upperMonth}_Call Center Combined`;
+        if (updated[cKey]) {
+          updated[cKey] = { ...updated[cKey], isSynced: false, unSyncedAt: new Date().toISOString() };
         }
       }
 
@@ -6420,10 +6541,20 @@ export default function Dashboard() {
                     onClick={handleSyncData}
                     disabled={isSyncingData}
                     className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-[#1C6B53] hover:from-emerald-700 hover:to-[#155a45] shadow-md shadow-emerald-600/25 ring-2 ring-emerald-400/40 animate-pulse shrink-0 active:scale-95 disabled:opacity-50"
-                    title="100% data complete! Click to sync to Agent Dashboard & update Top Star."
+                    title={
+                      isAdmin || isManager
+                        ? "Manager / Admin: 100% complete! Click to sync ALL teams to Agent Dashboard & update Top Star."
+                        : `100% data complete! Click to sync ${selectedTeam} to Agent Dashboard.`
+                    }
                   >
                     <RefreshCw size={11} className={isSyncingData ? "animate-spin" : ""} />
-                    <span>{isSyncingData ? "Syncing..." : "Sync to Agent & Top Star"}</span>
+                    <span>
+                      {isSyncingData
+                        ? "Syncing..."
+                        : isAdmin || isManager
+                        ? "Sync All Teams to Agents"
+                        : `Sync to ${selectedTeam.replace(' Team', '')} Agents`}
+                    </span>
                   </button>
                 )}
               </>
@@ -7043,7 +7174,13 @@ export default function Dashboard() {
                   className="w-full py-2.5 px-4 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155a45] shadow-md flex items-center justify-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
                 >
                   <RefreshCw size={14} className={isSyncingData ? "animate-spin" : ""} />
-                  <span>{isSyncingData ? "Updating..." : "Re-sync to Agent & Top Star"}</span>
+                  <span>
+                    {isSyncingData
+                      ? "Updating..."
+                      : isAdmin || isManager
+                      ? "Re-sync All Teams to Agents"
+                      : `Re-sync to ${selectedTeam.replace(' Team', '')} Agents`}
+                  </span>
                 </button>
 
                 <button

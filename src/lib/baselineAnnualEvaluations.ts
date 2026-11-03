@@ -369,5 +369,127 @@ export const BASELINE_ANNUAL_EVALUATIONS: Record<string, any> = {
     status: "manager_finalized",
     updated_at: "2026-07-14T12:00:00.000Z",
     last_modified_by: "Mohammed Dilshad"
+  },
+  "2026_Semi-Annual_azad_muhammad": {
+    id: "2026_Semi-Annual_azad_muhammad",
+    year: "2026",
+    period: "Semi-Annual",
+    period_type: "Semi-Annual",
+    evaluation_date: "20/07/2026",
+    employee_name: "Azad Muhammad Abdullah",
+    employee_id: "342",
+    department: "Contact Center",
+    team: "Younis Kamal Team",
+    team_leader: "Younis Kamal",
+    channel_type: "calls",
+    role_type: "agent",
+    is_special_staff: false,
+
+    self_kpis: {
+      qa: 4,
+      productivity: 2,
+      attendance: 5,
+      aht: 5,
+      knowledge: 4
+    },
+    self_competencies: {
+      communication: 2,
+      problem_solving: 4,
+      accountability: 3,
+      initiative: 4,
+      responsibility: 3,
+      team_work: 4
+    },
+    self_kpi_avg: 4.00,
+    self_competency_avg: 3.33,
+    self_overall_score: 3.67,
+    self_comments: "",
+
+    manager_kpis: {
+      qa: 4,
+      productivity: 2,
+      attendance: 5,
+      aht: 5,
+      knowledge: 4
+    },
+    manager_competencies: {
+      communication: 5,
+      problem_solving: 3,
+      accountability: 4,
+      initiative: 2,
+      responsibility: 4,
+      team_work: 5
+    },
+    manager_kpi_avg: 4.00,
+    manager_competency_avg: 3.83,
+    manager_overall_score: 3.92,
+    manager_strengths: "",
+    manager_improvements: "",
+    manager_comments: "",
+
+    status: "manager_finalized",
+    updated_at: "2026-07-20T12:00:00.000Z",
+    last_modified_by: "Younis Kamal"
+  },
+  "2026_Semi-Annual_azad_muhammad_abdullah": {
+    id: "2026_Semi-Annual_azad_muhammad_abdullah",
+    year: "2026",
+    period: "Semi-Annual",
+    period_type: "Semi-Annual",
+    evaluation_date: "20/07/2026",
+    employee_name: "Azad Muhammad Abdullah",
+    employee_id: "342",
+    department: "Contact Center",
+    team: "Younis Kamal Team",
+    team_leader: "Younis Kamal",
+    channel_type: "calls",
+    role_type: "agent",
+    is_special_staff: false,
+
+    self_kpis: {
+      qa: 4,
+      productivity: 2,
+      attendance: 5,
+      aht: 5,
+      knowledge: 4
+    },
+    self_competencies: {
+      communication: 2,
+      problem_solving: 4,
+      accountability: 3,
+      initiative: 4,
+      responsibility: 3,
+      team_work: 4
+    },
+    self_kpi_avg: 4.00,
+    self_competency_avg: 3.33,
+    self_overall_score: 3.67,
+    self_comments: "",
+
+    manager_kpis: {
+      qa: 4,
+      productivity: 2,
+      attendance: 5,
+      aht: 5,
+      knowledge: 4
+    },
+    manager_competencies: {
+      communication: 5,
+      problem_solving: 3,
+      accountability: 4,
+      initiative: 2,
+      responsibility: 4,
+      team_work: 5
+    },
+    manager_kpi_avg: 4.00,
+    manager_competency_avg: 3.83,
+    manager_overall_score: 3.92,
+    manager_strengths: "",
+    manager_improvements: "",
+    manager_comments: "",
+
+    status: "manager_finalized",
+    updated_at: "2026-07-20T12:00:00.000Z",
+    last_modified_by: "Younis Kamal"
   }
 };

@@ -1671,8 +1671,8 @@ export default function TopStarDashboard({
                 />
               </div>
 
-              {/* Publish Button: Publishes rankings & podium to everyone */}
-              {!isAgent && (
+              {/* Publish Button: Publishes rankings & podium to everyone (Admin & Manager Only) */}
+              {canEdit && (
                 <button
                   onClick={() => fetchDashboardMetrics(true)}
                   disabled={isSyncing}
