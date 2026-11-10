@@ -16,6 +16,7 @@ import { useAppTheme, applyThemeToDocument, getCurrentThemeId } from "@/lib/them
 import { TrendBadge, isLowerBetterMetric } from "@/components/TrendBadge";
 import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
 import { useBodyScrollLock, initGlobalModalScrollLock } from "@/lib/scrollLock";
+import { QualitySessionModal } from "@/components/QualitySessionModal";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
 const TEAMS: TeamName[] = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team'];
@@ -812,6 +813,7 @@ function AgentDashboard({
   }, [currentAgent]);
 
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showQualitySessionModal, setShowQualitySessionModal] = useState(false);
   const [editDisplayName, setEditDisplayName] = useState("");
   const [editPhotoUrl, setEditPhotoUrl] = useState("");
   const [forcePasswordChange, setForcePasswordChange] = useState(
@@ -821,7 +823,7 @@ function AgentDashboard({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  useBodyScrollLock(Boolean(showEditProfile || forcePasswordChange));
+  useBodyScrollLock(Boolean(showEditProfile || forcePasswordChange || showQualitySessionModal));
 
   useEffect(() => {
     if (previewMode && activeMembersList && activeMembersList.length > 0 && (!currentAgent?.agent_name || !activeMembersList.some(m => m.agent_name === currentAgent?.agent_name))) {
@@ -1671,6 +1673,17 @@ function AgentDashboard({
               </div>
             )}
 
+            {/* QUALITY SESSION Button */}
+            <button 
+              type="button"
+              onClick={() => setShowQualitySessionModal(true)} 
+              className="flex items-center gap-2 px-3.5 sm:px-4 py-2 text-xs font-black text-white bg-gradient-to-r from-emerald-600 via-[#1C6B53] to-teal-700 hover:from-emerald-700 hover:to-teal-800 rounded-2xl shadow-md shadow-emerald-900/20 active:scale-95 transition cursor-pointer shrink-0 border border-emerald-400/30"
+              title="Open Quality Session Sign-off"
+            >
+              <Award size={14} className="text-amber-300" />
+              <span>QUALITY SESSION</span>
+            </button>
+
             {!previewMode && (
               <button 
                 onClick={() => setShowEditProfile(true)} 
@@ -2177,6 +2190,23 @@ function AgentDashboard({
           </div>
         </div>
       )}
+
+      {/* Quality Session Sign-off Modal */}
+      <QualitySessionModal
+        isOpen={showQualitySessionModal}
+        onClose={() => setShowQualitySessionModal(false)}
+        agentName={currentAgent?.agent_name || userProfile?.name || userProfile?.agent_name}
+        agentTeam={currentAgent?.team || userProfile?.team || ""}
+        userProfile={userProfile}
+        initialYear={selectedYear}
+        initialQuarter={(() => {
+          const idx = MONTHS.indexOf(selectedMonth.toUpperCase());
+          if (idx === -1) return "Q4";
+          return ["Q1","Q2","Q3","Q4"][Math.floor(idx / 3)];
+        })()}
+        initialWeek={4}
+        isDarkMode={isDarkMode}
+      />
 
       {/* Mobile PWA Install Floating Banner */}
       <PwaInstallBanner />

@@ -101,11 +101,24 @@ export function UnifiedTopNavbar({
 
   const displayName = rawName.replace(/\w\S*/g, (txt: string) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
 
-  // Navigation Items
+  // Navigation Items in exact requested order:
+  // 1. Quality
+  // 2. TL Dashboard (renamed from CC Dashboard)
+  // 3. Agent View (or My Dashboard)
+  // 4. Top Star
+  // 5. Evaluation
   const navItems = [
     {
+      id: 'quality' as ActiveDashboardType,
+      label: 'Quality',
+      show: canAccessQuality,
+      icon: Award,
+      iconColor: 'text-purple-700 dark:text-purple-300',
+      iconBg: 'bg-purple-500/15 dark:bg-purple-400/20'
+    },
+    {
       id: 'cc' as ActiveDashboardType,
-      label: 'CC Dashboard',
+      label: 'TL Dashboard',
       show: canAccessCC,
       icon: BarChart3,
       iconColor: 'text-slate-700 dark:text-slate-300',
@@ -118,14 +131,6 @@ export function UnifiedTopNavbar({
       icon: LayoutDashboard,
       iconColor: 'text-sky-700 dark:text-sky-300',
       iconBg: 'bg-sky-500/15 dark:bg-sky-400/20'
-    },
-    {
-      id: 'quality' as ActiveDashboardType,
-      label: 'Quality',
-      show: canAccessQuality,
-      icon: Award,
-      iconColor: 'text-purple-700 dark:text-purple-300',
-      iconBg: 'bg-purple-500/15 dark:bg-purple-400/20'
     },
     {
       id: 'topstar' as ActiveDashboardType,
@@ -148,8 +153,8 @@ export function UnifiedTopNavbar({
   return (
     <div className={`relative inline-flex items-center gap-1.5 sm:gap-2 p-1.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl shadow-sm flex-nowrap shrink-0 max-w-full overflow-visible select-none ${className}`}>
       
-      {/* Navigation Buttons: Ultra-Modern Premium Segmented Control */}
-      <div className="flex items-center p-1 bg-gray-100/80 dark:bg-gray-800/80 rounded-xl border border-gray-200/60 dark:border-gray-700/60 gap-1 shrink-0 overflow-x-auto scrollbar-none">
+      {/* Navigation Buttons: Ultra-Modern Premium Segmented Control (Equalized Height & Flush Alignment) */}
+      <div className="flex items-center p-1 bg-gray-100/80 dark:bg-gray-800/80 rounded-xl border border-gray-200/60 dark:border-gray-700/60 gap-1 shrink-0 overflow-x-auto scrollbar-none h-10">
         {navItems.map((item) => {
           const isActive = currentDashboard === item.id;
           const ItemIcon = item.icon;
@@ -163,20 +168,20 @@ export function UnifiedTopNavbar({
                   onNavigate(item.id);
                 }
               }}
-              className={`flex items-center gap-2 px-3.5 sm:px-4 h-9 rounded-lg text-[13px] transition-all duration-200 shrink-0 cursor-pointer select-none ${
+              className={`flex items-center justify-center gap-2 px-3 sm:px-3.5 h-8 rounded-lg text-[13px] transition-all duration-150 shrink-0 cursor-pointer select-none leading-none ${
                 isActive
-                  ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 font-black shadow-sm ring-1 ring-[#1C6B53]/20 dark:ring-emerald-400/25 scale-[1.01]'
-                  : 'font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/60 dark:hover:bg-gray-700/50'
+                  ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 font-bold shadow-xs border border-gray-200/70 dark:border-gray-600'
+                  : 'font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/60 dark:hover:bg-gray-700/50'
               }`}
               title={item.label}
             >
               <ItemIcon 
-                size={15} 
-                className={`shrink-0 transition-all duration-200 ${
+                size={14} 
+                className={`shrink-0 transition-colors ${
                   isActive ? 'text-[#1C6B53] dark:text-emerald-400' : item.iconColor
                 } ${item.id === 'topstar' ? (isActive ? 'fill-amber-500 text-amber-500' : 'fill-amber-400/40') : ''}`} 
               />
-              <span className="whitespace-nowrap leading-none tracking-tight">{item.label}</span>
+              <span className="whitespace-nowrap tracking-tight">{item.label}</span>
             </button>
           );
         })}

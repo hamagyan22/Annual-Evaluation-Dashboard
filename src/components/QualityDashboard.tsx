@@ -9,7 +9,7 @@ import {
   Award, ArrowLeft, Search, Users, Check, Save, Download, 
   Sun, Moon, ChevronDown, ChevronLeft, ChevronRight, CheckCheck, RefreshCw, Calendar, Plus,
   LogOut, PhoneIncoming, PhoneOutgoing, Camera, X, Trash2, FileText, MessageSquare, ShieldCheck, UserPlus, ExternalLink, Link2,
-  CheckCircle2, AlertCircle, Activity, Clock, Lock, ClipboardCheck, Eye
+  CheckCircle2, AlertCircle, Activity, Clock, Lock, ClipboardCheck, Eye, PenTool
 } from "lucide-react";
 import { compressImageFile } from "@/lib/imageUtils";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
@@ -1344,6 +1344,28 @@ export default function QualityDashboard({
       }
     );
     return () => unsubSyncStatus();
+  }, []);
+
+  // 4. Real-time listener for Quality Session approvals and objections (quality_sessions collection)
+  const [qualitySessionsMap, setQualitySessionsMap] = useState<Record<string, any>>({});
+  const [activeSessionDetailModal, setActiveSessionDetailModal] = useState<{
+    csrName: string;
+    session: any;
+    week: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const unsubSessions = onSnapshot(collection(db, "quality_sessions"), (snap) => {
+      const sessions: Record<string, any> = {};
+      snap.forEach(d => {
+        sessions[d.id] = { id: d.id, ...d.data() };
+      });
+      setQualitySessionsMap(sessions);
+    }, (err) => {
+      console.warn("Error listening to quality_sessions:", err);
+    });
+
+    return () => unsubSessions();
   }, []);
 
   // Helper to determine the exact active section slug in Firestore
@@ -3997,6 +4019,15 @@ export default function QualityDashboard({
         const notes = evalData[docId]?.notes || {};
         const weekAvg = computeWeekAvg(scores, selectedWeek, isChatTeam, selectedYear, selectedQuarter, true);
 
+        // Quality Session status
+        const sessionDocId = `${selectedYear}_${selectedQuarter}_w${selectedWeek}_${slug}`;
+        const session = qualitySessionsMap[sessionDocId];
+        const isApproved = session?.status === "approved" && Boolean(session?.signature_data);
+        const signatureData = isApproved ? session.signature_data : null;
+        const signedAtFormatted = isApproved && session?.signed_at 
+          ? new Date(session.signed_at).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+          : null;
+
         const chatVals = [1, 2, 3].map(cNum => {
           const key = `w${selectedWeek}_chat_${cNum}`;
           const val = scores[key] ?? "-";
@@ -4008,7 +4039,10 @@ export default function QualityDashboard({
           idx: idx + 1,
           csrName,
           chatVals,
-          weekAvg: weekAvg !== "-" && weekAvg !== "V" ? `${weekAvg}%` : weekAvg
+          weekAvg: weekAvg !== "-" && weekAvg !== "V" ? `${weekAvg}%` : weekAvg,
+          isApproved,
+          signatureData,
+          signedAtFormatted
         };
       });
 
@@ -4126,6 +4160,7 @@ export default function QualityDashboard({
                   <th style="width: 80px;">Chat 2</th>
                   <th style="width: 80px;">Chat 3</th>
                   <th class="score-header" style="width: 100px;">Week ${selectedWeek} Score</th>
+                  <th style="width: 110px; font-weight: 800; text-align: center;">Agent Sign-off</th>
                 </tr>
               </thead>
               <tbody>
@@ -4135,12 +4170,23 @@ export default function QualityDashboard({
                     <td class="agent-cell">${r.csrName}</td>
                     ${r.chatVals.map(c => `<td><span style="font-weight: 800;">${c.val}</span></td>`).join('')}
                     <td><span class="badge-score">${r.weekAvg}</span></td>
+                    <td style="text-align: center; vertical-align: middle; padding: 2px;">
+                      ${r.isApproved ? `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;">
+                          <img src="${r.signatureData}" style="max-height: 24px; max-width: 85px; object-fit: contain;" />
+                          <span style="font-size: 7px; color: #166534; font-weight: 700; white-space: nowrap;">Signed: ${r.signedAtFormatted}</span>
+                        </div>
+                      ` : `
+                        <div style="border-bottom: 1px dashed #cbd5e1; width: 65px; height: 16px; margin: 4px auto 0;"></div>
+                      `}
+                    </td>
                   </tr>
                 `).join('')}
                 <tr class="total-row">
                   <td colspan="2" style="text-align: left; padding-left: 12px; text-transform: uppercase;">Team Average</td>
                   ${colAverages.map(avg => `<td>${avg}</td>`).join('')}
                   <td class="total-avg-cell">${totalWeekTeamAvg}</td>
+                  <td></td>
                 </tr>
               </tbody>
             </table>
@@ -4296,6 +4342,17 @@ export default function QualityDashboard({
       const notes = evalData[docId]?.notes || {};
       const weekAvg = computeWeekAvg(scores, selectedWeek, isChatTeam, selectedYear, selectedQuarter);
 
+      // Quality Session status
+      const sessionDocId = `${selectedYear}_${selectedQuarter}_w${selectedWeek}_${slug}`;
+      const session = qualitySessionsMap[sessionDocId];
+      const isApproved = session?.status === "approved" && Boolean(session?.signature_data);
+      const signatureData = isApproved ? session.signature_data : null;
+      const signedAtFormatted = isApproved && session?.signed_at 
+        ? new Date(session.signed_at).toLocaleString('en-GB', { 
+            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+          })
+        : null;
+
       const config = getWeekColumnsConfig(isChatTeam, selectedYear, selectedQuarter, selectedWeek);
       const callVals = Array.from({ length: config.colCount }, (_, i) => i + 1).map(cNum => {
         const key = isChatTeam ? `w${selectedWeek}_chat_${cNum}` : `w${selectedWeek}_call_${config.callBase + cNum}`;
@@ -4313,7 +4370,10 @@ export default function QualityDashboard({
         csrName,
         callVals,
         outboundVal,
-        weekAvg: weekAvg !== "-" && weekAvg !== "V" ? `${weekAvg}%` : weekAvg
+        weekAvg: weekAvg !== "-" && weekAvg !== "V" ? `${weekAvg}%` : weekAvg,
+        isApproved,
+        signatureData,
+        signedAtFormatted
       };
     });
 
@@ -4628,6 +4688,7 @@ export default function QualityDashboard({
                 ${Array.from({ length: exportWeekCfg.colCount }, (_, i) => i + 1).map(cNum => `<th style="width: 60px;">${isChatTeam ? `Chat ${cNum}` : `Call ${exportWeekCfg.callBase + cNum}`}</th>`).join('')}
                 ${extraColHeader}
                 <th class="score-header" style="width: 95px;">Week ${selectedWeek} Score</th>
+                <th style="width: 105px; text-align: center; font-weight: 800;">Agent Sign-off</th>
               </tr>
             </thead>
             <tbody>
@@ -4662,6 +4723,16 @@ export default function QualityDashboard({
                       ? '<span class="badge-v">V</span>' 
                       : '<span class="muted-dash">—</span>'}
                   </td>
+                  <td style="text-align: center; vertical-align: middle; padding: 2px;">
+                    ${r.isApproved ? `
+                      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;">
+                        <img src="${r.signatureData}" style="max-height: 24px; max-width: 85px; object-fit: contain;" />
+                        <span style="font-size: 7px; color: #166534; font-weight: 700; white-space: nowrap;">Signed: ${r.signedAtFormatted}</span>
+                      </div>
+                    ` : `
+                      <div style="border-bottom: 1px dashed #cbd5e1; width: 65px; height: 16px; margin: 4px auto 0;"></div>
+                    `}
+                  </td>
                 </tr>
               `).join('')}
 
@@ -4672,6 +4743,7 @@ export default function QualityDashboard({
                   <td class="outbound-col" style="font-weight: 900; color: #92400e;">${extraColAvg === '-' ? '<span class="muted-dash">—</span>' : extraColAvg}</td>
                 ` : ''}
                 <td class="total-avg-cell">${totalWeekTeamAvg}</td>
+                <td></td>
               </tr>
             </tbody>
           </table>
@@ -5826,6 +5898,14 @@ export default function QualityDashboard({
                       >
                         {selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Avg` : `Week ${selectedWeek} Score`}
                       </th>
+                      {selectedMonthFilter === null && (
+                        <th className="px-3 py-3 text-center min-w-[125px] bg-gray-50/90 dark:bg-gray-850/90 text-gray-700 dark:text-gray-300 font-bold border-l border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <PenTool size={12} className="text-[#1C6B53] dark:text-emerald-400" />
+                            <span>Session Sign-off</span>
+                          </div>
+                        </th>
+                      )}
                       <th className="px-3 py-3 text-center w-12 text-gray-400 font-bold">
                         Action
                       </th>
@@ -5884,6 +5964,14 @@ export default function QualityDashboard({
                       >
                         {selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Avg` : `Week ${selectedWeek} Score`}
                       </th>
+                      {selectedMonthFilter === null && (
+                        <th className="px-3 py-3 text-center min-w-[125px] bg-gray-50/90 dark:bg-gray-850/90 text-gray-700 dark:text-gray-300 font-bold border-l border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <PenTool size={12} className="text-[#1C6B53] dark:text-emerald-400" />
+                            <span>Session Sign-off</span>
+                          </div>
+                        </th>
+                      )}
                     </>
                   )}
                 </tr>
@@ -6531,6 +6619,53 @@ export default function QualityDashboard({
                             );
                           })()}
                         </td>
+
+                        {/* Quality Session Sign-off Status Pill */}
+                        {selectedMonthFilter === null && (
+                          <td className="p-2 text-center border-l border-gray-100 dark:border-gray-800">
+                            {(() => {
+                              const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+                              const sessionDocId = `${selectedYear}_${selectedQuarter}_w${selectedWeek}_${slug}`;
+                              const session = qualitySessionsMap[sessionDocId];
+                              const isAppr = session?.status === "approved" && Boolean(session?.signature_data);
+                              const isRej = session?.status === "rejected";
+
+                              if (isAppr) {
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveSessionDetailModal({ csrName, session, week: selectedWeek })}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-[#1C6B53] dark:text-emerald-400 border border-emerald-300/80 dark:border-emerald-700/80 shadow-2xs cursor-pointer transition active:scale-95"
+                                    title={`Approved & Signed on ${session?.signed_at ? new Date(session.signed_at).toLocaleString('en-GB') : ''}. Click to view signature.`}
+                                  >
+                                    <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400" />
+                                    <span>Signed</span>
+                                  </button>
+                                );
+                              }
+
+                              if (isRej) {
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveSessionDetailModal({ csrName, session, week: selectedWeek })}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-400 border border-amber-300/80 dark:border-amber-700/80 shadow-2xs cursor-pointer transition active:scale-95 animate-pulse"
+                                    title={`Rejected: "${session?.rejection_reason || 'No details'}". Click to read reason.`}
+                                  >
+                                    <AlertCircle size={12} className="text-amber-600 dark:text-amber-400" />
+                                    <span>Objection</span>
+                                  </button>
+                                );
+                              }
+
+                              return (
+                                <span className="inline-block text-[11px] font-medium text-gray-400 dark:text-gray-500">
+                                  Pending
+                                </span>
+                              );
+                            })()}
+                          </td>
+                        )}
                       </tr>
                     );
                   })
@@ -6776,15 +6911,22 @@ export default function QualityDashboard({
                               : "-";
                           }
                           return (
-                            <td 
-                              style={{
-                                backgroundColor: 'var(--brand-primary)',
-                                color: '#ffffff'
-                              }}
-                              className="p-2 text-center font-black text-sm"
-                            >
-                              {totalAvg !== "-" ? `${totalAvg}%` : "-"}
-                            </td>
+                            <>
+                              <td 
+                                style={{
+                                  backgroundColor: 'var(--brand-primary)',
+                                  color: '#ffffff'
+                                }}
+                                className="p-2 text-center font-black text-sm"
+                              >
+                                {totalAvg !== "-" ? `${totalAvg}%` : "-"}
+                              </td>
+                              {selectedMonthFilter === null && (
+                                <td className="p-2 text-center text-xs font-bold text-gray-400 dark:text-gray-500 bg-[var(--brand-bg-light)] dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700">
+                                  —
+                                </td>
+                              )}
+                            </>
                           );
                         })()}
                       </>
@@ -6946,6 +7088,99 @@ export default function QualityDashboard({
               </div>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* Quality Session Details Popup for QA (Approved signature or Rejected objection note) */}
+      {activeSessionDetailModal && (
+        <div data-modal="true" className="fixed inset-0 z-[80] flex items-center justify-center p-4 overscroll-contain animate-in fade-in duration-150">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-2xs" onClick={() => setActiveSessionDetailModal(null)} />
+          <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-6 w-full max-w-md border border-gray-100 dark:border-gray-800 animate-in zoom-in-95 duration-150">
+            <div className="flex justify-between items-start mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${activeSessionDetailModal.session?.status === "approved" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400" : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400"}`}>
+                  {activeSessionDetailModal.session?.status === "approved" ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-gray-900 dark:text-white">
+                    {activeSessionDetailModal.csrName}
+                  </h4>
+                  <p className="text-[11px] text-gray-500 font-medium">
+                    Week {activeSessionDetailModal.week} Quality Session Sign-off
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveSessionDetailModal(null)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {activeSessionDetailModal.session?.status === "approved" ? (
+              <div className="space-y-4">
+                <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300">
+                  <div className="font-bold flex items-center gap-1.5 mb-1">
+                    <CheckCircle2 size={14} className="text-emerald-600" />
+                    <span>Evaluation Approved & Signed</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
+                    Signed on {activeSessionDetailModal.session?.signed_at ? new Date(activeSessionDetailModal.session.signed_at).toLocaleString("en-GB") : "—"}
+                  </p>
+                </div>
+
+                {activeSessionDetailModal.session?.signature_data && (
+                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-850 border border-gray-200 dark:border-gray-700 text-center">
+                    <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block mb-2">
+                      Agent Electronic Signature
+                    </span>
+                    <img 
+                      src={activeSessionDetailModal.session.signature_data} 
+                      alt="Agent Signature" 
+                      className="max-h-20 max-w-[200px] mx-auto object-contain"
+                    />
+                  </div>
+                )}
+              </div>
+            ) : activeSessionDetailModal.session?.status === "rejected" ? (
+              <div className="space-y-3">
+                <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-300">
+                  <div className="font-bold flex items-center gap-1.5 mb-1">
+                    <AlertCircle size={14} className="text-amber-600" />
+                    <span>Agent Objection / Rejection Details</span>
+                  </div>
+                  {activeSessionDetailModal.session?.rejected_at && (
+                    <p className="text-[10px] text-amber-700 dark:text-amber-400">
+                      Submitted on {new Date(activeSessionDetailModal.session.rejected_at).toLocaleString("en-GB")}
+                    </p>
+                  )}
+                </div>
+
+                <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-850 border border-gray-200 dark:border-gray-700">
+                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block mb-1">
+                    Agent Feedback / Reason:
+                  </span>
+                  <p className="text-xs text-gray-800 dark:text-gray-200 leading-relaxed font-medium">
+                    {activeSessionDetailModal.session?.rejection_reason || "No written reason provided."}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 p-4 text-center">No sign-off activity recorded yet.</p>
+            )}
+
+            <div className="mt-5 pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setActiveSessionDetailModal(null)}
+                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 transition"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
