@@ -520,16 +520,15 @@ export default function TopStarDashboard({
 
       setPrevMetricsData({ chat: prevFinalChat, call: prevFinalCall });
 
-      // Strict Completeness Verification
-      const currentRoster = team === "chat" ? chatRoster : callRoster;
-      const currentData = team === "chat" ? finalChat : finalCall;
-      const completeness = checkTeamCompleteness(team, currentData, currentRoster);
+      // Strict Completeness Verification for BOTH teams
+      const chatComp = checkTeamCompleteness("chat", finalChat, chatRoster);
+      const callComp = checkTeamCompleteness("call", finalCall, callRoster);
 
       if (isManualSync) {
-        if (!completeness.hasAnyData) {
+        if (!chatComp.hasAnyData && !callComp.hasAnyData) {
           setSyncNotice({
             type: "error",
-            message: `Cannot Sync: No metrics entered for ${selectedMonth} ${selectedYear} in Team Leader dashboard.`
+            message: `Cannot Publish: No metrics entered for ${selectedMonth} ${selectedYear} in Team Leader dashboard.`
           });
           setTimeout(() => setSyncNotice(null), 6000);
           setIsSyncing(false);
@@ -537,52 +536,46 @@ export default function TopStarDashboard({
           return;
         }
 
-        if (!completeness.isComplete) {
-          const missingNames = completeness.missingAgents.map(a => a.name).slice(0, 3).join(", ");
-          const remaining = completeness.missingAgents.length > 3 ? ` +${completeness.missingAgents.length - 3} more` : "";
-          setSyncNotice({
-            type: "warning",
-            message: `Cannot Sync: Data is incomplete (${completeness.completedAgents}/${completeness.totalAgents} agents ready). Missing: ${missingNames}${remaining}. Team Leader must complete all data before syncing.`
-          });
-          setTimeout(() => setSyncNotice(null), 7000);
-          setIsSyncing(false);
-          setLoading(false);
-          return;
-        }
-
-        // All agents are 100% complete: proceed with official publish to everyone
+        // Proceed with official publish to everyone for BOTH teams (Call Center & Chat) in one click
         const upperMonth = (selectedMonth || "").toUpperCase();
-        const syncKey = `${selectedYear}_${upperMonth}_${team}`;
-        await setDoc(doc(db, "settings", "top_star_status"), {
-          synced_months: {
-            [syncKey]: {
-              isSynced: true,
-              isPublished: true,
-              isComplete: true,
-              syncedAt: new Date().toISOString(),
-              syncedBy: userProfile?.email || "admin",
-              agentCount: completeness.totalAgents
-            }
+        const callKey = `${selectedYear}_${upperMonth}_call`;
+        const chatKey = `${selectedYear}_${upperMonth}_chat`;
+        const nowIso = new Date().toISOString();
+        const publisherName = userProfile?.name || userProfile?.email || "Admin";
+
+        const updatePayload: Record<string, any> = {
+          [callKey]: {
+            isSynced: true,
+            isPublished: true,
+            isComplete: callComp.isComplete,
+            syncedAt: nowIso,
+            syncedBy: publisherName,
+            agentCount: callComp.totalAgents
+          },
+          [chatKey]: {
+            isSynced: true,
+            isPublished: true,
+            isComplete: chatComp.isComplete,
+            syncedAt: nowIso,
+            syncedBy: publisherName,
+            agentCount: chatComp.totalAgents
           }
+        };
+
+        await setDoc(doc(db, "settings", "top_star_status"), {
+          synced_months: updatePayload
         }, { merge: true });
 
         invalidateTopStarCache();
 
         setSyncStatusRegistry(prev => ({
           ...prev,
-          [syncKey]: {
-            isSynced: true,
-            isPublished: true,
-            isComplete: true,
-            syncedAt: new Date().toISOString(),
-            syncedBy: userProfile?.email || "admin",
-            agentCount: completeness.totalAgents
-          }
+          ...updatePayload
         }));
 
         setSyncNotice({
           type: "success",
-          message: `Top Star results for ${selectedMonth} ${selectedYear} have been published to everyone successfully!`
+          message: `Top Star results for ${selectedMonth} ${selectedYear} have been published for BOTH teams (Call Center & Chat) to everyone successfully!`
         });
         setTimeout(() => setSyncNotice(null), 5500);
         setMetricsData({ chat: finalChat, call: finalCall });
@@ -1677,18 +1670,16 @@ export default function TopStarDashboard({
                   onClick={() => fetchDashboardMetrics(true)}
                   disabled={isSyncing}
                   className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer ${
-                    !currentCompleteness.isComplete
+                    !currentCompleteness.isComplete && !isPublished
                       ? "bg-amber-600/90 hover:bg-amber-600 text-white"
                       : isPublished
                       ? "bg-emerald-700 hover:bg-emerald-800 text-white"
                       : "bg-[#1C6B53] hover:bg-[#155340] text-white"
                   }`}
                   title={
-                    !currentCompleteness.isComplete
-                      ? `Cannot publish: Data incomplete (${currentCompleteness.completedAgents}/${currentCompleteness.totalAgents} agents ready)`
-                      : isPublished
-                      ? `Results are published! Click to re-publish ${selectedMonth} Top Star`
-                      : `Publish ${selectedMonth} Top Star Results to Everyone`
+                    isPublished
+                      ? `Results are published! Click to re-publish ${selectedMonth} Top Star for both Call & Chat teams`
+                      : `Publish ${selectedMonth} Top Star Results for Both Teams (Call & Chat) to Everyone`
                   }
                 >
                   {isSyncing ? (
@@ -1701,8 +1692,6 @@ export default function TopStarDashboard({
                   <span>
                     {isSyncing
                       ? "Publishing..."
-                      : !currentCompleteness.isComplete
-                      ? "Publish (Incomplete Data)"
                       : isPublished
                       ? "Published ✓"
                       : "Publish Top Star"}

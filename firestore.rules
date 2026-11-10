@@ -8,7 +8,11 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() && request.auth.token.email == 'mohammed.dlshad0@gmail.com';
+      return isAuthenticated() && (
+        request.auth.token.email == 'mohammed.dlshad0@gmail.com' ||
+        request.auth.token.email == 'omar.ayad@fib.iq' ||
+        request.auth.token.email == 'Omar.Ayad@fib.iq'
+      );
     }
 
     function isManager() {
@@ -21,26 +25,12 @@ service cloud.firestore {
 
     // Users collection
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      // Allow users to create their own record or Admin to create
-      allow create: if isAuthenticated() && (isUser(userId) || isAdmin());
-      // Users can update their own profile (name, photo, password flag), BUT cannot tamper with role, team, or admin status
-      allow update: if isAuthenticated() && (
-        isAdmin() || 
-        (isUser(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isAdmin', 'team']))
-      );
-      allow delete: if isAdmin();
+      allow read, write: if true;
     }
 
     // Team members directory
     match /team_members/{memberId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && (
-        isManager() || 
-        request.auth.token.email == 'younis.kamal@agent.com' || 
-        request.auth.token.email == 'younis.kamal.tl@agent.com' || 
-        request.auth.token.email == 'ankido.buya@agent.com'
-      );
+      allow read, write: if true;
     }
 
     // KPI Columns configuration (Super Admin only can edit KPIs)
@@ -101,6 +91,23 @@ service cloud.firestore {
         request.auth.token.email == 'mohammed.azad@agent.com' ||
         request.auth.token.email == 'mohammed.azad.qa@agent.com'
       );
+    }
+
+    // Annual evaluations & criteria
+    match /annual_evaluations/{evalId} {
+      allow read, write: if true;
+    }
+
+    match /evaluation_criteria/{critId} {
+      allow read, write: if true;
+    }
+
+    match /evaluation_departments/{deptId} {
+      allow read, write: if true;
+    }
+
+    match /evaluation_employees/{empId} {
+      allow read, write: if true;
     }
 
     // Deny all other unmatched paths

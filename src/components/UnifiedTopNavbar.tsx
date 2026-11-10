@@ -21,6 +21,10 @@ export interface UnifiedTopNavbarProps {
   toggleDarkMode?: () => void;
   extraActions?: React.ReactNode;
   className?: string;
+  showOnlyEvaluation?: boolean;
+  lang?: "en" | "ar";
+  onLanguageChange?: (lang: "en" | "ar") => void;
+  evaluationLabel?: string;
 }
 
 export function UnifiedTopNavbar({
@@ -33,13 +37,17 @@ export function UnifiedTopNavbar({
   isDarkMode = false,
   toggleDarkMode,
   extraActions,
-  className = ""
+  className = "",
+  showOnlyEvaluation = true,
+  lang = "en",
+  onLanguageChange,
+  evaluationLabel
 }: UnifiedTopNavbarProps) {
   const emailLower = (userProfile?.email || "").toLowerCase().trim();
   const nameLower = (userProfile?.name || userProfile?.agent_name || "").toLowerCase().trim();
   const roleLower = (userProfile?.role || "").toLowerCase().trim();
 
-  const isAdmin = userProfile?.isAdmin === true || roleLower === "admin" || emailLower === "mohammed.dlshad0@gmail.com";
+  const isAdmin = userProfile?.isAdmin === true || roleLower === "admin" || emailLower === "mohammed.dlshad0@gmail.com" || emailLower === "omar.ayad@fib.iq";
   const isManager = isAdmin || roleLower === "manager" || emailLower === "jalal.burghol@agent.com";
   const isTL = roleLower === "tl" || emailLower.includes("younis.kamal") || emailLower.includes("ankido.buya");
   const isQA = roleLower === "qa" || emailLower.includes("lara.kamil") || emailLower.includes("mohammed.jihad");
@@ -58,7 +66,10 @@ export function UnifiedTopNavbar({
   let roleBadgeText = "AGENT";
   let roleBadgeClass = "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-400 border-sky-300 dark:border-sky-700/60";
 
-  if (isAdmin) {
+  if (emailLower === 'omar.ayad@fib.iq' || userProfile?.jobTitle === 'HR Manager') {
+    roleBadgeText = "HR MANAGER";
+    roleBadgeClass = "bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 border-emerald-300 dark:border-emerald-700/60 font-black";
+  } else if (isAdmin) {
     roleBadgeText = "ADMIN";
     roleBadgeClass = "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700/60";
   } else if (isManager) {
@@ -126,13 +137,13 @@ export function UnifiedTopNavbar({
     },
     {
       id: 'evaluation' as ActiveDashboardType,
-      label: 'Evaluation',
+      label: evaluationLabel || (lang === 'ar' ? 'التقييم' : 'Evaluation'),
       show: canAccessEvaluation,
       icon: ClipboardCheck,
       iconColor: 'text-emerald-700 dark:text-emerald-300',
       iconBg: 'bg-emerald-500/15 dark:bg-emerald-400/20'
     }
-  ].filter(item => item.show);
+  ].filter(item => item.show && (!showOnlyEvaluation || item.id === 'evaluation'));
 
   return (
     <div className={`relative inline-flex items-center gap-1.5 sm:gap-2 p-1.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl shadow-sm flex-nowrap shrink-0 max-w-full overflow-visible select-none ${className}`}>
@@ -243,10 +254,12 @@ export function UnifiedTopNavbar({
             type="button"
             onClick={onLogout} 
             className="flex items-center gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl text-[13px] font-semibold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/40 transition-all cursor-pointer shrink-0"
-            title="Logout"
+            title={lang === "ar" ? "تسجيل خروج" : "Logout"}
           >
             <LogOut size={14} />
-            <span className="hidden sm:inline font-semibold leading-none">Logout</span>
+            <span className="hidden sm:inline font-semibold leading-none">
+              {lang === "ar" ? "خروج" : "Logout"}
+            </span>
           </button>
         )}
       </div>

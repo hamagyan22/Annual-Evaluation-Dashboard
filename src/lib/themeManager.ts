@@ -168,10 +168,10 @@ export const THEMES: ThemeConfig[] = [
   },
 ];
 
-export const DEFAULT_THEME_ID = "ruby";
+export const DEFAULT_THEME_ID = "emerald";
 
 export function getThemeById(id: string): ThemeConfig {
-  return THEMES.find((t) => t.id === id) || THEMES.find((t) => t.id === "ruby") || THEMES[0];
+  return THEMES.find((t) => t.id === id) || THEMES.find((t) => t.id === "emerald") || THEMES[0];
 }
 
 export function applyThemeToDocument(themeId: string) {
@@ -199,7 +199,14 @@ export function applyThemeToDocument(themeId: string) {
 
 export function getCurrentThemeId(): string {
   if (typeof window === "undefined") return DEFAULT_THEME_ID;
-  return localStorage.getItem("app_color_theme") || DEFAULT_THEME_ID;
+  const saved = localStorage.getItem("app_color_theme");
+  if (!saved || saved === "ruby") {
+    try {
+      localStorage.setItem("app_color_theme", "emerald");
+    } catch (e) {}
+    return "emerald";
+  }
+  return saved;
 }
 
 export function setAppTheme(themeId: string) {

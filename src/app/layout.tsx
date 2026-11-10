@@ -16,11 +16,11 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "FIB Performance Scorecards",
-  description: "Performance & Quality Analytics Dashboard for Team Leaders, Managers, and Agents — Engineered by Mohammed Dlshad",
+  description: "Performance & Quality Analytics Dashboard for Team Leaders, Managers, and Agents — Engineered by Omer Ayad",
   applicationName: "FIB Scorecard",
-  authors: [{ name: "Mohammed Dlshad" }],
-  creator: "Mohammed Dlshad",
-  publisher: "Mohammed Dlshad",
+  authors: [{ name: "Omer Ayad" }],
+  creator: "Omer Ayad",
+  publisher: "Omer Ayad",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -55,12 +55,12 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="FIB Scorecard" />
-        <meta name="author" content="Mohammed Dlshad" />
-        <meta name="copyright" content="Mohammed Dlshad" />
+        <meta name="author" content="Omer Ayad" />
+        <meta name="copyright" content="Omer Ayad" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('app_color_theme')||'ruby';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('app_color_theme');if(!t||t==='ruby'){t='emerald';localStorage.setItem('app_color_theme','emerald');}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
           }}
         />
       </head>

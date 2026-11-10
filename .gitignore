@@ -20,3 +20,8 @@ fix.js
 patchAgent3.js
 rewrite.js
 updatePage.js
+
+.vercel
+out
+.firebase
+

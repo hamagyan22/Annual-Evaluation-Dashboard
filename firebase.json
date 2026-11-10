@@ -1,5 +1,28 @@
-﻿{
+{
   "firestore": {
     "rules": "firestore.rules"
+  },
+  "hosting": {
+    "public": "out",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "cleanUrls": true,
+    "rewrites": [
+      {
+        "source": "/evaluation",
+        "destination": "/evaluation.html"
+      },
+      {
+        "source": "/demo",
+        "destination": "/demo.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
   }
 }
