@@ -2201,7 +2201,7 @@ export default function AnnualEvaluationDashboard({
               onOpenSettings={onOpenSettings}
               isDarkMode={isDarkMode}
               toggleDarkMode={toggleDarkMode}
-              showOnlyEvaluation={true}
+              showOnlyEvaluation={userProfile?.role === 'backoffice' || (userProfile?.email || '').toLowerCase().includes('shireen')}
               lang={lang}
               evaluationLabel={t.evaluationTab}
               extraActions={
