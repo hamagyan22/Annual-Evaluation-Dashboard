@@ -5244,10 +5244,10 @@ export default function Dashboard() {
                 <img src="/logo.webp" alt="FIB Logo" className="w-full h-full object-contain drop-shadow-sm" />
               </div>
               <h2 className="text-xl sm:text-[23px] font-black tracking-tight text-gray-900 dark:text-white leading-snug">
-                Annual Evaluation Dashboard
+                Performance &amp; Scorecards Portal
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 font-medium">
-                Annual Performance &amp; Competency Review
+                Contact Center • TL &amp; Agent Analytics • Quality &amp; Evaluations
               </p>
             </div>
             
@@ -5328,7 +5328,7 @@ export default function Dashboard() {
               <button 
                 type="submit" 
                 disabled={loginLoading || lockoutTimer > 0}
-                className="w-full py-4 rounded-2xl text-sm font-black text-white transition-all mt-6 bg-gradient-to-r from-[#1C6B53] via-[#165a46] to-[#0F3A2E] hover:from-[#155a45] hover:to-[#0D2D24] shadow-lg shadow-[#1C6B53]/25 hover:shadow-xl hover:shadow-[#1C6B53]/35 active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full py-3.5 rounded-2xl text-sm font-black text-white transition-all mt-6 bg-[#1C6B53] hover:bg-[#155a45] shadow-lg shadow-[#1C6B53]/25 hover:shadow-xl hover:shadow-[#1C6B53]/35 active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <span>
                   {lockoutTimer > 0 

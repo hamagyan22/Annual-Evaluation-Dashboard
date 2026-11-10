@@ -268,11 +268,13 @@ body:not(.dark) [data-theme] .bg-\[\#1C6B53\]\/40 {
 
 [data-theme] .to-\[\#104334\],
 [data-theme] .to-\[\#0A281F\],
+[data-theme] .to-\[\#0F3A2E\],
 [data-theme] .to-\[\#0c392c\],
 [data-theme] .to-\[\#124d3a\],
 [data-theme] .to-\[\#155a45\],
 [data-theme] [class*="to-[#104334]"],
 [data-theme] [class*="to-[#0A281F]"],
+[data-theme] [class*="to-[#0F3A2E]"],
 [data-theme] [class*="to-[#0c392c]"],
 [data-theme] [class*="to-[#124d3a]"],
 [data-theme] [class*="to-[#155a45]"] {
