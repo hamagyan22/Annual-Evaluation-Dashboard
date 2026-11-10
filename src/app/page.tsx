@@ -5244,10 +5244,10 @@ export default function Dashboard() {
                 <img src="/logo.webp" alt="FIB Logo" className="w-full h-full object-contain drop-shadow-sm" />
               </div>
               <h2 className="text-xl sm:text-[23px] font-black tracking-tight text-gray-900 dark:text-white leading-snug">
-                Performance &amp; Scorecards Portal
+                Contact Center Performance Portal
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 font-medium">
-                Contact Center • TL &amp; Agent Analytics • Quality &amp; Evaluations
+                Team Leader &amp; Agent Dashboard • Quality &amp; Top Star
               </p>
             </div>
             
