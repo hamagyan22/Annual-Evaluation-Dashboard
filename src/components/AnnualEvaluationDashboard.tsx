@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { db } from "@/lib/firebaseClient";
 import { collection, doc, getDocs, query, where, onSnapshot, setDoc } from "firebase/firestore";
 import { 
-  ArrowLeft, Search, Users, Check, Save, Sliders, Building2, Plus, Trash2, Edit2, Globe, Languages, 
+  ArrowLeft, Search, Users, Check, Save, 
   Sun, Moon, ChevronDown, Sparkles,
   Award, X, Printer, UserCheck, Star,
   Info, ThumbsUp, Target, BookOpen, AlertTriangle,
@@ -21,30 +21,6 @@ import { ModernDropdown } from "@/components/ModernDropdown";
 import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
 import { BASELINE_ANNUAL_EVALUATIONS } from "@/lib/baselineAnnualEvaluations";
 import { useBodyScrollLock } from "@/lib/scrollLock";
-import { 
-  DynamicCriterion, 
-  DynamicSection, 
-  DynamicDepartment, 
-  DynamicEmployee,
-  loadStoredCriteria, 
-  saveStoredCriteria, 
-  loadStoredSections, 
-  saveStoredSections, 
-  loadStoredDepartments, 
-  saveStoredDepartments, 
-  loadStoredEmployees, 
-  saveStoredEmployees,
-  loadEvaluationRecord,
-  saveEvaluationRecord,
-  DEFAULT_CRITERIA,
-  DEFAULT_SECTIONS,
-  DEFAULT_DEPARTMENTS,
-  DEFAULT_EMPLOYEES
-} from "@/lib/customCriteriaManager";
-import { ManageCriteriaModal } from "@/components/ManageCriteriaModal";
-import { ManageStaffModal } from "@/components/ManageStaffModal";
-import { TRANSLATIONS, Language } from "@/lib/translations";
-
 
 export interface AnnualEvaluationDashboardProps {
   userProfile: any;
@@ -399,7 +375,7 @@ export default function AnnualEvaluationDashboard({
   isDarkMode = false,
   toggleDarkMode
 }: AnnualEvaluationDashboardProps) {
-  const isAdmin = userProfile?.role === 'admin' || userProfile?.email?.toLowerCase() === 'mohammed.dlshad0@gmail.com' || userProfile?.email?.toLowerCase() === 'omar.ayad@fib.iq';
+  const isAdmin = userProfile?.role === 'admin' || userProfile?.email?.toLowerCase() === 'mohammed.dlshad0@gmail.com';
   const isManager = isAdmin || userProfile?.role === 'manager' || userProfile?.email?.toLowerCase() === 'jalal.burghol@agent.com';
   const isTL = userProfile?.role === 'tl';
   const isQA = userProfile?.role === 'qa' || userProfile?.role === 'trainer' || userProfile?.role === 'auditor';
@@ -435,138 +411,12 @@ export default function AnnualEvaluationDashboard({
   }, [initialYear]);
 
   const [yearDropdownOpen, setYearDropdownOpen] = useState<boolean>(false);
-  // Period is strictly Annual (no Semi-Annual)
-  const [selectedPeriod, setSelectedPeriod] = useState<"Annual">("Annual");
-
-  // Language State: default 'en' (English by default as requested!)
-  const [lang, setLang] = useState<Language>("en");
-  const t = TRANSLATIONS[lang];
-  const isAr = lang === "ar";
-
-  const toggleLanguage = () => {
-    const nextLang: Language = lang === "en" ? "ar" : "en";
-    setLang(nextLang);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("fib_eval_language", nextLang);
-    }
-  };
-
-  const getTierLabel = (tierLevel: number) => {
-    switch (tierLevel) {
-      case 5: return t.tier5;
-      case 4: return t.tier4;
-      case 3: return t.tier3;
-      case 2: return t.tier2;
-      case 1: return t.tier1;
-      default: return "";
-    }
-  };
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedLang = localStorage.getItem("fib_eval_language") as Language;
-      if (savedLang === "ar" || savedLang === "en") {
-        setLang(savedLang);
-      }
-    }
-  }, []);
-
-  // Dynamic Criteria, Sections, Departments, Employees
-  const [criteria, setCriteria] = useState<DynamicCriterion[]>([]);
-  const [sections, setSections] = useState<DynamicSection[]>([]);
-  const [departments, setDepartments] = useState<DynamicDepartment[]>([]);
-  const [dynamicEmployees, setDynamicEmployees] = useState<DynamicEmployee[]>([]);
-
-  // Modals
-  const [showManageCriteriaModal, setShowManageCriteriaModal] = useState<boolean>(false);
-  const [showManageStaffModal, setShowManageStaffModal] = useState<boolean>(false);
-
-  useEffect(() => {
-    setCriteria(loadStoredCriteria());
-    setSections(loadStoredSections());
-    setDepartments(loadStoredDepartments());
-    setDynamicEmployees(loadStoredEmployees());
-  }, []);
+  const [selectedPeriod, setSelectedPeriod] = useState<"Semi-Annual" | "Annual">("Semi-Annual");
 
   // Selected Employee (Supports all employees across teams)
   const [selectedEmployeeName, setSelectedEmployeeName] = useState<string>("");
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState<string>("");
   const [employeeDropdownOpen, setEmployeeDropdownOpen] = useState<boolean>(false);
-  const employeeButtonRef = useRef<HTMLButtonElement>(null);
-  const [employeeDropdownCoords, setEmployeeDropdownCoords] = useState<{ top: number; right: number } | null>(null);
-
-  // Department Filter & Dropdown
-  const [selectedDepartmentFilter, setSelectedDepartmentFilter] = useState<string>("All");
-  const [deptDropdownOpen, setDeptDropdownOpen] = useState<boolean>(false);
-  const deptButtonRef = useRef<HTMLButtonElement>(null);
-  const [deptDropdownCoords, setDeptDropdownCoords] = useState<{ top: number; right: number } | null>(null);
-
-  const updateDeptDropdownPosition = useCallback(() => {
-    if (deptButtonRef.current && typeof window !== "undefined") {
-      const rect = deptButtonRef.current.getBoundingClientRect();
-      const rightDistance = Math.max(16, window.innerWidth - rect.right);
-      setDeptDropdownCoords({
-        top: rect.bottom + 8,
-        right: rightDistance,
-      });
-    }
-  }, []);
-
-  const toggleDeptDropdown = useCallback(() => {
-    if (!deptDropdownOpen) {
-      updateDeptDropdownPosition();
-      setDeptDropdownOpen(true);
-    } else {
-      setDeptDropdownOpen(false);
-    }
-  }, [deptDropdownOpen, updateDeptDropdownPosition]);
-
-  useEffect(() => {
-    if (!deptDropdownOpen) return;
-    const handleScrollOrResize = () => {
-      updateDeptDropdownPosition();
-    };
-    window.addEventListener("scroll", handleScrollOrResize, true);
-    window.addEventListener("resize", handleScrollOrResize);
-    return () => {
-      window.removeEventListener("scroll", handleScrollOrResize, true);
-      window.removeEventListener("resize", handleScrollOrResize);
-    };
-  }, [deptDropdownOpen, updateDeptDropdownPosition]);
-
-  const updateEmployeeDropdownPosition = useCallback(() => {
-    if (employeeButtonRef.current && typeof window !== "undefined") {
-      const rect = employeeButtonRef.current.getBoundingClientRect();
-      const rightDistance = Math.max(16, window.innerWidth - rect.right);
-      setEmployeeDropdownCoords({
-        top: rect.bottom + 8,
-        right: rightDistance,
-      });
-    }
-  }, []);
-
-  const toggleEmployeeDropdown = useCallback(() => {
-    if (!employeeDropdownOpen) {
-      updateEmployeeDropdownPosition();
-      setEmployeeDropdownOpen(true);
-    } else {
-      setEmployeeDropdownOpen(false);
-    }
-  }, [employeeDropdownOpen, updateEmployeeDropdownPosition]);
-
-  useEffect(() => {
-    if (!employeeDropdownOpen) return;
-    const handleScrollOrResize = () => {
-      updateEmployeeDropdownPosition();
-    };
-    window.addEventListener("scroll", handleScrollOrResize, true);
-    window.addEventListener("resize", handleScrollOrResize);
-    return () => {
-      window.removeEventListener("scroll", handleScrollOrResize, true);
-      window.removeEventListener("resize", handleScrollOrResize);
-    };
-  }, [employeeDropdownOpen, updateEmployeeDropdownPosition]);
-
   const [teamTabFilter, setTeamTabFilter] = useState<string>("Younis");
 
   // Guide Modal State
@@ -600,30 +450,6 @@ export default function AnnualEvaluationDashboard({
   const [areasForDevelopment, setAreasForDevelopment] = useState<string>("");
   const [managerComments, setManagerComments] = useState<string>("");
   const [employeeComments, setEmployeeComments] = useState<string>("");
-
-  // Criterion-Level Notes: Structured notes on any metric for employee or manager
-  type CriterionNoteTopic = "achievement" | "justification" | "improvement" | "incident" | "general";
-  interface CriterionNoteEntry {
-    role: "manager" | "employee";
-    authorName?: string;
-    topic: CriterionNoteTopic;
-    text: string;
-    updatedAt?: string;
-  }
-  const [criterionNotes, setCriterionNotes] = useState<Record<string, { employee?: CriterionNoteEntry; manager?: CriterionNoteEntry }>>({});
-  const [openNoteCriterionId, setOpenNoteCriterionId] = useState<string | null>(null);
-  const [noteActiveTab, setNoteActiveTab] = useState<"manager" | "employee">("manager");
-
-  // Clean English helper to guarantee no Arabic inside parentheses shows in English mode
-  const cleanEnglish = (text: string) => (text || "").replace(/\s*\([\u0600-\u06FF\s،؛ـ-]+\)/g, "").trim();
-  const getCriterionTitle = (c: { name: string; nameAr?: string }) => {
-    if (isAr) return c.nameAr || c.name;
-    return cleanEnglish(c.name);
-  };
-  const getCriterionDesc = (c: { description?: string; descriptionAr?: string }) => {
-    if (isAr) return c.descriptionAr || c.description || "";
-    return cleanEnglish(c.description || "");
-  };
 
   // Status & Metadata
   const [evaluationStatus, setEvaluationStatus] = useState<"draft" | "self_submitted" | "manager_finalized">("draft");
@@ -678,8 +504,8 @@ export default function AnnualEvaluationDashboard({
   const [allEvaluationsMap, setAllEvaluationsMap] = useState<Record<string, any>>({});
   const [showCoverageModal, setShowCoverageModal] = useState<boolean>(false);
   const [coverageFilterStatus, setCoverageFilterStatus] = useState<"pending" | "completed" | "all">("pending");
+  const [coveragePeriodFilter, setCoveragePeriodFilter] = useState<"all" | "Semi-Annual" | "Annual">("all");
   const [coverageTeamFilter, setCoverageTeamFilter] = useState<string>("all");
-  const [coverageDeptFilter, setCoverageDeptFilter] = useState<string>("all");
   const [coverageSearchTerm, setCoverageSearchTerm] = useState<string>("");
   const [coverageCopiedToast, setCoverageCopiedToast] = useState<boolean>(false);
   const [isClient, setIsClient] = useState<boolean>(false);
@@ -688,8 +514,8 @@ export default function AnnualEvaluationDashboard({
     setIsClient(true);
   }, []);
 
-  // Prevent background body scroll when any modal or dropdown is open across the dashboard
-  useBodyScrollLock(Boolean(showCoverageModal || showBenchmarkGuideModal || employeeDropdownOpen || deptDropdownOpen || showManageCriteriaModal || showManageStaffModal));
+  // Prevent background body scroll when any modal is open across the dashboard
+  useBodyScrollLock(Boolean(showCoverageModal || showBenchmarkGuideModal));
 
   // Lock team tab filter for Team Leaders to their team only
   useEffect(() => {
@@ -842,23 +668,6 @@ export default function AnnualEvaluationDashboard({
       }
     });
 
-    // Add dynamic employees from Manage Staff
-    dynamicEmployees.forEach(de => {
-      const k = normalizeAgentName(de.name);
-      map.set(k, {
-        id: de.id,
-        agent_name: de.name,
-        name: de.name,
-        employee_id: de.employee_id,
-        team: de.team || (de.name + ' Team'),
-        department: de.department || 'Contact Center',
-        role: de.role || 'Team Leader',
-        role_type: de.role_type || 'agent',
-        is_active: true,
-        is_dynamic: true
-      });
-    });
-
     // 2. Attach any Firestore metadata
     (allMembers || []).concat(internalMembers || []).forEach(m => {
       const name = (m.agent_name || m.name || m.display_name || "").trim();
@@ -883,11 +692,11 @@ export default function AnnualEvaluationDashboard({
     return Array.from(map.values())
       .filter(m => m.is_deleted !== true && m.is_active !== false)
       .sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
-  }, [allMembers, internalMembers, dynamicEmployees]);
+  }, [allMembers, internalMembers]);
 
   // Team counts for the 4 tabs (Younis, Ankido, Mohammed, QA & Training)
   const teamCounts = useMemo(() => {
-    const activeMembers = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, "YEAR - AVG", String(selectedYear)));
+    const activeMembers = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, selectedPeriod === "Semi-Annual" ? "H1" : "YEAR - AVG", String(selectedYear)));
     return {
       Younis: activeMembers.filter(m => (m.team || "").toLowerCase().includes("younis")).length,
       Ankido: activeMembers.filter(m => (m.team || "").toLowerCase().includes("ankido")).length,
@@ -896,60 +705,9 @@ export default function AnnualEvaluationDashboard({
     };
   }, [effectiveAllMembers, selectedPeriod, selectedYear]);
 
-  // Available departments with member counts
-  const availableDepartments = useMemo(() => {
-    const activeMembers = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, "YEAR - AVG", String(selectedYear)));
-    const deptMap = new Map<string, { id: string; name: string; nameAr?: string; count: number }>();
-
-    // Seed official departments
-    departments.forEach(d => {
-      const name = d.name.trim();
-      if (!deptMap.has(name)) {
-        deptMap.set(name, { id: d.id, name, nameAr: d.nameAr, count: 0 });
-      }
-    });
-
-    // Count members in departments
-    activeMembers.forEach(m => {
-      let dept = (m.department || "").trim();
-      if (!dept) {
-        if ((m.team || "").toLowerCase().includes("quality")) dept = "Call center - Quality";
-        else if ((m.team || "").toLowerCase().includes("training")) dept = "Training";
-        else if ((m.team || "").toLowerCase().includes("back office")) dept = "Back Office";
-        else dept = "Contact Center";
-      }
-      if (deptMap.has(dept)) {
-        deptMap.get(dept)!.count += 1;
-      } else {
-        deptMap.set(dept, { id: dept.toLowerCase().replace(/[^a-z0-9]/g, '_'), name: dept, count: 1 });
-      }
-    });
-
-    return Array.from(deptMap.values()).sort((a, b) => b.count - a.count);
-  }, [departments, effectiveAllMembers, selectedYear]);
-
-  const handleSelectDepartment = (deptName: string) => {
-    setSelectedDepartmentFilter(deptName);
-    setDeptDropdownOpen(false);
-
-    if (deptName !== "All") {
-      const target = deptName.toLowerCase();
-      const inDept = effectiveAllMembers.filter(m => {
-        const mDept = (m.department || "").toLowerCase();
-        const mTeam = (m.team || "").toLowerCase();
-        return (mDept.includes(target) || target.includes(mDept) || mTeam.includes(target)) && isMemberActiveInPeriod(m, "YEAR - AVG", String(selectedYear));
-      });
-
-      const isCurrentInDept = inDept.some(m => m.agent_name === selectedEmployeeName);
-      if (!isCurrentInDept && inDept.length > 0) {
-        setSelectedEmployeeName(inDept[0].agent_name);
-      }
-    }
-  };
-
   // Filtered members list: Younis Kamal, Ankido Buya, Mohammed Dlshad, or QA & Training
   const filteredMembers = useMemo(() => {
-    let list = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, "YEAR - AVG", String(selectedYear)));
+    let list = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, selectedPeriod === "Semi-Annual" ? "H1" : "YEAR - AVG", String(selectedYear)));
     
     // Special Staff & Team Leaders: strictly view only their own evaluation:
     // "التيم ليدر خلي بس يشوفون تقييمهم و ليس مال تيمهم"
@@ -1027,26 +785,16 @@ export default function AnnualEvaluationDashboard({
       ).sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
     }
 
-    // Department Filter: when selected, filter to that department across all teams
-    if (selectedDepartmentFilter && selectedDepartmentFilter !== "All") {
-      const target = selectedDepartmentFilter.toLowerCase();
-      list = list.filter(m => {
-        const mDept = (m.department || "").toLowerCase();
-        const mTeam = (m.team || "").toLowerCase();
-        return mDept.includes(target) || target.includes(mDept) || mTeam.includes(target);
-      });
+    // Team Tab Filter: Younis, Ankido, Mohammed, or QA & Training
+    if (teamTabFilter === "Ankido") {
+      list = list.filter(m => (m.team || "").toLowerCase().includes("ankido"));
+    } else if (teamTabFilter === "Mohammed") {
+      list = list.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad"));
+    } else if (teamTabFilter === "QA_Training") {
+      list = list.filter(m => (m.team || "").toLowerCase().includes("quality") || (m.team || "").toLowerCase().includes("training") || (m.team || "").toLowerCase().includes("back office") || m.role_type === "trainer" || m.role_type === "qa" || m.role_type === "backoffice");
     } else {
-      // Default: Team Tab Filter (Younis, Ankido, Mohammed, QA & Training)
-      if (teamTabFilter === "Ankido") {
-        list = list.filter(m => (m.team || "").toLowerCase().includes("ankido"));
-      } else if (teamTabFilter === "Mohammed") {
-        list = list.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad"));
-      } else if (teamTabFilter === "QA_Training") {
-        list = list.filter(m => (m.team || "").toLowerCase().includes("quality") || (m.team || "").toLowerCase().includes("training") || (m.team || "").toLowerCase().includes("back office") || m.role_type === "trainer" || m.role_type === "qa" || m.role_type === "backoffice");
-      } else {
-        // Default to Younis
-        list = list.filter(m => (m.team || "").toLowerCase().includes("younis"));
-      }
+      // Default to Younis
+      list = list.filter(m => (m.team || "").toLowerCase().includes("younis"));
     }
     
     return list.sort((a, b) => {
@@ -1054,7 +802,7 @@ export default function AnnualEvaluationDashboard({
       if (b.role_type === "tl" && a.role_type !== "tl") return 1;
       return (a.agent_name || "").localeCompare(b.agent_name || "");
     });
-  }, [effectiveAllMembers, employeeSearchTerm, teamTabFilter, selectedDepartmentFilter, isAgent, tlAssignedTeam, userProfile, selectedPeriod, selectedYear, isUserSpecialStaffOnly, isUserMohammedAzad, isUserMohammedJihad, isUserLaraKamil, isUserShireenWaisi]);
+  }, [effectiveAllMembers, employeeSearchTerm, teamTabFilter, isAgent, tlAssignedTeam, userProfile, selectedPeriod, selectedYear, isUserSpecialStaffOnly, isUserMohammedAzad, isUserMohammedJihad, isUserLaraKamil, isUserShireenWaisi]);
 
   // Current selected member object
   const currentMember = useMemo(() => {
@@ -1070,7 +818,7 @@ export default function AnnualEvaluationDashboard({
 
   // Chat Semi-Annual 2026 exception: Productivity is removed ONLY for year 2026 Semi-Annual Chat team
   const isChatSemi2026 = useMemo(() => {
-    return false;
+    return isSelectedEmployeeChat && selectedPeriod === "Semi-Annual" && String(selectedYear) === "2026";
   }, [isSelectedEmployeeChat, selectedPeriod, selectedYear]);
 
   // Open Benchmark Guide modal with auto-selected tab based on employee
@@ -1191,40 +939,10 @@ export default function AnnualEvaluationDashboard({
     };
   }, [effectiveAllMembers, allEvaluationsMap, selectedYear, tlAssignedTeam]);
 
-  // Dynamic department counts with pending and completed tallies for Coverage Tracker
-  const coverageDeptCounts = useMemo(() => {
-    const counts: Record<string, { total: number; pending: number; completed: number; nameAr?: string }> = {};
-    coverageData.membersList.forEach(item => {
-      const deptName = item.member?.department || "Contact Center";
-      if (!counts[deptName]) {
-        const foundDept = departments.find(d => d.name.toLowerCase() === deptName.toLowerCase());
-        counts[deptName] = { 
-          total: 0, 
-          pending: 0, 
-          completed: 0, 
-          nameAr: foundDept?.nameAr 
-        };
-      }
-      counts[deptName].total++;
-      if (!item.annual.isCompleted) {
-        counts[deptName].pending++;
-      } else {
-        counts[deptName].completed++;
-      }
-    });
-    return counts;
-  }, [coverageData.membersList, departments]);
-
   // Filtered members list for Coverage Modal
   const filteredCoverageList = useMemo(() => {
     return coverageData.membersList.filter(item => {
-      // 1. Department filter
-      if (coverageDeptFilter !== "all") {
-        const itemDept = (item.member?.department || "Contact Center").toLowerCase();
-        if (itemDept !== coverageDeptFilter.toLowerCase()) return false;
-      }
-
-      // 2. Team filter
+      // 1. Team filter
       if (coverageTeamFilter !== "all") {
         const t = (item.team || "").toLowerCase();
         if (coverageTeamFilter === "Younis" && !t.includes("younis")) return false;
@@ -1233,7 +951,7 @@ export default function AnnualEvaluationDashboard({
         if (coverageTeamFilter === "QA_Training" && !t.includes("quality") && !t.includes("training") && item.member?.role_type !== "trainer" && item.member?.role_type !== "qa") return false;
       }
 
-      // 3. Search query filter
+      // 2. Search query filter
       if (coverageSearchTerm.trim()) {
         const q = coverageSearchTerm.toLowerCase();
         const matchesName = item.name.toLowerCase().includes(q);
@@ -1241,28 +959,39 @@ export default function AnnualEvaluationDashboard({
         if (!matchesName && !matchesId) return false;
       }
 
-      // 4. Status filter (Strictly Annual)
+      // 3. Status filter
       if (coverageFilterStatus === "pending") {
-        return !item.annual.isCompleted;
+        if (coveragePeriodFilter === "Semi-Annual") return !item.semi.isCompleted;
+        if (coveragePeriodFilter === "Annual") return !item.annual.isCompleted;
+        return !item.semi.isCompleted || !item.annual.isCompleted;
       }
 
       if (coverageFilterStatus === "completed") {
-        return item.annual.isCompleted;
+        if (coveragePeriodFilter === "Semi-Annual") return item.semi.isCompleted;
+        if (coveragePeriodFilter === "Annual") return item.annual.isCompleted;
+        return item.semi.isCompleted || item.annual.isCompleted;
       }
 
       return true;
     });
-  }, [coverageData, coverageFilterStatus, coverageTeamFilter, coverageDeptFilter, coverageSearchTerm]);
+  }, [coverageData, coverageFilterStatus, coveragePeriodFilter, coverageTeamFilter, coverageSearchTerm]);
 
   // Copy pending list to clipboard
   const handleCopyPendingList = () => {
-    const pendingItems = coverageData.membersList.filter(item => !item.annual.isCompleted);
-
-    const lines = pendingItems.map((item, idx) => {
-      return `${idx + 1}. ${toTitleCase(item.name)} (${item.knownId ? `ID: ${item.knownId}, ` : ''}${item.team.replace(' Team', '')}) -> Pending Annual Evaluation`;
+    const pendingItems = coverageData.membersList.filter(item => {
+      if (coveragePeriodFilter === "Semi-Annual") return !item.semi.isCompleted;
+      if (coveragePeriodFilter === "Annual") return !item.annual.isCompleted;
+      return !item.semi.isCompleted || !item.annual.isCompleted;
     });
 
-    const textToCopy = `📋 Pending Annual Evaluations List (${selectedYear}):\n` + lines.join('\n');
+    const lines = pendingItems.map((item, idx) => {
+      const pendingPeriods = [];
+      if (!item.semi.isCompleted) pendingPeriods.push("Semi-Annual");
+      if (!item.annual.isCompleted) pendingPeriods.push("Annual");
+      return `${idx + 1}. ${toTitleCase(item.name)} (${item.knownId ? `ID: ${item.knownId}, ` : ''}${item.team.replace(' Team', '')}) -> Pending: ${pendingPeriods.join(' & ')}`;
+    });
+
+    const textToCopy = `📋 Pending Evaluations List (${selectedYear}):\n` + lines.join('\n');
     navigator.clipboard.writeText(textToCopy);
     setCoverageCopiedToast(true);
     setTimeout(() => setCoverageCopiedToast(false), 2500);
@@ -1271,7 +1000,7 @@ export default function AnnualEvaluationDashboard({
   const handleSelectForEvaluation = (memberName: string, period?: "Semi-Annual" | "Annual") => {
     setSelectedEmployeeName(memberName);
     if (period) {
-      setSelectedPeriod("Annual");
+      setSelectedPeriod(period);
     }
     setShowCoverageModal(false);
   };
@@ -1381,29 +1110,10 @@ export default function AnnualEvaluationDashboard({
     if (!docId) return;
 
     let isMounted = true;
-    const norm = normalizeAgentName(currentMember?.agent_name || selectedEmployeeName || "");
-    const knownId = KNOWN_EMPLOYEE_IDS[norm] || KNOWN_EMPLOYEE_IDS[currentMember?.id] || "";
-
     const unsub = onSnapshot(doc(db, "annual_evaluations", docId), (docSnap) => {
       if (!isMounted) return;
-
-      // Local storage fallback for instant response
-      const localDoc = loadEvaluationRecord(selectedYear, selectedEmployeeName);
-      if (localDoc && !docSnap.exists()) {
-        setEvaluationDate(localDoc.submittedAt || "");
-        setEmployeeId(localDoc.employeeId || knownId || "");
-        setSelfKpis(localDoc.selfScores || {});
-        setManagerKpis(localDoc.managerScores || {});
-        setSelfCompetencies(localDoc.selfScores || {});
-        setManagerCompetencies(localDoc.managerScores || {});
-        setKeyStrengths(localDoc.keyStrengths || "");
-        setAreasForDevelopment(localDoc.areasForDevelopment || "");
-        setManagerComments(localDoc.managerComments || "");
-        setEmployeeComments(localDoc.employeeComments || "");
-        setCriterionNotes(localDoc.criterionNotes || {});
-        setEvaluationStatus(localDoc.status || "draft");
-        setLastSavedAt(localDoc.updatedAt || "");
-      }
+      const norm = normalizeAgentName(currentMember?.agent_name || selectedEmployeeName || "");
+      const knownId = KNOWN_EMPLOYEE_IDS[norm] || KNOWN_EMPLOYEE_IDS[currentMember?.id] || "";
 
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -1418,7 +1128,6 @@ export default function AnnualEvaluationDashboard({
         setAreasForDevelopment(data.manager_improvements || "");
         setManagerComments(data.manager_comments || "");
         setEmployeeComments(data.self_comments || "");
-        setCriterionNotes(data.criterion_notes || localDoc?.criterionNotes || {});
         setEvaluationStatus(data.status || "draft");
         setLastSavedAt(data.updated_at || "");
       } else {
@@ -1444,7 +1153,6 @@ export default function AnnualEvaluationDashboard({
           setAreasForDevelopment(baselineData.manager_improvements || "");
           setManagerComments(baselineData.manager_comments || "");
           setEmployeeComments(baselineData.self_comments || "");
-          setCriterionNotes(baselineData.criterion_notes || localDoc?.criterionNotes || {});
           setEvaluationStatus(baselineData.status || "manager_finalized");
           setLastSavedAt(baselineData.updated_at || "");
 
@@ -1461,7 +1169,6 @@ export default function AnnualEvaluationDashboard({
           setAreasForDevelopment("");
           setManagerComments("");
           setEmployeeComments("");
-          setCriterionNotes(localDoc?.criterionNotes || {});
           setEvaluationStatus("draft");
           setLastSavedAt("");
         }
@@ -1517,7 +1224,9 @@ export default function AnnualEvaluationDashboard({
           } catch (e2) {}
         }
         
-        const periodMonths = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]; // Annual is Full Year
+        const periodMonths = selectedPeriod === 'Semi-Annual'
+          ? ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"] // Semi-Annual IS H1
+          : ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]; // Annual is Full Year
 
         const targetLower = selectedEmployeeName.toLowerCase().trim();
         const targetClean = targetLower.replace(/[^a-z0-9]/g, '');
@@ -1680,8 +1389,6 @@ export default function AnnualEvaluationDashboard({
     return () => { isMounted = false; };
   }, [selectedEmployeeName, selectedYear, selectedPeriod, currentMember?.team, isChatSemi2026]);
 
-
-
   // Operational KPIs dynamic definitions matching Role and Templates
   const kpiDefinitions: KpiItemDefinition[] = useMemo(() => {
     if (currentMemberRoleType === "trainer") {
@@ -1754,44 +1461,6 @@ export default function AnnualEvaluationDashboard({
     ];
   }, [selectedEmployeeName, currentMember, currentMemberRoleType]);
 
-  // Dynamic user criteria mapped to KPI section
-  const activeKpiDefinitions: KpiItemDefinition[] = useMemo(() => {
-    const customKpis = criteria.filter(c => c.sectionId === 'kpi');
-    if (customKpis.length > 0) {
-      return customKpis.map(c => ({
-        id: c.id,
-        name: (c.name || "").replace(/\s*\([\u0600-\u06FF\s،؛ـ-]+\)/g, "").trim(),
-        nameAr: c.nameAr || (c.name || "").match(/\(([\u0600-\u06FF\s،؛ـ-]+)\)/)?.[1]?.trim() || "",
-        description: (c.description || "").replace(/\s*\([\u0600-\u06FF\s،؛ـ-]+\)/g, "").trim(),
-        descriptionAr: c.descriptionAr || "",
-        noteGuideline: c.noteGuideline,
-        actual: null
-      }));
-    }
-    return kpiDefinitions;
-  }, [criteria, kpiDefinitions]);
-
-  // Dynamic user criteria mapped to Competencies section
-  const activeCompetenciesList = useMemo(() => {
-    const customComps = criteria.filter(c => c.sectionId === 'competencies');
-    if (customComps.length > 0) {
-      return customComps.map(c => ({
-        id: c.id,
-        name: (c.name || "").replace(/\s*\([\u0600-\u06FF\s،؛ـ-]+\)/g, "").trim(),
-        nameAr: c.nameAr || (c.name || "").match(/\(([\u0600-\u06FF\s،؛ـ-]+)\)/)?.[1]?.trim() || "",
-        description: (c.description || "").replace(/\s*\([\u0600-\u06FF\s،؛ـ-]+\)/g, "").trim(),
-        descriptionAr: c.descriptionAr || "",
-        noteGuideline: c.noteGuideline
-      }));
-    }
-    return currentCompetenciesList;
-  }, [criteria, currentCompetenciesList]);
-
-  // Custom sections beyond KPI and Competencies
-  const customSectionsList = useMemo(() => {
-    return sections.filter(s => s.id !== 'kpi' && s.id !== 'competencies');
-  }, [sections]);
-
   // Helper to reliably read KPI score whether keyed by 'exam' or 'knowledge'
   const getKpiScore = (kpisMap: Record<string, number>, id: string) => {
     if (!kpisMap) return 0;
@@ -1803,34 +1472,34 @@ export default function AnnualEvaluationDashboard({
 
   // KPI Averages
   const selfKpiAvg = useMemo(() => {
-    const vals = activeKpiDefinitions.map(k => getKpiScore(selfKpis, k.id)).filter(v => v > 0);
+    const vals = kpiDefinitions.map(k => getKpiScore(selfKpis, k.id)).filter(v => v > 0);
     if (vals.length === 0) return 0;
     return parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
   }, [kpiDefinitions, selfKpis]);
 
   const managerKpiAvg = useMemo(() => {
-    const vals = activeKpiDefinitions.map(k => getKpiScore(managerKpis, k.id)).filter(v => v > 0);
+    const vals = kpiDefinitions.map(k => getKpiScore(managerKpis, k.id)).filter(v => v > 0);
     if (vals.length === 0) return 0;
     return parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
   }, [kpiDefinitions, managerKpis]);
 
   // Competencies Averages
   const selfCompAvg = useMemo(() => {
-    const vals = activeCompetenciesList.map(c => selfCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
+    const vals = currentCompetenciesList.map(c => selfCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
     if (vals.length === 0) return 0;
     return parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
   }, [currentCompetenciesList, selfCompetencies]);
 
   const managerCompAvg = useMemo(() => {
-    const vals = activeCompetenciesList.map(c => managerCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
+    const vals = currentCompetenciesList.map(c => managerCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
     if (vals.length === 0) return 0;
     return parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
   }, [currentCompetenciesList, managerCompetencies]);
 
   // Overall Scores: Calculate using unrounded averages for exact Excel precision (50% KPI + 50% Competencies)
   const selfOverall = useMemo(() => {
-    const kpiVals = activeKpiDefinitions.map(k => getKpiScore(selfKpis, k.id)).filter(v => v > 0);
-    const compVals = activeCompetenciesList.map(c => selfCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
+    const kpiVals = kpiDefinitions.map(k => getKpiScore(selfKpis, k.id)).filter(v => v > 0);
+    const compVals = currentCompetenciesList.map(c => selfCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
     if (kpiVals.length > 0 && compVals.length > 0) {
       const rawKpi = kpiVals.reduce((a, b) => a + b, 0) / kpiVals.length;
       const rawComp = compVals.reduce((a, b) => a + b, 0) / compVals.length;
@@ -1842,8 +1511,8 @@ export default function AnnualEvaluationDashboard({
   }, [kpiDefinitions, selfKpis, currentCompetenciesList, selfCompetencies, selfKpiAvg, selfCompAvg]);
 
   const managerOverall = useMemo(() => {
-    const kpiVals = activeKpiDefinitions.map(k => getKpiScore(managerKpis, k.id)).filter(v => v > 0);
-    const compVals = activeCompetenciesList.map(c => managerCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
+    const kpiVals = kpiDefinitions.map(k => getKpiScore(managerKpis, k.id)).filter(v => v > 0);
+    const compVals = currentCompetenciesList.map(c => managerCompetencies[c.id]).filter(v => v !== undefined && v !== null && v > 0);
     if (kpiVals.length > 0 && compVals.length > 0) {
       const rawKpi = kpiVals.reduce((a, b) => a + b, 0) / kpiVals.length;
       const rawComp = compVals.reduce((a, b) => a + b, 0) / compVals.length;
@@ -1934,7 +1603,6 @@ export default function AnnualEvaluationDashboard({
         manager_strengths: keyStrengths,
         manager_improvements: areasForDevelopment,
         manager_comments: managerComments,
-        criterion_notes: criterionNotes,
 
         status: targetStatus,
         updated_at: new Date().toISOString(),
@@ -1953,29 +1621,6 @@ export default function AnnualEvaluationDashboard({
       }
 
       await setDoc(doc(db, "annual_evaluations", docId), payload, { merge: true });
-
-      // LocalStorage backup
-      try {
-        saveEvaluationRecord({
-          id: docId,
-          employeeId: employeeId || currentMember?.employee_id || "",
-          employeeName: selectedEmployeeName,
-          year: selectedYear,
-          period: "Annual",
-          status: targetStatus,
-          selfScores: { ...cleanSelfKpis, ...selfCompetencies },
-          managerScores: { ...cleanManagerKpis, ...managerCompetencies },
-          keyStrengths,
-          areasForDevelopment,
-          managerComments,
-          employeeComments,
-          criterionNotes,
-          submittedAt: autoDate,
-          updatedAt: new Date().toISOString()
-        });
-      } catch (e) {
-        console.warn("localStorage evaluation save warning:", e);
-      }
       setEvaluationStatus(targetStatus);
       setLastSavedAt(new Date().toLocaleTimeString());
       
@@ -1998,170 +1643,8 @@ export default function AnnualEvaluationDashboard({
     window.print();
   };
 
-  const handleUpdateCriterionNote = (criterionId: string, role: "manager" | "employee", topic: CriterionNoteTopic, text: string) => {
-    const safeId = criterionId || "crit_default";
-    setCriterionNotes(prev => {
-      const existing = prev[safeId] || {};
-      const updated = {
-        ...existing,
-        [role]: {
-          role,
-          authorName: userProfile?.name || userProfile?.agent_name || (role === "manager" ? "Manager" : "Employee"),
-          topic,
-          text: text,
-          updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      };
-      return {
-        ...prev,
-        [safeId]: updated
-      };
-    });
-  };
-
-  const getCriterionNotesCount = (critId: string) => {
-    const safeId = critId || "";
-    const entry = criterionNotes[safeId];
-    if (!entry) return 0;
-    return (entry.manager?.text ? 1 : 0) + (entry.employee?.text ? 1 : 0);
-  };
-
-  const renderCriterionNoteDrawer = (critId: string, critTitle: string) => {
-    const safeCritId = critId || (critTitle ? critTitle.toLowerCase().replace(/[^a-z0-9]/g, '_') : 'crit_default');
-    const entry = criterionNotes[safeCritId] || {};
-    const activeEntry = noteActiveTab === "manager" ? entry.manager : entry.employee;
-    const canEditThisTab = noteActiveTab === "manager" ? canEditManager : canEditSelf;
-
-    return (
-      <div className="bg-white dark:bg-gray-900 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl p-4 shadow-sm animate-in fade-in duration-150">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-gray-200/80 dark:border-gray-800">
-          <div className="flex items-center gap-2">
-            <MessageSquare size={16} className="text-[#1C6B53] dark:text-emerald-400 shrink-0" />
-            <div>
-              <span className="text-xs font-black text-gray-900 dark:text-white">
-                {isAr ? "ملاحظات وتبرير معيار:" : "Evaluation Notes for:"} <span className="text-[#1C6B53] dark:text-emerald-400 font-extrabold">{critTitle}</span>
-              </span>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2 self-end sm:self-auto">
-            {/* Tabs: Manager Note vs Employee Note */}
-            <div className="flex items-center p-0.5 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-bold">
-              <button
-                type="button"
-                onClick={() => setNoteActiveTab("manager")}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition cursor-pointer ${
-                  noteActiveTab === "manager"
-                    ? "bg-[#1C6B53] text-white shadow-2xs font-black"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
-                }`}
-              >
-                <span>{t.noteAuthorManager}</span>
-                {entry.manager?.text && <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />}
-              </button>
-              <button
-                type="button"
-                onClick={() => setNoteActiveTab("employee")}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition cursor-pointer ${
-                  noteActiveTab === "employee"
-                    ? "bg-blue-600 text-white shadow-2xs font-black"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
-                }`}
-              >
-                <span>{t.noteAuthorEmployee}</span>
-                {entry.employee?.text && <span className="w-1.5 h-1.5 rounded-full bg-blue-300" />}
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setOpenNoteCriterionId(null)}
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg transition cursor-pointer"
-              title="Close"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
-
-        {/* Note Topic / Reason Selector ("على شنو النوت") */}
-        <div className="mb-3">
-          <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1.5">
-            {t.noteTopicLabel}
-          </label>
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              { id: "justification" as CriterionNoteTopic, label: t.topicJustification, icon: "⚖️" },
-              { id: "achievement" as CriterionNoteTopic, label: t.topicAchievement, icon: "🏆" },
-              { id: "improvement" as CriterionNoteTopic, label: t.topicImprovement, icon: "🎯" },
-              { id: "incident" as CriterionNoteTopic, label: t.topicIncident, icon: "⚠️" },
-              { id: "general" as CriterionNoteTopic, label: t.topicGeneral, icon: "💬" }
-            ].map((top) => {
-              const currentTopic = activeEntry?.topic || "justification";
-              const isSelected = currentTopic === top.id;
-              return (
-                <button
-                  key={top.id}
-                  type="button"
-                  disabled={!canEditThisTab}
-                  onClick={() => {
-                    if (canEditThisTab) {
-                      handleUpdateCriterionNote(safeCritId, noteActiveTab, top.id, activeEntry?.text || "");
-                    }
-                  }}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition ${
-                    isSelected
-                      ? (noteActiveTab === "manager" ? "bg-[#1C6B53] text-white shadow-2xs" : "bg-blue-600 text-white shadow-2xs")
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200/80 border border-gray-200 dark:border-gray-700"
-                  } ${!canEditThisTab ? "opacity-75 cursor-default" : "cursor-pointer"}`}
-                >
-                  <span>{top.icon}</span>
-                  <span>{top.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Textarea */}
-        <div className="relative">
-          <textarea
-            rows={3}
-            value={activeEntry?.text || ""}
-            disabled={!canEditThisTab}
-            onChange={(e) => {
-              handleUpdateCriterionNote(
-                safeCritId, 
-                noteActiveTab, 
-                activeEntry?.topic || "justification", 
-                e.target.value
-              );
-            }}
-            placeholder={canEditThisTab ? t.noteTextPlaceholder : (isAr ? "لا توجد ملاحظة مدونة بعد." : "No note has been recorded yet.")}
-            className="w-full text-xs p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-2 focus:ring-[#1C6B53]/20 focus:border-[#1C6B53] outline-none transition disabled:opacity-75 resize-none font-medium leading-relaxed"
-          />
-        </div>
-
-        <div className="flex justify-between items-center text-[10px] text-gray-400 mt-2">
-          <span>
-            {activeEntry?.updatedAt 
-              ? `${isAr ? "آخر تعديل:" : "Last updated:"} ${activeEntry.updatedAt} ${activeEntry.authorName ? `(${activeEntry.authorName})` : ''}`
-              : (canEditThisTab ? (isAr ? "اكتب الملاحظة وستحفظ تلقائياً مع التقييم" : "Type your note and it saves automatically with the evaluation") : (isAr ? "للقراءة فقط" : "Read-only view"))}
-          </span>
-          <button
-            type="button"
-            onClick={() => setOpenNoteCriterionId(null)}
-            className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-xs font-bold text-gray-700 dark:text-gray-300 transition cursor-pointer"
-          >
-            {t.closeNote}
-          </button>
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div className="min-h-screen p-3.5 sm:p-6 md:p-8 font-sans bg-[#F9F8F4] dark:bg-gray-950 text-gray-800 dark:text-gray-100 transition-colors pb-16 print:bg-white print:text-black print:p-0" dir={isAr ? "rtl" : "ltr"}>
+    <div className="min-h-screen p-3.5 sm:p-6 md:p-8 font-sans bg-[#F9F8F4] dark:bg-gray-950 text-gray-800 dark:text-gray-100 transition-colors pb-16 print:bg-white print:text-black print:p-0">
       
       {/* Toast Notification */}
       {saveToast && (
@@ -2183,10 +1666,10 @@ export default function AnnualEvaluationDashboard({
             <div className="h-8 sm:h-9 w-[1.5px] bg-gray-200 dark:bg-gray-700 shrink-0" />
             <div className="shrink-0">
               <h1 className="text-base sm:text-xl font-black tracking-tight text-gray-900 dark:text-white leading-none">
-                {t.appTitle}
+                Performance Evaluation
               </h1>
               <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
-                {t.appSubtitle}
+                Semi-Annual & Annual Performance Review
               </p>
             </div>
           </div>
@@ -2201,45 +1684,6 @@ export default function AnnualEvaluationDashboard({
               onOpenSettings={onOpenSettings}
               isDarkMode={isDarkMode}
               toggleDarkMode={toggleDarkMode}
-              showOnlyEvaluation={userProfile?.role === 'backoffice' || (userProfile?.email || '').toLowerCase().includes('shireen')}
-              lang={lang}
-              evaluationLabel={t.evaluationTab}
-              extraActions={
-                <div className="flex items-center gap-1.5">
-                  <div className="flex items-center p-0.5 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-gray-700 shadow-2xs">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLang("en");
-                        if (typeof window !== "undefined") localStorage.setItem("fib_eval_language", "en");
-                      }}
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
-                        lang === "en"
-                          ? "bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 shadow-xs ring-1 ring-black/5"
-                          : "text-gray-500 hover:text-gray-800 dark:text-gray-300"
-                      }`}
-                      title="Switch to English"
-                    >
-                      <span>English</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLang("ar");
-                        if (typeof window !== "undefined") localStorage.setItem("fib_eval_language", "ar");
-                      }}
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
-                        lang === "ar"
-                          ? "bg-[#1C6B53] text-white shadow-xs"
-                          : "text-gray-500 hover:text-gray-800 dark:text-gray-300"
-                      }`}
-                      title="التبديل إلى العربية"
-                    >
-                      <span>العربية</span>
-                    </button>
-                  </div>
-                </div>
-              }
             />
           </div>
         </div>
@@ -2247,57 +1691,49 @@ export default function AnnualEvaluationDashboard({
         {/* Main Container */}
         <main className="w-full">
           
-          {/* Top Control Toolbar: Single Streamlined Executive Row ("روو واحد") */}
-          <section className="relative z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl sm:rounded-3xl p-2.5 sm:p-3 shadow-xs mb-5 print:hidden">
-            <div className="flex items-center justify-between gap-2.5 sm:gap-3 w-full overflow-x-auto no-scrollbar scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none]">
+          {/* Top Control Toolbar: Prominent, Spacious, Ultra-Modern Executive Control Bar */}
+          <section className="relative z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl sm:rounded-3xl p-2.5 sm:p-3.5 shadow-sm mb-5 print:hidden">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
               
-              {/* Left Group */}
-              <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+              {/* Left Controls: Year & Harmonized Period Switcher & Who's Pending */}
+              <div className="flex flex-wrap items-center gap-2">
+                
                 {/* Year Dropdown using ModernDropdown */}
-                <div className="shrink-0">
-                  <ModernDropdown
-                    value={selectedYear}
-                    onChange={(val) => setSelectedYear(val)}
-                    options={AVAILABLE_YEARS}
-                    variant="white"
-                    size="md"
-                    ariaLabel="Select Year"
-                  />
+                <ModernDropdown
+                  value={selectedYear}
+                  onChange={(val) => setSelectedYear(val)}
+                  options={AVAILABLE_YEARS}
+                  variant="gray"
+                  size="lg"
+                  ariaLabel="Select Year"
+                />
+
+                {/* Period Switcher */}
+                <div className="flex items-center p-0.5 bg-gray-100 dark:bg-gray-800/90 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shrink-0 h-9">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPeriod("Semi-Annual")}
+                    className={`flex items-center gap-1.5 px-3.5 sm:px-4 h-8 rounded-[10px] text-xs sm:text-sm font-black transition-all cursor-pointer ${
+                      selectedPeriod === "Semi-Annual"
+                        ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 shadow-xs ring-1 ring-black/5 dark:ring-white/10'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <span>Semi-Annual</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPeriod("Annual")}
+                    className={`flex items-center gap-1.5 px-3.5 sm:px-4 h-8 rounded-[10px] text-xs sm:text-sm font-black transition-all cursor-pointer ${
+                      selectedPeriod === "Annual"
+                        ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 shadow-xs ring-1 ring-black/5 dark:ring-white/10'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <span>Annual</span>
+                  </button>
                 </div>
-
-                {/* Annual Evaluation Badge */}
-                <div className="flex items-center gap-2 px-3.5 h-10 bg-gradient-to-r from-[#10664F] to-[#0A4736] border border-emerald-400/30 rounded-xl sm:rounded-2xl text-[13px] font-black text-white shrink-0 shadow-sm shadow-[#10664F]/25 select-none">
-                  <Award size={15} className="text-emerald-300" />
-                  <span>{isAr ? "التقييم السنوي" : "Annual Evaluation"}</span>
-                </div>
-
-                {/* Criteria Management Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowManageCriteriaModal(true)}
-                  className="flex items-center gap-2 h-10 px-3.5 rounded-xl sm:rounded-2xl bg-white hover:bg-gray-50/90 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200/90 dark:border-gray-700/80 text-[13px] font-bold text-gray-800 dark:text-gray-200 transition-all hover:border-[#10664F]/40 active:scale-95 cursor-pointer shrink-0 shadow-xs"
-                  title={isAr ? "إدارة ومعايير التقييم" : "Manage Evaluation Criteria"}
-                >
-                  <Sliders size={14} className="text-[#10664F] dark:text-emerald-400" />
-                  <span>{isAr ? "المعايير" : "Criteria"}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200/70 dark:border-emerald-800/60 text-[#10664F] dark:text-emerald-300 text-[11px] font-black">
-                    {criteria.length}
-                  </span>
-                </button>
-
-                {/* Employees & Departments Management Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowManageStaffModal(true)}
-                  className="flex items-center gap-2 h-10 px-3.5 rounded-xl sm:rounded-2xl bg-white hover:bg-gray-50/90 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200/90 dark:border-gray-700/80 text-[13px] font-bold text-gray-800 dark:text-gray-200 transition-all hover:border-blue-400/40 active:scale-95 cursor-pointer shrink-0 shadow-xs"
-                  title={isAr ? "إدارة الموظفين والأقسام" : "Manage Staff & Departments"}
-                >
-                  <Building2 size={14} className="text-blue-600 dark:text-blue-400" />
-                  <span>{isAr ? "الموظفين والأقسام" : "Staff & Rosters"}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/70 border border-blue-200/70 dark:border-blue-800/60 text-blue-700 dark:text-blue-300 text-[11px] font-black">
-                    {effectiveAllMembers.length}
-                  </span>
-                </button>
 
                 {/* Quick Button: Who's Pending - Manager & Admin Only */}
                 {(isManager || isAdmin) && (
@@ -2307,150 +1743,44 @@ export default function AnnualEvaluationDashboard({
                       setCoverageFilterStatus("pending");
                       setShowCoverageModal(true);
                     }}
-                    className="flex items-center gap-2 h-10 px-3.5 rounded-xl sm:rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 border border-amber-300/80 dark:border-amber-700/80 text-[13px] font-bold text-amber-900 dark:text-amber-200 transition-all active:scale-95 cursor-pointer shrink-0 shadow-xs"
-                    title={isAr ? "عرض الموظفين المتبقين للتقييم" : "View Pending Employees"}
+                    className="flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 border border-amber-500/30 text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200 transition active:scale-95 cursor-pointer shrink-0 shadow-2xs"
+                    title="View Pending Employees"
                   >
-                    <ListChecks size={14} className="text-amber-600 dark:text-amber-400" />
-                    <span>{isAr ? "المتبقين" : "Who's Pending"}</span>
-                    <span className="px-2 py-0.5 bg-amber-500 text-white rounded-full text-[11px] font-black shadow-2xs">
-                      {coverageData.annualPendingCount}
+                    <ListChecks size={15} className="text-amber-600 dark:text-amber-400" />
+                    <span>Who&apos;s Pending?</span>
+                    <span className="px-1.5 py-0.5 bg-amber-500 text-white rounded-full text-xs font-black shadow-2xs">
+                      {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount}
                     </span>
                   </button>
                 )}
+
               </div>
 
-              {/* Right Group */}
-              <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 justify-end">
+              {/* Right Side: Print PDF & Employee Selector */}
+              <div className="flex items-center gap-2 flex-1 sm:flex-initial justify-end">
+                
                 {/* Print / Save PDF Button */}
                 <button
                   type="button"
                   onClick={handlePrint}
-                  className="flex items-center gap-2 h-10 px-3.5 rounded-xl sm:rounded-2xl bg-white hover:bg-gray-50/90 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200/90 dark:border-gray-700/80 text-[13px] font-bold text-gray-800 dark:text-gray-200 transition-all active:scale-95 shadow-xs cursor-pointer shrink-0"
+                  className="flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-xl bg-gray-100/90 hover:bg-gray-200/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/80 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
                   title="Print / Save PDF"
                 >
-                  <Printer size={14} className="text-[#10664F] dark:text-emerald-400" />
-                  <span>Print</span>
+                  <Printer size={15} className="text-[#1C6B53] dark:text-emerald-400" />
+                  <span className="hidden sm:inline">Print / PDF</span>
                 </button>
 
-                {/* Department Selector */}
-                <div className="relative shrink-0">
-                  <button
-                    ref={deptButtonRef}
-                    type="button"
-                    onClick={toggleDeptDropdown}
-                    className="h-10 flex items-center justify-between gap-2 px-3.5 bg-white hover:bg-gray-50/90 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200/90 dark:border-gray-750 rounded-xl sm:rounded-2xl text-[13px] font-bold text-gray-900 dark:text-white transition-all shadow-xs cursor-pointer select-none"
-                    title={isAr ? "تصفية حسب القسم" : "Filter by Department"}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <div className="w-5 h-5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center shrink-0">
-                        <Building2 size={12} className="text-[#10664F] dark:text-emerald-400" />
-                      </div>
-                      <span className="truncate max-w-[95px] sm:max-w-[130px]">
-                        {selectedDepartmentFilter === "All" ? (isAr ? "جميع الأقسام" : "All Depts") : selectedDepartmentFilter}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-black bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200/60 dark:border-emerald-800/50 text-[#10664F] dark:text-emerald-300">
-                        {selectedDepartmentFilter === "All"
-                          ? effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, "YEAR - AVG", String(selectedYear))).length
-                          : (availableDepartments.find(d => d.name.toLowerCase() === selectedDepartmentFilter.toLowerCase())?.count || filteredMembers.length)}
-                      </span>
-                      <ChevronDown size={13} className={`text-gray-400 transition-transform ${deptDropdownOpen ? 'rotate-180' : ''}`} />
-                    </div>
-                  </button>
-
-                  {deptDropdownOpen && isClient && typeof document !== "undefined" && createPortal(
-                    <>
-                      <div 
-                        className="fixed inset-0 z-[99990] bg-black/10 backdrop-blur-[1px]" 
-                        onClick={() => setDeptDropdownOpen(false)} 
-                        onWheel={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                        onTouchMove={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                      />
-                      <div
-                        style={{
-                          position: 'fixed',
-                          top: deptDropdownCoords ? `${deptDropdownCoords.top}px` : '72px',
-                          right: deptDropdownCoords ? `${deptDropdownCoords.right}px` : '16px',
-                        }}
-                        className="w-[260px] sm:w-[280px] bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-2 z-[99999] flex flex-col animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/10"
-                      >
-                        <div className="px-2 py-1.5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between mb-1">
-                          <span className="text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                            <Building2 size={12} className="text-[#1C6B53] dark:text-emerald-400" />
-                            {isAr ? "الأقسام" : "Departments"}
-                          </span>
-                          <span className="text-[10px] text-gray-400 font-bold">
-                            {availableDepartments.length} {isAr ? "قسم" : "Depts"}
-                          </span>
-                        </div>
-
-                        <div className="max-h-60 overflow-y-auto space-y-0.5 overscroll-contain">
-                          {/* All Departments Option */}
-                          <button
-                            type="button"
-                            onClick={() => handleSelectDepartment("All")}
-                            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer text-left ${
-                              selectedDepartmentFilter === "All"
-                                ? "bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-black"
-                                : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 truncate">
-                              <span className="truncate">{isAr ? "جميع الأقسام (الكل)" : "All Departments"}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-black">
-                                {effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, "YEAR - AVG", String(selectedYear))).length}
-                              </span>
-                              {selectedDepartmentFilter === "All" && <Check size={13} className="text-[#1C6B53] dark:text-emerald-400 shrink-0" />}
-                            </div>
-                          </button>
-
-                          {/* Department List */}
-                          {availableDepartments.map(dept => {
-                            const isSelected = selectedDepartmentFilter.toLowerCase() === dept.name.toLowerCase();
-                            return (
-                              <button
-                                key={dept.id || dept.name}
-                                type="button"
-                                onClick={() => handleSelectDepartment(dept.name)}
-                                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer text-left ${
-                                  isSelected
-                                    ? "bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-black"
-                                    : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                }`}
-                              >
-                                <div className="flex items-center gap-2 truncate">
-                                  <span className="truncate">{isAr ? (dept.nameAr || dept.name) : dept.name}</span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-black">
-                                    {dept.count}
-                                  </span>
-                                  {isSelected && <Check size={13} className="text-[#1C6B53] dark:text-emerald-400 shrink-0" />}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </>,
-                    document.body
-                  )}
-                </div>
-
-                {/* Employee Selector (Comfortable & Modern) */}
-                <div className="relative shrink-0">
+                {/* Employee Selector */}
+                <div className="relative min-w-[220px] sm:min-w-[300px]">
                   {(isAgent || isUserSpecialStaffOnly) ? (
-                    <div className="h-10 flex items-center gap-2.5 px-3.5 bg-white dark:bg-gray-800 border border-gray-200/90 dark:border-gray-750 rounded-xl sm:rounded-2xl text-[13px] font-bold shadow-xs shrink-0">
-                      <div className="w-6.5 h-6.5 rounded-lg bg-[#10664F] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-2xs">
+                    <div className="h-10 flex items-center gap-2.5 px-3.5 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/80 rounded-xl text-xs sm:text-sm font-bold shrink-0">
+                      <div className="w-6.5 h-6.5 rounded-lg bg-[#1C6B53] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-2xs">
                         {userProfile?.name?.charAt(0) || userProfile?.agent_name?.charAt(0) || "A"}
                       </div>
-                      <span className="font-black text-gray-900 dark:text-white truncate max-w-[120px]">
+                      <span className="font-black text-gray-900 dark:text-white truncate">
                         {toTitleCase(selectedEmployeeName)}
                       </span>
-                      <span className="text-xs text-[#10664F] dark:text-emerald-400 font-bold shrink-0">
+                      <span className="text-xs text-[#1C6B53] dark:text-emerald-400 font-bold shrink-0">
                         • {currentMemberRoleType === 'trainer' ? 'Trainer' :
                            currentMemberRoleType === 'qa' ? 'QA' :
                            currentMemberRoleType === 'tl' ? 'Team Leader' :
@@ -2461,21 +1791,27 @@ export default function AnnualEvaluationDashboard({
                   ) : (
                     <div className="relative">
                       <button
-                        ref={employeeButtonRef}
                         type="button"
-                        onClick={toggleEmployeeDropdown}
-                        className="h-10 flex items-center justify-between gap-2.5 px-3.5 bg-white hover:bg-gray-50/90 dark:bg-gray-800 dark:hover:bg-gray-750 border border-gray-200/90 dark:border-gray-750 rounded-xl sm:rounded-2xl text-[13px] font-bold text-gray-900 dark:text-white transition-all shadow-xs cursor-pointer select-none"
+                        onClick={() => setEmployeeDropdownOpen(!employeeDropdownOpen)}
+                        className="w-full h-10 flex items-center justify-between gap-2.5 px-3.5 bg-gray-100/90 hover:bg-gray-200/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/80 dark:border-gray-700 rounded-xl text-xs sm:text-sm font-bold text-gray-900 dark:text-white transition shadow-2xs cursor-pointer"
                       >
-                        <div className="flex items-center gap-2 truncate">
-                          <div className="w-6.5 h-6.5 rounded-lg bg-gradient-to-br from-[#10664F] to-emerald-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-2xs">
-                            {selectedEmployeeName ? selectedEmployeeName.charAt(0).toUpperCase() : <Users size={12} />}
+                        <div className="flex items-center gap-2.5 truncate">
+                          <div className="w-6.5 h-6.5 rounded-lg bg-gradient-to-br from-[#1C6B53] to-emerald-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-2xs">
+                            {selectedEmployeeName ? selectedEmployeeName.charAt(0).toUpperCase() : <Users size={13} />}
                           </div>
-                          <span className="truncate font-black text-[13px] text-gray-900 dark:text-white max-w-[95px] sm:max-w-[130px] text-left">
-                            {toTitleCase(selectedEmployeeName) || "Select Employee..."}
-                          </span>
+                          <div className="flex items-center gap-1.5 truncate text-left">
+                            <span className="truncate font-black text-xs sm:text-sm text-gray-900 dark:text-white leading-tight">
+                              {toTitleCase(selectedEmployeeName) || "Select Employee..."}
+                            </span>
+                            {!selectedEmployeeName?.toLowerCase().includes((currentMember?.team || '').toLowerCase().split(' ')[0]) && (
+                              <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium truncate">
+                                • {currentMember?.team?.replace(' Team', '') || 'Contact Center'}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                          <span className={`text-[11px] px-2 py-0.5 rounded-lg border font-black flex items-center gap-1 ${
+                        <div className="flex items-center gap-2 shrink-0 ml-1">
+                          <span className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md border font-black flex items-center gap-1 ${
                             currentMemberRoleType === 'trainer'
                               ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
                               : currentMemberRoleType === 'qa'
@@ -2501,54 +1837,23 @@ export default function AnnualEvaluationDashboard({
                                isSelectedEmployeeChat ? 'Chat' : 'Calls'}
                             </span>
                           </span>
-                          <ChevronDown size={13} className={`text-gray-400 transition-transform ${employeeDropdownOpen ? 'rotate-180' : ''}`} />
+                          <ChevronDown size={14} className={`text-gray-400 transition-transform ${employeeDropdownOpen ? 'rotate-180' : ''}`} />
                         </div>
                       </button>
 
-                  {employeeDropdownOpen && isClient && typeof document !== "undefined" && createPortal(
+                  {employeeDropdownOpen && (
                     <>
-                      <div 
-                        className="fixed inset-0 z-[99990] bg-black/10 backdrop-blur-[1px]" 
-                        onClick={() => setEmployeeDropdownOpen(false)} 
-                        onWheel={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                        onTouchMove={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                      />
-                      <div 
-                        style={{
-                          position: 'fixed',
-                          top: employeeDropdownCoords ? `${employeeDropdownCoords.top}px` : '72px',
-                          right: employeeDropdownCoords ? `${employeeDropdownCoords.right}px` : '16px',
-                          maxHeight: employeeDropdownCoords ? `calc(100vh - ${employeeDropdownCoords.top + 16}px)` : '80vh',
-                        }}
-                        className="w-[92vw] sm:w-[460px] max-w-[460px] bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-3xl shadow-2xl p-3 z-[99999] flex flex-col animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/10"
-                      >
+                      <div className="fixed inset-0 z-40" onClick={() => setEmployeeDropdownOpen(false)} />
+                      <div className="absolute right-0 top-full mt-2 w-full sm:w-[460px] bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-3xl shadow-2xl p-3 z-50 max-h-[460px] flex flex-col animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/10">
                         
                         {/* Header */}
                         <div className="px-2 pt-1 pb-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
                           <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-xs font-black text-gray-900 dark:text-white">
-                                Select Employee
-                              </h4>
-                              {selectedDepartmentFilter !== "All" && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                                  <span>{selectedDepartmentFilter}</span>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedDepartmentFilter("All");
-                                    }}
-                                    className="hover:text-red-500 font-black ml-0.5"
-                                    title="Clear department filter"
-                                  >
-                                    ×
-                                  </button>
-                                </span>
-                              )}
-                            </div>
+                            <h4 className="text-xs font-black text-gray-900 dark:text-white">
+                              Select Employee
+                            </h4>
                             <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
-                              {filteredMembers.length} {isAr ? "موظف متاح" : "Available Employees"}
+                              38 Official Contact Center Agents
                             </p>
                           </div>
                           <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
@@ -2724,8 +2029,7 @@ export default function AnnualEvaluationDashboard({
                           )}
                         </div>
                       </div>
-                    </>,
-                    document.body
+                    </>
                   )}
                 </div>
               )}
@@ -2763,34 +2067,34 @@ export default function AnnualEvaluationDashboard({
                 <div>
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="text-[11px] font-black tracking-wider uppercase bg-white/15 text-emerald-100 px-3 py-0.5 rounded-full border border-white/20 backdrop-blur-sm shadow-xs">
-                      {isAr ? "التقييم السنوي" : "ANNUAL"} • {selectedYear}
+                      {toTitleCase(selectedPeriod)} • {selectedYear}
                     </span>
                     {evaluationDate && (
                       <span className="text-xs font-semibold text-emerald-200">
-                        {t.submittedAt} {evaluationDate}
+                        Submitted: {evaluationDate}
                       </span>
                     )}
                     {isReadOnly && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-white border border-white/20 flex items-center gap-1 backdrop-blur-sm">
                         <Eye size={11} />
-                        <span>{t.viewOnly}</span>
+                        <span>View Only</span>
                       </span>
                     )}
                   </div>
 
                   <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                    {toTitleCase(selectedEmployeeName || (isAr ? "اختر موظفاً" : "Select Employee"))}
+                    {toTitleCase(selectedEmployeeName || "Select Employee")}
                   </h2>
 
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs text-emerald-100/90 font-medium">
-                    <span className="font-bold text-white">{currentMember?.team || (isAr ? 'مركز خدمة العملاء' : 'Contact Center')}</span>
+                    <span className="font-bold text-white">{currentMember?.team || 'Contact Center'}</span>
                     <span>•</span>
-                    <span>{currentMember?.department || (isAr ? 'خدمة العملاء' : 'Contact Center')}</span>
+                    <span>{currentMember?.department || 'Contact Center'}</span>
                     {currentMemberRoleType !== 'agent' && (
                       <>
                         <span>•</span>
                         <span className="px-2 py-0.5 rounded-full bg-white/20 text-white font-black text-[10px] uppercase tracking-wider">
-                          {currentMemberRoleType === 'trainer' ? t.trainer : currentMemberRoleType === 'qa' ? t.qaRole : currentMemberRoleType === 'backoffice' ? t.backOffice : t.teamLeader}
+                          {currentMemberRoleType === 'trainer' ? 'Trainer' : currentMemberRoleType === 'qa' ? 'Quality Assurance' : currentMemberRoleType === 'backoffice' ? 'Back Office' : 'Team Leader'}
                         </span>
                       </>
                     )}
@@ -2803,7 +2107,7 @@ export default function AnnualEvaluationDashboard({
                 {/* Final Score Card */}
                 <div className="w-[140px] sm:w-[160px] h-[90px] bg-white/12 backdrop-blur-md border border-white/25 rounded-2xl p-3 sm:p-4 flex flex-col justify-between items-center text-center shadow-sm">
                   <div className="text-[10px] font-black text-emerald-200 uppercase tracking-widest leading-none">
-                    {t.finalScore}
+                    Final Score
                   </div>
                   <div className="flex-1 flex items-center justify-center">
                     {isManagerDataVisible && officialOverallScore > 0 ? (
@@ -2820,12 +2124,12 @@ export default function AnnualEvaluationDashboard({
                 {/* Rating Tier Card */}
                 <div className="min-w-[160px] sm:min-w-[190px] px-4 h-[90px] bg-white/12 backdrop-blur-md border border-white/25 rounded-2xl py-3 sm:py-4 flex flex-col justify-between items-center text-center shadow-sm">
                   <div className="text-[10px] font-black text-emerald-200 uppercase tracking-widest leading-none">
-                    {t.ratingTier}
+                    Rating Tier
                   </div>
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-sm sm:text-[15px] font-black text-white flex items-center gap-2 leading-none whitespace-nowrap">
                       <Award size={17} className={isManagerDataVisible && officialOverallScore > 0 ? "text-amber-300 shrink-0" : "text-white/40 shrink-0"} />
-                      <span>{isManagerDataVisible && officialOverallScore > 0 ? getTierLabel(ratingTier.level) : (isAr ? "قيد الانتظار" : "Pending")}</span>
+                      <span>{isManagerDataVisible && officialOverallScore > 0 ? ratingTier.label : "Pending"}</span>
                     </div>
                   </div>
                 </div>
@@ -2833,7 +2137,7 @@ export default function AnnualEvaluationDashboard({
                 {/* Status Card */}
                 <div className="w-[140px] sm:w-[155px] h-[90px] bg-white/12 backdrop-blur-md border border-white/25 rounded-2xl p-3 sm:p-4 flex flex-col justify-between items-center text-center shadow-sm">
                   <div className="text-[10px] font-black text-emerald-200 uppercase tracking-widest leading-none">
-                    {t.status}
+                    Status
                   </div>
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-sm font-bold text-white flex items-center gap-2 leading-none">
@@ -2843,8 +2147,8 @@ export default function AnnualEvaluationDashboard({
                         'bg-white/40 ring-4 ring-white/10'
                       }`} />
                       <span>
-                        {evaluationStatus === 'manager_finalized' ? t.finalized :
-                         evaluationStatus === 'self_submitted' ? t.selfDone : t.draft}
+                        {evaluationStatus === 'manager_finalized' ? 'Finalized' :
+                         evaluationStatus === 'self_submitted' ? 'Self Done' : 'Draft'}
                       </span>
                     </div>
                   </div>
@@ -2859,7 +2163,7 @@ export default function AnnualEvaluationDashboard({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Info size={14} className="text-[#1C6B53] dark:text-emerald-400" />
-                <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">{t.ratingScaleTitle}</span>
+                <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Rating Scale (1 to 5):</span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 {RATING_LEVELS.map(r => (
@@ -2867,7 +2171,7 @@ export default function AnnualEvaluationDashboard({
                     <span className="w-4 h-4 rounded-full bg-white/25 flex items-center justify-center text-[10px] font-black">
                       {r.level}
                     </span>
-                    <span>{getTierLabel(r.level)}</span>
+                    <span>{r.label}</span>
                   </div>
                 ))}
               </div>
@@ -2883,11 +2187,17 @@ export default function AnnualEvaluationDashboard({
                     1
                   </div>
                   <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                    {t.section1Title}
+                    {currentMemberRoleType === "trainer" ? "Training Performance KPI Evaluation" :
+                     currentMemberRoleType === "qa" ? "Quality Assurance KPI Evaluation" :
+                     currentMemberRoleType === "tl" ? "Leadership & Team Management KPI Evaluation" :
+                     currentMemberRoleType === "backoffice" ? "Back Office Operational KPI Evaluation" :
+                     "Operational KPI Evaluation"}
                   </h3>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-9">
-                  {t.section1Desc}
+                  {currentMemberRoleType !== "agent" 
+                    ? "Role-specific operational KPIs evaluated manually on an executive 1 to 5 scale." 
+                    : "Operational performance metrics evaluation (Rate 1 to 5)."}
                 </p>
               </div>
 
@@ -2916,39 +2226,33 @@ export default function AnnualEvaluationDashboard({
                 <thead>
                   <tr className="bg-gray-100/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-black border-b border-gray-200 dark:border-gray-700">
                     <th className={`p-3.5 text-left ${currentMemberRoleType === "agent" ? "w-1/3" : "w-1/2"}`}>
-                      {t.colMetric}
+                      {currentMemberRoleType === "agent" ? "KPI Metric" : "Role KPI Metric & Objectives"}
                     </th>
                     {currentMemberRoleType === "agent" && (
-                      <th className="p-3.5 text-center w-28">{isAr ? "النتيجة الفعلية" : "Actual Result"}</th>
+                      <th className="p-3.5 text-center w-28">Actual Result</th>
                     )}
                     <th className="p-3.5 text-center bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
-                      <span>{t.colSelf} {currentMemberRoleType === "agent" ? (isAr ? " - الموظف" : " (Agent)") : ""}</span>
+                      <span>Self-Evaluation {currentMemberRoleType === "agent" ? "(Agent)" : ""}</span>
                     </th>
                     <th className="p-3.5 text-center bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
-                      <span>{t.colManager}</span>
+                      <span>Manager Evaluation</span>
                     </th>
-                    <th className="p-3.5 text-center w-20">{t.colGap}</th>
-                    <th className="p-3.5 text-center w-24">{t.colNotes}</th>
+                    <th className="p-3.5 text-center w-20">Gap</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800 text-xs font-medium">
-                  {activeKpiDefinitions.map((kpi) => {
+                  {kpiDefinitions.map((kpi) => {
                     const selfVal = getKpiScore(selfKpis, kpi.id);
                     const mgrVal = getKpiScore(managerKpis, kpi.id);
                     const diff = mgrVal > 0 && selfVal > 0 ? (mgrVal - selfVal) : null;
-                    const notesCount = getCriterionNotesCount(kpi.id);
-                    const isDrawerOpen = openNoteCriterionId === kpi.id;
 
                     return (
-                      <React.Fragment key={kpi.id}>
-                      <tr className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors">
+                      <tr key={kpi.id} className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors">
                         <td className="p-3.5">
-                          <div className="font-bold text-gray-900 dark:text-white text-sm">
-                            {getCriterionTitle(kpi as any)}
-                          </div>
-                          {getCriterionDesc(kpi as any) && (
+                          <div className="font-bold text-gray-900 dark:text-white text-sm">{kpi.name}</div>
+                          {kpi.description && (
                             <p className="text-[11px] text-gray-500 dark:text-gray-400 font-normal mt-0.5 leading-relaxed">
-                              {getCriterionDesc(kpi as any)}
+                              {kpi.description}
                             </p>
                           )}
                         </td>
@@ -2999,7 +2303,7 @@ export default function AnnualEvaluationDashboard({
                           {!isManagerDataVisible ? (
                             <div className="flex items-center justify-center gap-1.5 py-1 text-gray-400 dark:text-gray-500 text-[11px] font-semibold">
                               <Clock size={13} className="text-amber-500" />
-                              <span>{isAr ? "بانتظار المراجعة" : "Awaiting Review"}</span>
+                              <span>Awaiting Review</span>
                             </div>
                           ) : (
                             <div className="flex items-center justify-center gap-1">
@@ -3046,36 +2350,7 @@ export default function AnnualEvaluationDashboard({
                             <span className="text-gray-400">-</span>
                           )}
                         </td>
-
-                        {/* Criterion Note Button */}
-                        <td className="p-3.5 text-center">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setOpenNoteCriterionId(isDrawerOpen ? null : kpi.id);
-                            }}
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer shadow-2xs ${
-                              notesCount > 0
-                                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
-                                : 'bg-gray-100 hover:bg-gray-200/80 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
-                            }`}
-                            title={isAr ? "ملاحظة / تبرير المعيار" : "Criterion Note"}
-                          >
-                            <MessageSquare size={13} className={notesCount > 0 ? 'text-[#1C6B53] dark:text-emerald-400' : 'text-gray-400'} />
-                            <span>{notesCount > 0 ? (isAr ? `ملاحظة (${notesCount})` : `Note (${notesCount})`) : t.addNote}</span>
-                          </button>
-                        </td>
                       </tr>
-
-                      {/* Expandable Note Drawer Row */}
-                      {isDrawerOpen && (
-                        <tr className="bg-emerald-50/20 dark:bg-emerald-950/10">
-                          <td colSpan={currentMemberRoleType === "agent" ? 6 : 5} className="p-3.5">
-                            {renderCriterionNoteDrawer(kpi.id, getCriterionTitle(kpi as any))}
-                          </td>
-                        </tr>
-                      )}
-                      </React.Fragment>
                     );
                   })}
 
@@ -3084,7 +2359,7 @@ export default function AnnualEvaluationDashboard({
                     <td className="p-3.5" colSpan={currentMemberRoleType === "agent" ? 2 : 1}>
                       <div className="flex items-center gap-2">
                         <Target size={16} className="text-[#1C6B53] dark:text-emerald-400" />
-                        <span className="text-sm">{isAr ? "النتيجة النهائية (متوسط 1-5)" : "Final Score (1-5 Average)"}</span>
+                        <span className="text-sm">Final Score (1-5 Average)</span>
                       </div>
                     </td>
                     <td className="p-3.5 text-center bg-blue-100/50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200">
@@ -3094,7 +2369,7 @@ export default function AnnualEvaluationDashboard({
                     </td>
                     <td className="p-3.5 text-center bg-emerald-100/50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200">
                       <span className="text-base font-black font-mono">
-                        {isManagerDataVisible && managerKpiAvg > 0 ? managerKpiAvg.toFixed(2) : isManagerDataVisible ? "--" : (isAr ? "قيد الانتظار" : "Pending")}
+                        {isManagerDataVisible && managerKpiAvg > 0 ? managerKpiAvg.toFixed(2) : isManagerDataVisible ? "--" : "Pending"}
                       </span>
                     </td>
                     <td className="p-3.5 text-center">
@@ -3104,7 +2379,6 @@ export default function AnnualEvaluationDashboard({
                         </span>
                       ) : "-"}
                     </td>
-                    <td className="p-3.5 text-center text-gray-400 font-normal">-</td>
                   </tr>
                 </tbody>
               </table>
@@ -3119,11 +2393,11 @@ export default function AnnualEvaluationDashboard({
                   2
                 </div>
                 <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                  {t.section2Title}
+                  Core Competencies Evaluation
                 </h3>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-9">
-                {isAr ? `تقييم ${currentCompetenciesList.length} كفاءات وسلوكيات مؤسسية معتمدة (من 1 إلى 5).` : `Assessment of the ${currentCompetenciesList.length} core institutional competencies (Rate 1 to 5).`}
+                Assessment of the {currentCompetenciesList.length} core institutional competencies (Rate 1 to 5).
               </p>
             </div>
 
@@ -3132,37 +2406,29 @@ export default function AnnualEvaluationDashboard({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-100/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-black border-b border-gray-200 dark:border-gray-700">
-                    <th className="p-3.5 text-left w-1/2">{isAr ? "الكفاءات والمؤشرات السلوكية" : "Competency & Behavioral Indicators"}</th>
+                    <th className="p-3.5 text-left w-1/2">Competency & Behavioral Indicators</th>
                     <th className="p-3.5 text-center bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
-                      <span>{t.colSelf} {currentMemberRoleType === "agent" ? (isAr ? " - الموظف" : " (Agent)") : ""}</span>
+                      <span>Self-Evaluation {currentMemberRoleType === "agent" ? "(Agent)" : ""}</span>
                     </th>
                     <th className="p-3.5 text-center bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
-                      <span>{t.colManager}</span>
+                      <span>Manager Evaluation</span>
                     </th>
-                    <th className="p-3.5 text-center w-20">{t.colGap}</th>
-                    <th className="p-3.5 text-center w-24">{t.colNotes}</th>
+                    <th className="p-3.5 text-center w-20">Gap</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800 text-xs font-medium">
-                  {activeCompetenciesList.map((comp) => {
+                  {currentCompetenciesList.map((comp) => {
                     const selfVal = selfCompetencies[comp.id] || 0;
                     const mgrVal = managerCompetencies[comp.id] || 0;
                     const diff = mgrVal > 0 && selfVal > 0 ? (mgrVal - selfVal) : null;
-                    const notesCount = getCriterionNotesCount(comp.id);
-                    const isDrawerOpen = openNoteCriterionId === comp.id;
 
                     return (
-                      <React.Fragment key={comp.id}>
-                      <tr className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors">
+                      <tr key={comp.id} className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors">
                         <td className="p-3.5">
-                          <div className="font-bold text-gray-900 dark:text-white text-sm">
-                            {getCriterionTitle(comp as any)}
-                          </div>
-                          {getCriterionDesc(comp as any) && (
-                            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-normal mt-0.5 leading-relaxed">
-                              {getCriterionDesc(comp as any)}
-                            </p>
-                          )}
+                          <div className="font-bold text-gray-900 dark:text-white text-sm">{comp.name}</div>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 font-normal mt-0.5 leading-relaxed">
+                            {comp.description}
+                          </p>
                         </td>
 
                         {/* Self Rating (1 to 5) */}
@@ -3199,7 +2465,7 @@ export default function AnnualEvaluationDashboard({
                           {!isManagerDataVisible ? (
                             <div className="flex items-center justify-center gap-1.5 py-1 text-gray-400 dark:text-gray-500 text-[11px] font-semibold">
                               <Clock size={13} className="text-amber-500" />
-                              <span>{isAr ? "بانتظار المراجعة" : "Awaiting Review"}</span>
+                              <span>Awaiting Review</span>
                             </div>
                           ) : (
                             <div className="flex items-center justify-center gap-1">
@@ -3246,36 +2512,7 @@ export default function AnnualEvaluationDashboard({
                             <span className="text-gray-400">-</span>
                           )}
                         </td>
-
-                        {/* Criterion Note Button */}
-                        <td className="p-3.5 text-center">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setOpenNoteCriterionId(isDrawerOpen ? null : comp.id);
-                            }}
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer shadow-2xs ${
-                              notesCount > 0
-                                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
-                                : 'bg-gray-100 hover:bg-gray-200/80 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
-                            }`}
-                            title={isAr ? "ملاحظة / تبرير الكفاءة" : "Criterion Note"}
-                          >
-                            <MessageSquare size={13} className={notesCount > 0 ? 'text-[#1C6B53] dark:text-emerald-400' : 'text-gray-400'} />
-                            <span>{notesCount > 0 ? (isAr ? `ملاحظة (${notesCount})` : `Note (${notesCount})`) : t.addNote}</span>
-                          </button>
-                        </td>
                       </tr>
-
-                      {/* Expandable Note Drawer Row */}
-                      {isDrawerOpen && (
-                        <tr className="bg-emerald-50/20 dark:bg-emerald-950/10">
-                          <td colSpan={5} className="p-3.5">
-                            {renderCriterionNoteDrawer(comp.id, getCriterionTitle(comp as any))}
-                          </td>
-                        </tr>
-                      )}
-                      </React.Fragment>
                     );
                   })}
 
@@ -3284,7 +2521,7 @@ export default function AnnualEvaluationDashboard({
                     <td className="p-3.5">
                       <div className="flex items-center gap-2">
                         <Users size={16} className="text-[#1C6B53] dark:text-emerald-400" />
-                        <span className="text-sm">{t.competencyAverage}</span>
+                        <span className="text-sm">Competency Average (1-5)</span>
                       </div>
                     </td>
                     <td className="p-3.5 text-center bg-blue-100/50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200">
@@ -3294,7 +2531,7 @@ export default function AnnualEvaluationDashboard({
                     </td>
                     <td className="p-3.5 text-center bg-emerald-100/50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200">
                       <span className="text-base font-black font-mono">
-                        {isManagerDataVisible && managerCompAvg > 0 ? managerCompAvg.toFixed(2) : isManagerDataVisible ? "--" : (isAr ? "قيد الانتظار" : "Pending")}
+                        {isManagerDataVisible && managerCompAvg > 0 ? managerCompAvg.toFixed(2) : isManagerDataVisible ? "--" : "Pending"}
                       </span>
                     </td>
                     <td className="p-3.5 text-center">
@@ -3304,7 +2541,6 @@ export default function AnnualEvaluationDashboard({
                         </span>
                       ) : "-"}
                     </td>
-                    <td className="p-3.5 text-center text-gray-400 font-normal">-</td>
                   </tr>
                 </tbody>
               </table>
@@ -3318,7 +2554,7 @@ export default function AnnualEvaluationDashboard({
                 3
               </div>
               <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                {t.overallSummaryTitle}
+                Overall Performance Summary
               </h3>
             </div>
 
@@ -3327,24 +2563,22 @@ export default function AnnualEvaluationDashboard({
               {/* Employee Summary Card */}
               <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-blue-200 dark:border-blue-900/60 shadow-2xs">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-blue-700 dark:text-blue-300">
-                    {currentMemberRoleType === 'agent' ? (isAr ? 'التقييم الذاتي للموظف' : 'Agent Self-Review') : t.selfReviewCard}
-                  </span>
+                  <span className="text-xs font-bold text-blue-700 dark:text-blue-300">{currentMemberRoleType === 'agent' ? 'Agent Self-Review' : 'Self-Review'}</span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">
-                    {isAr ? "الذاتي" : "Self"}
+                    Self
                   </span>
                 </div>
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between items-center text-gray-600 dark:text-gray-300">
-                    <span>{t.kpiAverage}</span>
+                    <span>KPI Average:</span>
                     <span className="font-bold font-mono">{selfKpiAvg > 0 ? selfKpiAvg.toFixed(2) : "--"} / 5.0</span>
                   </div>
                   <div className="flex justify-between items-center text-gray-600 dark:text-gray-300">
-                    <span>{t.competencyAverage}</span>
+                    <span>Competency Average:</span>
                     <span className="font-bold font-mono">{selfCompAvg > 0 ? selfCompAvg.toFixed(2) : "--"} / 5.0</span>
                   </div>
                   <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-sm font-black text-gray-900 dark:text-white">
-                    <span>{t.combinedScore}</span>
+                    <span>Combined Score:</span>
                     <span className="font-mono text-base text-blue-600 dark:text-blue-400">
                       {selfOverall > 0 ? selfOverall.toFixed(2) : "--"}
                     </span>
@@ -3355,27 +2589,27 @@ export default function AnnualEvaluationDashboard({
               {/* Manager Summary Card */}
               <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 shadow-2xs flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-[#1C6B53] dark:text-emerald-300">{t.managerReviewCard}</span>
+                  <span className="text-xs font-bold text-[#1C6B53] dark:text-emerald-300">Manager Review</span>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                     isManagerDataVisible && managerOverall > 0
                       ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200'
                       : 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300'
                   }`}>
-                    {isManagerDataVisible && managerOverall > 0 ? (isAr ? 'معتمد' : 'Official') : (isAr ? 'قيد الانتظار' : 'Pending')}
+                    {isManagerDataVisible && managerOverall > 0 ? 'Official' : 'Pending'}
                   </span>
                 </div>
                 {isManagerDataVisible ? (
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between items-center text-gray-600 dark:text-gray-300">
-                      <span>{t.kpiAverage}</span>
+                      <span>KPI Average:</span>
                       <span className="font-bold font-mono">{managerKpiAvg > 0 ? managerKpiAvg.toFixed(2) : "--"} / 5.0</span>
                     </div>
                     <div className="flex justify-between items-center text-gray-600 dark:text-gray-300">
-                      <span>{t.competencyAverage}</span>
+                      <span>Competency Average:</span>
                       <span className="font-bold font-mono">{managerCompAvg > 0 ? managerCompAvg.toFixed(2) : "--"} / 5.0</span>
                     </div>
                     <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-sm font-black text-gray-900 dark:text-white">
-                      <span>{t.combinedScore}</span>
+                      <span>Combined Score:</span>
                       <span className="font-mono text-base text-[#1C6B53] dark:text-emerald-400">
                         {managerOverall > 0 ? managerOverall.toFixed(2) : "--"}
                       </span>
@@ -3384,8 +2618,8 @@ export default function AnnualEvaluationDashboard({
                 ) : (
                   <div className="flex flex-col items-center justify-center py-5 text-center text-gray-400 dark:text-gray-500">
                     <Clock size={20} className="text-amber-500 mb-1.5" />
-                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{isAr ? "بانتظار تقييم المدير المسؤول" : "Awaiting Manager Review"}</span>
-                    <span className="text-[10px] text-gray-400 mt-1">{isAr ? "سيظهر التقييم الرسمي بمجرد اعتماده من قبل الإدارة." : "Official manager ratings will appear once finalized."}</span>
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Awaiting Manager Review</span>
+                    <span className="text-[10px] text-gray-400 mt-1">Official manager ratings will appear once finalized.</span>
                   </div>
                 )}
               </div>
@@ -3397,7 +2631,7 @@ export default function AnnualEvaluationDashboard({
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-gray-200">
-                      {t.officialFinalRatingCard}
+                      Official Final Rating
                     </span>
                     {isManagerDataVisible && officialOverallScore > 0 ? (
                       <Star size={16} className="text-amber-500 fill-amber-500" />
@@ -3412,130 +2646,19 @@ export default function AnnualEvaluationDashboard({
                         <span className="text-xs text-gray-500 font-normal"> / 5.0</span>
                       </>
                     ) : (
-                      <span className="text-base text-gray-400 font-bold">{isAr ? "قيد المراجعة" : "Pending Review"}</span>
+                      <span className="text-base text-gray-400 font-bold">Pending Review</span>
                     )}
                   </div>
                   <div className="text-sm font-black mt-1">
-                    {isManagerDataVisible && officialOverallScore > 0 ? getTierLabel(ratingTier.level) : (isAr ? "بانتظار اعتماد الإدارة" : "Awaiting Manager Approval")}
+                    {isManagerDataVisible && officialOverallScore > 0 ? ratingTier.label : "Awaiting Manager Approval"}
                   </div>
                 </div>
 
                 <div className="text-[11px] text-gray-600 dark:text-gray-400 mt-3 pt-2 border-t border-gray-200/60 dark:border-gray-700/60">
-                  {isManagerDataVisible && officialOverallScore > 0 ? (
-                    isAr ? (
-                      ratingTier.level === 5 ? "أداء استثنائي متميز يفوق كافة الأهداف المحددة بانتظام ويكون قدوة للآخرين." :
-                      ratingTier.level === 4 ? "أداء متميز يفوق التوقعات المحددة بانتظام وبجودة عمل عالية." :
-                      ratingTier.level === 3 ? "يلبي متطلبات وتوقعات الوظيفة بفعالية وكفاءة." :
-                      ratingTier.level === 2 ? "يحتاج إلى مزيد من التطوير والمتابعة الدورية في بعض الجوانب." :
-                      "أداء دون المستوى المطلوب ويحتاج إلى خطة تحسين عاجلة."
-                    ) : ratingTier.desc
-                  ) : (
-                    isAr ? "أكمل التقييم لاحتساب الدرجة النهائية الرسمية." : "Complete evaluation to compute official final score."
-                  )}
+                  {isManagerDataVisible && officialOverallScore > 0 ? ratingTier.desc : "Complete evaluation to compute official final score."}
                 </div>
               </div>
 
-            </div>
-          </div>
-
-          {/* Section 4: Performance Notes & Executive Development Plans */}
-          <div className="p-6 sm:p-8 border-b border-gray-200/80 dark:border-gray-800">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-lg bg-[#1C6B53]/15 text-[#1C6B53] dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
-                4
-              </div>
-              <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                {t.notesSectionTitle}
-              </h3>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-6 ml-9">
-              {t.notesSectionSubtitle}
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Manager Feedback & Recommendations */}
-              <div className="bg-gray-50/70 dark:bg-gray-800/50 p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-gray-700/80">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5">
-                    <ShieldCheck size={14} className="text-[#1C6B53] dark:text-emerald-400" />
-                    <span>{t.managerComments}</span>
-                  </label>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
-                    {t.noteAuthorManager}
-                  </span>
-                </div>
-                <textarea
-                  rows={4}
-                  value={managerComments}
-                  onChange={(e) => setManagerComments(e.target.value)}
-                  disabled={!canEditManager}
-                  placeholder={canEditManager ? t.managerCommentsPlaceholder : (isAr ? "لا توجد ملاحظات مدونة من المدير بعد." : "No manager comments recorded yet.")}
-                  className="w-full text-xs p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-2 focus:ring-[#1C6B53]/20 focus:border-[#1C6B53] outline-none transition disabled:opacity-75 resize-none font-medium leading-relaxed"
-                />
-              </div>
-
-              {/* Employee Self-Reflection & Goals */}
-              <div className="bg-gray-50/70 dark:bg-gray-800/50 p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-gray-700/80">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5">
-                    <Users size={14} className="text-blue-600 dark:text-blue-400" />
-                    <span>{t.employeeComments}</span>
-                  </label>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300">
-                    {t.noteAuthorEmployee}
-                  </span>
-                </div>
-                <textarea
-                  rows={4}
-                  value={employeeComments}
-                  onChange={(e) => setEmployeeComments(e.target.value)}
-                  disabled={!canEditSelf}
-                  placeholder={canEditSelf ? t.employeeCommentsPlaceholder : (isAr ? "لا توجد أهداف أو تعليقات مدونة من الموظف بعد." : "No self-reflection notes recorded yet.")}
-                  className="w-full text-xs p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition disabled:opacity-75 resize-none font-medium leading-relaxed"
-                />
-              </div>
-
-              {/* Key Strengths */}
-              <div className="bg-gray-50/70 dark:bg-gray-800/50 p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-gray-700/80">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5">
-                    <ThumbsUp size={14} className="text-emerald-600 dark:text-emerald-400" />
-                    <span>{t.keyStrengths}</span>
-                  </label>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
-                    {isAr ? "نقاط القوة" : "Strengths"}
-                  </span>
-                </div>
-                <textarea
-                  rows={3}
-                  value={keyStrengths}
-                  onChange={(e) => setKeyStrengths(e.target.value)}
-                  disabled={!canEditManager}
-                  placeholder={canEditManager ? t.strengthsPlaceholder : (isAr ? "لم يتم تحديد نقاط القوة بعد." : "No strengths specified yet.")}
-                  className="w-full text-xs p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-[#1C6B53] outline-none transition disabled:opacity-75 resize-none font-medium leading-relaxed"
-                />
-              </div>
-
-              {/* Areas for Development */}
-              <div className="bg-gray-50/70 dark:bg-gray-800/50 p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-gray-700/80">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5">
-                    <Target size={14} className="text-amber-600 dark:text-amber-400" />
-                    <span>{t.areasForDevelopment}</span>
-                  </label>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
-                    {isAr ? "خطة التطوير" : "Growth"}
-                  </span>
-                </div>
-                <textarea
-                  rows={3}
-                  value={areasForDevelopment}
-                  onChange={(e) => setAreasForDevelopment(e.target.value)}
-                  disabled={!canEditManager}
-                  placeholder={canEditManager ? t.improvementsPlaceholder : (isAr ? "لم يتم تحديد مجالات التطوير بعد." : "No development areas specified yet.")}
-                  className="w-full text-xs p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition disabled:opacity-75 resize-none font-medium leading-relaxed"
-                />
-              </div>
             </div>
           </div>
 
@@ -3561,15 +2684,15 @@ export default function AnnualEvaluationDashboard({
                 {lastSavedAt ? (
                   <>
                     <CheckCircle size={14} className="text-emerald-500" />
-                    <span>{t.lastSaved} {lastSavedAt}</span>
+                    <span>Last Saved: {lastSavedAt}</span>
                   </>
                 ) : (
-                  <span>{isAr ? "لم يتم حفظ أية تغييرات بعد" : "No changes saved yet"}</span>
+                  <span>No changes saved yet</span>
                 )}
                 {isReadOnly && (
                   <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md ml-2 flex items-center gap-1">
                     <Eye size={12} />
-                    <span>{t.viewOnly} ({tlAssignedTeam ? (isAr ? 'مراجعة قائد الفريق' : 'Team Leader Review') : (isAr ? 'فريق الجودة' : 'Quality Team')})</span>
+                    <span>View Only ({tlAssignedTeam ? 'Team Leader Review' : 'Quality Team'})</span>
                   </span>
                 )}
               </div>
@@ -3579,7 +2702,7 @@ export default function AnnualEvaluationDashboard({
                 {!canEditManager && isViewingSelf && (evaluationStatus as string) === 'manager_finalized' && (
                   <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-[#1C6B53] dark:text-emerald-400">
                     <CheckCircle size={15} />
-                    <span>{isAr ? "تم اعتماد التقييم نهائياً من قبل الإدارة" : "Evaluation Finalized by Management"}</span>
+                    <span>Evaluation Finalized by Management</span>
                   </div>
                 )}
                 {!canEditManager && canEditSelf && (
@@ -3590,7 +2713,7 @@ export default function AnnualEvaluationDashboard({
                     className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer"
                   >
                     <CheckCircle size={14} />
-                    <span>{evaluationStatus === 'self_submitted' ? t.updateSelf : t.submitSelf}</span>
+                    <span>{evaluationStatus === 'self_submitted' ? 'Update Self-Evaluation' : 'Submit Self-Evaluation'}</span>
                   </button>
                 )}
 
@@ -3604,7 +2727,7 @@ export default function AnnualEvaluationDashboard({
                       className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 disabled:opacity-50 cursor-pointer"
                     >
                       <Save size={14} />
-                      <span>{t.saveDraft}</span>
+                      <span>Save Draft</span>
                     </button>
                     <button
                       type="button"
@@ -3613,7 +2736,7 @@ export default function AnnualEvaluationDashboard({
                       className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-gradient-to-r from-[#1C6B53] to-emerald-600 hover:opacity-95 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer"
                     >
                       <ShieldCheck size={15} />
-                      <span>{evaluationStatus === 'manager_finalized' ? t.updateFinalize : t.approveFinalize}</span>
+                      <span>{evaluationStatus === 'manager_finalized' ? 'Update & Finalize Evaluation' : 'Approve & Finalize Evaluation'}</span>
                     </button>
                   </div>
                 )}
@@ -4150,31 +3273,56 @@ export default function AnnualEvaluationDashboard({
               </button>
             </div>
 
-            {/* KPI Summary Overview Cards - Strictly Annual */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 sm:p-5 bg-gray-50/80 dark:bg-gray-800/40 border-b border-gray-200/80 dark:border-gray-800 shrink-0">
+            {/* KPI Summary Overview Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 sm:p-5 bg-gray-50/80 dark:bg-gray-800/40 border-b border-gray-200/80 dark:border-gray-800 shrink-0">
               
               {/* Card 1: Total Employees */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-4 shadow-2xs">
+              <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-3.5 shadow-2xs">
                 <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
                   <span>Total Active Members</span>
-                  <Users size={16} className="text-[#1C6B53] dark:text-emerald-400" />
+                  <Users size={15} className="text-gray-400" />
                 </div>
                 <div className="text-2xl font-black text-gray-900 dark:text-white">
                   {coverageData.totalCount} <span className="text-xs font-semibold text-gray-500">Employees</span>
                 </div>
                 <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                  Across Contact Center & Specialized Operations
+                  Across 3 Contact Center Teams
                 </div>
               </div>
 
-              {/* Card 2: Annual Review Progress */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-4 shadow-2xs">
+              {/* Card 2: Semi-Annual */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-3.5 shadow-2xs">
                 <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
-                  <span>Annual Review Progress</span>
-                  <Award size={16} className="text-emerald-600 dark:text-emerald-400" />
+                  <span>Semi-Annual Review</span>
+                  <Calendar size={15} className="text-[#1C6B53] dark:text-emerald-400" />
                 </div>
                 <div className="flex items-baseline justify-between">
                   <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
+                    {coverageData.semiCompletedCount} <span className="text-xs font-semibold text-gray-500">Completed</span>
+                  </div>
+                  <span className="text-xs font-black text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
+                    {coverageData.semiPendingCount} Pending
+                  </span>
+                </div>
+                <div className="w-full bg-gray-100 dark:bg-gray-700 h-2 rounded-full mt-2.5 overflow-hidden">
+                  <div 
+                    className="bg-[#1C6B53] h-full rounded-full transition-all duration-500"
+                    style={{ width: `${coverageData.semiPercent}%` }}
+                  />
+                </div>
+                <div className="text-[10px] text-right font-bold text-gray-500 dark:text-gray-400 mt-1">
+                  {coverageData.semiPercent}% Completed
+                </div>
+              </div>
+
+              {/* Card 3: Annual */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-3.5 shadow-2xs">
+                <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                  <span>Annual Review</span>
+                  <Award size={15} className="text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <div className="text-2xl font-black text-blue-700 dark:text-blue-400">
                     {coverageData.annualCompletedCount} <span className="text-xs font-semibold text-gray-500">Completed</span>
                   </div>
                   <span className="text-xs font-black text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
@@ -4183,7 +3331,7 @@ export default function AnnualEvaluationDashboard({
                 </div>
                 <div className="w-full bg-gray-100 dark:bg-gray-700 h-2 rounded-full mt-2.5 overflow-hidden">
                   <div 
-                    className="bg-[#1C6B53] h-full rounded-full transition-all duration-500"
+                    className="bg-blue-600 h-full rounded-full transition-all duration-500"
                     style={{ width: `${coverageData.annualPercent}%` }}
                   />
                 </div>
@@ -4213,7 +3361,11 @@ export default function AnnualEvaluationDashboard({
                     <AlertCircle size={13} />
                     <span>Pending Only</span>
                     <span className="text-[10px] px-1.5 py-0.2 bg-white/25 rounded-md font-black">
-                      {coverageData.annualPendingCount}
+                      {coveragePeriodFilter === "Semi-Annual" 
+                        ? coverageData.semiPendingCount 
+                        : coveragePeriodFilter === "Annual" 
+                        ? coverageData.annualPendingCount 
+                        : coverageData.semiPendingCount}
                     </span>
                   </button>
 
@@ -4229,7 +3381,11 @@ export default function AnnualEvaluationDashboard({
                     <CheckCircle2 size={13} />
                     <span>Completed</span>
                     <span className="text-[10px] px-1.5 py-0.2 bg-white/25 rounded-md font-black">
-                      {coverageData.annualCompletedCount}
+                      {coveragePeriodFilter === "Semi-Annual" 
+                        ? coverageData.semiCompletedCount 
+                        : coveragePeriodFilter === "Annual" 
+                        ? coverageData.annualCompletedCount 
+                        : coverageData.semiCompletedCount}
                     </span>
                   </button>
 
@@ -4246,11 +3402,54 @@ export default function AnnualEvaluationDashboard({
                   </button>
                 </div>
 
-                {/* Team Filter Tabs */}
+                {/* Period View Filter */}
+                <div className="flex items-center gap-1 bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-2xl border border-gray-200/60 dark:border-gray-700/60 text-xs font-bold">
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400 px-2 font-medium">Period:</span>
+                  <button
+                    type="button"
+                    onClick={() => setCoveragePeriodFilter("all")}
+                    className={`px-3 py-1 rounded-xl transition cursor-pointer ${
+                      coveragePeriodFilter === "all"
+                        ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-black shadow-2xs"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    Both
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCoveragePeriodFilter("Semi-Annual")}
+                    className={`px-3 py-1 rounded-xl transition cursor-pointer ${
+                      coveragePeriodFilter === "Semi-Annual"
+                        ? "bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-400 font-black shadow-2xs"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    Semi-Annual
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCoveragePeriodFilter("Annual")}
+                    className={`px-3 py-1 rounded-xl transition cursor-pointer ${
+                      coveragePeriodFilter === "Annual"
+                        ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 font-black shadow-2xs"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    Annual
+                  </button>
+                </div>
+
+              </div>
+
+              {/* Second Row: Team Filter Tabs and Live Search */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+                
+                {/* Team Filter */}
                 <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400 mr-1">{isAr ? "الفريق:" : "Team:"}</span>
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400 mr-1">Team:</span>
                   {[
-                    { id: "all", label: isAr ? "جميع الفرق" : "All Teams" },
+                    { id: "all", label: "All Teams" },
                     { id: "Younis", label: "Younis Kamal" },
                     { id: "Ankido", label: "Ankido Buya" },
                     { id: "Mohammed", label: "Mohammed Dlshad" },
@@ -4271,66 +3470,8 @@ export default function AnnualEvaluationDashboard({
                   ))}
                 </div>
 
-              </div>
-
-              {/* Department Filter Bar with Live Pending Badges */}
-              <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold pt-2 border-t border-gray-100 dark:border-gray-800">
-                <span className="text-[11px] text-gray-500 dark:text-gray-400 mr-1 flex items-center gap-1">
-                  <Building2 size={13} className="text-[#1C6B53] dark:text-emerald-400" />
-                  <span>{isAr ? "القسم والمتبقي:" : "Department & Pending:"}</span>
-                </span>
-                
-                <button
-                  type="button"
-                  onClick={() => setCoverageDeptFilter("all")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                    coverageDeptFilter === "all"
-                      ? "bg-[#1C6B53] text-white shadow-2xs font-black"
-                      : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-                  }`}
-                >
-                  <span>{isAr ? "جميع الأقسام" : "All Departments"}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${
-                    coverageDeptFilter === "all" ? "bg-white/20 text-white font-black" : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                  }`}>
-                    {coverageData.totalCount}
-                  </span>
-                </button>
-
-                {Object.entries(coverageDeptCounts).map(([dName, stats]) => {
-                  const isSelected = coverageDeptFilter.toLowerCase() === dName.toLowerCase();
-                  const displayName = isAr && stats.nameAr ? stats.nameAr : dName;
-                  return (
-                    <button
-                      key={dName}
-                      type="button"
-                      onClick={() => setCoverageDeptFilter(isSelected ? "all" : dName)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                        isSelected
-                          ? "bg-[#1C6B53] text-white shadow-2xs font-black ring-2 ring-[#1C6B53]/30"
-                          : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-                      }`}
-                    >
-                      <span>{displayName}</span>
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-black ${
-                        stats.pending > 0 
-                          ? (isSelected ? "bg-amber-400 text-amber-950 font-black" : "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800")
-                          : (isSelected ? "bg-white/25 text-white" : "bg-emerald-100 text-emerald-800")
-                      }`}>
-                        {stats.pending > 0 
-                          ? `${stats.pending} ${isAr ? "معلق" : "Pending"}`
-                          : (isAr ? "مكتمل" : "Completed")}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Second Row: Live Search Bar & Quick Action */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
-                
                 {/* Search Bar */}
-                <div className="relative flex-1 max-w-md">
+                <div className="relative min-w-[240px]">
                   <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
@@ -4349,16 +3490,6 @@ export default function AnnualEvaluationDashboard({
                     </button>
                   )}
                 </div>
-
-                {/* Copy Pending Button */}
-                <button
-                  type="button"
-                  onClick={handleCopyPendingList}
-                  className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold transition cursor-pointer shrink-0"
-                >
-                  <Copy size={13} />
-                  <span>{coverageCopiedToast ? "Copied!" : "Copy Pending List"}</span>
-                </button>
 
               </div>
 
@@ -4407,16 +3538,8 @@ export default function AnnualEvaluationDashboard({
                             {item.isChat ? "Chat" : "Calls"}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                          <span>{item.team}</span>
-                          {item.member?.department && (
-                            <>
-                              <span>•</span>
-                              <span className="font-semibold text-gray-600 dark:text-gray-300">
-                                {item.member.department}
-                              </span>
-                            </>
-                          )}
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          {item.team}
                         </div>
                       </div>
                     </div>
@@ -4424,25 +3547,48 @@ export default function AnnualEvaluationDashboard({
                     {/* Status Badges & Quick Action */}
                     <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-gray-100 dark:border-gray-700">
                       
-                      {/* Annual Status Badge */}
+                      {/* Semi-Annual Status Badge */}
                       <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold ${
-                        item.annual.isCompleted
+                        item.semi.isCompleted
                           ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300/80 dark:border-emerald-700/60"
                           : "bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border-amber-300/80 dark:border-amber-700/60"
                       }`}>
-                        {item.annual.isCompleted ? (
+                        {item.semi.isCompleted ? (
                           <>
                             <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            <span>Annual:</span>
+                            <span>Semi-Annual:</span>
                             <span className="font-black text-emerald-700 dark:text-emerald-300">
+                              {item.semi.score !== null ? item.semi.score.toFixed(2) : "Completed"}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                            <span>Semi-Annual:</span>
+                            <span className="font-black text-amber-700 dark:text-amber-300">Pending</span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Annual Status Badge */}
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold ${
+                        item.annual.isCompleted
+                          ? "bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-300/80 dark:border-blue-700/60"
+                          : "bg-slate-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700"
+                      }`}>
+                        {item.annual.isCompleted ? (
+                          <>
+                            <CheckCircle2 size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                            <span>Annual:</span>
+                            <span className="font-black text-blue-700 dark:text-blue-300">
                               {item.annual.score !== null ? item.annual.score.toFixed(2) : "Completed"}
                             </span>
                           </>
                         ) : (
                           <>
-                            <Clock size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                            <Clock size={13} className="text-gray-400 shrink-0" />
                             <span>Annual:</span>
-                            <span className="font-medium text-amber-700 dark:text-amber-300">Pending</span>
+                            <span className="font-medium text-gray-500 dark:text-gray-400">Pending</span>
                           </>
                         )}
                       </div>
@@ -4450,7 +3596,7 @@ export default function AnnualEvaluationDashboard({
                       {/* Action Button: Evaluate / Open */}
                       <button
                         type="button"
-                        onClick={() => handleSelectForEvaluation(item.name, "Annual")}
+                        onClick={() => handleSelectForEvaluation(item.name, !item.semi.isCompleted ? "Semi-Annual" : "Annual")}
                         className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1C6B53] hover:bg-[#155340] text-white text-xs font-black transition active:scale-95 shadow-2xs cursor-pointer ml-auto md:ml-0"
                       >
                         <span>Evaluate Employee</span>
@@ -4483,48 +3629,6 @@ export default function AnnualEvaluationDashboard({
         </div>,
         document.body
       )}
-
-      {/* Manage Criteria Modal */}
-      <ManageCriteriaModal
-        lang={lang}
-        isOpen={showManageCriteriaModal}
-        onClose={() => setShowManageCriteriaModal(false)}
-        criteria={criteria}
-        sections={sections}
-        onSaveCriteria={(updated) => {
-          setCriteria(updated);
-          saveStoredCriteria(updated);
-          showToastNotification("تم حفظ معايير التقييم بنجاح!", "success");
-        }}
-        onSaveSections={(updated) => {
-          setSections(updated);
-          saveStoredSections(updated);
-          showToastNotification("تم حفظ أقسام التقييم بنجاح!", "success");
-        }}
-      />
-
-      {/* Manage Staff Modal */}
-      <ManageStaffModal
-        lang={lang}
-        isOpen={showManageStaffModal}
-        onClose={() => setShowManageStaffModal(false)}
-        departments={departments}
-        employees={dynamicEmployees}
-        onSaveDepartments={(updated) => {
-          setDepartments(updated);
-          saveStoredDepartments(updated);
-          showToastNotification("تم حفظ الأقسام بنجاح!", "success");
-        }}
-        onSaveEmployees={(updated) => {
-          setDynamicEmployees(updated);
-          saveStoredEmployees(updated);
-          showToastNotification("تم حفظ بيانات الموظفين بنجاح!", "success");
-        }}
-        onSelectEmployeeForEval={(empName) => {
-          setSelectedEmployeeName(empName);
-          setShowManageStaffModal(false);
-        }}
-      />
 
       {/* Copied Toast Notification */}
       {coverageCopiedToast && (

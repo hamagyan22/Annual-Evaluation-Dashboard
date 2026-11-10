@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { 
   Award, CheckCircle2, XCircle, PenTool, Eraser, 
   AlertTriangle, Clock, Calendar, X, MessageSquare, 
-  Download, Sparkles, Check, ChevronRight, ShieldCheck,
+  Download, Sparkles, Check, ChevronRight, ChevronDown, ShieldCheck,
   UserCheck, AlertCircle, FileText
 } from "lucide-react";
 import { db } from "@/lib/firebaseClient";
@@ -563,6 +563,7 @@ export function QualitySessionModal({
 
   const isApproved = sessionData?.status === "approved";
   const isRejected = sessionData?.status === "rejected";
+  const isQaResponded = sessionData?.status === "qa_responded";
   const hasSignedData = Boolean(sessionData?.signature_data);
 
   return (
@@ -626,9 +627,23 @@ export function QualitySessionModal({
 
         {/* Period and Week Controls */}
         <div className="px-5 sm:px-7 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-850/40 flex flex-wrap items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Year Dropdown */}
+            <div className="relative shrink-0">
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="h-8 px-2.5 pr-7 text-xs font-black bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-[#1C6B53] dark:text-emerald-300 shadow-xs outline-none cursor-pointer appearance-none"
+              >
+                {["2026", "2027", "2028", "2029", "2030"].map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
             {/* Quarter Pill Selector */}
-            <div className="flex items-center p-0.5 bg-gray-200/70 dark:bg-gray-800 rounded-xl">
+            <div className="flex items-center p-0.5 bg-gray-200/70 dark:bg-gray-800 rounded-xl shrink-0">
               {["Q1", "Q2", "Q3", "Q4"].map((q) => (
                 <button
                   key={q}
@@ -645,9 +660,9 @@ export function QualitySessionModal({
               ))}
             </div>
 
-            {/* Week Selector Dropdown / Pills */}
-            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none max-w-[400px]">
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((w) => (
+            {/* Week Selector Dropdown / Pills - All weeks W1 to W13 visible */}
+            <div className="flex items-center gap-1 flex-wrap">
+              {Array.from({ length: 13 }, (_, i) => i + 1).map((w) => (
                 <button
                   key={w}
                   type="button"
@@ -675,6 +690,11 @@ export function QualitySessionModal({
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-400 text-xs font-black">
                 <AlertCircle size={14} className="text-amber-600 dark:text-amber-400" />
                 <span>Rejected / Under Review</span>
+              </div>
+            ) : isQaResponded ? (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-400 text-xs font-black">
+                <CheckCircle2 size={14} className="text-blue-600 dark:text-blue-400" />
+                <span>QA Responded / Ready for Sign-off</span>
               </div>
             ) : (
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-xs font-bold">
@@ -718,8 +738,42 @@ export function QualitySessionModal({
             </div>
           </div>
 
-          {/* Rejection Alert Banner (if rejected) */}
-          {isRejected && (
+          {/* QA Evaluator Response Banner (if QA responded) */}
+          {isQaResponded && (
+            <div className="p-4 rounded-2xl bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex items-start gap-3">
+              <ShieldCheck size={18} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <h5 className="text-xs font-black text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+                    <span>QA Evaluator Response Received</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/80 text-blue-800 dark:text-blue-300">
+                      Coaching / Re-evaluation
+                    </span>
+                  </h5>
+                  {sessionData?.qa_responded_at && (
+                    <span className="text-[10px] font-medium text-blue-700 dark:text-blue-400">
+                      {new Date(sessionData.qa_responded_at).toLocaleString("en-GB")}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-blue-950 dark:text-blue-100 mt-1 leading-relaxed bg-white/70 dark:bg-gray-900/60 p-3 rounded-xl border border-blue-100 dark:border-blue-900/40 font-medium">
+                  <strong>Evaluator Feedback:</strong> {sessionData?.qa_response || "QA has reviewed your objection."}
+                </p>
+                {sessionData?.rejection_reason && (
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5">
+                    Your previous objection note: <em>&ldquo;{sessionData.rejection_reason}&rdquo;</em>
+                  </p>
+                )}
+                <div className="mt-2 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                  <Check size={13} className="text-emerald-600" />
+                  <span>The QA evaluator has reviewed and updated your session. You can now approve and submit your electronic sign-off below.</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Rejection Alert Banner (if rejected and pending QA review) */}
+          {isRejected && !isQaResponded && (
             <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-start gap-3">
               <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div className="flex-1">
@@ -883,9 +937,13 @@ export function QualitySessionModal({
               <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
                 <Check size={14} /> Session sign-off completed. The signature will reflect on the weekly QA PDF.
               </span>
-            ) : isRejected ? (
+            ) : isRejected && !isQaResponded ? (
               <span className="text-amber-700 dark:text-amber-400 font-bold flex items-center gap-1">
-                <AlertTriangle size={14} /> Objection pending QA team discussion.
+                <AlertTriangle size={14} /> Objection submitted to QA Evaluator {evaluatorInfo.name}. Waiting for evaluator response.
+              </span>
+            ) : isQaResponded ? (
+              <span className="text-blue-700 dark:text-blue-400 font-bold flex items-center gap-1">
+                <Check size={14} /> Evaluator response received. Approval has been re-enabled for you to sign.
               </span>
             ) : (
               <span>Please review all call scores before submitting your electronic signature.</span>
@@ -893,26 +951,36 @@ export function QualitySessionModal({
           </div>
 
           <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-            {/* Reject Button */}
+            {/* Reject Button: Completely disabled once submitted unless new cycle */}
             <button
               type="button"
               onClick={() => setIsRejectOpen(true)}
-              disabled={actionLoading}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-red-700 dark:text-red-400 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-800 transition active:scale-95 cursor-pointer disabled:opacity-50"
+              disabled={actionLoading || isApproved || isRejected || isQaResponded}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition ${
+                isApproved || isRejected || isQaResponded
+                  ? "opacity-40 cursor-not-allowed bg-gray-100 dark:bg-gray-800 text-gray-400 border border-gray-200 dark:border-gray-700"
+                  : "text-red-700 dark:text-red-400 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-800 active:scale-95 cursor-pointer"
+              }`}
             >
               <XCircle size={14} />
-              <span>{isRejected ? "Update Objection" : "Reject Session"}</span>
+              <span>{isRejected ? "Objection Submitted" : "Reject Session"}</span>
             </button>
 
-            {/* Approve Button */}
+            {/* Approve Button: Re-enabled when QA has responded, disabled if already approved or waiting for QA */}
             <button
               type="button"
               onClick={() => setIsSigningOpen(true)}
-              disabled={actionLoading}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-5 py-2 rounded-xl text-xs font-black text-white bg-gradient-to-r from-emerald-600 to-[#1C6B53] hover:from-emerald-700 hover:to-emerald-800 shadow-md shadow-emerald-800/20 transition active:scale-95 cursor-pointer disabled:opacity-50"
+              disabled={actionLoading || isApproved || (isRejected && !isQaResponded)}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-5 py-2 rounded-xl text-xs font-black transition ${
+                isApproved
+                  ? "opacity-60 cursor-not-allowed bg-emerald-700 text-white shadow-none"
+                  : (isRejected && !isQaResponded)
+                  ? "opacity-40 cursor-not-allowed bg-gray-300 dark:bg-gray-700 text-gray-500 shadow-none"
+                  : "text-white bg-gradient-to-r from-emerald-600 to-[#1C6B53] hover:from-emerald-700 hover:to-emerald-800 shadow-md shadow-emerald-800/20 active:scale-95 cursor-pointer"
+              }`}
             >
               <PenTool size={14} />
-              <span>{isApproved ? "Re-sign / Update" : "Approve Session"}</span>
+              <span>{isApproved ? "Approved & Signed" : isQaResponded ? "Approve Session" : "Approve Session"}</span>
             </button>
           </div>
         </div>
@@ -1029,7 +1097,7 @@ export function QualitySessionModal({
 
             <div className="mb-4">
               <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block mb-1.5">
-                Objection Reason / ملاحظات الاعتراض:
+                Objection Reason:
               </label>
               <textarea
                 value={rejectionReason}
@@ -1039,9 +1107,6 @@ export function QualitySessionModal({
                 className="w-full p-3 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-gray-900 dark:text-white placeholder:text-gray-400 font-medium shadow-xs resize-none"
                 autoFocus
               />
-              <p className="text-[10px] text-gray-400 mt-1 italic">
-                This note will be transmitted directly to QA Evaluator <strong>{evaluatorInfo.name}</strong>. It will not be printed on exported official PDFs.
-              </p>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">

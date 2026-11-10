@@ -9,7 +9,7 @@ import {
   Award, ArrowLeft, Search, Users, Check, Save, Download, 
   Sun, Moon, ChevronDown, ChevronLeft, ChevronRight, CheckCheck, RefreshCw, Calendar, Plus,
   LogOut, PhoneIncoming, PhoneOutgoing, Camera, X, Trash2, FileText, MessageSquare, ShieldCheck, UserPlus, ExternalLink, Link2,
-  CheckCircle2, AlertCircle, Activity, Clock, Lock, ClipboardCheck, Eye, PenTool
+  CheckCircle2, AlertCircle, Activity, Clock, Lock, ClipboardCheck, Eye, PenTool, Send
 } from "lucide-react";
 import { compressImageFile } from "@/lib/imageUtils";
 import { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
@@ -1352,7 +1352,59 @@ export default function QualityDashboard({
     csrName: string;
     session: any;
     week: number;
+    docId?: string;
   } | null>(null);
+  const [qaResponseText, setQaResponseText] = useState<string>("");
+  const [qaResponseLoading, setQaResponseLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (activeSessionDetailModal?.session?.qa_response) {
+      setQaResponseText(activeSessionDetailModal.session.qa_response);
+    } else {
+      setQaResponseText("");
+    }
+  }, [activeSessionDetailModal]);
+
+  const handleSendQaResponse = async () => {
+    if (!activeSessionDetailModal) return;
+    const { csrName, session, week, docId } = activeSessionDetailModal;
+    const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    const sessionDocId = docId || `${selectedYear}_${selectedQuarter}_w${week}_${slug}`;
+
+    setQaResponseLoading(true);
+    try {
+      const now = new Date().toISOString();
+      const evaluatorName = (currentUserProfile?.name || userProfile?.name || "QA Evaluator");
+
+      const updateData = {
+        status: "qa_responded",
+        qa_response: qaResponseText.trim(),
+        qa_responded_at: now,
+        qa_responded_by: evaluatorName,
+        updated_at: now,
+      };
+
+      await setDoc(doc(db, "quality_sessions", sessionDocId), updateData, { merge: true });
+
+      // Save to aliases as well
+      for (const [regex, replacement] of SLUG_ALIASES) {
+        if (regex.test(`_${slug}`)) {
+          const altSlug = `_${slug}`.replace(regex, replacement).replace(/^_/, "");
+          if (altSlug && altSlug !== slug) {
+            const altSessionDocId = `${selectedYear}_${selectedQuarter}_w${week}_${altSlug}`;
+            setDoc(doc(db, "quality_sessions", altSessionDocId), updateData, { merge: true }).catch(() => {});
+          }
+        }
+      }
+
+      setActiveSessionDetailModal(null);
+      setQaResponseText("");
+    } catch (err) {
+      console.error("Error sending QA response:", err);
+    } finally {
+      setQaResponseLoading(false);
+    }
+  };
 
   useEffect(() => {
     const unsubSessions = onSnapshot(collection(db, "quality_sessions"), (snap) => {
@@ -6629,12 +6681,13 @@ export default function QualityDashboard({
                               const session = qualitySessionsMap[sessionDocId];
                               const isAppr = session?.status === "approved" && Boolean(session?.signature_data);
                               const isRej = session?.status === "rejected";
+                              const isResponded = session?.status === "qa_responded";
 
                               if (isAppr) {
                                 return (
                                   <button
                                     type="button"
-                                    onClick={() => setActiveSessionDetailModal({ csrName, session, week: selectedWeek })}
+                                    onClick={() => setActiveSessionDetailModal({ csrName, session, week: selectedWeek, docId: sessionDocId })}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-[#1C6B53] dark:text-emerald-400 border border-emerald-300/80 dark:border-emerald-700/80 shadow-2xs cursor-pointer transition active:scale-95"
                                     title={`Approved & Signed on ${session?.signed_at ? new Date(session.signed_at).toLocaleString('en-GB') : ''}. Click to view signature.`}
                                   >
@@ -6648,12 +6701,26 @@ export default function QualityDashboard({
                                 return (
                                   <button
                                     type="button"
-                                    onClick={() => setActiveSessionDetailModal({ csrName, session, week: selectedWeek })}
+                                    onClick={() => setActiveSessionDetailModal({ csrName, session, week: selectedWeek, docId: sessionDocId })}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-400 border border-amber-300/80 dark:border-amber-700/80 shadow-2xs cursor-pointer transition active:scale-95 animate-pulse"
-                                    title={`Rejected: "${session?.rejection_reason || 'No details'}". Click to read reason.`}
+                                    title={`Rejected: "${session?.rejection_reason || 'No details'}". Click to read reason and respond.`}
                                   >
                                     <AlertCircle size={12} className="text-amber-600 dark:text-amber-400" />
                                     <span>Objection</span>
+                                  </button>
+                                );
+                              }
+
+                              if (isResponded) {
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveSessionDetailModal({ csrName, session, week: selectedWeek, docId: sessionDocId })}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-800 dark:text-blue-300 border border-blue-300/80 dark:border-blue-700/80 shadow-2xs cursor-pointer transition active:scale-95"
+                                    title={`QA response sent. Awaiting agent sign-off.`}
+                                  >
+                                    <CheckCircle2 size={12} className="text-blue-600 dark:text-blue-400" />
+                                    <span>Responded</span>
                                   </button>
                                 );
                               }
@@ -7145,12 +7212,19 @@ export default function QualityDashboard({
                   </div>
                 )}
               </div>
-            ) : activeSessionDetailModal.session?.status === "rejected" ? (
-              <div className="space-y-3">
+            ) : (activeSessionDetailModal.session?.status === "rejected" || activeSessionDetailModal.session?.status === "qa_responded") ? (
+              <div className="space-y-3.5">
                 <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-300">
-                  <div className="font-bold flex items-center gap-1.5 mb-1">
-                    <AlertCircle size={14} className="text-amber-600" />
-                    <span>Agent Objection / Rejection Details</span>
+                  <div className="font-bold flex items-center justify-between gap-1.5 mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <AlertCircle size={14} className="text-amber-600" />
+                      <span>Agent Objection / Rejection Details</span>
+                    </div>
+                    {activeSessionDetailModal.session?.status === "qa_responded" && (
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300">
+                        Responded
+                      </span>
+                    )}
                   </div>
                   {activeSessionDetailModal.session?.rejected_at && (
                     <p className="text-[10px] text-amber-700 dark:text-amber-400">
@@ -7159,7 +7233,7 @@ export default function QualityDashboard({
                   )}
                 </div>
 
-                <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-850 border border-gray-200 dark:border-gray-700">
+                <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-gray-850 border border-gray-200 dark:border-gray-700">
                   <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block mb-1">
                     Agent Feedback / Reason:
                   </span>
@@ -7167,19 +7241,46 @@ export default function QualityDashboard({
                     {activeSessionDetailModal.session?.rejection_reason || "No written reason provided."}
                   </p>
                 </div>
+
+                {/* QA Evaluator Response Input */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 flex items-center justify-between">
+                    <span>QA Evaluator Response / Coaching Note:</span>
+                    <span className="text-[10px] text-gray-400 font-normal">Re-enables agent sign-off</span>
+                  </label>
+                  <textarea
+                    value={qaResponseText}
+                    onChange={(e) => setQaResponseText(e.target.value)}
+                    placeholder="Write coaching feedback, explanation, or score adjustment justification..."
+                    rows={3}
+                    className="w-full p-3 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-gray-900 dark:text-white placeholder:text-gray-400 font-medium shadow-xs resize-none"
+                  />
+                </div>
               </div>
             ) : (
               <p className="text-xs text-gray-400 p-4 text-center">No sign-off activity recorded yet.</p>
             )}
 
-            <div className="mt-5 pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-end">
+            <div className="mt-5 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2">
               <button
                 type="button"
                 onClick={() => setActiveSessionDetailModal(null)}
-                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 transition"
+                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 transition cursor-pointer"
               >
                 Close
               </button>
+
+              {(activeSessionDetailModal.session?.status === "rejected" || activeSessionDetailModal.session?.status === "qa_responded") && (
+                <button
+                  type="button"
+                  onClick={handleSendQaResponse}
+                  disabled={qaResponseLoading || !qaResponseText.trim()}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-white bg-gradient-to-r from-emerald-600 to-[#1C6B53] hover:from-emerald-700 hover:to-emerald-800 shadow-md shadow-emerald-800/20 transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                >
+                  <Send size={13} />
+                  <span>{qaResponseLoading ? "Sending..." : "Send Response & Re-enable Agent Approval"}</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
