@@ -3230,6 +3230,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("app_show_annual_eval_view");
+        localStorage.removeItem("app_auth_session");
+      } catch (e) {}
       const sp = new URLSearchParams(window.location.search);
       if (sp.get("preview") === "true" || sp.get("guest") === "true" || sp.get("demo") === "true") {
         const demoTeam = (sp.get("team") as TeamName) || "Mohammed Dlshad Team";
