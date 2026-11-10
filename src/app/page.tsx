@@ -2218,7 +2218,7 @@ export default function Dashboard() {
   const { themeId } = useAppTheme();
   const [session, setSession] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const isAdmin = session?.email?.toLowerCase() === 'mohammed.dlshad0@gmail.com' || session?.email?.toLowerCase() === 'omar.ayad@fib.iq' || userProfile?.role === 'admin';
+  const isAdmin = session?.email?.toLowerCase() === 'mohammed.dlshad0@gmail.com' || userProfile?.role === 'admin';
   const isManager = isAdmin || session?.email?.toLowerCase() === 'jalal.burghol@agent.com' || userProfile?.role === 'manager';
   const emailLower = (session?.email || userProfile?.email || '').toLowerCase().trim();
   const isTl = userProfile?.role === 'tl';
@@ -2310,10 +2310,10 @@ export default function Dashboard() {
   const [showAnnualEvalView, setShowAnnualEvalView] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       const sp = new URLSearchParams(window.location.search);
-      if (sp.get("view") === "cc" || sp.get("tab") === "cc") return false;
-      return true;
+      if (sp.get("view") === "evaluation" || sp.get("tab") === "evaluation") return true;
+      return localStorage.getItem("app_show_annual_eval_view") === "true";
     }
-    return true;
+    return false;
   });
   const [isPageTransitioning, setIsPageTransitioning] = useState<boolean>(false);
   const [isCombinedCallCenter, setIsCombinedCallCenter] = useState<boolean>(() => {
@@ -3261,35 +3261,7 @@ export default function Dashboard() {
         return;
       }
 
-      try {
-        const cachedAuth = localStorage.getItem("app_auth_session");
-        if (cachedAuth) {
-          const parsed = JSON.parse(cachedAuth);
-          if (parsed && (parsed.email === 'mohammed.dlshad0@gmail.com' || parsed.email === 'mohammed.dlshad@gmail.com' || parsed.email === 'omar.ayad@fib.iq')) {
-            const isOmar = parsed.email.includes("omar");
-            const adminProfile: any = {
-              role: "admin",
-              isAdmin: true,
-              isManager: true,
-              title: isOmar ? "HR Manager" : "General Administrator",
-              jobTitle: isOmar ? "HR Manager" : "General Administrator",
-              team: isOmar ? "Human Resources" : "Mohammed Dlshad Team",
-              department: isOmar ? "Human Resources" : "Contact Center",
-              name: isOmar ? "Omer Ayad" : "Mohammed Dlshad",
-              agent_name: isOmar ? "Omer Ayad" : "Mohammed Dlshad",
-              email: parsed.email,
-              photo_url: "",
-              mustChangePassword: false,
-              passwordUpdated: true,
-            };
-            setUserProfile(adminProfile);
-            setSession({ email: parsed.email, uid: isOmar ? "hr-manager-omar" : "master-admin" });
-            setShowAnnualEvalView(true);
-            setAuthLoading(false);
-            return;
-          }
-        }
-      } catch (e) {}
+
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -3502,37 +3474,7 @@ export default function Dashboard() {
     const cleanEmail = email.trim().toLowerCase();
     const cleanPassword = password.trim();
 
-    // Direct Administrator Credentials Verification (Mohammed Dlshad / Omer Ayad)
-    const isAdminEmail = cleanEmail === 'mohammed.dlshad0@gmail.com' || cleanEmail === 'mohammed.dlshad@gmail.com' || cleanEmail === 'omar.ayad@fib.iq';
-    const isMasterPassword = cleanPassword === 'Admin@2026' || cleanPassword === 'Fib@2026' || cleanPassword === 'Mohammed@2026' || cleanPassword === 'Omar@2026' || cleanPassword === 'Hr@2026' || cleanPassword === '12345678';
 
-    if (isAdminEmail && isMasterPassword) {
-      const isOmar = cleanEmail.includes("omar");
-      const adminProfile: any = {
-        role: "admin",
-        isAdmin: true,
-        isManager: true,
-        title: isOmar ? "HR Manager" : "General Administrator",
-        jobTitle: isOmar ? "HR Manager" : "General Administrator",
-        team: isOmar ? "Human Resources" : "Mohammed Dlshad Team",
-        department: isOmar ? "Human Resources" : "Contact Center",
-        name: isOmar ? "Omer Ayad" : "Mohammed Dlshad",
-        agent_name: isOmar ? "Omer Ayad" : "Mohammed Dlshad",
-        email: cleanEmail,
-        photo_url: "",
-        mustChangePassword: false,
-        passwordUpdated: true,
-      };
-      setUserProfile(adminProfile);
-      setSession({ email: cleanEmail, uid: isOmar ? "hr-manager-omar" : "master-admin" });
-      setShowAnnualEvalView(true);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("app_auth_session", JSON.stringify({ email: cleanEmail, role: "admin", title: isOmar ? "HR Manager" : "Admin", ts: Date.now() }));
-      }
-      setLoginAttempts(0);
-      setLoginLoading(false);
-      return;
-    }
 
     try {
       try {
@@ -5243,11 +5185,11 @@ export default function Dashboard() {
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-950/40 dark:to-gray-800 p-2.5 flex items-center justify-center border border-emerald-100/80 dark:border-emerald-900/50 shadow-sm mb-4">
                 <img src="/logo.webp" alt="FIB Logo" className="w-full h-full object-contain drop-shadow-sm" />
               </div>
-              <h2 className="text-xl sm:text-[23px] font-black tracking-tight text-gray-900 dark:text-white leading-snug">
-                Contact Center Performance Portal
+              <h2 className="text-xl sm:text-[22px] font-bold tracking-tight text-gray-900 dark:text-white leading-snug">
+                Team Leader &amp; Agent Dashboard
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 font-medium">
-                Team Leader &amp; Agent Dashboard • Quality &amp; Top Star
+                Welcome back. Please sign in to access your scorecards.
               </p>
             </div>
             
@@ -5258,7 +5200,7 @@ export default function Dashboard() {
               </div>
             )}
             
-            <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5 ml-1">
                   Email Address
@@ -5273,8 +5215,7 @@ export default function Dashboard() {
                     value={email} 
                     onChange={e => setEmail(e.target.value)} 
                     className="w-full pl-10 pr-4 py-3.5 bg-gray-50/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-2xl focus:outline-none transition-all text-gray-900 dark:text-white focus:bg-white dark:focus:bg-gray-800 focus:border-[#1C6B53] dark:focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 text-sm font-medium placeholder:text-gray-400" 
-                    placeholder="name@fib.iq or admin email" 
-                    autoComplete="off"
+                    placeholder="name@agent.com" 
                   />
                 </div>
               </div>
@@ -5328,7 +5269,7 @@ export default function Dashboard() {
               <button 
                 type="submit" 
                 disabled={loginLoading || lockoutTimer > 0}
-                className="w-full py-3.5 rounded-2xl text-sm font-black text-white transition-all mt-6 bg-[#1C6B53] hover:bg-[#155a45] shadow-lg shadow-[#1C6B53]/25 hover:shadow-xl hover:shadow-[#1C6B53]/35 active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full py-4 rounded-2xl text-sm font-black text-white transition-all mt-6 bg-[#1C6B53] hover:bg-[#155a45] shadow-lg shadow-[#1C6B53]/25 hover:shadow-xl hover:shadow-[#1C6B53]/35 active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <span>
                   {lockoutTimer > 0 
@@ -5339,7 +5280,11 @@ export default function Dashboard() {
               </button>
             </form>
 
-            <div className="mt-6 pt-5 border-t border-gray-100 dark:border-gray-800/80 flex flex-col items-center justify-center gap-1.5 text-gray-400 dark:text-gray-500 text-[11px] font-medium">
+            <div className="mt-8 pt-5 border-t border-gray-100 dark:border-gray-800/80 flex flex-col items-center justify-center gap-1.5 text-gray-400 dark:text-gray-500 text-[11px] font-medium">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={14} className="text-[#1C6B53] dark:text-emerald-400" />
+                <span>Protected By FIB Enterprise Security</span>
+              </div>
               <div className="text-[10.5px] font-bold tracking-wide text-gray-400/90 dark:text-gray-500">
                 Designed &amp; Engineered by <span className="text-[#1C6B53] dark:text-emerald-400 font-black">{getSystemAuthor()}</span>
               </div>
