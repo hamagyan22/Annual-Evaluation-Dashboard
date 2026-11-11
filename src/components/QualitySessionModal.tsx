@@ -5,7 +5,7 @@ import {
   Award, CheckCircle2, XCircle, PenTool, Eraser, 
   AlertTriangle, Clock, Calendar, X, MessageSquare, 
   Download, Sparkles, Check, ChevronRight, ChevronDown, ShieldCheck,
-  UserCheck, AlertCircle, FileText
+  UserCheck, AlertCircle, FileText, BarChart3, ClipboardCheck
 } from "lucide-react";
 import { db } from "@/lib/firebaseClient";
 import { doc, setDoc, onSnapshot, getDoc } from "firebase/firestore";
@@ -25,6 +25,7 @@ export interface QualitySessionModalProps {
   initialYear?: string;
   initialQuarter?: string;
   initialWeek?: number;
+  initialSection?: "qs" | "kpi";
   isDarkMode?: boolean;
 }
 
@@ -37,8 +38,10 @@ export function QualitySessionModal({
   initialYear = "2026",
   initialQuarter = "Q4",
   initialWeek = 4,
+  initialSection = "qs",
   isDarkMode = false
 }: QualitySessionModalProps) {
+  const [activeSection, setActiveSection] = useState<"qs" | "kpi">(initialSection);
   const [selectedYear, setSelectedYear] = useState<string>(initialYear);
   const [selectedQuarter, setSelectedQuarter] = useState<string>(initialQuarter);
   const [selectedWeek, setSelectedWeek] = useState<number>(initialWeek);
@@ -46,6 +49,7 @@ export function QualitySessionModal({
   // Evaluation data and session status
   const [evalDoc, setEvalDoc] = useState<any>(null);
   const [sessionData, setSessionData] = useState<any>(null);
+  const [kpiSessionData, setKpiSessionData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   // Sub-modal views for signing and rejecting
@@ -81,12 +85,28 @@ export function QualitySessionModal({
     return { slug: "mohammed_jihad", name: "Mohammed Jihad", role: "Quality Assurance Evaluator" };
   }, [agentTeam]);
 
+  // Determine Team Leader info (for Weekly KPI Session)
+  const teamLeaderInfo = useMemo(() => {
+    const t = (agentTeam || "").toLowerCase();
+    if (t.includes("younis")) {
+      return { name: "Younis Kamal", role: "Team Leader • Calls Team" };
+    }
+    if (t.includes("ankido")) {
+      return { name: "Ankido Buya", role: "Team Leader • Calls Team" };
+    }
+    if (t.includes("dlshad") || t.includes("mohammed")) {
+      return { name: "Mohammed Dlshad", role: "Team Leader • Chat Team" };
+    }
+    return { name: "Team Leader", role: "Team Leader • Contact Center" };
+  }, [agentTeam]);
+
   // Firestore Document IDs
   const qualityDocId = `${selectedYear}_${selectedQuarter}_${evaluatorInfo.slug}_${agentSlug}`;
   const cShiftDocId = `${selectedYear}_${selectedQuarter}_mohammed_dlshad_c_shift_${agentSlug}`;
   const sessionDocId = `${selectedYear}_${selectedQuarter}_w${selectedWeek}_${agentSlug}`;
+  const kpiSessionDocId = `${selectedYear}_${selectedQuarter}_w${selectedWeek}_${agentSlug}`;
 
-  // Listen to Firestore Quality Evaluation doc in real-time
+  // Listen to Firestore Quality Evaluation doc & both sign-off docs in real-time
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
@@ -121,11 +141,24 @@ export function QualitySessionModal({
       setSessionData(null);
     });
 
+    // Listen to KPI Session sign-off doc (Team Leader weekly sign-off)
+    const unsubKpiSession = onSnapshot(doc(db, "kpi_sessions", kpiSessionDocId), (snap) => {
+      if (snap.exists()) {
+        setKpiSessionData(snap.data());
+      } else {
+        setKpiSessionData(null);
+      }
+    }, (err) => {
+      console.warn("KPI session snapshot error:", err);
+      setKpiSessionData(null);
+    });
+
     return () => {
       unsubEval();
       unsubSession();
+      unsubKpiSession();
     };
-  }, [isOpen, qualityDocId, sessionDocId]);
+  }, [isOpen, qualityDocId, sessionDocId, kpiSessionDocId]);
 
   // Compute Week Calls & Scores
   const weekDetails = useMemo(() => {
@@ -246,6 +279,15 @@ export function QualitySessionModal({
     };
   }, [evalDoc, selectedYear, selectedQuarter, selectedWeek, isChatTeam]);
 
+  // Reset active section when opening modal
+  useEffect(() => {
+    if (isOpen) {
+      setActiveSection(initialSection);
+      setIsSigningOpen(false);
+      setIsRejectOpen(false);
+    }
+  }, [isOpen, initialSection]);
+
   // Setup Canvas when signing pad opens
   useEffect(() => {
     if (!isSigningOpen) return;
@@ -326,24 +368,42 @@ export function QualitySessionModal({
       const signatureDataUrl = canvas.toDataURL("image/png");
       const signedAt = new Date().toISOString();
 
-      const payload = {
-        year: selectedYear,
-        quarter: selectedQuarter,
-        week: selectedWeek,
-        agent_name: cleanAgentName,
-        agent_slug: agentSlug,
-        evaluator: evaluatorInfo.name,
-        status: "approved",
-        signature_data: signatureDataUrl,
-        signed_at: signedAt,
-        signed_by_name: cleanAgentName,
-        signed_by_email: userProfile?.email || "",
-        rejection_reason: null,
-        rejected_at: null,
-        updated_at: signedAt
-      };
+      const targetCollection = activeSection === "kpi" ? "kpi_sessions" : "quality_sessions";
+      const targetDocId = activeSection === "kpi" ? kpiSessionDocId : sessionDocId;
+      const payload = activeSection === "kpi"
+        ? {
+            year: selectedYear,
+            quarter: selectedQuarter,
+            week: selectedWeek,
+            agent_name: cleanAgentName,
+            agent_slug: agentSlug,
+            team: agentTeam || "",
+            team_leader: teamLeaderInfo.name,
+            status: "approved",
+            signature_data: signatureDataUrl,
+            signed_at: signedAt,
+            signed_by_name: cleanAgentName,
+            signed_by_email: userProfile?.email || "",
+            updated_at: signedAt
+          }
+        : {
+            year: selectedYear,
+            quarter: selectedQuarter,
+            week: selectedWeek,
+            agent_name: cleanAgentName,
+            agent_slug: agentSlug,
+            evaluator: evaluatorInfo.name,
+            status: "approved",
+            signature_data: signatureDataUrl,
+            signed_at: signedAt,
+            signed_by_name: cleanAgentName,
+            signed_by_email: userProfile?.email || "",
+            rejection_reason: null,
+            rejected_at: null,
+            updated_at: signedAt
+          };
 
-      await setDoc(doc(db, "quality_sessions", sessionDocId), payload, { merge: true });
+      await setDoc(doc(db, targetCollection, targetDocId), payload, { merge: true });
 
       // Save to alias docs as well to ensure total consistency
       for (const [regex, replacement] of SLUG_ALIASES) {
@@ -351,13 +411,18 @@ export function QualitySessionModal({
           const altSlug = `_${agentSlug}`.replace(regex, replacement).replace(/^_/, "");
           if (altSlug && altSlug !== agentSlug) {
             const altSessionDocId = `${selectedYear}_${selectedQuarter}_w${selectedWeek}_${altSlug}`;
-            setDoc(doc(db, "quality_sessions", altSessionDocId), payload, { merge: true }).catch(() => {});
+            setDoc(doc(db, targetCollection, altSessionDocId), payload, { merge: true }).catch(() => {});
           }
         }
       }
 
       setIsSigningOpen(false);
-      setToastMessage({ text: "Quality session successfully approved and signed!", type: "success" });
+      setToastMessage({
+        text: activeSection === "kpi"
+          ? "KPI session successfully approved and signed!"
+          : "Quality session successfully approved and signed!",
+        type: "success"
+      });
       setTimeout(() => setToastMessage(null), 4000);
     } catch (err) {
       console.error("Error saving signature:", err);
@@ -427,6 +492,106 @@ export function QualitySessionModal({
   const handlePrintSessionSheet = () => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
+
+    const escapeHtml = (val: string) =>
+      String(val || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
+    if (activeSection === "kpi") {
+      const kpiApproved = kpiSessionData?.status === "approved";
+      const kpiSigImg = kpiApproved ? kpiSessionData.signature_data : null;
+      const kpiSignTime = kpiApproved && kpiSessionData.signed_at
+        ? new Date(kpiSessionData.signed_at).toLocaleString("en-GB", {
+            day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+          })
+        : null;
+
+      const kpiHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>KPI Coaching Session - ${escapeHtml(cleanAgentName)} (${escapeHtml(selectedYear)} ${escapeHtml(selectedQuarter)} W${selectedWeek})</title>
+  <style>
+    @page { size: A4 portrait; margin: 18mm; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+    body { margin: 0; padding: 24px; color: #111827; background: #fff; }
+    .no-print { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 16px; }
+    .btn { background: #1C6B53; color: #fff; border: none; padding: 9px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; }
+    @media print { .no-print { display: none !important; } body { padding: 0; } }
+    .card { border: 1.5px solid #d1d5db; border-radius: 14px; overflow: hidden; }
+    .header { background: #0f2922; color: #fff; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .title { font-size: 18px; font-weight: 800; letter-spacing: 0.4px; }
+    .subtitle { font-size: 12px; color: #a7f3d0; margin-top: 4px; }
+    .badge { padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; background: ${kpiApproved ? "#10b981" : "#f59e0b"}; color: #fff; }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; padding: 20px 24px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; }
+    .meta-box { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; }
+    .meta-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px; }
+    .meta-val { font-size: 14px; font-weight: 700; color: #111827; margin-top: 4px; }
+    .section { padding: 20px 24px; }
+    .statement { font-size: 13px; line-height: 1.6; color: #374151; background: #f3f4f6; border-left: 4px solid #1C6B53; padding: 12px 14px; border-radius: 6px; margin-bottom: 20px; }
+    .sig-box { border: 1.5px dashed #10b981; background: #ecfdf5; border-radius: 12px; padding: 18px; text-align: center; }
+    .sig-box img { max-height: 90px; object-fit: contain; display: block; margin: 8px auto; }
+    .sig-time { font-size: 12px; color: #065f46; font-weight: 600; margin-top: 6px; }
+    .footer { padding: 12px 24px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #6b7280; display: flex; justify-content: space-between; }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <button class="btn" onclick="window.print()">Download / Print PDF</button>
+  </div>
+  <div class="card">
+    <div class="header">
+      <div>
+        <div class="title">WEEKLY KPI COACHING SESSION SIGN-OFF</div>
+        <div class="subtitle">First Iraqi Bank (FIB) • Contact Center Performance</div>
+      </div>
+      <div class="badge">${kpiApproved ? "APPROVED & SIGNED" : "PENDING SIGN-OFF"}</div>
+    </div>
+    <div class="grid">
+      <div class="meta-box">
+        <div class="meta-label">Agent Name</div>
+        <div class="meta-val">${escapeHtml(cleanAgentName)}</div>
+      </div>
+      <div class="meta-box">
+        <div class="meta-label">Team Leader</div>
+        <div class="meta-val">${escapeHtml(teamLeaderInfo.name)} (${escapeHtml(teamLeaderInfo.role)})</div>
+      </div>
+      <div class="meta-box">
+        <div class="meta-label">Review Period</div>
+        <div class="meta-val">${escapeHtml(selectedYear)} • ${escapeHtml(selectedQuarter)} • Week ${selectedWeek}</div>
+      </div>
+      <div class="meta-box">
+        <div class="meta-label">Sign-off Timestamp</div>
+        <div class="meta-val">${kpiSignTime ? escapeHtml(kpiSignTime) : "Not signed yet"}</div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="statement">
+        I confirm that I have reviewed my weekly Key Performance Indicators (KPIs) and coaching feedback with my Team Leader for ${escapeHtml(selectedQuarter)} Week ${selectedWeek} (${escapeHtml(selectedYear)}).
+      </div>
+      <div class="sig-box">
+        <div class="meta-label">Agent Electronic Signature</div>
+        ${kpiSigImg ? `<img src="${kpiSigImg}" alt="Agent KPI Signature" />` : `<div style="padding:20px;color:#6b7280;font-size:13px;">Signature pending</div>`}
+        ${kpiSignTime ? `<div class="sig-time">Signed on ${escapeHtml(kpiSignTime)}</div>` : ""}
+      </div>
+    </div>
+    <div class="footer">
+      <span>Generated from Q.S &amp; KPI Portal</span>
+      <span>Document ID: ${escapeHtml(kpiSessionDocId)}</span>
+    </div>
+  </div>
+  <script>window.onload = function() { setTimeout(function(){ window.print(); }, 300); };</script>
+</body>
+</html>`;
+      printWindow.document.open();
+      printWindow.document.write(kpiHtml);
+      printWindow.document.close();
+      return;
+    }
 
     const isApproved = sessionData?.status === "approved";
     const sigImg = isApproved ? sessionData.signature_data : null;
@@ -565,6 +730,8 @@ export function QualitySessionModal({
   const isRejected = sessionData?.status === "rejected";
   const isQaResponded = sessionData?.status === "qa_responded";
   const hasSignedData = Boolean(sessionData?.signature_data);
+  const isKpiApproved = kpiSessionData?.status === "approved";
+  const hasKpiSignedData = Boolean(kpiSessionData?.signature_data);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -588,19 +755,25 @@ export function QualitySessionModal({
         <div className="px-5 sm:px-7 py-4 sm:py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gradient-to-r from-gray-50/80 via-white to-gray-50/80 dark:from-gray-900 dark:via-gray-850 dark:to-gray-900 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-[#1C6B53] to-emerald-400 flex items-center justify-center text-white shadow-md shadow-emerald-800/20">
-              <Award size={22} className="text-amber-300" />
+              {activeSection === "kpi" ? (
+                <BarChart3 size={22} className="text-amber-300" />
+              ) : (
+                <Award size={22} className="text-amber-300" />
+              )}
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white leading-tight">
-                  QUALITY SESSION
+                  Q.S &amp; KPI
                 </h3>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60 dark:border-emerald-800/60 text-[#1C6B53] dark:text-emerald-400">
-                  Read-Only Performance Review
+                  {activeSection === "kpi" ? "Weekly Team Leader KPI Sign-off" : "Read-Only Performance Review"}
                 </span>
               </div>
               <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">
-                Review your official QA evaluation scores, coaching notes, and submit your electronic sign-off.
+                {activeSection === "kpi"
+                  ? "Review your weekly KPI session with your Team Leader and submit your electronic sign-off with timestamp."
+                  : "Review your official QA evaluation scores, coaching notes, and submit your electronic sign-off."}
               </p>
             </div>
           </div>
@@ -623,6 +796,57 @@ export function QualitySessionModal({
               <X size={18} />
             </button>
           </div>
+        </div>
+
+        {/* Section Switcher: Quality Session (Q.S) vs KPI Session (Team Leader) */}
+        <div className="px-5 sm:px-7 py-2.5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center gap-2 flex-wrap shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveSection("qs");
+              setIsSigningOpen(false);
+              setIsRejectOpen(false);
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-black transition cursor-pointer ${
+              activeSection === "qs"
+                ? "bg-[#1C6B53] text-white shadow-sm shadow-emerald-900/20"
+                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-gray-700"
+            }`}
+          >
+            <Award size={14} className={activeSection === "qs" ? "text-amber-300" : "text-gray-400"} />
+            <span>Quality Session (Q.S)</span>
+            {isApproved && (
+              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${
+                activeSection === "qs" ? "bg-white/20 text-white" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+              }`}>
+                Signed
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveSection("kpi");
+              setIsSigningOpen(false);
+              setIsRejectOpen(false);
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-black transition cursor-pointer ${
+              activeSection === "kpi"
+                ? "bg-[#1C6B53] text-white shadow-sm shadow-emerald-900/20"
+                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-gray-700"
+            }`}
+          >
+            <ClipboardCheck size={14} className={activeSection === "kpi" ? "text-amber-300" : "text-gray-400"} />
+            <span>KPI Session &bull; {teamLeaderInfo.name}</span>
+            {isKpiApproved && (
+              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${
+                activeSection === "kpi" ? "bg-white/20 text-white" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+              }`}>
+                Signed
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Period and Week Controls */}
@@ -681,10 +905,22 @@ export function QualitySessionModal({
 
           {/* Status Badge */}
           <div className="flex items-center gap-2">
-            {isApproved ? (
+            {activeSection === "kpi" ? (
+              isKpiApproved ? (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-[#1C6B53] dark:text-emerald-400 text-xs font-black">
+                  <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400" />
+                  <span>Approved &amp; Signed</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-xs font-bold">
+                  <Clock size={14} />
+                  <span>Pending Sign-off</span>
+                </div>
+              )
+            ) : isApproved ? (
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-[#1C6B53] dark:text-emerald-400 text-xs font-black">
                 <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400" />
-                <span>Approved & Signed</span>
+                <span>Approved &amp; Signed</span>
               </div>
             ) : isRejected ? (
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-400 text-xs font-black">
@@ -707,6 +943,132 @@ export function QualitySessionModal({
 
         {/* Scrollable Evaluation Body */}
         <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-5">
+          {activeSection === "kpi" ? (
+            <>
+              {/* KPI Session Summary Cards (NO numeric scores) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div className="bg-gray-50 dark:bg-gray-800/80 p-3.5 rounded-2xl border border-gray-200/70 dark:border-gray-700/70">
+                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">Agent</span>
+                  <span className="text-xs sm:text-sm font-black text-gray-900 dark:text-white truncate block mt-0.5">
+                    {cleanAgentName}
+                  </span>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800/80 p-3.5 rounded-2xl border border-gray-200/70 dark:border-gray-700/70">
+                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">Team Leader</span>
+                  <span className="text-xs sm:text-sm font-black text-gray-900 dark:text-white truncate block mt-0.5">
+                    {teamLeaderInfo.name}
+                  </span>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800/80 p-3.5 rounded-2xl border border-gray-200/70 dark:border-gray-700/70">
+                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">Session Week</span>
+                  <span className="text-xs sm:text-sm font-black text-gray-900 dark:text-white truncate block mt-0.5">
+                    {selectedYear} &bull; {selectedQuarter} &bull; W{selectedWeek}
+                  </span>
+                </div>
+                <div className={`p-3.5 rounded-2xl border shadow-xs ${
+                  isKpiApproved
+                    ? "bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/30 border-emerald-300/80 dark:border-emerald-700/80"
+                    : "bg-gray-50 dark:bg-gray-800/80 border-gray-200/70 dark:border-gray-700/70"
+                }`}>
+                  <span className={`text-[10px] font-black uppercase tracking-wider block ${
+                    isKpiApproved ? "text-emerald-800 dark:text-emerald-400" : "text-gray-400"
+                  }`}>
+                    KPI Sign-off Status
+                  </span>
+                  <span className={`text-xs sm:text-sm font-black leading-tight block mt-0.5 ${
+                    isKpiApproved ? "text-[#1C6B53] dark:text-emerald-300" : "text-gray-700 dark:text-gray-300"
+                  }`}>
+                    {isKpiApproved ? "Approved & Signed" : "Pending Sign-off"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Approved KPI Signature Card */}
+              {isKpiApproved && (
+                <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center text-emerald-700 dark:text-emerald-300 shrink-0">
+                      <UserCheck size={20} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-emerald-900 dark:text-emerald-300">
+                          Officially Signed &amp; Approved
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-300">
+                          Verified
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+                        Signed by <strong>{kpiSessionData?.signed_by_name || cleanAgentName}</strong> on{" "}
+                        {kpiSessionData?.signed_at
+                          ? new Date(kpiSessionData.signed_at).toLocaleString("en-GB", {
+                              day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+                            })
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {hasKpiSignedData && (
+                    <div className="flex items-center gap-3 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-xl border border-emerald-200/80 dark:border-emerald-800/80 shadow-xs">
+                      <span className="text-[10px] font-black uppercase text-gray-400">Signature:</span>
+                      <img
+                        src={kpiSessionData.signature_data}
+                        alt="Agent KPI Electronic Signature"
+                        className="h-8 max-w-[120px] object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Weekly Team Leader KPI Coaching Confirmation Card (Signature + Date Only, No Scores) */}
+              <div className="p-5 rounded-2xl bg-gray-50/80 dark:bg-gray-800/50 border border-gray-200/80 dark:border-gray-700/80 space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <h4 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <ClipboardCheck size={15} className="text-[#1C6B53] dark:text-emerald-400" />
+                    <span>Week {selectedWeek} Team Leader KPI Confirmation</span>
+                  </h4>
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                    Sign-off &amp; Date Verification Only
+                  </span>
+                </div>
+
+                <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed bg-white dark:bg-gray-900/70 p-4 rounded-xl border border-gray-200/70 dark:border-gray-700/70">
+                  This weekly KPI sign-off confirms your 1-on-1 performance review session with Team Leader{" "}
+                  <strong className="text-gray-900 dark:text-white">{teamLeaderInfo.name}</strong> for{" "}
+                  <strong className="text-[#1C6B53] dark:text-emerald-400">
+                    Week {selectedWeek} ({selectedQuarter} {selectedYear})
+                  </strong>. Your electronic signature and exact timestamp will be securely logged and reflected on the Team Leader Dashboard PDF report.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="bg-white dark:bg-gray-900/70 p-3.5 rounded-xl border border-gray-200/70 dark:border-gray-700/70">
+                    <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">
+                      Reviewing Team Leader
+                    </span>
+                    <span className="text-xs font-bold text-gray-900 dark:text-white block mt-1">
+                      {teamLeaderInfo.name} ({teamLeaderInfo.role})
+                    </span>
+                  </div>
+                  <div className="bg-white dark:bg-gray-900/70 p-3.5 rounded-xl border border-gray-200/70 dark:border-gray-700/70">
+                    <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">
+                      Signature Date &amp; Time
+                    </span>
+                    <span className="text-xs font-bold text-gray-900 dark:text-white block mt-1">
+                      {isKpiApproved && kpiSessionData?.signed_at
+                        ? new Date(kpiSessionData.signed_at).toLocaleString("en-GB", {
+                            day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+                          })
+                        : "Recorded automatically upon approval"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
           
           {/* Summary Card */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -928,12 +1290,22 @@ export function QualitySessionModal({
               </div>
             )}
           </div>
+            </>
+          )}
         </div>
 
         {/* Modal Bottom Footer Actions: Approve / Reject */}
         <div className="px-5 sm:px-7 py-3.5 sm:py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-850/60 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
           <div className="text-xs text-gray-500 dark:text-gray-400 text-center sm:text-left">
-            {isApproved ? (
+            {activeSection === "kpi" ? (
+              isKpiApproved ? (
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
+                  <Check size={14} /> KPI session sign-off completed. Your signature and date are synced with the Team Leader PDF report.
+                </span>
+              ) : (
+                <span>Please approve and sign to confirm your weekly KPI review with {teamLeaderInfo.name}.</span>
+              )
+            ) : isApproved ? (
               <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
                 <Check size={14} /> Session sign-off completed. The signature will reflect on the weekly QA PDF.
               </span>
@@ -951,37 +1323,55 @@ export function QualitySessionModal({
           </div>
 
           <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-            {/* Reject Button: Completely disabled once submitted unless new cycle */}
-            <button
-              type="button"
-              onClick={() => setIsRejectOpen(true)}
-              disabled={actionLoading || isApproved || isRejected || isQaResponded}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition ${
-                isApproved || isRejected || isQaResponded
-                  ? "opacity-40 cursor-not-allowed bg-gray-100 dark:bg-gray-800 text-gray-400 border border-gray-200 dark:border-gray-700"
-                  : "text-red-700 dark:text-red-400 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-800 active:scale-95 cursor-pointer"
-              }`}
-            >
-              <XCircle size={14} />
-              <span>{isRejected ? "Objection Submitted" : "Reject Session"}</span>
-            </button>
+            {activeSection === "kpi" ? (
+              <button
+                type="button"
+                onClick={() => setIsSigningOpen(true)}
+                disabled={actionLoading || isKpiApproved}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-5 py-2 rounded-xl text-xs font-black transition ${
+                  isKpiApproved
+                    ? "opacity-60 cursor-not-allowed bg-emerald-700 text-white shadow-none"
+                    : "text-white bg-gradient-to-r from-emerald-600 to-[#1C6B53] hover:from-emerald-700 hover:to-emerald-800 shadow-md shadow-emerald-800/20 active:scale-95 cursor-pointer"
+                }`}
+              >
+                <PenTool size={14} />
+                <span>{isKpiApproved ? "Approved & Signed" : "Approve KPI Session"}</span>
+              </button>
+            ) : (
+              <>
+                {/* Reject Button: Completely disabled once submitted unless new cycle */}
+                <button
+                  type="button"
+                  onClick={() => setIsRejectOpen(true)}
+                  disabled={actionLoading || isApproved || isRejected || isQaResponded}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition ${
+                    isApproved || isRejected || isQaResponded
+                      ? "opacity-40 cursor-not-allowed bg-gray-100 dark:bg-gray-800 text-gray-400 border border-gray-200 dark:border-gray-700"
+                      : "text-red-700 dark:text-red-400 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-800 active:scale-95 cursor-pointer"
+                  }`}
+                >
+                  <XCircle size={14} />
+                  <span>{isRejected ? "Objection Submitted" : "Reject Session"}</span>
+                </button>
 
-            {/* Approve Button: Re-enabled when QA has responded, disabled if already approved or waiting for QA */}
-            <button
-              type="button"
-              onClick={() => setIsSigningOpen(true)}
-              disabled={actionLoading || isApproved || (isRejected && !isQaResponded)}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-5 py-2 rounded-xl text-xs font-black transition ${
-                isApproved
-                  ? "opacity-60 cursor-not-allowed bg-emerald-700 text-white shadow-none"
-                  : (isRejected && !isQaResponded)
-                  ? "opacity-40 cursor-not-allowed bg-gray-300 dark:bg-gray-700 text-gray-500 shadow-none"
-                  : "text-white bg-gradient-to-r from-emerald-600 to-[#1C6B53] hover:from-emerald-700 hover:to-emerald-800 shadow-md shadow-emerald-800/20 active:scale-95 cursor-pointer"
-              }`}
-            >
-              <PenTool size={14} />
-              <span>{isApproved ? "Approved & Signed" : isQaResponded ? "Approve Session" : "Approve Session"}</span>
-            </button>
+                {/* Approve Button: Re-enabled when QA has responded, disabled if already approved or waiting for QA */}
+                <button
+                  type="button"
+                  onClick={() => setIsSigningOpen(true)}
+                  disabled={actionLoading || isApproved || (isRejected && !isQaResponded)}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-5 py-2 rounded-xl text-xs font-black transition ${
+                    isApproved
+                      ? "opacity-60 cursor-not-allowed bg-emerald-700 text-white shadow-none"
+                      : (isRejected && !isQaResponded)
+                      ? "opacity-40 cursor-not-allowed bg-gray-300 dark:bg-gray-700 text-gray-500 shadow-none"
+                      : "text-white bg-gradient-to-r from-emerald-600 to-[#1C6B53] hover:from-emerald-700 hover:to-emerald-800 shadow-md shadow-emerald-800/20 active:scale-95 cursor-pointer"
+                  }`}
+                >
+                  <PenTool size={14} />
+                  <span>{isApproved ? "Approved & Signed" : "Approve Session"}</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -1027,7 +1417,7 @@ export function QualitySessionModal({
                 className="w-full h-44 cursor-crosshair touch-none"
               />
               <div className="absolute bottom-2 left-3 pointer-events-none text-[10px] font-bold text-gray-400 select-none">
-                Draw Signature Here • FIB Quality Assurance Verification
+                Draw Signature Here • {activeSection === "kpi" ? "FIB Team Leader KPI Verification" : "FIB Quality Assurance Verification"}
               </div>
             </div>
 

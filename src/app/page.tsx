@@ -1343,204 +1343,6 @@ function AgentDashboard({
               onOpenSettings={onOpenSettings}
               isDarkMode={isDarkMode}
               toggleDarkMode={toggleDarkMode}
-              extraActions={
-                previewMode ? (
-                  <div className="relative shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setAgentDropdownOpen(!agentDropdownOpen)}
-                      className="h-8 flex items-center justify-between gap-1.5 px-2.5 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 hover:bg-gray-100/90 dark:hover:bg-gray-800/80 transition cursor-pointer shrink-0"
-                    >
-                      <div className="w-5 h-5 rounded-md bg-[#1C6B53]/15 text-[#1C6B53] dark:text-emerald-300 flex items-center justify-center text-[10px] font-black shrink-0">
-                        {currentAgent?.agent_name ? currentAgent.agent_name.charAt(0).toUpperCase() : <Users size={11} />}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-left truncate">
-                        <span className="truncate max-w-[110px] sm:max-w-[140px] font-black text-xs text-gray-900 dark:text-white leading-none">
-                          {toTitleCase(currentAgent?.agent_name || "Select Agent")}
-                        </span>
-                        <span className="text-[9px] text-[#1C6B53] dark:text-emerald-400 font-bold leading-none shrink-0">
-                          • {currentAgent?.team?.replace(' Team', '') || 'CC'}
-                        </span>
-                      </div>
-                      <ChevronDown size={11} className={`text-gray-400 transition-transform duration-200 shrink-0 ml-0.5 ${agentDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {agentDropdownOpen && (
-                      <>
-                        <div className="fixed inset-0 z-40" onClick={() => setAgentDropdownOpen(false)} />
-                        <div className="absolute right-0 top-full mt-2 w-[calc(100vw-32px)] sm:w-[420px] bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-3xl shadow-2xl p-3 z-50 max-h-[460px] flex flex-col animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/10">
-                          
-                          {/* Header */}
-                          <div className="px-2 pt-1 pb-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
-                            <div>
-                              <h4 className="text-xs font-black text-gray-900 dark:text-white">
-                                Select Employee
-                              </h4>
-                              <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
-                                {activeMembersList.length} Official Contact Center Agents
-                              </p>
-                            </div>
-                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                              {filteredAgentsList.length} Available
-                            </span>
-                          </div>
-
-                          {/* Search Input - Modern & Calm */}
-                          <div className="relative mt-2.5 mb-2">
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
-                            <input
-                              type="text"
-                              placeholder="Search employee across all teams..."
-                              value={agentSearchTerm}
-                              onChange={(e) => setAgentSearchTerm(e.target.value)}
-                              className="w-full pl-9 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200/90 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-[#1C6B53]/20 focus:border-[#1C6B53] dark:focus:border-emerald-500 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 font-medium shadow-xs transition"
-                              autoFocus
-                            />
-                            {agentSearchTerm && (
-                              <button
-                                type="button"
-                                onClick={() => setAgentSearchTerm("")}
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 rounded-md transition"
-                                title="Clear search"
-                              >
-                                <X size={12} />
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Team Filter Pills: Younis Kamal, Ankido Buya, Mohammed Dlshad (Strictly 3 tabs, No "All") */}
-                          <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0">
-                            {[
-                              { id: "Younis", label: "Younis Kamal", count: teamCounts.Younis, icon: PhoneCall },
-                              { id: "Ankido", label: "Ankido Buya", count: teamCounts.Ankido, icon: PhoneCall },
-                              { id: "Mohammed", label: "Mohammed Dlshad", count: teamCounts.Mohammed, icon: MessageSquare },
-                            ].map(tab => {
-                              const TabIcon = tab.icon;
-                              const isActive = teamTabFilter === tab.id;
-                              return (
-                                <button
-                                  key={tab.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setTeamTabFilter(tab.id);
-                                    setAgentSearchTerm("");
-                                  }}
-                                  className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-[10px] font-bold transition cursor-pointer ${
-                                    isActive
-                                      ? 'bg-[#1C6B53] text-white shadow-xs font-black'
-                                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-700'
-                                  }`}
-                                >
-                                  <TabIcon size={11} className={isActive ? 'text-emerald-200' : 'text-gray-400'} />
-                                  <span className="truncate">{tab.label.split(' ')[0]}</span>
-                                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
-                                    isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                                  }`}>
-                                    {tab.count}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
-
-                          {/* Roster Count Summary */}
-                          <div className="px-2 py-1 text-[10px] font-bold text-gray-500 dark:text-gray-400 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 mb-1.5">
-                            <span>
-                              {agentSearchTerm.trim() 
-                                ? `${filteredAgentsList.length} Matching Search` 
-                                : `${filteredAgentsList.length} Agents in ${teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' : teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'}`}
-                            </span>
-                            <span className="text-[9px] font-bold text-[#1C6B53] dark:text-emerald-400">
-                              {teamTabFilter === 'Mohammed' ? 'Digital Chat' : 'Voice Calls'}
-                            </span>
-                          </div>
-
-                          {/* Scrollable Members List */}
-                          <div className="overflow-y-auto space-y-1.5 flex-1 pr-1 overscroll-contain max-h-64">
-                            {filteredAgentsList.length === 0 ? (
-                              <div className="py-8 px-3 text-center text-xs text-gray-400 dark:text-gray-500 font-medium flex flex-col items-center gap-2">
-                                <Users size={20} className="text-gray-300 dark:text-gray-600" />
-                                <span>{agentSearchTerm.trim() ? `No employees matching "${agentSearchTerm}"` : "No employees found"}</span>
-                              </div>
-                            ) : (
-                              filteredAgentsList.map(m => {
-                                const isSelected = m.agent_name === currentAgent?.agent_name;
-                                const teamStr = m.team || "Contact Center";
-                                const isYounis = teamStr.includes("Younis");
-                                const isAnkido = teamStr.includes("Ankido");
-                                const isDlshad = teamStr.includes("Mohammed") || teamStr.includes("Dlshad");
-                                
-                                const teamBadgeClass = isYounis
-                                  ? "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
-                                  : isAnkido
-                                  ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
-                                  : isDlshad
-                                  ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700";
-
-                                return (
-                                  <button
-                                    key={m.id || m.agent_name}
-                                    type="button"
-                                    onClick={() => {
-                                      setCurrentAgent({
-                                        role: 'agent',
-                                        agent_name: m.agent_name,
-                                        team: m.team,
-                                        name: m.agent_name,
-                                        photo_url: m.photo_url || ""
-                                      });
-                                      setAgentDropdownOpen(false);
-                                      setAgentSearchTerm("");
-                                    }}
-                                    className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left text-xs transition-all cursor-pointer ${
-                                      isSelected
-                                        ? 'bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800'
-                                        : 'hover:bg-gray-50 dark:hover:bg-gray-800/70 text-gray-700 dark:text-gray-200 font-medium'
-                                    }`}
-                                  >
-                                    <div className="flex items-center gap-2.5 truncate">
-                                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-black shrink-0 ${
-                                        isSelected
-                                          ? 'bg-[#1C6B53] text-white shadow-2xs'
-                                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
-                                      }`}>
-                                        {m.agent_name?.charAt(0).toUpperCase()}
-                                      </div>
-                                      <div className="truncate">
-                                        <div className="font-bold truncate text-gray-900 dark:text-gray-100">
-                                          {toTitleCase(m.agent_name)}
-                                        </div>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                          <span className={`text-[9px] px-1.5 py-0.2 rounded-md font-bold border ${teamBadgeClass}`}>
-                                            {teamStr.replace(' Team', '')}
-                                          </span>
-                                          <span className="text-[9px] font-semibold text-gray-400 dark:text-gray-500">
-                                            {isDlshad ? 'Chat' : 'Call'}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div className="shrink-0 ml-2">
-                                      {isSelected ? (
-                                        <span className="w-5 h-5 rounded-full bg-[#1C6B53] text-white flex items-center justify-center shadow-2xs">
-                                          <Check size={11} strokeWidth={3} />
-                                        </span>
-                                      ) : (
-                                        <span className="text-[10px] text-gray-400 group-hover:text-gray-600 font-medium">Select</span>
-                                      )}
-                                    </div>
-                                  </button>
-                                );
-                              })
-                            )}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ) : undefined
-              }
             />
           </div>
         </div>
@@ -1673,15 +1475,214 @@ function AgentDashboard({
               </div>
             )}
 
-            {/* QUALITY SESSION Button */}
+            {/* Moved Preview Agent Selector Dropdown (Placed neatly next to Q.S & KPI) */}
+            {previewMode && (
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setAgentDropdownOpen(!agentDropdownOpen)}
+                  className="h-9 flex items-center justify-between gap-2 px-3 rounded-2xl text-xs font-bold text-gray-800 dark:text-gray-200 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 shadow-xs transition cursor-pointer shrink-0"
+                  title="Switch Preview Employee"
+                >
+                  <div className="w-5 h-5 rounded-md bg-[#1C6B53]/15 text-[#1C6B53] dark:text-emerald-300 flex items-center justify-center text-[10px] font-black shrink-0">
+                    {currentAgent?.agent_name ? currentAgent.agent_name.charAt(0).toUpperCase() : <Users size={11} />}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-left truncate">
+                    <span className="truncate max-w-[120px] sm:max-w-[150px] font-black text-xs text-gray-900 dark:text-white leading-none">
+                      {toTitleCase(currentAgent?.agent_name || "Select Agent")}
+                    </span>
+                    <span className="text-[10px] text-[#1C6B53] dark:text-emerald-400 font-bold leading-none shrink-0">
+                      • {currentAgent?.team?.replace(' Team', '') || 'CC'}
+                    </span>
+                  </div>
+                  <ChevronDown size={12} className={`text-gray-400 transition-transform duration-200 shrink-0 ml-0.5 ${agentDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {agentDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setAgentDropdownOpen(false)} />
+                    <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-[calc(100vw-32px)] sm:w-[420px] bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-3xl shadow-2xl p-3 z-50 max-h-[460px] flex flex-col animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/10">
+                      
+                      {/* Header */}
+                      <div className="px-2 pt-1 pb-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                        <div>
+                          <h4 className="text-xs font-black text-gray-900 dark:text-white">
+                            Select Employee
+                          </h4>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                            {activeMembersList.length} Official Contact Center Agents
+                          </p>
+                        </div>
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                          {filteredAgentsList.length} Available
+                        </span>
+                      </div>
+
+                      {/* Search Input */}
+                      <div className="relative mt-2.5 mb-2">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                        <input
+                          type="text"
+                          placeholder="Search employee across all teams..."
+                          value={agentSearchTerm}
+                          onChange={(e) => setAgentSearchTerm(e.target.value)}
+                          className="w-full pl-9 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200/90 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-[#1C6B53]/20 focus:border-[#1C6B53] dark:focus:border-emerald-500 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 font-medium shadow-xs transition"
+                          autoFocus
+                        />
+                        {agentSearchTerm && (
+                          <button
+                            type="button"
+                            onClick={() => setAgentSearchTerm("")}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 rounded-md transition"
+                            title="Clear search"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Team Filter Pills */}
+                      <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0">
+                        {[
+                          { id: "Younis", label: "Younis Kamal", count: teamCounts.Younis, icon: PhoneCall },
+                          { id: "Ankido", label: "Ankido Buya", count: teamCounts.Ankido, icon: PhoneCall },
+                          { id: "Mohammed", label: "Mohammed Dlshad", count: teamCounts.Mohammed, icon: MessageSquare },
+                        ].map(tab => {
+                          const TabIcon = tab.icon;
+                          const isActive = teamTabFilter === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => {
+                                setTeamTabFilter(tab.id);
+                                setAgentSearchTerm("");
+                              }}
+                              className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-[10px] font-bold transition cursor-pointer ${
+                                isActive
+                                  ? 'bg-[#1C6B53] text-white shadow-xs font-black'
+                                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-700'
+                              }`}
+                            >
+                              <TabIcon size={11} className={isActive ? 'text-emerald-200' : 'text-gray-400'} />
+                              <span className="truncate">{tab.label.split(' ')[0]}</span>
+                              <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
+                                isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                              }`}>
+                                {tab.count}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Roster Count Summary */}
+                      <div className="px-2 py-1 text-[10px] font-bold text-gray-500 dark:text-gray-400 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 mb-1.5">
+                        <span>
+                          {agentSearchTerm.trim() 
+                            ? `${filteredAgentsList.length} Matching Search` 
+                            : `${filteredAgentsList.length} Agents in ${teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' : teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'}`}
+                        </span>
+                        <span className="text-[9px] font-bold text-[#1C6B53] dark:text-emerald-400">
+                          {teamTabFilter === 'Mohammed' ? 'Digital Chat' : 'Voice Calls'}
+                        </span>
+                      </div>
+
+                      {/* Scrollable Members List */}
+                      <div className="overflow-y-auto space-y-1.5 flex-1 pr-1 overscroll-contain max-h-64">
+                        {filteredAgentsList.length === 0 ? (
+                          <div className="py-8 px-3 text-center text-xs text-gray-400 dark:text-gray-500 font-medium flex flex-col items-center gap-2">
+                            <Users size={20} className="text-gray-300 dark:text-gray-600" />
+                            <span>{agentSearchTerm.trim() ? `No employees matching "${agentSearchTerm}"` : "No employees found"}</span>
+                          </div>
+                        ) : (
+                          filteredAgentsList.map(m => {
+                            const isSelected = m.agent_name === currentAgent?.agent_name;
+                            const teamStr = m.team || "Contact Center";
+                            const isYounis = teamStr.includes("Younis");
+                            const isAnkido = teamStr.includes("Ankido");
+                            const isDlshad = teamStr.includes("Mohammed") || teamStr.includes("Dlshad");
+                            
+                            const teamBadgeClass = isYounis
+                              ? "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
+                              : isAnkido
+                              ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                              : isDlshad
+                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                              : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700";
+
+                            return (
+                              <button
+                                key={m.id || m.agent_name}
+                                type="button"
+                                onClick={() => {
+                                  setCurrentAgent({
+                                    role: 'agent',
+                                    agent_name: m.agent_name,
+                                    team: m.team,
+                                    name: m.agent_name,
+                                    photo_url: m.photo_url || ""
+                                  });
+                                  setAgentDropdownOpen(false);
+                                  setAgentSearchTerm("");
+                                }}
+                                className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left text-xs transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800'
+                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800/70 text-gray-700 dark:text-gray-200 font-medium'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 truncate">
+                                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-black shrink-0 ${
+                                    isSelected
+                                      ? 'bg-[#1C6B53] text-white shadow-2xs'
+                                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                                  }`}>
+                                    {m.agent_name?.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div className="truncate">
+                                    <div className="font-bold truncate text-gray-900 dark:text-gray-100">
+                                      {toTitleCase(m.agent_name)}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                      <span className={`text-[9px] px-1.5 py-0.2 rounded-md font-bold border ${teamBadgeClass}`}>
+                                        {teamStr.replace(' Team', '')}
+                                      </span>
+                                      <span className="text-[9px] font-semibold text-gray-400 dark:text-gray-500">
+                                        {isDlshad ? 'Chat' : 'Call'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="shrink-0 ml-2">
+                                  {isSelected ? (
+                                    <span className="w-5 h-5 rounded-full bg-[#1C6B53] text-white flex items-center justify-center shadow-2xs">
+                                      <Check size={11} strokeWidth={3} />
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] text-gray-400 group-hover:text-gray-600 font-medium">Select</span>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Q.S & KPI Button */}
             <button 
               type="button"
               onClick={() => setShowQualitySessionModal(true)} 
-              className="flex items-center gap-2 px-3.5 sm:px-4 py-2 text-xs font-black text-white bg-gradient-to-r from-emerald-600 via-[#1C6B53] to-teal-700 hover:from-emerald-700 hover:to-teal-800 rounded-2xl shadow-md shadow-emerald-900/20 active:scale-95 transition cursor-pointer shrink-0 border border-emerald-400/30"
-              title="Open Quality Session Sign-off"
+              className="h-9 flex items-center gap-2 px-3.5 sm:px-4 text-xs font-black text-white bg-gradient-to-r from-emerald-600 via-[#1C6B53] to-teal-700 hover:from-emerald-700 hover:to-teal-800 rounded-2xl shadow-md shadow-emerald-900/20 active:scale-95 transition cursor-pointer shrink-0 border border-emerald-400/30"
+              title="Open Q.S & KPI Sign-off"
             >
               <Award size={14} className="text-amber-300" />
-              <span>QUALITY SESSION</span>
+              <span>Q.S &amp; KPI</span>
             </button>
 
             {!previewMode && (
@@ -2429,6 +2430,55 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, [selectedYear]);
 
+  const inferQuarterFromMonth = (m: string) => {
+    const up = (m || "").toUpperCase();
+    if (["JAN", "FEB", "MAR", "Q1"].includes(up)) return "Q1";
+    if (["APR", "MAY", "JUN", "Q2", "H1"].includes(up)) return "Q2";
+    if (["JUL", "AUG", "SEP", "Q3"].includes(up)) return "Q3";
+    return "Q4";
+  };
+
+  // Real-time KPI Sessions listener for Team Leader Dashboard PDF Signatures
+  const [kpiSessionsMap, setKpiSessionsMap] = useState<Record<string, any>>({});
+  const [showTlPdfModal, setShowTlPdfModal] = useState(false);
+  const [tlPdfQuarter, setTlPdfQuarter] = useState<string>(() => inferQuarterFromMonth(selectedMonth));
+  const [tlPdfWeek, setTlPdfWeek] = useState<number>(4);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "kpi_sessions"), (snapshot) => {
+      const map: Record<string, any> = {};
+      snapshot.forEach(d => {
+        map[d.id] = { id: d.id, ...d.data() };
+      });
+      setKpiSessionsMap(map);
+    }, (err) => {
+      console.warn("Firestore kpi_sessions listener in page.tsx:", err);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const findKpiSession = useCallback((agentName: string, year: string, quarter: string, week: number) => {
+    if (!agentName) return null;
+    const slugs = getAllAgentSlugs(agentName);
+    for (const s of slugs) {
+      const docId = `${year}_${quarter}_w${week}_${s}`;
+      if (kpiSessionsMap[docId]) return kpiSessionsMap[docId];
+    }
+    const qUp = String(quarter || "").toUpperCase();
+    for (const rec of Object.values(kpiSessionsMap)) {
+      if (
+        String(rec.year) === String(year) &&
+        String(rec.quarter || "").toUpperCase() === qUp &&
+        Number(rec.week) === Number(week) &&
+        isSameAgent(rec.agent_name || "", agentName)
+      ) {
+        return rec;
+      }
+    }
+    return null;
+  }, [kpiSessionsMap]);
+
   const [columnsMap, setColumnsMap] = useState<Record<string, ColumnConfig[]>>(DEFAULT_COLUMNS_MAP);
 
   // TL & Manager Profile Modal State
@@ -2754,6 +2804,7 @@ export default function Dashboard() {
     showMonthLockModal ||
     showIncompleteSyncModal ||
     showSyncedDetailsModal ||
+    showTlPdfModal ||
     deleteTarget
   );
   useBodyScrollLock(isAnyDashboardModalOpen);
@@ -6150,6 +6201,203 @@ export default function Dashboard() {
       ? getEffectiveColumns('Ankido Buya Team', selectedMonth, selectedYear, columnsMap['Ankido Buya Team'] || columnsMap['Younis Kamal Team'] || DEFAULT_OTHER_COLUMNS)
       : getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
 
+    const handleExportTlPdf = () => {
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        alert("Popup blocked! Please allow popups in your browser to download the Team Leader PDF report.");
+        return;
+      }
+
+      const escapeHtml = (val: string) =>
+        String(val || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+
+      const formatMetricValue = (val: any, col: ColumnConfig) => {
+        if (val === undefined || val === null) return "-";
+        const raw = String(val).trim();
+        if (!raw || raw === "-") return "-";
+        const isWrapup = col.id === 'wrapup' || col.id?.toLowerCase().includes('wrapup') || col.label?.toLowerCase().includes('wrapup');
+        if (!isWrapup && col.type !== 'time' && col.aggregation === 'average' && !raw.endsWith('%')) {
+          return `${raw}%`;
+        }
+        return raw;
+      };
+
+      const teamTitle = isCombinedCallCenter ? "Call Center Combined (Younis + Ankido)" : selectedTeam;
+      const safeFilePart = teamTitle.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_|_$/g, "");
+      const docTitle = `TL_KPI_Report_${safeFilePart}_${selectedMonth}_${selectedYear}_${tlPdfQuarter}_W${tlPdfWeek}`;
+
+      let signedCount = 0;
+      const rowsHtml = filteredRows.map((row, idx) => {
+        const agentName = row.display_name || row.agent_name || "-";
+        const kpiRec = findKpiSession(row.agent_name || row.display_name || "", selectedYear, tlPdfQuarter, tlPdfWeek);
+        const isSigned = kpiRec?.status === "approved";
+        if (isSigned) signedCount++;
+
+        const signedAtFormatted = isSigned && kpiRec?.signed_at
+          ? new Date(kpiRec.signed_at).toLocaleString("en-GB", {
+              day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+            })
+          : null;
+        const safeSigUrl = isSigned && typeof kpiRec?.signature_data === "string" && kpiRec.signature_data.startsWith("data:image/")
+          ? kpiRec.signature_data
+          : null;
+
+        const metricCells = activeCols.map(col => {
+          const valStr = formatMetricValue(row[col.id], col);
+          return `<td class="num-cell">${escapeHtml(valStr)}</td>`;
+        }).join("");
+
+        const teamTag = isCombinedCallCenter && row.team
+          ? `<div class="agent-team">${escapeHtml(String(row.team).replace(" Team", ""))}</div>`
+          : "";
+
+        const signOffCell = isSigned
+          ? `<div class="sig-wrap">
+               ${safeSigUrl ? `<img src="${safeSigUrl}" alt="Signature" class="sig-img" />` : `<span class="badge-signed">Approved</span>`}
+               <div class="sig-date">✓ ${signedAtFormatted ? escapeHtml(signedAtFormatted) : "Signed"}</div>
+             </div>`
+          : `<span class="badge-pending">Pending Sign-off</span>`;
+
+        return `<tr>
+          <td class="idx-cell">${idx + 1}</td>
+          <td class="agent-cell">
+            <div class="agent-name">${escapeHtml(agentName)}</div>
+            ${teamTag}
+          </td>
+          ${metricCells}
+          <td class="sig-cell">${signOffCell}</td>
+        </tr>`;
+      }).join("");
+
+      const summaryCells = activeCols.map(col => {
+        const avgVal = formatMetricValue(calcAvg(col, filteredRows), col);
+        return `<td class="num-cell">${escapeHtml(avgVal)}</td>`;
+      }).join("");
+
+      const generatedAt = new Date().toLocaleString("en-GB", {
+        day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+      });
+      const preparedBy = userProfile?.name || (selectedTeam ? selectedTeam.replace(" Team", "") : "Team Leader");
+
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(docTitle)}</title>
+  <style>
+    @page { size: A4 landscape; margin: 10mm; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+    body { margin: 0; padding: 18px; color: #111827; background: #fff; }
+    .no-print { display: flex; align-items: center; justify-content: space-between; background: #f3f4f6; border: 1px solid #e5e7eb; padding: 10px 16px; border-radius: 10px; margin-bottom: 14px; }
+    .no-print-info { font-size: 12px; color: #374151; font-weight: 600; }
+    .no-print-actions { display: flex; gap: 8px; }
+    .btn-primary { background: #1C6B53; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px; }
+    .btn-secondary { background: #fff; color: #374151; border: 1px solid #d1d5db; padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px; }
+    @media print { .no-print { display: none !important; } body { padding: 0; } }
+    .banner { background: #0f2922; color: #fff; padding: 14px 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .banner-title { font-size: 17px; font-weight: 800; letter-spacing: 0.3px; }
+    .banner-sub { font-size: 11px; color: #a7f3d0; margin-top: 2px; }
+    .banner-meta { text-align: right; font-size: 11px; color: #d1fae5; line-height: 1.5; }
+    .meta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+    .meta-card { border: 1px solid #e5e7eb; background: #f9fafb; border-radius: 8px; padding: 8px 10px; }
+    .meta-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px; }
+    .meta-val { font-size: 12px; font-weight: 800; color: #111827; margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    th { background: #1C6B53; color: #fff; padding: 8px 6px; text-align: center; font-weight: 700; border: 1px solid #165441; white-space: nowrap; }
+    th.agent-th { text-align: left; padding-left: 10px; min-width: 140px; }
+    td { padding: 6px; border: 1px solid #e5e7eb; vertical-align: middle; }
+    tr:nth-child(even) td { background: #f9fafb; }
+    .idx-cell { text-align: center; font-weight: 700; color: #6b7280; width: 28px; }
+    .agent-cell { text-align: left; padding-left: 10px; }
+    .agent-name { font-weight: 700; color: #111827; }
+    .agent-team { font-size: 9px; color: #1C6B53; font-weight: 700; margin-top: 1px; }
+    .num-cell { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; color: #1f2937; }
+    .sig-cell { text-align: center; min-width: 128px; }
+    .sig-wrap { display: inline-flex; flex-direction: column; align-items: center; }
+    .sig-img { height: 28px; max-width: 105px; object-fit: contain; display: block; margin-bottom: 2px; }
+    .sig-date { font-size: 9px; color: #065f46; font-weight: 700; white-space: nowrap; }
+    .badge-signed { display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 9px; font-weight: 700; background: #d1fae5; color: #065f46; }
+    .badge-pending { display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 9px; font-weight: 600; background: #f3f4f6; color: #6b7280; }
+    tfoot td { background: #ecfdf5 !important; font-weight: 800; color: #065f46; border-top: 2px solid #1C6B53; }
+    .footer-note { margin-top: 10px; font-size: 10px; color: #6b7280; display: flex; justify-content: space-between; }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <div class="no-print-info">Tip: Choose &ldquo;Save as PDF&rdquo; as the destination printer to download this report as a PDF file.</div>
+    <div class="no-print-actions">
+      <button class="btn-secondary" onclick="window.close()">Close</button>
+      <button class="btn-primary" onclick="window.print()">Download / Print PDF</button>
+    </div>
+  </div>
+  <div class="banner">
+    <div>
+      <div class="banner-title">TEAM LEADER KPI PERFORMANCE &amp; SIGN-OFF REPORT</div>
+      <div class="banner-sub">First Iraqi Bank (FIB) &bull; ${escapeHtml(teamTitle)}</div>
+    </div>
+    <div class="banner-meta">
+      <div><strong>Prepared By:</strong> ${escapeHtml(preparedBy)}</div>
+      <div><strong>Generated:</strong> ${escapeHtml(generatedAt)}</div>
+    </div>
+  </div>
+  <div class="meta-grid">
+    <div class="meta-card">
+      <div class="meta-lbl">Team / Unit</div>
+      <div class="meta-val">${escapeHtml(teamTitle)}</div>
+    </div>
+    <div class="meta-card">
+      <div class="meta-lbl">KPI Metrics Period</div>
+      <div class="meta-val">${escapeHtml(selectedMonth)} ${escapeHtml(selectedYear)}</div>
+    </div>
+    <div class="meta-card">
+      <div class="meta-lbl">KPI Sign-off Week</div>
+      <div class="meta-val">${escapeHtml(selectedYear)} &bull; ${escapeHtml(tlPdfQuarter)} &bull; Week ${tlPdfWeek}</div>
+    </div>
+    <div class="meta-card">
+      <div class="meta-lbl">Signatures Logged</div>
+      <div class="meta-val">${signedCount} / ${filteredRows.length} Agents Signed</div>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th class="agent-th">Agent Name</th>
+        ${activeCols.map(col => `<th>${escapeHtml(cleanColLabel(col.id, col.label))}</th>`).join("")}
+        <th>KPI Sign-off (${escapeHtml(tlPdfQuarter)} W${tlPdfWeek})</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowsHtml}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td></td>
+        <td class="agent-cell">Team Summary / Average</td>
+        ${summaryCells}
+        <td class="num-cell">${signedCount}/${filteredRows.length} Signed</td>
+      </tr>
+    </tfoot>
+  </table>
+  <div class="footer-note">
+    <span>FIB Contact Center &bull; Official Team Leader Dashboard Export</span>
+    <span>All KPI signatures include verified electronic timestamps from Q.S &amp; KPI Portal</span>
+  </div>
+  <script>window.onload = function() { setTimeout(function(){ window.print(); }, 350); };</script>
+</body>
+</html>`;
+
+      printWindow.document.open();
+      printWindow.document.write(html);
+      printWindow.document.close();
+      setShowTlPdfModal(false);
+    };
+
     const handleCellKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, rowIndex: number, colIndex: number) => {
       if (isAggregate) return;
 
@@ -6610,6 +6858,21 @@ export default function Dashboard() {
               </>
             )}
           </div>
+
+          {/* Export PDF Button (Pinned Right in TL Controls Bar) */}
+          <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5 flex-shrink-0" />
+          <button
+            type="button"
+            onClick={() => {
+              setTlPdfQuarter(inferQuarterFromMonth(selectedMonth));
+              setShowTlPdfModal(true);
+            }}
+            className="px-2.5 sm:px-3 py-1 rounded-xl text-[11px] font-black transition flex items-center gap-1.5 border cursor-pointer whitespace-nowrap bg-gray-900 hover:bg-gray-800 dark:bg-[#1C6B53] dark:hover:bg-[#155a45] text-white border-gray-800 dark:border-emerald-500/40 shadow-xs shrink-0 active:scale-95"
+            title="Download Team Leader KPI & Agent Signatures PDF Report"
+          >
+            <Download size={12} />
+            <span>Export PDF</span>
+          </button>
         </div>
 
         {/* Mobile Swipe Hint */}
@@ -7243,6 +7506,144 @@ export default function Dashboard() {
                   <span>Unpublish (Revert to Draft)</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Team Leader Export PDF Modal (with Weekly KPI Signatures) */}
+      {isMounted && showTlPdfModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/80 dark:bg-gray-800/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#1C6B53] text-white flex items-center justify-center shadow-md shadow-emerald-900/20">
+                  <Download size={18} />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-white">
+                    Export Team Leader KPI Report (PDF)
+                  </h3>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+                    Includes KPI metrics table &amp; agent electronic signatures
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTlPdfModal(false)}
+                className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 transition cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              {/* Report Scope Summary */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-800/70 border border-gray-200/70 dark:border-gray-700/70">
+                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">Team / View</span>
+                  <span className="text-xs font-black text-gray-900 dark:text-white mt-0.5 block truncate">
+                    {isCombinedCallCenter ? "CC Combined (Y+A)" : selectedTeam}
+                  </span>
+                </div>
+                <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-800/70 border border-gray-200/70 dark:border-gray-700/70">
+                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">KPI Period</span>
+                  <span className="text-xs font-black text-gray-900 dark:text-white mt-0.5 block">
+                    {selectedMonth} {selectedYear} &bull; {filteredRows.length} Agents
+                  </span>
+                </div>
+              </div>
+
+              {/* Quarter Selection for Signatures */}
+              <div>
+                <label className="text-xs font-black text-gray-700 dark:text-gray-300 block mb-2">
+                  Select Signature Quarter ({selectedYear}):
+                </label>
+                <div className="grid grid-cols-4 gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl">
+                  {["Q1", "Q2", "Q3", "Q4"].map((q) => (
+                    <button
+                      key={q}
+                      type="button"
+                      onClick={() => setTlPdfQuarter(q)}
+                      className={`py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                        tlPdfQuarter === q
+                          ? "bg-[#1C6B53] text-white shadow-xs"
+                          : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                      }`}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Week Selection for Signatures */}
+              <div>
+                <label className="text-xs font-black text-gray-700 dark:text-gray-300 block mb-2">
+                  Select KPI Signature Week (W1 &ndash; W13):
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {Array.from({ length: 13 }, (_, i) => i + 1).map((w) => (
+                    <button
+                      key={w}
+                      type="button"
+                      onClick={() => setTlPdfWeek(w)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                        tlPdfWeek === w
+                          ? "bg-[#1C6B53] text-white shadow-xs"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      }`}
+                    >
+                      W{w}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Live Signatures Readiness Box */}
+              {(() => {
+                const signedAgents = filteredRows.filter(r =>
+                  findKpiSession(r.agent_name || r.display_name || "", selectedYear, tlPdfQuarter, tlPdfWeek)?.status === "approved"
+                ).length;
+                return (
+                  <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-black text-emerald-900 dark:text-emerald-300">
+                        KPI Signatures for {selectedYear} &bull; {tlPdfQuarter} &bull; W{tlPdfWeek}
+                      </div>
+                      <div className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+                        Each signed agent&apos;s signature &amp; timestamp will be printed on the PDF.
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 rounded-xl bg-white dark:bg-gray-800 border border-emerald-300 dark:border-emerald-700 text-xs font-black text-[#1C6B53] dark:text-emerald-300 shrink-0">
+                      {signedAgents} / {filteredRows.length} Signed
+                    </span>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowTlPdfModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-gray-700 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleExportTlPdf}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-emerald-600 to-[#1C6B53] hover:from-emerald-700 hover:to-emerald-800 shadow-md shadow-emerald-900/20 transition active:scale-95 cursor-pointer"
+              >
+                <Download size={14} />
+                <span>Download / Print PDF Report</span>
+              </button>
             </div>
           </div>
         </div>,

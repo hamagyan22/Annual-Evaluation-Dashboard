@@ -9,9 +9,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && (
-        request.auth.token.email == 'mohammed.dlshad0@gmail.com' ||
-        request.auth.token.email == 'omar.ayad@fib.iq' ||
-        request.auth.token.email == 'Omar.Ayad@fib.iq'
+        request.auth.token.email == 'mohammed.dlshad0@gmail.com'
       );
     }
 
@@ -108,6 +106,15 @@ service cloud.firestore {
 
     match /evaluation_employees/{empId} {
       allow read, write: if true;
+    }
+
+    // Quality & KPI coaching session sign-offs
+    match /quality_sessions/{sessionId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /kpi_sessions/{sessionId} {
+      allow read, write: if isAuthenticated();
     }
 
     // Deny all other unmatched paths
