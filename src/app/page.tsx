@@ -6216,73 +6216,83 @@ export default function Dashboard() {
           .replace(/"/g, "&quot;")
           .replace(/'/g, "&#39;");
 
-      const formatMetricValue = (val: any, col: ColumnConfig) => {
-        if (val === undefined || val === null) return "-";
-        const raw = String(val).trim();
-        if (!raw || raw === "-") return "-";
-        const isWrapup = col.id === 'wrapup' || col.id?.toLowerCase().includes('wrapup') || col.label?.toLowerCase().includes('wrapup');
-        if (!isWrapup && col.type !== 'time' && col.aggregation === 'average' && !raw.endsWith('%')) {
-          return `${raw}%`;
-        }
-        return raw;
-      };
-
       const teamTitle = isCombinedCallCenter ? "Call Center Combined (Younis + Ankido)" : selectedTeam;
+      const tlDisplayName = isCombinedCallCenter
+        ? "Younis Kamal & Ankido Buya"
+        : selectedTeam.replace(" Team", "");
       const safeFilePart = teamTitle.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_|_$/g, "");
-      const docTitle = `TL_KPI_Report_${safeFilePart}_${selectedMonth}_${selectedYear}_${tlPdfQuarter}_W${tlPdfWeek}`;
+      const docTitle = `TL_KPI_Signoff_${safeFilePart}_${selectedYear}_${tlPdfQuarter}_W${tlPdfWeek}`;
 
       let signedCount = 0;
       const rowsHtml = filteredRows.map((row, idx) => {
         const agentName = row.display_name || row.agent_name || "-";
+        const initialChar = agentName.trim().charAt(0).toUpperCase() || "A";
         const kpiRec = findKpiSession(row.agent_name || row.display_name || "", selectedYear, tlPdfQuarter, tlPdfWeek);
         const isSigned = kpiRec?.status === "approved";
         if (isSigned) signedCount++;
 
-        const signedAtFormatted = isSigned && kpiRec?.signed_at
-          ? new Date(kpiRec.signed_at).toLocaleString("en-GB", {
-              day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
-            })
+        const signedDateObj = isSigned && kpiRec?.signed_at ? new Date(kpiRec.signed_at) : null;
+        const dateOnlyStr = signedDateObj && !isNaN(signedDateObj.getTime())
+          ? signedDateObj.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
           : null;
+        const timeOnlyStr = signedDateObj && !isNaN(signedDateObj.getTime())
+          ? signedDateObj.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: true })
+          : null;
+
         const safeSigUrl = isSigned && typeof kpiRec?.signature_data === "string" && kpiRec.signature_data.startsWith("data:image/")
           ? kpiRec.signature_data
           : null;
 
-        const metricCells = activeCols.map(col => {
-          const valStr = formatMetricValue(row[col.id], col);
-          return `<td class="num-cell">${escapeHtml(valStr)}</td>`;
-        }).join("");
+        const rowTeamStr = String(row.team || selectedTeam || "");
+        const rowTlLabel = rowTeamStr.replace(" Team", "");
+        const teamPillClass = rowTeamStr.includes("Ankido")
+          ? "team-pill-purple"
+          : rowTeamStr.includes("Mohammed") || rowTeamStr.includes("Dlshad")
+          ? "team-pill-teal"
+          : "team-pill-emerald";
 
-        const teamTag = isCombinedCallCenter && row.team
-          ? `<div class="agent-team">${escapeHtml(String(row.team).replace(" Team", ""))}</div>`
-          : "";
+        const statusCellHtml = isSigned
+          ? `<span class="status-pill status-signed">&#10003; Approved</span>`
+          : `<span class="status-pill status-pending">Pending</span>`;
 
-        const signOffCell = isSigned
-          ? `<div class="sig-wrap">
-               ${safeSigUrl ? `<img src="${safeSigUrl}" alt="Signature" class="sig-img" />` : `<span class="badge-signed">Approved</span>`}
-               <div class="sig-date">✓ ${signedAtFormatted ? escapeHtml(signedAtFormatted) : "Signed"}</div>
+        const signatureColHtml = isSigned
+          ? (safeSigUrl
+              ? `<div class="sig-frame"><img src="${safeSigUrl}" alt="Signature" class="sig-img" /></div>`
+              : `<span class="status-pill status-signed">Verified Approval</span>`)
+          : `<div class="sig-empty">Awaiting Signature</div>`;
+
+        const dateColHtml = isSigned && dateOnlyStr
+          ? `<div class="date-wrap">
+               <div class="date-main">${escapeHtml(dateOnlyStr)}</div>
+               ${timeOnlyStr ? `<div class="date-time">${escapeHtml(timeOnlyStr)}</div>` : ""}
              </div>`
-          : `<span class="badge-pending">Pending Sign-off</span>`;
+          : `<span class="muted-dash">&mdash;</span>`;
 
-        return `<tr>
-          <td class="idx-cell">${idx + 1}</td>
+        return `<tr class="${isSigned ? "row-signed" : ""}">
+          <td class="idx-cell"><span class="idx-badge ${isSigned ? "idx-signed" : ""}">${idx + 1}</span></td>
           <td class="agent-cell">
-            <div class="agent-name">${escapeHtml(agentName)}</div>
-            ${teamTag}
+            <div class="agent-wrap">
+              <div class="avatar ${isSigned ? "avatar-signed" : ""}">${escapeHtml(initialChar)}</div>
+              <div>
+                <div class="agent-name">${escapeHtml(agentName)}</div>
+                ${rowTlLabel ? `<span class="team-pill ${teamPillClass}">TL: ${escapeHtml(rowTlLabel)}</span>` : ""}
+              </div>
+            </div>
           </td>
-          ${metricCells}
-          <td class="sig-cell">${signOffCell}</td>
+          <td class="status-cell">${statusCellHtml}</td>
+          <td class="sig-cell">${signatureColHtml}</td>
+          <td class="date-cell">${dateColHtml}</td>
         </tr>`;
       }).join("");
 
-      const summaryCells = activeCols.map(col => {
-        const avgVal = formatMetricValue(calcAvg(col, filteredRows), col);
-        return `<td class="num-cell">${escapeHtml(avgVal)}</td>`;
-      }).join("");
+      const pendingCount = Math.max(0, filteredRows.length - signedCount);
+      const completionPct = filteredRows.length > 0 ? Math.round((signedCount / filteredRows.length) * 100) : 0;
 
       const generatedAt = new Date().toLocaleString("en-GB", {
         day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
       });
       const preparedBy = userProfile?.name || (selectedTeam ? selectedTeam.replace(" Team", "") : "Team Leader");
+      const logoUrl = `${window.location.origin}/logo.webp`;
 
       const html = `<!DOCTYPE html>
 <html lang="en">
@@ -6290,103 +6300,453 @@ export default function Dashboard() {
   <meta charset="utf-8" />
   <title>${escapeHtml(docTitle)}</title>
   <style>
-    @page { size: A4 landscape; margin: 10mm; }
-    * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
-    body { margin: 0; padding: 18px; color: #111827; background: #fff; }
-    .no-print { display: flex; align-items: center; justify-content: space-between; background: #f3f4f6; border: 1px solid #e5e7eb; padding: 10px 16px; border-radius: 10px; margin-bottom: 14px; }
-    .no-print-info { font-size: 12px; color: #374151; font-weight: 600; }
+    @page { size: A4 portrait; margin: 10mm 12mm; }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      color: #0f172a;
+      background: #ffffff;
+    }
+    body { padding: 16px; }
+    .no-print {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ecfdf5;
+      border: 1.5px solid #a7f3d0;
+      padding: 10px 16px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+    }
+    .no-print-info { font-size: 12px; color: #065f46; font-weight: 700; }
     .no-print-actions { display: flex; gap: 8px; }
-    .btn-primary { background: #1C6B53; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px; }
-    .btn-secondary { background: #fff; color: #374151; border: 1px solid #d1d5db; padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px; }
-    @media print { .no-print { display: none !important; } body { padding: 0; } }
-    .banner { background: #0f2922; color: #fff; padding: 14px 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .banner-title { font-size: 17px; font-weight: 800; letter-spacing: 0.3px; }
-    .banner-sub { font-size: 11px; color: #a7f3d0; margin-top: 2px; }
-    .banner-meta { text-align: right; font-size: 11px; color: #d1fae5; line-height: 1.5; }
-    .meta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
-    .meta-card { border: 1px solid #e5e7eb; background: #f9fafb; border-radius: 8px; padding: 8px 10px; }
-    .meta-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px; }
-    .meta-val { font-size: 12px; font-weight: 800; color: #111827; margin-top: 2px; }
-    table { width: 100%; border-collapse: collapse; font-size: 11px; }
-    th { background: #1C6B53; color: #fff; padding: 8px 6px; text-align: center; font-weight: 700; border: 1px solid #165441; white-space: nowrap; }
-    th.agent-th { text-align: left; padding-left: 10px; min-width: 140px; }
-    td { padding: 6px; border: 1px solid #e5e7eb; vertical-align: middle; }
-    tr:nth-child(even) td { background: #f9fafb; }
-    .idx-cell { text-align: center; font-weight: 700; color: #6b7280; width: 28px; }
-    .agent-cell { text-align: left; padding-left: 10px; }
-    .agent-name { font-weight: 700; color: #111827; }
-    .agent-team { font-size: 9px; color: #1C6B53; font-weight: 700; margin-top: 1px; }
-    .num-cell { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; color: #1f2937; }
-    .sig-cell { text-align: center; min-width: 128px; }
-    .sig-wrap { display: inline-flex; flex-direction: column; align-items: center; }
-    .sig-img { height: 28px; max-width: 105px; object-fit: contain; display: block; margin-bottom: 2px; }
-    .sig-date { font-size: 9px; color: #065f46; font-weight: 700; white-space: nowrap; }
-    .badge-signed { display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 9px; font-weight: 700; background: #d1fae5; color: #065f46; }
-    .badge-pending { display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 9px; font-weight: 600; background: #f3f4f6; color: #6b7280; }
-    tfoot td { background: #ecfdf5 !important; font-weight: 800; color: #065f46; border-top: 2px solid #1C6B53; }
-    .footer-note { margin-top: 10px; font-size: 10px; color: #6b7280; display: flex; justify-content: space-between; }
+    .btn-primary {
+      background: #1C6B53;
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 9px;
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 12px;
+      box-shadow: 0 2px 6px rgba(28, 107, 83, 0.25);
+    }
+    .btn-secondary {
+      background: #ffffff;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 8px 14px;
+      border-radius: 9px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { padding: 0; }
+    }
+
+    /* Executive Emerald Header Banner */
+    .banner {
+      background-color: #1C6B53 !important;
+      background-image: linear-gradient(135deg, #064e3b 0%, #1C6B53 55%, #0f766e 100%) !important;
+      color: #ffffff !important;
+      padding: 16px 20px;
+      border-radius: 14px;
+      border-bottom: 4px solid #fbbf24;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+    .banner-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-pill {
+      background-color: #ffffff !important;
+      padding: 6px 10px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      flex-shrink: 0;
+    }
+    .logo-img {
+      height: 30px;
+      width: auto;
+      object-fit: contain;
+      display: block;
+    }
+    .banner-title {
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 0.4px;
+      color: #ffffff !important;
+    }
+    .banner-sub {
+      font-size: 11px;
+      color: #fde68a !important;
+      font-weight: 700;
+      margin-top: 3px;
+    }
+    .banner-meta {
+      text-align: right;
+      background-color: rgba(255, 255, 255, 0.12) !important;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 10.5px;
+      color: #ecfdf5 !important;
+      line-height: 1.55;
+      flex-shrink: 0;
+    }
+    .banner-meta strong { color: #ffffff !important; }
+
+    /* Colorful Metadata Summary Cards */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .meta-card {
+      border-radius: 10px;
+      padding: 9px 11px;
+      border: 1.5px solid #e2e8f0;
+      background-color: #f8fafc !important;
+    }
+    .meta-card.card-teal {
+      background-color: #f0fdfa !important;
+      border-color: #99f6e4;
+    }
+    .meta-card.card-sky {
+      background-color: #f0f9ff !important;
+      border-color: #bae6fd;
+    }
+    .meta-card.card-amber {
+      background-color: #fffbeb !important;
+      border-color: #fde68a;
+    }
+    .meta-card.card-emerald {
+      background-color: #ecfdf5 !important;
+      border-color: #6ee7b7;
+    }
+    .meta-lbl {
+      font-size: 8.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #475569;
+    }
+    .card-emerald .meta-lbl { color: #065f46; }
+    .meta-val {
+      font-size: 12px;
+      font-weight: 900;
+      color: #0f172a;
+      margin-top: 3px;
+    }
+    .card-emerald .meta-val { color: #047857; }
+    .meta-sub {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #059669;
+      margin-top: 1px;
+    }
+
+    /* Executive Sign-off Table */
+    .table-card {
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    thead { display: table-header-group; }
+    tr {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    th {
+      background-color: #1C6B53 !important;
+      color: #ffffff !important;
+      padding: 10px 8px;
+      text-align: center;
+      font-weight: 800;
+      font-size: 10.5px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      border-right: 1px solid #165441;
+      border-bottom: 2px solid #064e3b;
+    }
+    th:last-child { border-right: none; }
+    th.agent-th { text-align: left; padding-left: 12px; }
+    th.sig-th, th.date-th { background-color: #0f4c3a !important; }
+    td {
+      padding: 7px 8px;
+      border-bottom: 1px solid #e2e8f0;
+      border-right: 1px solid #f1f5f9;
+      vertical-align: middle;
+      background-color: #ffffff !important;
+    }
+    td:last-child { border-right: none; }
+    tbody tr:nth-child(even) td { background-color: #f8fafc !important; }
+    tbody tr.row-signed td { background-color: #f0fdf4 !important; }
+
+    .idx-cell { text-align: center; width: 38px; }
+    .idx-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      font-size: 10px;
+      font-weight: 800;
+      background-color: #f1f5f9 !important;
+      color: #475569;
+    }
+    .idx-badge.idx-signed {
+      background-color: #d1fae5 !important;
+      color: #065f46;
+    }
+
+    .agent-cell { text-align: left; padding-left: 12px; }
+    .agent-wrap { display: flex; align-items: center; gap: 9px; }
+    .avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background-color: #e2e8f0 !important;
+      color: #334155;
+      font-size: 11px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .avatar.avatar-signed {
+      background-color: #1C6B53 !important;
+      color: #ffffff !important;
+    }
+    .agent-name {
+      font-weight: 800;
+      font-size: 11.5px;
+      color: #0f172a;
+    }
+    .team-pill {
+      display: inline-block;
+      margin-top: 2px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-size: 8.5px;
+      font-weight: 800;
+      border: 1px solid transparent;
+    }
+    .team-pill-emerald {
+      background-color: #e0f2fe !important;
+      color: #0369a1;
+      border-color: #bae6fd;
+    }
+    .team-pill-purple {
+      background-color: #f3e8ff !important;
+      color: #7e22ce;
+      border-color: #e9d5ff;
+    }
+    .team-pill-teal {
+      background-color: #ccfbf1 !important;
+      color: #0f766e;
+      border-color: #99f6e4;
+    }
+
+    .status-cell { text-align: center; width: 105px; }
+    .status-pill {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .status-signed {
+      background-color: #dcfce7 !important;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+    .status-pending {
+      background-color: #fef3c7 !important;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+
+    /* Separate Column 1: Electronic Signature */
+    .sig-cell { text-align: center; width: 175px; }
+    .sig-frame {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #ffffff !important;
+      border: 1px solid #86efac;
+      border-radius: 8px;
+      padding: 3px 10px;
+      min-width: 120px;
+      min-height: 34px;
+    }
+    .sig-img {
+      height: 28px;
+      max-width: 135px;
+      object-fit: contain;
+      display: block;
+    }
+    .sig-empty {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 8px;
+      border: 1px dashed #cbd5e1;
+      background-color: #f8fafc !important;
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    /* Separate Column 2: Date & Time */
+    .date-cell { text-align: center; width: 130px; }
+    .date-wrap {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #ecfdf5 !important;
+      border: 1px solid #a7f3d0;
+      border-radius: 8px;
+      padding: 4px 10px;
+      min-width: 106px;
+    }
+    .date-main {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #065f46;
+      white-space: nowrap;
+    }
+    .date-time {
+      font-size: 9px;
+      font-weight: 700;
+      color: #047857;
+      margin-top: 1px;
+      white-space: nowrap;
+    }
+    .muted-dash {
+      color: #cbd5e1;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    tfoot td {
+      background-color: #064e3b !important;
+      color: #ffffff !important;
+      font-weight: 800;
+      padding: 9px 10px;
+      font-size: 10.5px;
+      border-top: 2px solid #fbbf24;
+    }
+    .footer-note {
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 9.5px;
+      color: #64748b;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+    }
   </style>
 </head>
 <body>
   <div class="no-print">
-    <div class="no-print-info">Tip: Choose &ldquo;Save as PDF&rdquo; as the destination printer to download this report as a PDF file.</div>
+    <div class="no-print-info">Tip: Choose &ldquo;Save as PDF&rdquo; as the destination to download this color report as a PDF file.</div>
     <div class="no-print-actions">
       <button class="btn-secondary" onclick="window.close()">Close</button>
       <button class="btn-primary" onclick="window.print()">Download / Print PDF</button>
     </div>
   </div>
+
   <div class="banner">
-    <div>
-      <div class="banner-title">TEAM LEADER KPI PERFORMANCE &amp; SIGN-OFF REPORT</div>
-      <div class="banner-sub">First Iraqi Bank (FIB) &bull; ${escapeHtml(teamTitle)}</div>
+    <div class="banner-left">
+      <div class="logo-pill">
+        <img src="${logoUrl}" alt="FIB Logo" class="logo-img" />
+      </div>
+      <div>
+        <div class="banner-title">WEEKLY KPI SIGN-OFF &amp; ATTENDANCE REGISTER</div>
+        <div class="banner-sub">First Iraqi Bank (FIB) &bull; Contact Center Team Leader Review</div>
+      </div>
     </div>
     <div class="banner-meta">
       <div><strong>Prepared By:</strong> ${escapeHtml(preparedBy)}</div>
       <div><strong>Generated:</strong> ${escapeHtml(generatedAt)}</div>
     </div>
   </div>
+
   <div class="meta-grid">
-    <div class="meta-card">
+    <div class="meta-card card-teal">
       <div class="meta-lbl">Team / Unit</div>
       <div class="meta-val">${escapeHtml(teamTitle)}</div>
     </div>
-    <div class="meta-card">
-      <div class="meta-lbl">KPI Metrics Period</div>
-      <div class="meta-val">${escapeHtml(selectedMonth)} ${escapeHtml(selectedYear)}</div>
+    <div class="meta-card card-sky">
+      <div class="meta-lbl">Team Leader</div>
+      <div class="meta-val">${escapeHtml(tlDisplayName)}</div>
     </div>
-    <div class="meta-card">
-      <div class="meta-lbl">KPI Sign-off Week</div>
+    <div class="meta-card card-amber">
+      <div class="meta-lbl">KPI Review Week</div>
       <div class="meta-val">${escapeHtml(selectedYear)} &bull; ${escapeHtml(tlPdfQuarter)} &bull; Week ${tlPdfWeek}</div>
     </div>
-    <div class="meta-card">
+    <div class="meta-card card-emerald">
       <div class="meta-lbl">Signatures Logged</div>
       <div class="meta-val">${signedCount} / ${filteredRows.length} Agents Signed</div>
+      <div class="meta-sub">${completionPct}% Completed</div>
     </div>
   </div>
-  <table>
-    <thead>
-      <tr>
-        <th>#</th>
-        <th class="agent-th">Agent Name</th>
-        ${activeCols.map(col => `<th>${escapeHtml(cleanColLabel(col.id, col.label))}</th>`).join("")}
-        <th>KPI Sign-off (${escapeHtml(tlPdfQuarter)} W${tlPdfWeek})</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${rowsHtml}
-    </tbody>
-    <tfoot>
-      <tr>
-        <td></td>
-        <td class="agent-cell">Team Summary / Average</td>
-        ${summaryCells}
-        <td class="num-cell">${signedCount}/${filteredRows.length} Signed</td>
-      </tr>
-    </tfoot>
-  </table>
+
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th class="agent-th">Agent Name</th>
+          <th>Status</th>
+          <th class="sig-th">Agent Signature</th>
+          <th class="date-th">Sign-off Date &amp; Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2" style="text-align:left;padding-left:12px;">KPI Sign-off Summary (${escapeHtml(tlPdfQuarter)} &bull; Week ${tlPdfWeek})</td>
+          <td style="text-align:center;">${signedCount} Signed / ${pendingCount} Pending</td>
+          <td style="text-align:center;">${completionPct}% Verified</td>
+          <td style="text-align:center;">${escapeHtml(selectedYear)}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
   <div class="footer-note">
-    <span>FIB Contact Center &bull; Official Team Leader Dashboard Export</span>
-    <span>All KPI signatures include verified electronic timestamps from Q.S &amp; KPI Portal</span>
+    <span>FIB Contact Center &bull; Official Team Leader Weekly KPI Sign-off Sheet</span>
+    <span>Electronic signatures &amp; timestamps synced from Q.S &amp; KPI Portal</span>
   </div>
   <script>window.onload = function() { setTimeout(function(){ window.print(); }, 350); };</script>
 </body>
@@ -7524,10 +7884,10 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-white">
-                    Export Team Leader KPI Report (PDF)
+                    Export KPI Sign-off Report (PDF)
                   </h3>
                   <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
-                    Includes KPI metrics table &amp; agent electronic signatures
+                    Signatures &amp; timestamps register (no performance scores)
                   </p>
                 </div>
               </div>
@@ -7551,9 +7911,9 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-800/70 border border-gray-200/70 dark:border-gray-700/70">
-                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">KPI Period</span>
+                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">Selected Week &amp; Roster</span>
                   <span className="text-xs font-black text-gray-900 dark:text-white mt-0.5 block">
-                    {selectedMonth} {selectedYear} &bull; {filteredRows.length} Agents
+                    {selectedYear} &bull; {tlPdfQuarter} &bull; W{tlPdfWeek} &bull; {filteredRows.length} Agents
                   </span>
                 </div>
               </div>

@@ -516,27 +516,49 @@ export function QualitySessionModal({
   <meta charset="utf-8" />
   <title>KPI Coaching Session - ${escapeHtml(cleanAgentName)} (${escapeHtml(selectedYear)} ${escapeHtml(selectedQuarter)} W${selectedWeek})</title>
   <style>
-    @page { size: A4 portrait; margin: 18mm; }
-    * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
-    body { margin: 0; padding: 24px; color: #111827; background: #fff; }
+    @page { size: A4 portrait; margin: 16mm; }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    body { margin: 0; padding: 20px; color: #0f172a; background: #fff; }
     .no-print { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 16px; }
-    .btn { background: #1C6B53; color: #fff; border: none; padding: 9px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; }
+    .btn { background: #1C6B53; color: #fff; border: none; padding: 9px 18px; border-radius: 9px; font-weight: 800; cursor: pointer; font-size: 12px; }
     @media print { .no-print { display: none !important; } body { padding: 0; } }
-    .card { border: 1.5px solid #d1d5db; border-radius: 14px; overflow: hidden; }
-    .header { background: #0f2922; color: #fff; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; }
-    .title { font-size: 18px; font-weight: 800; letter-spacing: 0.4px; }
-    .subtitle { font-size: 12px; color: #a7f3d0; margin-top: 4px; }
-    .badge { padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; background: ${kpiApproved ? "#10b981" : "#f59e0b"}; color: #fff; }
-    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; padding: 20px 24px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; }
-    .meta-box { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; }
-    .meta-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px; }
-    .meta-val { font-size: 14px; font-weight: 700; color: #111827; margin-top: 4px; }
+    .card { border: 1.5px solid #cbd5e1; border-radius: 16px; overflow: hidden; }
+    .header {
+      background-color: #1C6B53 !important;
+      background-image: linear-gradient(135deg, #064e3b 0%, #1C6B53 55%, #0f766e 100%) !important;
+      color: #ffffff !important;
+      padding: 20px 24px;
+      border-bottom: 4px solid #fbbf24;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .logo-pill { background-color: #ffffff !important; padding: 6px 10px; border-radius: 10px; display: flex; align-items: center; }
+    .logo-img { height: 28px; width: auto; object-fit: contain; display: block; }
+    .title { font-size: 17px; font-weight: 900; letter-spacing: 0.4px; color: #ffffff !important; }
+    .subtitle { font-size: 11px; color: #fde68a !important; font-weight: 700; margin-top: 3px; }
+    .badge { padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 800; background-color: ${kpiApproved ? "#10b981" : "#f59e0b"} !important; color: #ffffff !important; white-space: nowrap; }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 18px 24px; background-color: #f8fafc !important; border-bottom: 1px solid #e2e8f0; }
+    .meta-box { background-color: #ffffff !important; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 11px 14px; }
+    .meta-box.highlight { background-color: #ecfdf5 !important; border-color: #6ee7b7; }
+    .meta-label { font-size: 9.5px; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
+    .meta-val { font-size: 13.5px; font-weight: 800; color: #0f172a; margin-top: 4px; }
     .section { padding: 20px 24px; }
-    .statement { font-size: 13px; line-height: 1.6; color: #374151; background: #f3f4f6; border-left: 4px solid #1C6B53; padding: 12px 14px; border-radius: 6px; margin-bottom: 20px; }
-    .sig-box { border: 1.5px dashed #10b981; background: #ecfdf5; border-radius: 12px; padding: 18px; text-align: center; }
-    .sig-box img { max-height: 90px; object-fit: contain; display: block; margin: 8px auto; }
-    .sig-time { font-size: 12px; color: #065f46; font-weight: 600; margin-top: 6px; }
-    .footer { padding: 12px 24px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #6b7280; display: flex; justify-content: space-between; }
+    .statement { font-size: 12.5px; line-height: 1.65; color: #1e293b; background-color: #f0fdfa !important; border: 1px solid #99f6e4; border-left: 4px solid #1C6B53; padding: 12px 14px; border-radius: 8px; margin-bottom: 18px; }
+    .sig-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
+    .sig-box { border: 1.5px dashed #10b981; background-color: #ecfdf5 !important; border-radius: 12px; padding: 16px; text-align: center; }
+    .sig-box img { max-height: 80px; object-fit: contain; display: block; margin: 8px auto 0; background: #fff; padding: 4px 10px; border-radius: 8px; border: 1px solid #a7f3d0; }
+    .date-box { border: 1.5px solid #bae6fd; background-color: #f0f9ff !important; border-radius: 12px; padding: 16px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    .sig-time { font-size: 13px; color: #0369a1; font-weight: 800; margin-top: 6px; }
+    .footer { padding: 12px 24px; background-color: #064e3b !important; color: #d1fae5 !important; font-size: 10.5px; font-weight: 600; display: flex; justify-content: space-between; }
   </style>
 </head>
 <body>
@@ -545,11 +567,16 @@ export function QualitySessionModal({
   </div>
   <div class="card">
     <div class="header">
-      <div>
-        <div class="title">WEEKLY KPI COACHING SESSION SIGN-OFF</div>
-        <div class="subtitle">First Iraqi Bank (FIB) • Contact Center Performance</div>
+      <div class="header-left">
+        <div class="logo-pill">
+          <img src="${window.location.origin}/logo.webp" alt="FIB Logo" class="logo-img" />
+        </div>
+        <div>
+          <div class="title">WEEKLY KPI COACHING SESSION SIGN-OFF</div>
+          <div class="subtitle">First Iraqi Bank (FIB) &bull; Contact Center Performance</div>
+        </div>
       </div>
-      <div class="badge">${kpiApproved ? "APPROVED & SIGNED" : "PENDING SIGN-OFF"}</div>
+      <div class="badge">${kpiApproved ? "APPROVED &amp; SIGNED" : "PENDING SIGN-OFF"}</div>
     </div>
     <div class="grid">
       <div class="meta-box">
@@ -562,21 +589,26 @@ export function QualitySessionModal({
       </div>
       <div class="meta-box">
         <div class="meta-label">Review Period</div>
-        <div class="meta-val">${escapeHtml(selectedYear)} • ${escapeHtml(selectedQuarter)} • Week ${selectedWeek}</div>
+        <div class="meta-val">${escapeHtml(selectedYear)} &bull; ${escapeHtml(selectedQuarter)} &bull; Week ${selectedWeek}</div>
       </div>
-      <div class="meta-box">
-        <div class="meta-label">Sign-off Timestamp</div>
-        <div class="meta-val">${kpiSignTime ? escapeHtml(kpiSignTime) : "Not signed yet"}</div>
+      <div class="meta-box highlight">
+        <div class="meta-label">Sign-off Status</div>
+        <div class="meta-val">${kpiApproved ? "Officially Verified" : "Pending Sign-off"}</div>
       </div>
     </div>
     <div class="section">
       <div class="statement">
-        I confirm that I have reviewed my weekly Key Performance Indicators (KPIs) and coaching feedback with my Team Leader for ${escapeHtml(selectedQuarter)} Week ${selectedWeek} (${escapeHtml(selectedYear)}).
+        I confirm that I have reviewed my weekly Key Performance Indicators (KPIs) coaching session with my Team Leader for ${escapeHtml(selectedQuarter)} Week ${selectedWeek} (${escapeHtml(selectedYear)}).
       </div>
-      <div class="sig-box">
-        <div class="meta-label">Agent Electronic Signature</div>
-        ${kpiSigImg ? `<img src="${kpiSigImg}" alt="Agent KPI Signature" />` : `<div style="padding:20px;color:#6b7280;font-size:13px;">Signature pending</div>`}
-        ${kpiSignTime ? `<div class="sig-time">Signed on ${escapeHtml(kpiSignTime)}</div>` : ""}
+      <div class="sig-row">
+        <div class="sig-box">
+          <div class="meta-label">Agent Electronic Signature</div>
+          ${kpiSigImg ? `<img src="${kpiSigImg}" alt="Agent KPI Signature" />` : `<div style="padding:20px;color:#64748b;font-size:12px;">Signature pending</div>`}
+        </div>
+        <div class="date-box">
+          <div class="meta-label">Sign-off Date &amp; Time</div>
+          <div class="sig-time">${kpiSignTime ? escapeHtml(kpiSignTime) : "Not signed yet"}</div>
+        </div>
       </div>
     </div>
     <div class="footer">
