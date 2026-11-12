@@ -916,9 +916,9 @@ export function QualitySessionModal({
               ))}
             </div>
 
-            {/* Week Selector Dropdown / Pills - All weeks W1 to W13 visible */}
+            {/* Week Selector Dropdown / Pills - All weeks W1 to W12 visible */}
             <div className="flex items-center gap-1 flex-wrap">
-              {Array.from({ length: 13 }, (_, i) => i + 1).map((w) => (
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((w) => (
                 <button
                   key={w}
                   type="button"

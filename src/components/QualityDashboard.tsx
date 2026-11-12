@@ -536,7 +536,16 @@ export default function QualityDashboard({
   );
   const isTlViewer = isYounis || isAnkido;
 
-  const canSwitchTeams = (isAdmin || isManager) && !isTlViewer;
+  const isAdminOrManager = isAdmin || isManager;
+  const isPeerQaSwitcher = !isAdminOrManager && !isTlViewer && (isMohammedJihad || isLaraKamil);
+  const availableSections = useMemo(() => {
+    if (isAdminOrManager) return DEFAULT_SECTIONS;
+    if (isPeerQaSwitcher) {
+      return DEFAULT_SECTIONS.filter(s => s.id === "mohammed_jihad" || s.id === "lara_kamil");
+    }
+    return [];
+  }, [isAdminOrManager, isPeerQaSwitcher]);
+  const canSwitchTeams = (isAdminOrManager || isPeerQaSwitcher) && !isTlViewer;
 
   const initialPeriod = useMemo(() => getCurrentPeriod(), []);
   const [selectedYear, setSelectedYear] = useState<string>(() => {
@@ -777,7 +786,11 @@ export default function QualityDashboard({
     ? "mohammed_jihad" 
     : isAnkido 
     ? "lara_kamil" 
-    : (canSwitchTeams ? activeSectionId : defaultSectionId);
+    : (canSwitchTeams
+        ? (availableSections.some(s => s.id === activeSectionId) ? activeSectionId : defaultSectionId)
+        : defaultSectionId);
+  const isPeerQaViewer = isPeerQaSwitcher && effectiveSectionId !== defaultSectionId;
+  const isReadOnlyViewer = isTlViewer || isPeerQaViewer;
   const currentSection = useMemo(() => {
     return DEFAULT_SECTIONS.find(s => s.id === effectiveSectionId) || DEFAULT_SECTIONS[0];
   }, [effectiveSectionId]);
@@ -1366,7 +1379,7 @@ export default function QualityDashboard({
   }, [activeSessionDetailModal]);
 
   const handleSendQaResponse = async () => {
-    if (!activeSessionDetailModal) return;
+    if (isTlViewer || isPeerQaViewer || !activeSessionDetailModal) return;
     const { csrName, session, week, docId } = activeSessionDetailModal;
     const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
     const sessionDocId = docId || `${selectedYear}_${selectedQuarter}_w${week}_${slug}`;
@@ -1437,11 +1450,11 @@ export default function QualityDashboard({
     key: string,
     rawVal: string
   ) => {
-    // Strictly prevent edits if team leader viewer (Younis or Ankido)
+    // Strictly prevent edits if team leader viewer (Younis or Ankido); peer QA can edit scores & notes
     if (isTlViewer) return;
 
     // Block data entry in a new month if a completed previous month (from SEP 2026 onwards) has not been synced yet
-    if (!isTrainer && !isCallMon && !isBonus && !isCShift && unsyncedPreviousMonthRef.current) {
+    if (!isPeerQaViewer && !isTrainer && !isCallMon && !isBonus && !isCShift && unsyncedPreviousMonthRef.current) {
       setSyncReminderModal(unsyncedPreviousMonthRef.current);
       return;
     }
@@ -1568,7 +1581,7 @@ export default function QualityDashboard({
         setSaveStatus("idle");
       }
     }, 450);
-  }, [selectedYear, selectedQuarter, trainerMonth, isCShift, isCallMon, isBonus, isTlViewer, isTrainer, getActiveSectionSlug, callShift, dlshadShift]);
+  }, [selectedYear, selectedQuarter, trainerMonth, isCShift, isCallMon, isBonus, isTlViewer, isPeerQaViewer, isTrainer, getActiveSectionSlug, callShift, dlshadShift]);
 
   // Determine the active calendar month index (0..11) currently displayed in the main table
   const activeTableMonthIdx = useMemo(() => {
@@ -2444,12 +2457,12 @@ export default function QualityDashboard({
 
   useEffect(() => {
     unsyncedPreviousMonthRef.current = unsyncedPreviousMonth;
-    if (unsyncedPreviousMonth) {
+    if (!isReadOnlyViewer && unsyncedPreviousMonth) {
       setSyncReminderModal(unsyncedPreviousMonth);
     } else {
       setSyncReminderModal(null);
     }
-  }, [unsyncedPreviousMonth]);
+  }, [unsyncedPreviousMonth, isReadOnlyViewer]);
 
   const weeksList = useMemo(() => {
     return Array.from({ length: 12 }, (_, i) => i + 1);
@@ -3540,7 +3553,7 @@ export default function QualityDashboard({
 
   // Open note modal for a specific cell
   const handleOpenNote = useCallback((csrName: string, key: string, callLabel: string) => {
-    if (!isTrainer && !isCallMon && !isBonus && !isCShift && unsyncedPreviousMonthRef.current) {
+    if (!isPeerQaViewer && !isTrainer && !isCallMon && !isBonus && !isCShift && unsyncedPreviousMonthRef.current) {
       setSyncReminderModal(unsyncedPreviousMonthRef.current);
       return;
     }
@@ -3577,7 +3590,7 @@ export default function QualityDashboard({
       docId,
       hasExistingData: Boolean(existingNote.trim() || existingLink.trim())
     });
-  }, [isTrainer, isCallMon, isBonus, isCShift, currentSection.evaluator, trainerMonth, selectedQuarter, selectedYear, getCellNote, getCellLink]);
+  }, [isPeerQaViewer, isTrainer, isCallMon, isBonus, isCShift, currentSection.evaluator, trainerMonth, selectedQuarter, selectedYear, getCellNote, getCellLink]);
 
   // Save note & link to Firestore
   const handleSaveNote = async () => {
@@ -3881,6 +3894,7 @@ export default function QualityDashboard({
 
   // Export Week / Month Data to PDF
   const handleExportPDF = () => {
+    if (isTlViewer || isPeerQaViewer) return;
     if (isTrainer) {
       const trainerQ = `Q${Math.floor(trainerMonth / 3) + 1}`;
       const effectiveColCount = isCallMon ? callMonColCount : trainerColCount;
@@ -5034,10 +5048,10 @@ export default function QualityDashboard({
                   <span className="text-[11px] font-bold text-white/80">
                     {isTrainer ? "Call Training Performance" : "QA Evaluator Performance"}
                   </span>
-                  {isTlViewer && (
+                  {isReadOnlyViewer && (
                     <span className="px-2.5 py-0.5 rounded-full bg-amber-400/25 text-amber-200 border border-amber-300/30 text-[10px] font-black uppercase tracking-wider backdrop-blur-xs flex items-center gap-1">
                       <Eye size={10} />
-                      <span>TL View Only • {currentSection.team}</span>
+                      <span>{isTlViewer ? `TL View Only • ${currentSection.team}` : `QA Shared Edit • ${currentSection.team}`}</span>
                     </span>
                   )}
                   {selectedMonthFilter !== null && !isTrainer && (
@@ -5130,7 +5144,7 @@ export default function QualityDashboard({
 
               {canSwitchTeams && (
                 <div className="flex items-center gap-1.5 p-1 bg-white/10 backdrop-blur-md rounded-xl border border-white/15">
-                  {DEFAULT_SECTIONS.map(sec => (
+                  {availableSections.map(sec => (
                     <button
                       key={sec.id}
                       onClick={() => setActiveSectionId(sec.id)}
@@ -5552,29 +5566,33 @@ export default function QualityDashboard({
                 <span>{isChatTeam ? "Bonus Chats" : "Bonus Calls"} (1 to {bonusColCount})</span>
               </div>
 
-              {/* Add Call/Chat Column Button */}
-              <button
-                type="button"
-                onClick={handleAddBonusColumn}
-                style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl hover:opacity-90 text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
-                title={isChatTeam ? "Add Bonus Chat Column" : "Add Bonus Call Column"}
-              >
-                <Plus size={13} className="stroke-[2.5]" />
-                <span>Add</span>
-              </button>
+              {!isReadOnlyViewer && (
+                <>
+                  {/* Add Call/Chat Column Button */}
+                  <button
+                    type="button"
+                    onClick={handleAddBonusColumn}
+                    style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl hover:opacity-90 text-white text-xs font-black shadow-xs hover:shadow-md transition cursor-pointer shrink-0 active:scale-95"
+                    title={isChatTeam ? "Add Bonus Chat Column" : "Add Bonus Call Column"}
+                  >
+                    <Plus size={13} className="stroke-[2.5]" />
+                    <span>Add</span>
+                  </button>
 
-              {/* Delete Call/Chat Column Button */}
-              <button
-                type="button"
-                onClick={() => handleRemoveBonusColumn(bonusColCount)}
-                disabled={bonusColCount <= 1}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-black transition cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
-                title={isChatTeam ? "Remove Last Bonus Chat Column" : "Remove Last Bonus Call Column"}
-              >
-                <Trash2 size={13} />
-                <span>Delete</span>
-              </button>
+                  {/* Delete Call/Chat Column Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveBonusColumn(bonusColCount)}
+                    disabled={bonusColCount <= 1}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-black transition cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+                    title={isChatTeam ? "Remove Last Bonus Chat Column" : "Remove Last Bonus Call Column"}
+                  >
+                    <Trash2 size={13} />
+                    <span>Delete</span>
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             /* REGULAR QA VIEW: 12 Week Tabs */
@@ -5698,8 +5716,8 @@ export default function QualityDashboard({
 
               <div className="hidden sm:block h-5 w-px bg-gray-200 dark:bg-gray-700 mx-0.5" />
 
-              {/* Activity Log Button — strictly restricted to Admin & Manager (canSwitchTeams) */}
-              {canSwitchTeams && (
+              {/* Activity Log Button — strictly restricted to Admin & Manager */}
+              {isAdminOrManager && (
                 <button
                   type="button"
                   onClick={() => {
@@ -5725,8 +5743,8 @@ export default function QualityDashboard({
                 </button>
               )}
 
-              {/* Export PDF Button (QA & Admins only - hidden for TL per request) */}
-              {!isTlViewer && (
+              {/* Export PDF Button (Owner QA & Admins only - hidden for TL and peer QA viewer) */}
+              {!isReadOnlyViewer && (
                 <button
                   type="button"
                   onClick={handleExportPDF}
@@ -5751,8 +5769,8 @@ export default function QualityDashboard({
                 </button>
               )}
 
-              {/* Sync Completed Quality to TL & Agent Dashboards (QA & Admins only) */}
-              {!isTlViewer && (
+              {/* Sync Completed Quality to TL & Agent Dashboards (QA & Admins only on own editable section) */}
+              {!isReadOnlyViewer && (
                 <button
                   type="button"
                   onClick={() => handleSyncToMetrics()}
@@ -5781,7 +5799,7 @@ export default function QualityDashboard({
           </div>
 
           {/* Lock Banner when moving to a new month without syncing the completed previous month */}
-          {!isTlViewer && unsyncedPreviousMonth && (
+          {!isReadOnlyViewer && unsyncedPreviousMonth && (
             <div 
               className="mx-4 mt-3 mb-2 p-3.5 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-700 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-left"
             >
@@ -5830,7 +5848,7 @@ export default function QualityDashboard({
           )}
 
           {/* Ready-to-Sync Banner when current viewed month has all 4 weeks completed but is not synced yet */}
-          {!isTlViewer && !unsyncedPreviousMonth && currentMonthSyncStatus.isSyncEligible && currentMonthSyncStatus.isMonthComplete && !currentMonthSyncStatus.isSynced && (
+          {!isReadOnlyViewer && !unsyncedPreviousMonth && currentMonthSyncStatus.isSyncEligible && currentMonthSyncStatus.isMonthComplete && !currentMonthSyncStatus.isSynced && (
             <div 
               className="mx-4 mt-3 mb-2 p-3 sm:p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-left"
             >
@@ -6561,7 +6579,7 @@ export default function QualityDashboard({
                               targetKey={`${csrName.trim().toLowerCase()}|${key}`}
                               value={val}
                               readOnly={isTlViewer}
-                              isLocked={Boolean(unsyncedPreviousMonth)}
+                              isLocked={!isReadOnlyViewer && Boolean(unsyncedPreviousMonth)}
                               isCellHighlighted={isCellHighlighted}
                               hasNote={hasNote}
                               hasLink={hasLink}
@@ -6577,7 +6595,7 @@ export default function QualityDashboard({
                               onKeyDown={handleCellKeyDown}
                               onOpenNote={handleOpenNote}
                               onLockClick={() => {
-                                if (!isTlViewer && unsyncedPreviousMonth) {
+                                if (!isReadOnlyViewer && unsyncedPreviousMonth) {
                                   setSyncReminderModal(unsyncedPreviousMonth);
                                 }
                               }}
@@ -6603,7 +6621,7 @@ export default function QualityDashboard({
                               targetKey={`${csrName.trim().toLowerCase()}|${key}`}
                               value={val}
                               readOnly={isTlViewer}
-                              isLocked={Boolean(unsyncedPreviousMonth)}
+                              isLocked={!isReadOnlyViewer && Boolean(unsyncedPreviousMonth)}
                               isCellHighlighted={isCellHighlighted}
                               hasNote={hasNote}
                               hasLink={hasLink}
@@ -6620,7 +6638,7 @@ export default function QualityDashboard({
                               onKeyDown={handleCellKeyDown}
                               onOpenNote={handleOpenNote}
                               onLockClick={() => {
-                                if (!isTlViewer && unsyncedPreviousMonth) {
+                                if (!isReadOnlyViewer && unsyncedPreviousMonth) {
                                   setSyncReminderModal(unsyncedPreviousMonth);
                                 }
                               }}
@@ -7243,19 +7261,21 @@ export default function QualityDashboard({
                 </div>
 
                 {/* QA Evaluator Response Input */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 flex items-center justify-between">
-                    <span>QA Evaluator Response / Coaching Note:</span>
-                    <span className="text-[10px] text-gray-400 font-normal">Re-enables agent sign-off</span>
-                  </label>
-                  <textarea
-                    value={qaResponseText}
-                    onChange={(e) => setQaResponseText(e.target.value)}
-                    placeholder="Write coaching feedback, explanation, or score adjustment justification..."
-                    rows={3}
-                    className="w-full p-3 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-gray-900 dark:text-white placeholder:text-gray-400 font-medium shadow-xs resize-none"
-                  />
-                </div>
+                {!isReadOnlyViewer && (
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 flex items-center justify-between">
+                      <span>QA Evaluator Response / Coaching Note:</span>
+                      <span className="text-[10px] text-gray-400 font-normal">Re-enables agent sign-off</span>
+                    </label>
+                    <textarea
+                      value={qaResponseText}
+                      onChange={(e) => setQaResponseText(e.target.value)}
+                      placeholder="Write coaching feedback, explanation, or score adjustment justification..."
+                      rows={3}
+                      className="w-full p-3 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-gray-900 dark:text-white placeholder:text-gray-400 font-medium shadow-xs resize-none"
+                    />
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-xs text-gray-400 p-4 text-center">No sign-off activity recorded yet.</p>
@@ -7270,7 +7290,7 @@ export default function QualityDashboard({
                 Close
               </button>
 
-              {(activeSessionDetailModal.session?.status === "rejected" || activeSessionDetailModal.session?.status === "qa_responded") && (
+              {!isReadOnlyViewer && (activeSessionDetailModal.session?.status === "rejected" || activeSessionDetailModal.session?.status === "qa_responded") && (
                 <button
                   type="button"
                   onClick={handleSendQaResponse}
@@ -7701,8 +7721,8 @@ export default function QualityDashboard({
         </div>
       )}
 
-      {/* Activity Log Modal — Strictly Restricted to Admin & Manager (canSwitchTeams) */}
-      {showActivityLogModal && canSwitchTeams && (
+      {/* Activity Log Modal — Strictly Restricted to Admin & Manager */}
+      {showActivityLogModal && isAdminOrManager && (
         <div
           data-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150 overscroll-contain"
@@ -8033,7 +8053,7 @@ export default function QualityDashboard({
       )}
 
       {/* Mandatory Sync Reminder Modal when trying to enter a new month before syncing a completed previous month */}
-      {!isTlViewer && syncReminderModal && (
+      {!isReadOnlyViewer && syncReminderModal && (
         <div data-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain">
           <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800/80 overflow-hidden text-left">
             <div className="p-6 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border-b border-amber-100 dark:border-amber-900/50 flex items-start justify-between gap-3">

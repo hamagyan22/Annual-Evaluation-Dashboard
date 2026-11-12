@@ -7944,10 +7944,10 @@ export default function Dashboard() {
               {/* Week Selection for Signatures */}
               <div>
                 <label className="text-xs font-black text-gray-700 dark:text-gray-300 block mb-2">
-                  Select KPI Signature Week (W1 &ndash; W13):
+                  Select KPI Signature Week (W1 &ndash; W12):
                 </label>
                 <div className="flex flex-wrap gap-1.5">
-                  {Array.from({ length: 13 }, (_, i) => i + 1).map((w) => (
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((w) => (
                     <button
                       key={w}
                       type="button"
