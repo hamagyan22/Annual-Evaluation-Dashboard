@@ -3333,7 +3333,7 @@ export default function Dashboard() {
         const isMohammedJihad = emailLower === 'mohammed.jihad@agent.com' || emailLower === 'mohammed.jihad.qa@agent.com' || emailLower.includes('mohammed.jihad');
         const isMohammedAzad = emailLower === 'mohammed.azad@agent.com' || emailLower === 'mohammed.azad.qa@agent.com' || emailLower.includes('mohammed.azad');
         const isAzad = (emailLower === 'azad.muhammad@agent.com' || emailLower === 'azad.mohammed@agent.com' || emailLower === 'azad.muhammad.reset@agent.com' || emailLower.startsWith('azad.muhammad') || emailLower.startsWith('azad.mohammed')) && !isMohammedAzad;
-        const isMarwa = emailLower === 'marwa.shalaan@agent.com' || emailLower === 'marwa.shaalan@agent.com' || emailLower === 'marwa.shalaan.reset@agent.com' || emailLower.startsWith('marwa.shalaan') || emailLower.startsWith('marwa.shaalan');
+        const isMarwa = emailLower === 'marwa.shalaan@agent.com' || emailLower === 'marwa.shaalan@agent.com' || emailLower === 'marwa.shalaan.reset@agent.com' || emailLower === 'marwa.shalaan.reset2@agent.com' || emailLower.startsWith('marwa.shalaan') || emailLower.startsWith('marwa.shaalan');
         const isAya = emailLower === 'aya.yasin@agent.com' || emailLower === 'aya.yaseen@agent.com' || emailLower === 'aya.yasin.reset@agent.com' || emailLower.startsWith('aya.yasin') || emailLower.startsWith('aya.yaseen');
         const isShireen = emailLower === 'shireen.waisi@agent.com' || emailLower.includes('shireen.waisi') || emailLower.includes('shireen');
         const isAgent = emailLower.endsWith('@agent.com');
@@ -3555,12 +3555,16 @@ export default function Dashboard() {
           }
         } else if (cleanEmail === 'marwa.shalaan@agent.com' || cleanEmail === 'marwa.shaalan@agent.com' || cleanEmail.startsWith('marwa.shalaan') || cleanEmail.startsWith('marwa.shaalan')) {
           try {
-            await signInWithEmailAndPassword(auth, 'marwa.shalaan.reset@agent.com', password);
+            await signInWithEmailAndPassword(auth, 'marwa.shalaan.reset2@agent.com', password);
           } catch (passErr) {
             try {
-              await signInWithEmailAndPassword(auth, 'marwa.shalaan.reset@agent.com', 'Marwa@2026');
+              await signInWithEmailAndPassword(auth, 'marwa.shalaan.reset2@agent.com', 'Password@2026');
             } catch {
-              throw passErr;
+              try {
+                await signInWithEmailAndPassword(auth, 'marwa.shalaan.reset@agent.com', password);
+              } catch {
+                throw passErr;
+              }
             }
           }
         } else if (cleanEmail === 'aya.yasin@agent.com' || cleanEmail === 'aya.yaseen@agent.com' || cleanEmail.startsWith('aya.yasin') || cleanEmail.startsWith('aya.yaseen')) {
