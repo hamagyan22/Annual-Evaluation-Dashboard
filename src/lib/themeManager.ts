@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { db } from "@/lib/firebaseClient";
-import { doc, setDoc, onSnapshot } from "firebase/firestore";
 
 export interface ThemeConfig {
   id: string;
@@ -200,32 +198,21 @@ export function applyThemeToDocument(themeId: string) {
 export function getCurrentThemeId(): string {
   if (typeof window === "undefined") return DEFAULT_THEME_ID;
   const saved = localStorage.getItem("app_color_theme");
-  if (!saved || saved === "ruby") {
+  if (!saved) {
     try {
-      localStorage.setItem("app_color_theme", "emerald");
+      localStorage.setItem("app_color_theme", DEFAULT_THEME_ID);
     } catch (e) {}
-    return "emerald";
+    return DEFAULT_THEME_ID;
   }
   return saved;
 }
 
 export function setAppTheme(themeId: string) {
   if (typeof window === "undefined") return;
+  // Local-only persistence: Changes strictly apply to this device/browser only
   localStorage.setItem("app_color_theme", themeId);
   applyThemeToDocument(themeId);
   window.dispatchEvent(new CustomEvent("app-theme-changed", { detail: themeId }));
-
-  // Global Firestore persistence so the theme stays fixed permanently across all devices & users
-  try {
-    setDoc(doc(db, "system_config", "theme"), {
-      theme_id: themeId,
-      updated_at: new Date().toISOString()
-    }, { merge: true }).catch((err) => {
-      console.warn("Could not save theme to Firestore:", err);
-    });
-  } catch (err) {
-    console.warn("Firestore theme set warning:", err);
-  }
 }
 
 export function useAppTheme() {
@@ -244,30 +231,9 @@ export function useAppTheme() {
     window.addEventListener("app-theme-changed", handleThemeChange);
     window.addEventListener("storage", handleThemeChange);
 
-    // Real-time Firestore sync: Only applied as default fallback if user hasn't explicitly set a theme,
-    // protecting the user's local theme from being unexpectedly changed by other sessions.
-    let unsubFirestore: (() => void) | null = null;
-    try {
-      unsubFirestore = onSnapshot(doc(db, "system_config", "theme"), (snap) => {
-        if (snap.exists()) {
-          const remoteTheme = snap.data()?.theme_id;
-          const localTheme = localStorage.getItem("app_color_theme");
-          // If no local theme was chosen yet, adopt the organization theme
-          if (remoteTheme && !localTheme) {
-            setThemeId(remoteTheme);
-            localStorage.setItem("app_color_theme", remoteTheme);
-            applyThemeToDocument(remoteTheme);
-          }
-        }
-      }, (err) => {
-        console.warn("Theme snapshot warning:", err);
-      });
-    } catch (e) {}
-
     return () => {
       window.removeEventListener("app-theme-changed", handleThemeChange);
       window.removeEventListener("storage", handleThemeChange);
-      if (unsubFirestore) unsubFirestore();
     };
   }, []);
 

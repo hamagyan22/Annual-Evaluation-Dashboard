@@ -60,7 +60,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('app_color_theme');if(!t||t==='ruby'){t='emerald';localStorage.setItem('app_color_theme','emerald');}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('app_color_theme');if(!t){t='emerald';localStorage.setItem('app_color_theme','emerald');}document.documentElement.setAttribute('data-theme',t);var m=localStorage.getItem('theme');if(m==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();`,
           }}
         />
       </head>
