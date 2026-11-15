@@ -100,10 +100,9 @@ export function UnifiedTopNavbar({
 
   // Navigation Items in exact requested order:
   // 1. Quality
-  // 2. TL Dashboard (renamed from CC Dashboard)
+  // 2. TL Dashboard
   // 3. Agent View (or My Dashboard)
-  // 4. Top Star
-  // 5. Evaluation
+  // 4. Evaluation (Top Star removed from top navbar as requested)
   const navItems = [
     {
       id: 'quality' as ActiveDashboardType,
@@ -128,14 +127,6 @@ export function UnifiedTopNavbar({
       icon: LayoutDashboard,
       iconColor: 'text-sky-700 dark:text-sky-300',
       iconBg: 'bg-sky-500/15 dark:bg-sky-400/20'
-    },
-    {
-      id: 'topstar' as ActiveDashboardType,
-      label: 'Top Star',
-      show: canAccessTopStar,
-      icon: Star,
-      iconColor: 'text-amber-700 dark:text-amber-400',
-      iconBg: 'bg-amber-500/20 dark:bg-amber-400/25'
     },
     {
       id: 'evaluation' as ActiveDashboardType,

@@ -244,13 +244,16 @@ export function useAppTheme() {
     window.addEventListener("app-theme-changed", handleThemeChange);
     window.addEventListener("storage", handleThemeChange);
 
-    // Real-time Firestore sync: ensures selected theme is fixed & live across all users
+    // Real-time Firestore sync: Only applied as default fallback if user hasn't explicitly set a theme,
+    // protecting the user's local theme from being unexpectedly changed by other sessions.
     let unsubFirestore: (() => void) | null = null;
     try {
       unsubFirestore = onSnapshot(doc(db, "system_config", "theme"), (snap) => {
         if (snap.exists()) {
           const remoteTheme = snap.data()?.theme_id;
-          if (remoteTheme && remoteTheme !== localStorage.getItem("app_color_theme")) {
+          const localTheme = localStorage.getItem("app_color_theme");
+          // If no local theme was chosen yet, adopt the organization theme
+          if (remoteTheme && !localTheme) {
             setThemeId(remoteTheme);
             localStorage.setItem("app_color_theme", remoteTheme);
             applyThemeToDocument(remoteTheme);

@@ -7048,21 +7048,14 @@ export default function QualityDashboard({
                   </p>
                 </div>
               </div>
-              {!isTlViewer && (Boolean(activeNoteModal.noteText?.trim()) || Boolean(activeNoteModal.linkUrl?.trim()) || Boolean(activeNoteModal.hasExistingData)) && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    handleDeleteNote();
-                  }}
-                  disabled={savingNote}
-                  className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/50 cursor-pointer disabled:opacity-50 flex items-center justify-center"
-                  title="Delete Note & Link"
-                >
-                  {savingNote ? <RefreshCw size={15} className="animate-spin text-red-500" /> : <Trash2 size={15} />}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setActiveNoteModal(null)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
+                title="Close"
+              >
+                <X size={16} />
+              </button>
             </div>
 
             {/* Note Textarea */}
