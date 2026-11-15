@@ -25,6 +25,7 @@ export interface UnifiedTopNavbarProps {
   lang?: "en" | "ar";
   onLanguageChange?: (lang: "en" | "ar") => void;
   evaluationLabel?: string;
+  onOpenQualitySession?: () => void;
 }
 
 export function UnifiedTopNavbar({
@@ -41,7 +42,8 @@ export function UnifiedTopNavbar({
   showOnlyEvaluation = false,
   lang = "en",
   onLanguageChange,
-  evaluationLabel
+  evaluationLabel,
+  onOpenQualitySession
 }: UnifiedTopNavbarProps) {
   const emailLower = (userProfile?.email || "").toLowerCase().trim();
   const nameLower = (userProfile?.name || userProfile?.agent_name || "").toLowerCase().trim();
@@ -173,6 +175,18 @@ export function UnifiedTopNavbar({
             </button>
           );
         })}
+
+        {onOpenQualitySession && (
+          <button
+            type="button"
+            onClick={onOpenQualitySession}
+            className="flex items-center justify-center gap-2 px-3 sm:px-3.5 h-8 rounded-lg text-[13px] transition-all duration-150 shrink-0 cursor-pointer select-none leading-none font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/60 dark:hover:bg-gray-700/50"
+            title="Quality Session & Weekly KPI Sign-off"
+          >
+            <Award size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <span className="whitespace-nowrap tracking-tight font-medium">Q.S &amp; KPI</span>
+          </button>
+        )}
       </div>
 
       {/* Extra Dashboard Actions (e.g. Criteria, Save indicator, etc.) */}
