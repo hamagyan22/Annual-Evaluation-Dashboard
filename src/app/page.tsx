@@ -5317,7 +5317,7 @@ export default function Dashboard() {
                 Annual Evaluation Dashboard
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 font-medium">
-                Welcome back. Please sign in to access your scorecards.
+                Welcome back. Please sign in to access your annual evaluations.
               </p>
             </div>
             
