@@ -2330,13 +2330,11 @@ export default function Dashboard() {
   });
   const [showAnnualEvalView, setShowAnnualEvalView] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
-      try {
-        localStorage.removeItem("app_show_annual_eval_view");
-      } catch (e) {}
       const sp = new URLSearchParams(window.location.search);
-      if (sp.get("view") === "evaluation" || sp.get("tab") === "evaluation") return true;
+      if (sp.get("view") === "cc" || sp.get("tab") === "cc") return false;
+      return true;
     }
-    return false;
+    return true;
   });
   const [isPageTransitioning, setIsPageTransitioning] = useState<boolean>(false);
   const [isCombinedCallCenter, setIsCombinedCallCenter] = useState<boolean>(() => {

@@ -1931,6 +1931,7 @@ export default function AnnualEvaluationDashboard({
               onOpenSettings={onOpenSettings}
               isDarkMode={isDarkMode}
               toggleDarkMode={toggleDarkMode}
+              showOnlyEvaluation={true}
             />
           </div>
         </div>
@@ -1942,7 +1943,7 @@ export default function AnnualEvaluationDashboard({
           <section className="relative z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl sm:rounded-3xl p-2.5 sm:p-3.5 shadow-sm mb-5 print:hidden">
             <div className="flex flex-wrap items-center justify-between gap-2.5">
               
-              {/* Left Controls: Year & Harmonized Period Switcher & Who's Pending */}
+              {/* Left Controls: Year & Annual Badge & Who's Pending */}
               <div className="flex flex-wrap items-center gap-2">
                 
                 {/* Year Dropdown using ModernDropdown */}
@@ -1955,31 +1956,10 @@ export default function AnnualEvaluationDashboard({
                   ariaLabel="Select Year"
                 />
 
-                {/* Period Switcher */}
-                <div className="flex items-center p-0.5 bg-gray-100 dark:bg-gray-800/90 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shrink-0 h-9">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedPeriod("Semi-Annual")}
-                    className={`flex items-center gap-1.5 px-3.5 sm:px-4 h-8 rounded-[10px] text-xs sm:text-sm font-black transition-all cursor-pointer ${
-                      selectedPeriod === "Semi-Annual"
-                        ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 shadow-xs ring-1 ring-black/5 dark:ring-white/10'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <span>Semi-Annual</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedPeriod("Annual")}
-                    className={`flex items-center gap-1.5 px-3.5 sm:px-4 h-8 rounded-[10px] text-xs sm:text-sm font-black transition-all cursor-pointer ${
-                      selectedPeriod === "Annual"
-                        ? 'bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-300 shadow-xs ring-1 ring-black/5 dark:ring-white/10'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <span>Annual</span>
-                  </button>
+                {/* Annual Evaluation Badge (Purely Annual Evaluation Without Semi-Annual) */}
+                <div className="flex items-center gap-1.5 px-3.5 h-9 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/80 text-[#1C6B53] dark:text-emerald-300 rounded-xl text-xs sm:text-sm font-black shrink-0 shadow-2xs">
+                  <Award size={15} />
+                  <span>Annual Evaluation</span>
                 </div>
 
                 {/* Admin Management Buttons: Criteria & Staff Rosters */}
@@ -2371,7 +2351,7 @@ export default function AnnualEvaluationDashboard({
                 <div>
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="text-[11px] font-black tracking-wider uppercase bg-white/15 text-emerald-100 px-3 py-0.5 rounded-full border border-white/20 backdrop-blur-sm shadow-xs">
-                      {toTitleCase(selectedPeriod)} • {selectedYear}
+                      ANNUAL • {selectedYear}
                     </span>
                     {evaluationDate && (
                       <span className="text-xs font-semibold text-emerald-200">
