@@ -43,6 +43,10 @@ export function ManageStaffModal({
   const [empSearch, setEmpSearch] = useState<string>("");
   const [selectedDeptFilter, setSelectedDeptFilter] = useState<string>("all");
 
+  // Department Search & Filters
+  const [deptSearch, setDeptSearch] = useState<string>("");
+  const [selectedDeptViewFilter, setSelectedDeptViewFilter] = useState<string>("all");
+
   // Employee Form State (Opens as a Dedicated Modal)
   const [isAddingEmployee, setIsAddingEmployee] = useState<boolean>(false);
   const [editingEmpId, setEditingEmpId] = useState<string | null>(null);
@@ -90,6 +94,22 @@ export function ManageStaffModal({
       return matchSearch && matchDept;
     });
   }, [employees, empSearch, selectedDeptFilter]);
+
+  // Filtered departments
+  const filteredDepartments = useMemo(() => {
+    return departments.filter(dept => {
+      const q = deptSearch.trim().toLowerCase();
+      const matchSearch = !q ||
+        dept.name.toLowerCase().includes(q) ||
+        (dept.nameAr || "").toLowerCase().includes(q) ||
+        (dept.description || "").toLowerCase().includes(q) ||
+        (dept.direct_manager || "").toLowerCase().includes(q) ||
+        (dept.department_chief || "").toLowerCase().includes(q);
+
+      const matchFilter = selectedDeptViewFilter === "all" || dept.name === selectedDeptViewFilter;
+      return matchSearch && matchFilter;
+    });
+  }, [departments, deptSearch, selectedDeptViewFilter]);
 
   if (!isOpen) return null;
 
@@ -539,9 +559,67 @@ export function ManageStaffModal({
         {activeTab === "departments" && (
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
             
+            {/* Search & Dept Filters - Elongated Search Bar + Modern Department Dropdown */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <div className="relative flex-1 min-w-[240px]">
+                <Search size={15} className={`absolute ${isAr ? "right-3.5" : "left-3.5"} top-1/2 -translate-y-1/2 text-gray-400`} />
+                <input
+                  type="text"
+                  value={deptSearch}
+                  onChange={(e) => setDeptSearch(e.target.value)}
+                  placeholder={isAr ? "بحث باسم القسم، المدير المباشر، أو الشيف..." : "Search department by name, manager, or chief..."}
+                  className={`w-full h-10 ${isAr ? "pr-10 pl-8" : "pl-10 pr-8"} text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden shadow-2xs font-medium`}
+                />
+                {deptSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setDeptSearch("")}
+                    className={`absolute ${isAr ? "left-2.5" : "right-2.5"} top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 rounded-md`}
+                    title={isAr ? "مسح البحث" : "Clear search"}
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {/* Department Dropdown Filter */}
+              <div className="w-full sm:w-auto shrink-0 min-w-[210px]">
+                <ModernDropdown
+                  value={selectedDeptViewFilter}
+                  onChange={(val) => setSelectedDeptViewFilter(val)}
+                  options={[
+                    {
+                      value: "all",
+                      label: isAr ? `جميع الأقسام (${departments.length})` : `All Departments (${departments.length})`,
+                      icon: Building2,
+                    },
+                    ...departments.map((d) => {
+                      const count = employees.filter((e) => e.department === d.name).length;
+                      return {
+                        value: d.name,
+                        label: isAr
+                          ? `${d.nameAr || d.name} (${count})`
+                          : `${d.name} (${count})`,
+                        icon: Building2,
+                      };
+                    }),
+                  ]}
+                  variant="gray"
+                  size="sm"
+                  fullWidth
+                />
+              </div>
+            </div>
+
             {/* Departments Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {departments.map((dept) => {
+              {filteredDepartments.length === 0 ? (
+                <div className="col-span-full p-8 text-center text-gray-400 bg-gray-50 dark:bg-gray-800/40 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700">
+                  <AlertCircle size={28} className="mx-auto mb-2 text-gray-300" />
+                  <p className="text-xs font-bold">{isAr ? "لا توجد أقسام مطابقة لبحثك" : "No departments match your search"}</p>
+                </div>
+              ) : (
+                filteredDepartments.map((dept) => {
                 const count = employees.filter(e => e.department === dept.name).length;
                 return (
                   <div
@@ -611,7 +689,7 @@ export function ManageStaffModal({
                     </div>
                   </div>
                 );
-              })}
+              }))}
             </div>
 
           </div>
