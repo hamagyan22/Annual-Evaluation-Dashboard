@@ -6488,8 +6488,8 @@ export default function Dashboard() {
     /* Colorful Metadata Summary Cards */
     .meta-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
       margin-bottom: 12px;
     }
     .meta-card {
@@ -6773,10 +6773,6 @@ export default function Dashboard() {
 
   <div class="meta-grid">
     <div class="meta-card card-teal">
-      <div class="meta-lbl">Team / Unit</div>
-      <div class="meta-val">${escapeHtml(teamTitle)}</div>
-    </div>
-    <div class="meta-card card-sky">
       <div class="meta-lbl">Team Leader</div>
       <div class="meta-val">${escapeHtml(tlDisplayName)}</div>
     </div>
