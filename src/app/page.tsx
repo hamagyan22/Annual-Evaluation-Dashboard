@@ -1392,33 +1392,61 @@ function AgentDashboard({
           </div>
 
           <div className="flex items-center gap-3 self-end sm:self-auto flex-wrap sm:flex-nowrap justify-end">
-            {/* Modern Employee Switcher Dropdown (Admin & Manager Only - placed next to rating) */}
+            {/* Modern Employee Switcher Card (Admin & Manager Only - twin layout with rating card) */}
             {canSwitchAgent && (
               <div className="relative shrink-0">
                 <button
                   type="button"
                   onClick={() => setAgentDropdownOpen(!agentDropdownOpen)}
-                  className="h-11 sm:h-12 flex items-center justify-between gap-2.5 px-3 sm:px-4 rounded-2xl sm:rounded-3xl bg-gray-50/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-750 border border-gray-200/90 dark:border-gray-700/90 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer shrink-0 group ring-1 ring-black/5 dark:ring-white/5"
+                  className={`relative overflow-hidden flex items-center gap-3.5 px-4 py-2.5 rounded-2xl sm:rounded-3xl border transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer text-left group bg-gradient-to-br from-white via-emerald-50/30 to-teal-50/15 dark:from-gray-800 dark:via-gray-850 dark:to-emerald-950/20 border-emerald-500/25 dark:border-emerald-500/30 ${
+                    agentDropdownOpen ? "ring-2 ring-[#1C6B53]/30 dark:ring-emerald-400/40 shadow-md" : ""
+                  }`}
                   title="Switch Employee (Admin & Manager)"
                 >
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-[#1C6B53] to-emerald-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-xs shadow-emerald-900/20 group-hover:scale-105 transition-transform">
-                    {currentAgent?.agent_name ? currentAgent.agent_name.charAt(0).toUpperCase() : <Users size={14} />}
+                  {/* Decorative background aura matching rating card */}
+                  <div className="absolute -right-5 -bottom-5 w-20 h-20 rounded-full blur-xl pointer-events-none bg-teal-400/15" />
+
+                  {/* Left Badge with Initial or Photo */}
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-sm transition-transform duration-200 group-hover:scale-105 bg-gradient-to-tr from-[#1C6B53] to-emerald-600 text-white ring-2 ring-emerald-400/30 shadow-emerald-900/20 overflow-hidden">
+                    {currentAgent?.photo_url ? (
+                      <img src={currentAgent.photo_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <>
+                        <span className="text-[8px] font-black uppercase tracking-wider text-emerald-100/90 leading-none">AGENT</span>
+                        <span className="text-base sm:text-lg font-black leading-tight text-white tracking-tight">
+                          {currentAgent?.agent_name ? currentAgent.agent_name.charAt(0).toUpperCase() : "A"}
+                        </span>
+                      </>
+                    )}
                   </div>
-                  <div className="flex flex-col text-left truncate">
-                    <div className="flex items-center gap-1.5 leading-none mb-0.5">
-                      <span className="text-[9px] uppercase font-black tracking-wider text-[#1C6B53] dark:text-emerald-400">
-                        Employee Switcher
-                      </span>
-                      <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-emerald-100/70 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300">
+
+                  {/* Center / Right Content matching Top Star structure */}
+                  <div className="flex flex-col min-w-0 pr-1 max-w-xs sm:max-w-sm">
+                    {/* Top Row: Switcher Tag & Team Badge */}
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-emerald-500/15 dark:bg-emerald-400/15 text-[#1C6B53] dark:text-emerald-300">
+                        <Users size={10} className="text-[#1C6B53] dark:text-emerald-300" />
+                        <span>Switcher</span>
+                      </div>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700/80 text-gray-600 dark:text-gray-300 font-mono">
                         {currentAgent?.team?.replace(' Team', '') || 'CC'}
                       </span>
                     </div>
-                    <span className="truncate max-w-[110px] sm:max-w-[145px] font-black text-xs sm:text-sm text-gray-900 dark:text-white leading-tight">
-                      {toTitleCase(currentAgent?.agent_name || "Select Agent")}
-                    </span>
-                  </div>
-                  <div className={`w-6 h-6 rounded-lg bg-gray-150 dark:bg-gray-700/60 flex items-center justify-center text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-all duration-200 shrink-0 ml-0.5 ${agentDropdownOpen ? 'rotate-180 bg-emerald-50 dark:bg-emerald-950/50 text-[#1C6B53]' : ''}`}>
-                    <ChevronDown size={13} />
+
+                    {/* Bottom Row: Name & Dropdown Indicator Pill */}
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="text-xs sm:text-sm font-black text-gray-900 dark:text-white truncate">
+                        {toTitleCase(currentAgent?.agent_name || "Select Agent")}
+                      </span>
+                      <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border font-bold text-[10px] transition-all duration-200 ${
+                        agentDropdownOpen 
+                          ? "bg-[#1C6B53] text-white border-[#1C6B53]" 
+                          : "bg-emerald-500/10 dark:bg-emerald-400/10 text-[#1C6B53] dark:text-emerald-300 border-emerald-500/20 group-hover:bg-[#1C6B53] group-hover:text-white"
+                      }`}>
+                        <span className="font-mono text-xs font-black">Switch</span>
+                        <ChevronDown size={11} className={`transition-transform duration-200 ${agentDropdownOpen ? "rotate-180" : ""}`} />
+                      </div>
+                    </div>
                   </div>
                 </button>
 
