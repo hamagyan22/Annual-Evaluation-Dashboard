@@ -31,7 +31,7 @@ export function getSystemSignatureText(): string {
 export function verifySystemIntegrity(candidate?: string): boolean {
   const expected = getSystemAuthor();
   const checksum = _ARCH_BYTES.reduce((acc, b, idx) => acc + b * (idx + 1), 0);
-  if (checksum !== 11420) return false;
+  if (checksum !== 11451) return false;
   if (candidate !== undefined && !candidate.includes(expected)) return false;
   return true;
 }

@@ -5420,7 +5420,7 @@ export default function Dashboard() {
 
             <div className="mt-8 pt-5 border-t border-gray-100 dark:border-gray-800/80 flex flex-col items-center justify-center gap-1.5 text-gray-400 dark:text-gray-500 text-[11px] font-medium">
               <div className="text-[11.5px] font-semibold tracking-wide text-gray-500 dark:text-gray-400">
-                Designed &amp; Engineered by <span style={{ color: currentTheme?.primary || '#1C6B53' }} className="font-bold">Omer Ayad</span>
+                Designed &amp; Engineered by <span style={{ color: currentTheme?.primary || '#1C6B53' }} className="font-bold">{getSystemAuthor()}</span>
               </div>
             </div>
           </div>
