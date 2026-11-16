@@ -440,7 +440,7 @@ export default function AnnualEvaluationDashboard({
     saveStoredEmployees(newEmps);
   };
 
-  // Selected filters: Year (2026-2030) and Period (Semi-Annual & Annual only)
+  // Selected filter: Year (2026-2030) (Pure Annual Evaluation)
   const [selectedYear, setSelectedYear] = useState<string>(initialYear || "2026");
 
   useEffect(() => {
@@ -450,7 +450,7 @@ export default function AnnualEvaluationDashboard({
   }, [initialYear]);
 
   const [yearDropdownOpen, setYearDropdownOpen] = useState<boolean>(false);
-  const [selectedPeriod, setSelectedPeriod] = useState<"Semi-Annual" | "Annual">("Semi-Annual");
+  const selectedPeriod = "Annual" as const;
 
   // Selected Employee (Supports all employees across teams)
   const [selectedEmployeeName, setSelectedEmployeeName] = useState<string>("");
@@ -544,7 +544,6 @@ export default function AnnualEvaluationDashboard({
   const [allEvaluationsMap, setAllEvaluationsMap] = useState<Record<string, any>>({});
   const [showCoverageModal, setShowCoverageModal] = useState<boolean>(false);
   const [coverageFilterStatus, setCoverageFilterStatus] = useState<"pending" | "completed" | "all">("pending");
-  const [coveragePeriodFilter, setCoveragePeriodFilter] = useState<"all" | "Semi-Annual" | "Annual">("all");
   const [coverageTeamFilter, setCoverageTeamFilter] = useState<string>("all");
   const [coverageSearchTerm, setCoverageSearchTerm] = useState<string>("");
   const [coverageCopiedToast, setCoverageCopiedToast] = useState<boolean>(false);
@@ -815,14 +814,14 @@ export default function AnnualEvaluationDashboard({
 
   // Team counts for the 4 tabs (Younis, Ankido, Mohammed, QA & Training)
   const teamCounts = useMemo(() => {
-    const activeMembers = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, selectedPeriod === "Semi-Annual" ? "H1" : "YEAR - AVG", String(selectedYear)));
+    const activeMembers = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, "YEAR - AVG", String(selectedYear)));
     return {
       Younis: activeMembers.filter(m => (m.team || "").toLowerCase().includes("younis")).length,
       Ankido: activeMembers.filter(m => (m.team || "").toLowerCase().includes("ankido")).length,
       Mohammed: activeMembers.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad")).length,
       QA_Training: activeMembers.filter(m => (m.team || "").toLowerCase().includes("quality") || (m.team || "").toLowerCase().includes("training") || (m.team || "").toLowerCase().includes("back office") || m.role_type === "trainer" || m.role_type === "qa" || m.role_type === "backoffice").length,
     };
-  }, [effectiveAllMembers, selectedPeriod, selectedYear]);
+  }, [effectiveAllMembers, selectedYear]);
 
   // Hierarchy-scoped member visibility:
   // - Admin: see everyone across the entire organization
@@ -860,7 +859,7 @@ export default function AnnualEvaluationDashboard({
   // Filtered members list: Younis Kamal, Ankido Buya, Mohammed Dlshad, or QA & Training
   const filteredMembers = useMemo(() => {
     let list = allowedMembersForUser.filter(m => 
-      isMemberActiveInPeriod(m, selectedPeriod === "Semi-Annual" ? "H1" : "YEAR - AVG", String(selectedYear))
+      isMemberActiveInPeriod(m, "YEAR - AVG", String(selectedYear))
     );
 
     // Search Term Filter: When searching, search across visible active agents & staff
@@ -898,7 +897,7 @@ export default function AnnualEvaluationDashboard({
       if (b.role_type === "tl" && a.role_type !== "tl") return 1;
       return (a.agent_name || "").localeCompare(b.agent_name || "");
     });
-  }, [allowedMembersForUser, employeeSearchTerm, teamTabFilter, isAdmin, selectedPeriod, selectedYear, currentUserNameNorm]);
+  }, [allowedMembersForUser, employeeSearchTerm, teamTabFilter, isAdmin, selectedYear, currentUserNameNorm]);
 
   // Current selected member object
   const currentMember = useMemo(() => {
@@ -911,11 +910,6 @@ export default function AnnualEvaluationDashboard({
     const t = (currentMember?.team || "").toLowerCase();
     return t.includes("mohammed") || t.includes("dlshad");
   }, [currentMember]);
-
-  // Chat Semi-Annual 2026 exception: Productivity is removed ONLY for year 2026 Semi-Annual Chat team
-  const isChatSemi2026 = useMemo(() => {
-    return isSelectedEmployeeChat && selectedPeriod === "Semi-Annual" && String(selectedYear) === "2026";
-  }, [isSelectedEmployeeChat, selectedPeriod, selectedYear]);
 
   // Open Benchmark Guide modal with auto-selected tab based on employee
   const openBenchmarkGuide = () => {
@@ -939,8 +933,6 @@ export default function AnnualEvaluationDashboard({
       }
     }
 
-    let semiCompletedCount = 0;
-    let semiPendingCount = 0;
     let annualCompletedCount = 0;
     let annualPendingCount = 0;
 
@@ -951,13 +943,13 @@ export default function AnnualEvaluationDashboard({
       const normClean = norm.replace(/[^a-z0-9]/g, '_');
       const knownId = KNOWN_EMPLOYEE_IDS[norm] || KNOWN_EMPLOYEE_IDS[member.id] || member.id || "";
 
-      const findEval = (period: "Semi-Annual" | "Annual") => {
-        const direct1 = allEvaluationsMap[`${selectedYear}_${period}_${clean}`];
+      const findEval = () => {
+        const direct1 = allEvaluationsMap[`${selectedYear}_Annual_${clean}`];
         if (direct1) return direct1;
-        const direct2 = allEvaluationsMap[`${selectedYear}_${period}_${normClean}`];
+        const direct2 = allEvaluationsMap[`${selectedYear}_Annual_${normClean}`];
         if (direct2) return direct2;
 
-        const periodPrefix = `${selectedYear}_${period}_`;
+        const periodPrefix = `${selectedYear}_Annual_`;
         for (const [k, d] of Object.entries(allEvaluationsMap)) {
           if (!k.startsWith(periodPrefix)) continue;
           const docEmpName = normalizeAgentName(d.employee_name || "");
@@ -972,16 +964,7 @@ export default function AnnualEvaluationDashboard({
         return null;
       };
 
-      const semiDoc = findEval("Semi-Annual");
-      const annualDoc = findEval("Annual");
-
-      const semiCompleted = Boolean(
-        semiDoc && (
-          semiDoc.status === 'manager_finalized' || 
-          (typeof semiDoc.manager_overall_score === 'number' && semiDoc.manager_overall_score > 0)
-        )
-      );
-      const semiScore = semiDoc ? (semiDoc.manager_overall_score ?? semiDoc.self_overall_score ?? null) : null;
+      const annualDoc = findEval();
 
       const annualCompleted = Boolean(
         annualDoc && (
@@ -990,9 +973,6 @@ export default function AnnualEvaluationDashboard({
         )
       );
       const annualScore = annualDoc ? (annualDoc.manager_overall_score ?? annualDoc.self_overall_score ?? null) : null;
-
-      if (semiCompleted) semiCompletedCount++;
-      else semiPendingCount++;
 
       if (annualCompleted) annualCompletedCount++;
       else annualPendingCount++;
@@ -1006,32 +986,19 @@ export default function AnnualEvaluationDashboard({
         knownId,
         team,
         isChat,
-        semi: {
-          isEvaluated: Boolean(semiDoc),
-          isCompleted: semiCompleted,
-          status: semiDoc?.status || (semiCompleted ? 'manager_finalized' : 'pending'),
-          score: semiScore,
-          doc: semiDoc
-        },
-        annual: {
-          isEvaluated: Boolean(annualDoc),
-          isCompleted: annualCompleted,
-          status: annualDoc?.status || (annualCompleted ? 'manager_finalized' : 'pending'),
-          score: annualScore,
-          doc: annualDoc
-        }
+        isCompleted: annualCompleted,
+        status: annualDoc?.status || (annualCompleted ? 'manager_finalized' : 'pending'),
+        score: annualScore,
+        doc: annualDoc
       };
     });
 
     return {
       membersList: list,
       totalCount: activeMembers.length,
-      semiCompletedCount,
-      semiPendingCount,
-      annualCompletedCount,
-      annualPendingCount,
-      semiPercent: activeMembers.length > 0 ? Math.round((semiCompletedCount / activeMembers.length) * 100) : 0,
-      annualPercent: activeMembers.length > 0 ? Math.round((annualCompletedCount / activeMembers.length) * 100) : 0
+      completedCount: annualCompletedCount,
+      pendingCount: annualPendingCount,
+      percent: activeMembers.length > 0 ? Math.round((annualCompletedCount / activeMembers.length) * 100) : 0
     };
   }, [effectiveAllMembers, allEvaluationsMap, selectedYear, tlAssignedTeam]);
 
@@ -1057,34 +1024,23 @@ export default function AnnualEvaluationDashboard({
 
       // 3. Status filter
       if (coverageFilterStatus === "pending") {
-        if (coveragePeriodFilter === "Semi-Annual") return !item.semi.isCompleted;
-        if (coveragePeriodFilter === "Annual") return !item.annual.isCompleted;
-        return !item.semi.isCompleted || !item.annual.isCompleted;
+        return !item.isCompleted;
       }
 
       if (coverageFilterStatus === "completed") {
-        if (coveragePeriodFilter === "Semi-Annual") return item.semi.isCompleted;
-        if (coveragePeriodFilter === "Annual") return item.annual.isCompleted;
-        return item.semi.isCompleted || item.annual.isCompleted;
+        return item.isCompleted;
       }
 
       return true;
     });
-  }, [coverageData, coverageFilterStatus, coveragePeriodFilter, coverageTeamFilter, coverageSearchTerm]);
+  }, [coverageData, coverageFilterStatus, coverageTeamFilter, coverageSearchTerm]);
 
   // Copy pending list to clipboard
   const handleCopyPendingList = () => {
-    const pendingItems = coverageData.membersList.filter(item => {
-      if (coveragePeriodFilter === "Semi-Annual") return !item.semi.isCompleted;
-      if (coveragePeriodFilter === "Annual") return !item.annual.isCompleted;
-      return !item.semi.isCompleted || !item.annual.isCompleted;
-    });
+    const pendingItems = coverageData.membersList.filter(item => !item.isCompleted);
 
     const lines = pendingItems.map((item, idx) => {
-      const pendingPeriods = [];
-      if (!item.semi.isCompleted) pendingPeriods.push("Semi-Annual");
-      if (!item.annual.isCompleted) pendingPeriods.push("Annual");
-      return `${idx + 1}. ${toTitleCase(item.name)} (${item.knownId ? `ID: ${item.knownId}, ` : ''}${item.team.replace(' Team', '')}) -> Pending: ${pendingPeriods.join(' & ')}`;
+      return `${idx + 1}. ${toTitleCase(item.name)} (${item.knownId ? `ID: ${item.knownId}, ` : ''}${item.team.replace(' Team', '')}) -> Pending Annual Evaluation`;
     });
 
     const textToCopy = `📋 Pending Evaluations List (${selectedYear}):\n` + lines.join('\n');
@@ -1093,11 +1049,8 @@ export default function AnnualEvaluationDashboard({
     setTimeout(() => setCoverageCopiedToast(false), 2500);
   };
 
-  const handleSelectForEvaluation = (memberName: string, period?: "Semi-Annual" | "Annual") => {
+  const handleSelectForEvaluation = (memberName: string) => {
     setSelectedEmployeeName(memberName);
-    if (period) {
-      setSelectedPeriod(period);
-    }
     setShowCoverageModal(false);
   };
 
@@ -1167,8 +1120,8 @@ export default function AnnualEvaluationDashboard({
   const docId = useMemo(() => {
     if (!selectedEmployeeName) return "";
     const cleanName = selectedEmployeeName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    return `${selectedYear}_${selectedPeriod}_${cleanName}`;
-  }, [selectedYear, selectedPeriod, selectedEmployeeName]);
+    return `${selectedYear}_Annual_${cleanName}`;
+  }, [selectedYear, selectedEmployeeName]);
 
   // Load existing evaluation data from Firestore
   useEffect(() => {
@@ -1200,7 +1153,7 @@ export default function AnnualEvaluationDashboard({
         const baselineData = BASELINE_ANNUAL_EVALUATIONS[docId] || 
           Object.values(BASELINE_ANNUAL_EVALUATIONS).find(b => 
             String(b.year) === String(selectedYear) && 
-            b.period === selectedPeriod && 
+            b.period === "Annual" && 
             (
               normalizeAgentName(b.employee_name || "") === norm ||
               (b.employee_id && (b.employee_id === knownId || b.employee_id === currentMember?.id))
@@ -1252,7 +1205,7 @@ export default function AnnualEvaluationDashboard({
   }, [docId]);
 
   // Fetch actual performance metrics from team metrics table (ankido_metrics, mohammed_metrics, younis_metrics)
-  // Semi-Annual is H1 (Jan-Jun) and Annual is full year as requested
+  // Annual evaluation is computed across the full year (Jan-Dec)
   useEffect(() => {
     if (!selectedEmployeeName) {
       setActualMetricsSummary(null);
@@ -1292,9 +1245,7 @@ export default function AnnualEvaluationDashboard({
           } catch (e2) {}
         }
         
-        const periodMonths = selectedPeriod === 'Semi-Annual'
-          ? ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"] // Semi-Annual IS H1
-          : ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]; // Annual is Full Year
+        const periodMonths = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]; // Annual is Full Year
 
         const targetLower = selectedEmployeeName.toLowerCase().trim();
         const targetClean = targetLower.replace(/[^a-z0-9]/g, '');
@@ -1393,7 +1344,7 @@ export default function AnnualEvaluationDashboard({
             else suggestions.art = 1;
           }
           // Productivity: >13 (5), 11-12.99 (4), 8.5-10.99 (3), 7.50-8.49 (2), <7.50 (1)
-          if (!isChatSemi2026 && avgProd !== null) {
+          if (avgProd !== null) {
             if (avgProd > 13) suggestions.productivity = 5;
             else if (avgProd >= 11) suggestions.productivity = 4;
             else if (avgProd >= 8.5) suggestions.productivity = 3;
@@ -1442,7 +1393,7 @@ export default function AnnualEvaluationDashboard({
             monthsCount: rows.length,
             qa: avgQA !== null ? `${avgQA.toFixed(1)}%` : null,
             exam: avgExam !== null ? `${avgExam.toFixed(1)}%` : null,
-            productivity: (!isChatSemi2026 && avgProd !== null) ? (isChat ? avgProd.toFixed(2) : `${avgProd.toFixed(1)}%`) : null,
+            productivity: avgProd !== null ? (isChat ? avgProd.toFixed(2) : `${avgProd.toFixed(1)}%`) : null,
             aht: formatTime(avgAhtSec),
             art: formatTime(avgArtSec),
             suggestions
@@ -1455,7 +1406,7 @@ export default function AnnualEvaluationDashboard({
 
     fetchActuals();
     return () => { isMounted = false; };
-  }, [selectedEmployeeName, selectedYear, selectedPeriod, currentMember?.team, isChatSemi2026]);
+  }, [selectedEmployeeName, selectedYear, currentMember?.team]);
 
   // Operational KPIs dynamic definitions matching Role and Templates
   const kpiDefinitions: KpiItemDefinition[] = useMemo(() => {
@@ -1813,17 +1764,10 @@ export default function AnnualEvaluationDashboard({
     const autoDate = evaluationDate || getSubmissionFormattedDate();
 
     try {
-      const cleanSelfKpis = { ...selfKpis };
-      const cleanManagerKpis = { ...managerKpis };
-      if (isChatSemi2026) {
-        delete cleanSelfKpis.productivity;
-        delete cleanManagerKpis.productivity;
-      }
-
       const payload: any = {
         year: selectedYear,
-        period: selectedPeriod,
-        period_type: selectedPeriod,
+        period: "Annual",
+        period_type: "Annual",
         evaluation_date: autoDate,
         employee_name: selectedEmployeeName,
         employee_id: employeeId || "",
@@ -1834,14 +1778,14 @@ export default function AnnualEvaluationDashboard({
         role_type: currentMemberRoleType,
         is_special_staff: currentMemberRoleType !== "agent",
         
-        self_kpis: cleanSelfKpis,
+        self_kpis: selfKpis,
         self_competencies: selfCompetencies,
         self_kpi_avg: selfKpiAvg,
         self_competency_avg: selfCompAvg,
         self_overall_score: selfOverall,
         self_comments: employeeComments,
 
-        manager_kpis: cleanManagerKpis,
+        manager_kpis: managerKpis,
         manager_competencies: managerCompetencies,
         manager_kpi_avg: managerKpiAvg,
         manager_competency_avg: managerCompAvg,
@@ -1956,7 +1900,7 @@ export default function AnnualEvaluationDashboard({
                   ariaLabel="Select Year"
                 />
 
-                {/* Annual Evaluation Badge (Purely Annual Evaluation Without Semi-Annual) */}
+                {/* Annual Evaluation Badge */}
                 <div className="flex items-center gap-1.5 px-3.5 h-9 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/80 text-[#1C6B53] dark:text-emerald-300 rounded-xl text-xs sm:text-sm font-black shrink-0 shadow-2xs">
                   <Award size={15} />
                   <span>Annual Evaluation</span>
@@ -2007,7 +1951,7 @@ export default function AnnualEvaluationDashboard({
                     <ListChecks size={15} className="text-amber-600 dark:text-amber-400" />
                     <span>Who&apos;s Pending?</span>
                     <span className="px-1.5 py-0.5 bg-amber-500 text-white rounded-full text-xs font-black shadow-2xs">
-                      {selectedPeriod === "Semi-Annual" ? coverageData.semiPendingCount : coverageData.annualPendingCount}
+                      {coverageData.pendingCount}
                     </span>
                   </button>
                 )}
@@ -3506,12 +3450,10 @@ export default function AnnualEvaluationDashboard({
                             <div className="font-black text-gray-900 dark:text-gray-100">ART</div>
                             <div className="text-[10px] text-gray-400 font-medium">First Response</div>
                           </th>
-                          {!isChatSemi2026 && (
-                            <th className="p-3">
-                              <div className="font-black text-gray-900 dark:text-gray-100">Productivity</div>
-                              <div className="text-[10px] text-gray-400 font-medium">Chats / Hour</div>
-                            </th>
-                          )}
+                          <th className="p-3">
+                            <div className="font-black text-gray-900 dark:text-gray-100">Productivity</div>
+                            <div className="text-[10px] text-gray-400 font-medium">Chats / Hour</div>
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -3535,11 +3477,9 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-300">
                             <span className="px-2 py-0.5 rounded-lg bg-emerald-100/80 dark:bg-emerald-900/50">&lt; 1:30</span>
                           </td>
-                          {!isChatSemi2026 && (
-                            <td className="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-300">
-                              <span className="px-2 py-0.5 rounded-lg bg-emerald-100/80 dark:bg-emerald-900/50">&gt; 13</span>
-                            </td>
-                          )}
+                          <td className="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                            <span className="px-2 py-0.5 rounded-lg bg-emerald-100/80 dark:bg-emerald-900/50">&gt; 13</span>
+                          </td>
                         </tr>
 
                         {/* 4 Exceeds Expectations */}
@@ -3562,11 +3502,9 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono font-semibold text-blue-900 dark:text-blue-200">
                             <span className="px-2 py-0.5 rounded-lg bg-blue-100/70 dark:bg-blue-900/40">1:31 - 1:59</span>
                           </td>
-                          {!isChatSemi2026 && (
-                            <td className="p-3 font-mono font-semibold text-blue-900 dark:text-blue-200">
-                              <span className="px-2 py-0.5 rounded-lg bg-blue-100/70 dark:bg-blue-900/40">11 - 12.99</span>
-                            </td>
-                          )}
+                          <td className="p-3 font-mono font-semibold text-blue-900 dark:text-blue-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-blue-100/70 dark:bg-blue-900/40">11 - 12.99</span>
+                          </td>
                         </tr>
 
                         {/* 3 Meets Expectations */}
@@ -3589,11 +3527,9 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">
                             <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800">2:00 - 2:59</span>
                           </td>
-                          {!isChatSemi2026 && (
-                            <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">
-                              <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800">8.50 - 10.99</span>
-                            </td>
-                          )}
+                          <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800">8.50 - 10.99</span>
+                          </td>
                         </tr>
 
                         {/* 2 Developing */}
@@ -3616,11 +3552,9 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
                             <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">3:00 - 3:30</span>
                           </td>
-                          {!isChatSemi2026 && (
-                            <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
-                              <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">7.50 - 8.49</span>
-                            </td>
-                          )}
+                          <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
+                            <span className="px-2 py-0.5 rounded-lg bg-amber-100/70 dark:bg-amber-900/40">7.50 - 8.49</span>
+                          </td>
                         </tr>
 
                         {/* 1 Needs Improvement */}
@@ -3643,11 +3577,9 @@ export default function AnnualEvaluationDashboard({
                           <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
                             <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&gt; 3:31</span>
                           </td>
-                          {!isChatSemi2026 && (
-                            <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
-                              <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&lt; 7.50</span>
-                            </td>
-                          )}
+                          <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
+                            <span className="px-2 py-0.5 rounded-lg bg-rose-100/80 dark:bg-rose-900/50">&lt; 7.50</span>
+                          </td>
                         </tr>
                       </tbody>
                     </table>
@@ -3720,7 +3652,7 @@ export default function AnnualEvaluationDashboard({
                     </span>
                   </div>
                   <p className="text-xs text-emerald-100/90 font-medium mt-0.5">
-                    Real-time tracking of completed and pending semi-annual & annual evaluations
+                    Real-time tracking of completed and pending annual evaluations
                   </p>
                 </div>
               </div>
@@ -3736,10 +3668,10 @@ export default function AnnualEvaluationDashboard({
             </div>
 
             {/* KPI Summary Overview Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 sm:p-5 bg-gray-50/80 dark:bg-gray-800/40 border-b border-gray-200/80 dark:border-gray-800 shrink-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 sm:p-5 bg-gray-50/80 dark:bg-gray-800/40 border-b border-gray-200/80 dark:border-gray-800 shrink-0">
               
               {/* Card 1: Total Employees */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-3.5 shadow-2xs">
+              <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-4 shadow-2xs">
                 <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
                   <span>Total Active Members</span>
                   <Users size={15} className="text-gray-400" />
@@ -3752,53 +3684,28 @@ export default function AnnualEvaluationDashboard({
                 </div>
               </div>
 
-              {/* Card 2: Semi-Annual */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-3.5 shadow-2xs">
+              {/* Card 2: Annual Review Progress */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-4 shadow-2xs">
                 <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
-                  <span>Semi-Annual Review</span>
-                  <Calendar size={15} className="text-[#1C6B53] dark:text-emerald-400" />
+                  <span>Annual Review Progress</span>
+                  <Award size={15} className="text-[#1C6B53] dark:text-emerald-400" />
                 </div>
                 <div className="flex items-baseline justify-between">
                   <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
-                    {coverageData.semiCompletedCount} <span className="text-xs font-semibold text-gray-500">Completed</span>
+                    {coverageData.completedCount} <span className="text-xs font-semibold text-gray-500">Completed</span>
                   </div>
-                  <span className="text-xs font-black text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
-                    {coverageData.semiPendingCount} Pending
+                  <span className="text-xs font-black text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
+                    {coverageData.pendingCount} Pending
                   </span>
                 </div>
-                <div className="w-full bg-gray-100 dark:bg-gray-700 h-2 rounded-full mt-2.5 overflow-hidden">
+                <div className="w-full bg-gray-100 dark:bg-gray-700 h-2.5 rounded-full mt-2.5 overflow-hidden">
                   <div 
-                    className="bg-[#1C6B53] h-full rounded-full transition-all duration-500"
-                    style={{ width: `${coverageData.semiPercent}%` }}
+                    className="bg-gradient-to-r from-[#1C6B53] to-emerald-500 h-full rounded-full transition-all duration-500"
+                    style={{ width: `${coverageData.percent}%` }}
                   />
                 </div>
                 <div className="text-[10px] text-right font-bold text-gray-500 dark:text-gray-400 mt-1">
-                  {coverageData.semiPercent}% Completed
-                </div>
-              </div>
-
-              {/* Card 3: Annual */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-3.5 shadow-2xs">
-                <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
-                  <span>Annual Review</span>
-                  <Award size={15} className="text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="flex items-baseline justify-between">
-                  <div className="text-2xl font-black text-blue-700 dark:text-blue-400">
-                    {coverageData.annualCompletedCount} <span className="text-xs font-semibold text-gray-500">Completed</span>
-                  </div>
-                  <span className="text-xs font-black text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
-                    {coverageData.annualPendingCount} Pending
-                  </span>
-                </div>
-                <div className="w-full bg-gray-100 dark:bg-gray-700 h-2 rounded-full mt-2.5 overflow-hidden">
-                  <div 
-                    className="bg-blue-600 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${coverageData.annualPercent}%` }}
-                  />
-                </div>
-                <div className="text-[10px] text-right font-bold text-gray-500 dark:text-gray-400 mt-1">
-                  {coverageData.annualPercent}% Completed
+                  {coverageData.percent}% Completed
                 </div>
               </div>
 
@@ -3823,11 +3730,7 @@ export default function AnnualEvaluationDashboard({
                     <AlertCircle size={13} />
                     <span>Pending Only</span>
                     <span className="text-[10px] px-1.5 py-0.2 bg-white/25 rounded-md font-black">
-                      {coveragePeriodFilter === "Semi-Annual" 
-                        ? coverageData.semiPendingCount 
-                        : coveragePeriodFilter === "Annual" 
-                        ? coverageData.annualPendingCount 
-                        : coverageData.semiPendingCount}
+                      {coverageData.pendingCount}
                     </span>
                   </button>
 
@@ -3843,11 +3746,7 @@ export default function AnnualEvaluationDashboard({
                     <CheckCircle2 size={13} />
                     <span>Completed</span>
                     <span className="text-[10px] px-1.5 py-0.2 bg-white/25 rounded-md font-black">
-                      {coveragePeriodFilter === "Semi-Annual" 
-                        ? coverageData.semiCompletedCount 
-                        : coveragePeriodFilter === "Annual" 
-                        ? coverageData.annualCompletedCount 
-                        : coverageData.semiCompletedCount}
+                      {coverageData.completedCount}
                     </span>
                   </button>
 
@@ -3861,44 +3760,6 @@ export default function AnnualEvaluationDashboard({
                     }`}
                   >
                     <span>All ({coverageData.totalCount})</span>
-                  </button>
-                </div>
-
-                {/* Period View Filter */}
-                <div className="flex items-center gap-1 bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-2xl border border-gray-200/60 dark:border-gray-700/60 text-xs font-bold">
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400 px-2 font-medium">Period:</span>
-                  <button
-                    type="button"
-                    onClick={() => setCoveragePeriodFilter("all")}
-                    className={`px-3 py-1 rounded-xl transition cursor-pointer ${
-                      coveragePeriodFilter === "all"
-                        ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-black shadow-2xs"
-                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                    }`}
-                  >
-                    Both
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCoveragePeriodFilter("Semi-Annual")}
-                    className={`px-3 py-1 rounded-xl transition cursor-pointer ${
-                      coveragePeriodFilter === "Semi-Annual"
-                        ? "bg-white dark:bg-gray-700 text-[#1C6B53] dark:text-emerald-400 font-black shadow-2xs"
-                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                    }`}
-                  >
-                    Semi-Annual
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCoveragePeriodFilter("Annual")}
-                    className={`px-3 py-1 rounded-xl transition cursor-pointer ${
-                      coveragePeriodFilter === "Annual"
-                        ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 font-black shadow-2xs"
-                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                    }`}
-                  >
-                    Annual
                   </button>
                 </div>
 
@@ -4009,48 +3870,25 @@ export default function AnnualEvaluationDashboard({
                     {/* Status Badges & Quick Action */}
                     <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-gray-100 dark:border-gray-700">
                       
-                      {/* Semi-Annual Status Badge */}
+                      {/* Annual Status Badge */}
                       <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold ${
-                        item.semi.isCompleted
+                        item.isCompleted
                           ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300/80 dark:border-emerald-700/60"
                           : "bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border-amber-300/80 dark:border-amber-700/60"
                       }`}>
-                        {item.semi.isCompleted ? (
+                        {item.isCompleted ? (
                           <>
                             <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            <span>Semi-Annual:</span>
+                            <span>Annual:</span>
                             <span className="font-black text-emerald-700 dark:text-emerald-300">
-                              {item.semi.score !== null ? item.semi.score.toFixed(2) : "Completed"}
+                              {item.score !== null ? item.score.toFixed(2) : "Completed"}
                             </span>
                           </>
                         ) : (
                           <>
                             <AlertCircle size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
-                            <span>Semi-Annual:</span>
+                            <span>Annual:</span>
                             <span className="font-black text-amber-700 dark:text-amber-300">Pending</span>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Annual Status Badge */}
-                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold ${
-                        item.annual.isCompleted
-                          ? "bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-300/80 dark:border-blue-700/60"
-                          : "bg-slate-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700"
-                      }`}>
-                        {item.annual.isCompleted ? (
-                          <>
-                            <CheckCircle2 size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                            <span>Annual:</span>
-                            <span className="font-black text-blue-700 dark:text-blue-300">
-                              {item.annual.score !== null ? item.annual.score.toFixed(2) : "Completed"}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <Clock size={13} className="text-gray-400 shrink-0" />
-                            <span>Annual:</span>
-                            <span className="font-medium text-gray-500 dark:text-gray-400">Pending</span>
                           </>
                         )}
                       </div>
@@ -4058,7 +3896,7 @@ export default function AnnualEvaluationDashboard({
                       {/* Action Button: Evaluate / Open */}
                       <button
                         type="button"
-                        onClick={() => handleSelectForEvaluation(item.name, !item.semi.isCompleted ? "Semi-Annual" : "Annual")}
+                        onClick={() => handleSelectForEvaluation(item.name)}
                         className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1C6B53] hover:bg-[#155340] text-white text-xs font-black transition active:scale-95 shadow-2xs cursor-pointer ml-auto md:ml-0"
                       >
                         <span>Evaluate Employee</span>

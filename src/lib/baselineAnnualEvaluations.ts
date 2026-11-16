@@ -1,14 +1,14 @@
 /**
- * Baseline Official Semi-Annual and Annual Evaluations
+ * Baseline Official Annual Evaluations
  * Sourced directly from Company Official Evaluation Sheets (Excel)
  */
 
 export const BASELINE_ANNUAL_EVALUATIONS: Record<string, any> = {
-  "2026_Semi-Annual_saja_bashar_anwar": {
-    id: "2026_Semi-Annual_saja_bashar_anwar",
+  "2026_Annual_saja_bashar_anwar": {
+    id: "2026_Annual_saja_bashar_anwar",
     year: "2026",
-    period: "Semi-Annual",
-    period_type: "Semi-Annual",
+    period: "Annual",
+    period_type: "Annual",
     evaluation_date: "",
     employee_name: "Saja Bashar Anwar",
     employee_id: "366",
@@ -65,11 +65,11 @@ export const BASELINE_ANNUAL_EVALUATIONS: Record<string, any> = {
     updated_at: "2026-07-15T12:00:00.000Z",
     last_modified_by: "Ankido Buya"
   },
-  "2026_Semi-Annual_saja_bashar": {
-    id: "2026_Semi-Annual_saja_bashar",
+  "2026_Annual_saja_bashar": {
+    id: "2026_Annual_saja_bashar",
     year: "2026",
-    period: "Semi-Annual",
-    period_type: "Semi-Annual",
+    period: "Annual",
+    period_type: "Annual",
     evaluation_date: "",
     employee_name: "Saja Bashar Anwar",
     employee_id: "366",
@@ -126,11 +126,11 @@ export const BASELINE_ANNUAL_EVALUATIONS: Record<string, any> = {
     updated_at: "2026-07-15T12:00:00.000Z",
     last_modified_by: "Ankido Buya"
   },
-  "2026_Semi-Annual_haneen_abd_al_kareem": {
-    id: "2026_Semi-Annual_haneen_abd_al_kareem",
+  "2026_Annual_haneen_abd_al_kareem": {
+    id: "2026_Annual_haneen_abd_al_kareem",
     year: "2026",
-    period: "Semi-Annual",
-    period_type: "Semi-Annual",
+    period: "Annual",
+    period_type: "Annual",
     evaluation_date: "15/07/2026",
     employee_name: "Haneen Abd-Al Kareem",
     employee_id: "586",
@@ -187,11 +187,11 @@ export const BASELINE_ANNUAL_EVALUATIONS: Record<string, any> = {
     updated_at: "2026-07-15T12:00:00.000Z",
     last_modified_by: "Ankido Buya"
   },
-  "2026_Semi-Annual_haneen_abdelkareem": {
-    id: "2026_Semi-Annual_haneen_abdelkareem",
+  "2026_Annual_haneen_abdelkareem": {
+    id: "2026_Annual_haneen_abdelkareem",
     year: "2026",
-    period: "Semi-Annual",
-    period_type: "Semi-Annual",
+    period: "Annual",
+    period_type: "Annual",
     evaluation_date: "15/07/2026",
     employee_name: "Haneen Abd-Al Kareem",
     employee_id: "586",
@@ -248,11 +248,11 @@ export const BASELINE_ANNUAL_EVALUATIONS: Record<string, any> = {
     updated_at: "2026-07-15T12:00:00.000Z",
     last_modified_by: "Ankido Buya"
   },
-  "2026_Semi-Annual_nawen_maadh": {
-    id: "2026_Semi-Annual_nawen_maadh",
+  "2026_Annual_nawen_maadh": {
+    id: "2026_Annual_nawen_maadh",
     year: "2026",
-    period: "Semi-Annual",
-    period_type: "Semi-Annual",
+    period: "Annual",
+    period_type: "Annual",
     evaluation_date: "",
     employee_name: "Nawen Maadh",
     employee_id: "360",
@@ -309,11 +309,11 @@ export const BASELINE_ANNUAL_EVALUATIONS: Record<string, any> = {
     updated_at: "2026-07-15T12:00:00.000Z",
     last_modified_by: "Mohammed Dilshad"
   },
-  "2026_Semi-Annual_bana_ahmed": {
-    id: "2026_Semi-Annual_bana_ahmed",
+  "2026_Annual_bana_ahmed": {
+    id: "2026_Annual_bana_ahmed",
     year: "2026",
-    period: "Semi-Annual",
-    period_type: "Semi-Annual",
+    period: "Annual",
+    period_type: "Annual",
     evaluation_date: "14/07/2026",
     employee_name: "Bana Ahmed",
     employee_id: "343",
@@ -370,11 +370,11 @@ export const BASELINE_ANNUAL_EVALUATIONS: Record<string, any> = {
     updated_at: "2026-07-14T12:00:00.000Z",
     last_modified_by: "Mohammed Dilshad"
   },
-  "2026_Semi-Annual_azad_muhammad": {
-    id: "2026_Semi-Annual_azad_muhammad",
+  "2026_Annual_azad_muhammad": {
+    id: "2026_Annual_azad_muhammad",
     year: "2026",
-    period: "Semi-Annual",
-    period_type: "Semi-Annual",
+    period: "Annual",
+    period_type: "Annual",
     evaluation_date: "20/07/2026",
     employee_name: "Azad Muhammad Abdullah",
     employee_id: "342",
@@ -431,11 +431,11 @@ export const BASELINE_ANNUAL_EVALUATIONS: Record<string, any> = {
     updated_at: "2026-07-20T12:00:00.000Z",
     last_modified_by: "Younis Kamal"
   },
-  "2026_Semi-Annual_azad_muhammad_abdullah": {
-    id: "2026_Semi-Annual_azad_muhammad_abdullah",
+  "2026_Annual_azad_muhammad_abdullah": {
+    id: "2026_Annual_azad_muhammad_abdullah",
     year: "2026",
-    period: "Semi-Annual",
-    period_type: "Semi-Annual",
+    period: "Annual",
+    period_type: "Annual",
     evaluation_date: "20/07/2026",
     employee_name: "Azad Muhammad Abdullah",
     employee_id: "342",
