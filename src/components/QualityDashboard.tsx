@@ -5945,11 +5945,11 @@ export default function QualityDashboard({
                           </div>
                         </th>
                       ))}
-                      <th 
-                        style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
-                        className="px-4 py-3 text-center min-w-[120px] text-white font-black"
-                      >
-                        {MONTH_NAMES[trainerMonth]} Avg
+                      <th className="px-3 py-2.5 text-center min-w-[135px] font-black border-l border-teal-100/80 dark:border-gray-800 bg-teal-50/70 dark:bg-teal-950/20">
+                        <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black shadow-xs tracking-tight bg-gradient-to-r from-teal-600 via-[#0d9488] to-emerald-700 text-white border border-teal-400/30 select-none">
+                          <Award size={12} className="text-amber-300 shrink-0" />
+                          <span>{MONTH_NAMES[trainerMonth]} Avg</span>
+                        </div>
                       </th>
                     </>
                   ) : isCShift ? (
@@ -5962,11 +5962,11 @@ export default function QualityDashboard({
                           </div>
                         </th>
                       ))}
-                      <th 
-                        style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
-                        className="px-4 py-3 text-center min-w-[120px] text-white font-black"
-                      >
-                        {selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Avg` : `Week ${selectedWeek} Score`}
+                      <th className="px-3 py-2.5 text-center min-w-[135px] font-black border-l border-teal-100/80 dark:border-gray-800 bg-teal-50/70 dark:bg-teal-950/20">
+                        <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black shadow-xs tracking-tight bg-gradient-to-r from-teal-600 via-[#00A991] to-emerald-700 text-white border border-teal-400/30 select-none">
+                          <Award size={12} className="text-amber-300 shrink-0" />
+                          <span>{selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Avg` : `Week ${selectedWeek} Score`}</span>
+                        </div>
                       </th>
                       {selectedMonthFilter === null && (
                         <th className="px-3 py-3 text-center min-w-[125px] bg-gray-50/90 dark:bg-gray-850/90 text-gray-700 dark:text-gray-300 font-bold border-l border-gray-200 dark:border-gray-700">
@@ -6003,11 +6003,11 @@ export default function QualityDashboard({
                           </div>
                         </th>
                       ))}
-                      <th 
-                        style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
-                        className="px-4 py-3 text-center min-w-[120px] text-white font-black"
-                      >
-                        Bonus Score
+                      <th className="px-3 py-2.5 text-center min-w-[135px] font-black border-l border-teal-100/80 dark:border-gray-800 bg-teal-50/70 dark:bg-teal-950/20">
+                        <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black shadow-xs tracking-tight bg-gradient-to-r from-teal-600 via-[#00A991] to-emerald-700 text-white border border-teal-400/30 select-none">
+                          <Award size={12} className="text-amber-300 shrink-0" />
+                          <span>Bonus Score</span>
+                        </div>
                       </th>
                     </>
                   ) : (
@@ -6028,11 +6028,11 @@ export default function QualityDashboard({
                           </div>
                         </th>
                       )}
-                      <th 
-                        style={{ backgroundColor: 'var(--brand-primary, #1C6B53)' }}
-                        className="px-4 py-3 text-center min-w-[120px] text-white font-black"
-                      >
-                        {selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Avg` : `Week ${selectedWeek} Score`}
+                      <th className="px-3 py-2.5 text-center min-w-[135px] font-black border-l border-emerald-100/80 dark:border-gray-800 bg-emerald-50/70 dark:bg-emerald-950/20">
+                        <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black shadow-xs tracking-tight bg-gradient-to-r from-emerald-600 via-[#1C6B53] to-teal-700 text-white border border-emerald-400/30 select-none">
+                          <Award size={12} className="text-amber-300 shrink-0" />
+                          <span>{selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Avg` : `Week ${selectedWeek} Score`}</span>
+                        </div>
                       </th>
                       {selectedMonthFilter === null && (
                         <th className="px-3 py-3 text-center min-w-[125px] bg-gray-50/90 dark:bg-gray-850/90 text-gray-700 dark:text-gray-300 font-bold border-l border-gray-200 dark:border-gray-700">
@@ -6744,8 +6744,9 @@ export default function QualityDashboard({
                               }
 
                               return (
-                                <span className="inline-block text-[11px] font-medium text-gray-400 dark:text-gray-500">
-                                  Pending
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100/70 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/50 select-none">
+                                  <Clock size={10} className="text-gray-400 shrink-0" />
+                                  <span>Pending</span>
                                 </span>
                               );
                             })()}
@@ -6764,7 +6765,10 @@ export default function QualityDashboard({
                     <td 
                       className="sticky left-0 z-20 px-5 py-3 font-black shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] bg-[var(--brand-bg-light)] dark:bg-gray-900 text-[var(--brand-primary)] dark:text-[var(--brand-dark-text-light)] border-r border-gray-100 dark:border-gray-800"
                     >
-                      Team Average
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-2xs animate-pulse shrink-0" />
+                        <span>Team Average</span>
+                      </div>
                     </td>
 
                     {isTrainer ? (
@@ -6785,8 +6789,10 @@ export default function QualityDashboard({
                           });
                           const colAvg = nums.length > 0 ? (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1) : "-";
                           return (
-                            <td key={cNum} className="p-2 text-center font-black text-[#0d9488] dark:text-teal-300">
-                              {colAvg !== "-" ? `${colAvg}%` : "-"}
+                            <td key={cNum} className="p-2 text-center">
+                              <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-bold text-teal-800 dark:text-teal-300 bg-white/80 dark:bg-gray-800/80 border border-teal-200/70 dark:border-gray-700/60 shadow-2xs">
+                                {colAvg !== "-" ? `${colAvg}%` : "-"}
+                              </span>
                             </td>
                           );
                         })}
@@ -6813,10 +6819,11 @@ export default function QualityDashboard({
                             <td className="p-2 text-center border-l border-teal-200/70 dark:border-gray-700/80 bg-teal-50/40 dark:bg-gray-800/40">
                               <div className="flex items-center justify-center">
                                 {totalTrainerAvg !== "-" ? (
-                                  <span className={`inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl font-black text-xs sm:text-sm shadow-xs border border-white/20 tracking-tight min-w-[70px] ${
-                                    isCallMon ? "bg-[#0f766e] text-white" : "bg-[#0d9488] text-white"
+                                  <span className={`inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl font-black text-xs sm:text-sm text-white shadow-md shadow-teal-800/25 border border-teal-400/30 tracking-tight min-w-[76px] select-none ${
+                                    isCallMon ? "bg-gradient-to-r from-teal-700 to-teal-900" : "bg-gradient-to-r from-teal-600 via-[#0d9488] to-emerald-700"
                                   }`}>
-                                    {totalTrainerAvg}%
+                                    <Award size={12} className="text-amber-300 shrink-0" />
+                                    <span>{totalTrainerAvg}%</span>
                                   </span>
                                 ) : (
                                   <span className="text-gray-400 dark:text-gray-500 font-bold text-xs sm:text-sm">
@@ -6844,8 +6851,10 @@ export default function QualityDashboard({
                           });
                           const colAvg = nums.length > 0 ? (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1) : "-";
                           return (
-                            <td key={cNum} className="p-2 text-center font-black text-[#00A991] dark:text-teal-300">
-                              {colAvg !== "-" ? `${colAvg}%` : "-"}
+                            <td key={cNum} className="p-2 text-center">
+                              <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-bold text-teal-800 dark:text-teal-300 bg-white/80 dark:bg-gray-800/80 border border-teal-200/70 dark:border-gray-700/60 shadow-2xs">
+                                {colAvg !== "-" ? `${colAvg}%` : "-"}
+                              </span>
                             </td>
                           );
                         })}
@@ -6880,8 +6889,9 @@ export default function QualityDashboard({
                             <td className="p-2 text-center border-l border-teal-200/70 dark:border-gray-700/80 bg-teal-50/40 dark:bg-gray-800/40">
                               <div className="flex items-center justify-center">
                                 {totalAvg !== "-" ? (
-                                  <span className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl font-black text-xs sm:text-sm bg-[#00A991] text-white shadow-xs border border-white/20 tracking-tight min-w-[70px]">
-                                    {totalAvg}%
+                                  <span className="inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-teal-600 via-[#00A991] to-emerald-700 shadow-md shadow-teal-800/25 border border-teal-400/30 tracking-tight min-w-[76px] select-none">
+                                    <Award size={12} className="text-amber-300 shrink-0" />
+                                    <span>{totalAvg}%</span>
                                   </span>
                                 ) : (
                                   <span className="text-gray-400 dark:text-gray-500 font-bold text-xs sm:text-sm">
@@ -6937,8 +6947,9 @@ export default function QualityDashboard({
                             <td className="p-2 text-center border-l border-teal-200/70 dark:border-gray-700/80 bg-teal-50/40 dark:bg-gray-800/40">
                               <div className="flex items-center justify-center">
                                 {totalAvg !== "-" ? (
-                                  <span className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl font-black text-xs sm:text-sm bg-[#00A991] text-white shadow-xs border border-white/20 tracking-tight min-w-[70px]">
-                                    {totalAvg}%
+                                  <span className="inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-teal-600 via-[#00A991] to-emerald-700 shadow-md shadow-teal-800/25 border border-teal-400/30 tracking-tight min-w-[76px] select-none">
+                                    <Award size={12} className="text-amber-300 shrink-0" />
+                                    <span>{totalAvg}%</span>
                                   </span>
                                 ) : (
                                   <span className="text-gray-400 dark:text-gray-500 font-bold text-xs sm:text-sm">
@@ -6971,9 +6982,11 @@ export default function QualityDashboard({
                           return (
                             <td 
                               key={cNum} 
-                              className="p-2 text-center font-black text-[var(--brand-primary)] dark:text-[var(--brand-dark-text-light)]"
+                              className="p-2 text-center"
                             >
-                              {colAvg !== "-" ? `${colAvg}%` : "-"}
+                              <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-bold text-gray-700 dark:text-gray-300 bg-white/80 dark:bg-gray-800/80 border border-gray-200/70 dark:border-gray-700/60 shadow-2xs">
+                                {colAvg !== "-" ? `${colAvg}%` : "-"}
+                              </span>
                             </td>
                           );
                         })}
@@ -6993,8 +7006,10 @@ export default function QualityDashboard({
                           });
                           const outAvg = nums.length > 0 ? (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1) : "-";
                           return (
-                            <td className="p-2 text-center font-black text-amber-800 dark:text-amber-400 bg-amber-100/40 dark:bg-amber-950/30">
-                              {outAvg !== "-" ? `${outAvg}%` : "-"}
+                            <td className="p-2 text-center border-x border-amber-200/80 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20">
+                              <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/60 border border-amber-300/60 dark:border-amber-900/60 shadow-2xs">
+                                {outAvg !== "-" ? `${outAvg}%` : "-"}
+                              </span>
                             </td>
                           );
                         })()}
@@ -7033,13 +7048,10 @@ export default function QualityDashboard({
                                 <div className="flex items-center justify-center">
                                   {totalAvg !== "-" ? (
                                     <span 
-                                      style={{
-                                        backgroundColor: 'var(--brand-primary)',
-                                        color: '#ffffff'
-                                      }}
-                                      className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl font-black text-xs sm:text-sm shadow-xs border border-white/20 tracking-tight min-w-[70px]"
+                                      className="inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-emerald-600 via-[#1C6B53] to-teal-700 shadow-md shadow-emerald-800/25 border border-emerald-400/30 tracking-tight min-w-[76px] select-none"
                                     >
-                                      {totalAvg}%
+                                      <Award size={12} className="text-amber-300 shrink-0" />
+                                      <span>{totalAvg}%</span>
                                     </span>
                                   ) : (
                                     <span className="text-gray-400 dark:text-gray-500 font-bold text-xs sm:text-sm">

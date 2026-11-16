@@ -7028,7 +7028,7 @@ export default function Dashboard() {
                 placeholder="Search agent name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 pr-7 py-1 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/90 hover:bg-white dark:bg-gray-900/70 dark:hover:bg-gray-900 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-[#1C6B53]/30 focus:border-[#1C6B53] dark:focus:border-emerald-500 text-[11px] sm:text-xs w-36 sm:w-48 md:w-56 transition-all dark:text-gray-100 font-semibold shadow-2xs"
+                className="pl-8 pr-7 py-1 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/90 hover:bg-white dark:bg-gray-900/70 dark:hover:bg-gray-900 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-[#1C6B53]/30 focus:border-[#1C6B53] dark:focus:border-emerald-500 text-[11px] sm:text-xs w-32 sm:w-40 md:w-44 transition-all dark:text-gray-100 font-semibold shadow-2xs"
               />
               {searchTerm && (
                 <button
@@ -7131,15 +7131,18 @@ export default function Dashboard() {
               );
             })}
 
-            {/* Separator */}
+          </div>
+
+          {/* Pinned Right Controls Cluster: CC (Y+A), Sync, Export PDF */}
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 pl-1 pr-0.5">
             <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5 flex-shrink-0" />
 
-            {/* Button next to H1 / H2: Younis + Ankido Combined Data (Compact & Brief) */}
+            {/* Button: Younis + Ankido Combined Data (Always fully visible, never clipped) */}
             <button
               type="button"
               onClick={() => setIsCombinedCallCenter(prev => !prev)}
               style={isCombinedCallCenter ? { background: 'var(--brand-gradient)' } : undefined}
-              className={`h-7 sm:h-8 px-2 sm:px-2.5 rounded-xl text-[11px] font-black transition-all flex-shrink-0 flex items-center gap-1.5 border cursor-pointer whitespace-nowrap ${
+              className={`h-7 sm:h-8 px-2.5 rounded-xl text-[11px] font-black transition-all shrink-0 flex items-center gap-1.5 border cursor-pointer whitespace-nowrap select-none ${
                 isCombinedCallCenter
                   ? 'text-white border-transparent shadow-md shadow-[var(--brand-glow)] ring-2 ring-[var(--brand-glow)]'
                   : 'bg-[var(--brand-bg-light)] dark:bg-gray-800 text-[var(--brand-text-light)] dark:text-[var(--brand-dark-text-light)] border-[var(--brand-border-light)] dark:border-gray-700 hover:opacity-90'
@@ -7161,7 +7164,7 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={() => setShowIncompleteSyncModal(true)}
-                    className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 border cursor-pointer whitespace-nowrap bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-300/80 dark:border-amber-700/60 shadow-2xs shrink-0 active:scale-95"
+                    className="h-7 sm:h-8 px-2.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1.5 border cursor-pointer whitespace-nowrap bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-300/80 dark:border-amber-700/60 shadow-2xs shrink-0 active:scale-95"
                     title={`${selectedMonth} data is incomplete (${currentMonthCompleteness.completedAgents}/${currentMonthCompleteness.totalAgents}). Click to view missing fields.`}
                   >
                     <Clock size={11} className="text-amber-600 dark:text-amber-400" />
@@ -7171,7 +7174,7 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={() => setShowSyncedDetailsModal(true)}
-                    className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg text-[11px] font-black transition flex items-center gap-1.5 border cursor-pointer whitespace-nowrap bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/70 shadow-2xs shrink-0 active:scale-95"
+                    className="h-7 sm:h-8 px-2.5 rounded-xl text-[11px] font-black transition flex items-center gap-1.5 border cursor-pointer whitespace-nowrap bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/70 shadow-2xs shrink-0 active:scale-95"
                     title="Data is published and live on Agent Dashboard. Click to manage sync."
                   >
                     <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400" />
@@ -7182,7 +7185,7 @@ export default function Dashboard() {
                     type="button"
                     onClick={handleSyncData}
                     disabled={isSyncingData}
-                    className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-[#1C6B53] hover:from-emerald-700 hover:to-[#155a45] shadow-md shadow-emerald-600/25 ring-2 ring-emerald-400/40 animate-pulse shrink-0 active:scale-95 disabled:opacity-50"
+                    className="h-7 sm:h-8 px-2.5 sm:px-3 rounded-xl text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-[#1C6B53] hover:from-emerald-700 hover:to-[#155a45] shadow-md shadow-emerald-600/25 ring-2 ring-emerald-400/40 animate-pulse shrink-0 active:scale-95 disabled:opacity-50"
                     title={
                       isAdmin || isManager
                         ? "Manager / Admin: 100% complete! Click to sync ALL teams to Agent Dashboard & update Top Star."
@@ -7194,18 +7197,17 @@ export default function Dashboard() {
                       {isSyncingData
                         ? "Syncing..."
                         : isAdmin || isManager
-                        ? "Sync All Teams to Agents"
-                        : `Sync to ${selectedTeam.replace(' Team', '')} Agents`}
+                        ? "Sync All Teams"
+                        : `Sync to ${selectedTeam.replace(' Team', '')}`}
                     </span>
                   </button>
                 )}
               </>
             )}
-          </div>
 
-          {/* Export PDF Button (Pinned Right in TL Controls Bar with harmonious height & spacing) */}
-          <div className="flex items-center gap-1.5 shrink-0 pl-1 pr-0.5">
             <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5 flex-shrink-0" />
+
+            {/* Export PDF Button (Pinned Right in TL Controls Bar with harmonious height & spacing) */}
             <button
               type="button"
               onClick={() => {
