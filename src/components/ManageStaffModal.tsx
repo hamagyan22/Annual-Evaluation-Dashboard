@@ -377,46 +377,55 @@ export function ManageStaffModal({
         {activeTab === "employees" && (
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
             
-            {/* Search & Dept Filters */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-              <div className="relative flex-1">
-                <Search size={15} className={`absolute ${isAr ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 text-gray-400`} />
+            {/* Search & Dept Filters - Elongated Search Bar + Modern Department Dropdown */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <div className="relative flex-1 min-w-[240px]">
+                <Search size={15} className={`absolute ${isAr ? "right-3.5" : "left-3.5"} top-1/2 -translate-y-1/2 text-gray-400`} />
                 <input
                   type="text"
                   value={empSearch}
                   onChange={(e) => setEmpSearch(e.target.value)}
                   placeholder={isAr ? "بحث باسم الموظف، الرقم الوظيفي، أو المسمى..." : "Search employee by name, ID, or job title..."}
-                  className={`w-full h-9 ${isAr ? "pr-9 pl-3" : "pl-9 pr-3"} text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden`}
+                  className={`w-full h-10 ${isAr ? "pr-10 pl-8" : "pl-10 pr-8"} text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden shadow-2xs font-medium`}
                 />
+                {empSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setEmpSearch("")}
+                    className={`absolute ${isAr ? "left-2.5" : "right-2.5"} top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 rounded-md`}
+                    title={isAr ? "مسح البحث" : "Clear search"}
+                  >
+                    <X size={13} />
+                  </button>
+                )}
               </div>
 
-              {/* Department Filter Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-                <button
-                  type="button"
-                  onClick={() => setSelectedDeptFilter("all")}
-                  className={`px-3 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer shrink-0 ${
-                    selectedDeptFilter === "all"
-                      ? "bg-[#1C6B53] text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
-                  }`}
-                >
-                  {isAr ? "جميع الأقسام" : "All Departments"}
-                </button>
-                {departments.map(d => (
-                  <button
-                    key={d.id}
-                    type="button"
-                    onClick={() => setSelectedDeptFilter(d.name)}
-                    className={`px-3 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer shrink-0 ${
-                      selectedDeptFilter === d.name
-                        ? "bg-[#1C6B53] text-white"
-                        : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
-                    }`}
-                  >
-                    {isAr ? (d.nameAr || d.name) : d.name}
-                  </button>
-                ))}
+              {/* Department Dropdown Filter */}
+              <div className="w-full sm:w-auto shrink-0 min-w-[210px]">
+                <ModernDropdown
+                  value={selectedDeptFilter}
+                  onChange={(val) => setSelectedDeptFilter(val)}
+                  options={[
+                    {
+                      value: "all",
+                      label: isAr ? `جميع الأقسام (${employees.length})` : `All Departments (${employees.length})`,
+                      icon: Building2,
+                    },
+                    ...departments.map((d) => {
+                      const count = employees.filter((e) => e.department === d.name).length;
+                      return {
+                        value: d.name,
+                        label: isAr
+                          ? `${d.nameAr || d.name} (${count})`
+                          : `${d.name} (${count})`,
+                        icon: Building2,
+                      };
+                    }),
+                  ]}
+                  variant="gray"
+                  size="sm"
+                  fullWidth
+                />
               </div>
             </div>
 

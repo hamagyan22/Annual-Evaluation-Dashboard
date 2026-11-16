@@ -3862,41 +3862,45 @@ export default function AnnualEvaluationDashboard({
                     </button>
                   </div>
 
-                  {/* Department Dropdown: Placed directly beside Status Switcher */}
-                  <div className="relative flex items-center min-w-[200px]">
-                    <Building2 size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
-                    <select
+                  {/* Department Dropdown: Modern Custom Dropdown */}
+                  <div className="min-w-[210px]">
+                    <ModernDropdown
                       value={coverageDepartmentFilter}
-                      onChange={(e) => setCoverageDepartmentFilter(e.target.value)}
-                      className="w-full appearance-none pl-8.5 pr-8 py-2 bg-gray-100/90 dark:bg-gray-800/90 hover:bg-gray-200/70 dark:hover:bg-gray-700/70 border border-gray-200/60 dark:border-gray-700/60 rounded-2xl text-xs font-bold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1C6B53] cursor-pointer transition shadow-2xs"
-                      title="Filter by Department"
-                    >
-                      <option value="all">All Departments ({coverageData.totalCount})</option>
-                      {departmentOptions.map(dept => (
-                        <option key={dept.name} value={dept.name}>
-                          {dept.name} {dept.count > 0 ? `(${dept.count})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                      onChange={(val) => setCoverageDepartmentFilter(val)}
+                      options={[
+                        {
+                          value: "all",
+                          label: `All Departments (${coverageData.totalCount})`,
+                          icon: Building2,
+                        },
+                        ...departmentOptions.map((dept) => ({
+                          value: dept.name,
+                          label: `${dept.name} (${dept.count})`,
+                          icon: Building2,
+                        })),
+                      ]}
+                      variant="gray"
+                      size="sm"
+                      fullWidth
+                    />
                   </div>
                 </div>
 
                 {/* Live Search Bar */}
-                <div className="relative min-w-[240px]">
+                <div className="relative flex-1 min-w-[220px]">
                   <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     value={coverageSearchTerm}
                     onChange={(e) => setCoverageSearchTerm(e.target.value)}
                     placeholder="Search by name, ID or team..."
-                    className="w-full pl-9 pr-8 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C6B53]"
+                    className="w-full pl-9 pr-8 py-2 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C6B53] shadow-2xs"
                   />
                   {coverageSearchTerm && (
                     <button
                       type="button"
                       onClick={() => setCoverageSearchTerm("")}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 rounded-md"
                     >
                       <X size={13} />
                     </button>

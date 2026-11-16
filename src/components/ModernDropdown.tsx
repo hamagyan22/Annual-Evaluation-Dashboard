@@ -108,6 +108,7 @@ export const ModernDropdown: React.FC<ModernDropdownProps> = ({
     value,
     label: value,
   };
+  const SelectedIcon = selectedOption.icon;
 
   // Button styles based on variant
   const getButtonStyles = () => {
@@ -151,7 +152,19 @@ export const ModernDropdown: React.FC<ModernDropdownProps> = ({
         aria-label={ariaLabel}
         className={`flex items-center justify-between transition-all cursor-pointer select-none active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed ${getButtonStyles()}`}
       >
-        <span className="truncate">{selectedOption.label}</span>
+        <div className="flex items-center gap-2 truncate min-w-0 pr-1">
+          {SelectedIcon && (
+            <SelectedIcon
+              size={size === "lg" ? 15 : size === "sm" ? 12 : 13}
+              className={`shrink-0 ${
+                variant === "solid-green" || variant === "theme"
+                  ? "text-white/80"
+                  : "text-gray-500 dark:text-gray-400"
+              }`}
+            />
+          )}
+          <span className="truncate">{selectedOption.label}</span>
+        </div>
         <ChevronDown
           size={size === "lg" ? 15 : size === "sm" ? 11 : 13}
           className={`transition-transform duration-200 shrink-0 ml-1.5 ${
