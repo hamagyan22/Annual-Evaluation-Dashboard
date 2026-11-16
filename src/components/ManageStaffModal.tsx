@@ -50,6 +50,8 @@ export function ManageStaffModal({
   const [empDept, setEmpDept] = useState<string>(departments[0]?.name || "Contact Center");
   const [empRole, setEmpRole] = useState<string>("Team Leader");
   const [empTeam, setEmpTeam] = useState<string>("");
+  const [empDirectManager, setEmpDirectManager] = useState<string>("");
+  const [empCustomPosition, setEmpCustomPosition] = useState<string>("");
   const [empRoleType, setEmpRoleType] = useState<DynamicEmployee["role_type"]>("tl");
 
   // Department Form State
@@ -67,6 +69,8 @@ export function ManageStaffModal({
         emp.name.toLowerCase().includes(empSearch.toLowerCase()) ||
         emp.employee_id.includes(empSearch) ||
         (emp.role || "").toLowerCase().includes(empSearch.toLowerCase()) ||
+        (emp.direct_manager || "").toLowerCase().includes(empSearch.toLowerCase()) ||
+        (emp.custom_position || "").toLowerCase().includes(empSearch.toLowerCase()) ||
         (emp.team || "").toLowerCase().includes(empSearch.toLowerCase());
       
       const matchDept = selectedDeptFilter === "all" || emp.department === selectedDeptFilter;
@@ -84,6 +88,8 @@ export function ManageStaffModal({
     setEmpDept(departments[0]?.name || "Contact Center");
     setEmpRole("Team Leader");
     setEmpTeam("");
+    setEmpDirectManager("Omer Ayad");
+    setEmpCustomPosition("");
     setEmpRoleType("tl");
     setIsAddingEmployee(true);
   };
@@ -95,6 +101,8 @@ export function ManageStaffModal({
     setEmpDept(emp.department);
     setEmpRole(emp.role);
     setEmpTeam(emp.team || "");
+    setEmpDirectManager(emp.direct_manager || emp.team?.replace(' Team', '') || "");
+    setEmpCustomPosition(emp.custom_position || (emp.role_type === 'custom' ? emp.role : ""));
     setEmpRoleType(emp.role_type || "agent");
     setIsAddingEmployee(true);
   };
@@ -102,6 +110,12 @@ export function ManageStaffModal({
   const handleSaveEmployeeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!empName.trim()) return;
+
+    const finalRole = empRoleType === 'custom' 
+      ? (empCustomPosition.trim() || empRole.trim() || "Specialist")
+      : (empRole.trim() || "Staff");
+    const finalDm = empDirectManager.trim() || empTeam.trim() || "Omer Ayad";
+    const finalTeam = empTeam.trim() || (finalDm ? `${finalDm} Team` : "General");
 
     if (editingEmpId) {
       const updated = employees.map(emp => {
@@ -111,8 +125,10 @@ export function ManageStaffModal({
             name: empName.trim(),
             employee_id: empIdNum.trim() || emp.employee_id,
             department: empDept,
-            role: empRole.trim(),
-            team: empTeam.trim() || `${empName.trim()} Team`,
+            role: finalRole,
+            team: finalTeam,
+            direct_manager: finalDm,
+            custom_position: empRoleType === 'custom' ? finalRole : undefined,
             role_type: empRoleType
           };
         }
@@ -125,8 +141,10 @@ export function ManageStaffModal({
         name: empName.trim(),
         employee_id: empIdNum.trim() || String(Math.floor(300 + Math.random() * 600)),
         department: empDept,
-        role: empRole.trim(),
-        team: empTeam.trim() || `${empName.trim()} Team`,
+        role: finalRole,
+        team: finalTeam,
+        direct_manager: finalDm,
+        custom_position: empRoleType === 'custom' ? finalRole : undefined,
         role_type: empRoleType
       };
       onSaveEmployees([...employees, newEmp]);
@@ -430,47 +448,98 @@ export function ManageStaffModal({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                   <div>
                     <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
-                      {isAr ? "المسمى الوظيفي (Job Title) *" : "Job Title *"}
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={empRole}
-                      onChange={(e) => setEmpRole(e.target.value)}
-                      placeholder="e.g. Team Leader, Customer Care Specialist"
-                      className="w-full h-9 px-3 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
-                      {isAr ? "الفريق (Team Name)" : "Team Name"}
-                    </label>
-                    <input
-                      type="text"
-                      value={empTeam}
-                      onChange={(e) => setEmpTeam(e.target.value)}
-                      placeholder="e.g. Younis Kamal Team, Alpha Team"
-                      className="w-full h-9 px-3 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
-                      {isAr ? "نوع الدور الوظيفي" : "Role Category"}
+                      {isAr ? "نوع الدور الوظيفي *" : "Role Category *"}
                     </label>
                     <ModernDropdown
                       value={empRoleType || "tl"}
-                      onChange={(val: any) => setEmpRoleType(val)}
+                      onChange={(val: any) => {
+                        setEmpRoleType(val);
+                        if (val === "custom") {
+                          if (empRole === "Team Leader" || empRole === "Staff / Agent" || !empCustomPosition) {
+                            setEmpRole("");
+                          }
+                        } else if (!empRole || empRoleType === "custom") {
+                          if (val === "tl") setEmpRole("Team Leader");
+                          else if (val === "qa") setEmpRole("Quality Auditor");
+                          else if (val === "trainer") setEmpRole("Trainer");
+                          else if (val === "backoffice") setEmpRole("Back Office Specialist");
+                          else setEmpRole("Customer Care Agent");
+                        }
+                      }}
                       options={[
                         { value: "tl", label: isAr ? "Team Leader (قائد فريق)" : "Team Leader" },
                         { value: "agent", label: isAr ? "Staff / Agent (موظف أداء)" : "Staff / Agent" },
                         { value: "qa", label: isAr ? "Quality Auditor (جودة)" : "Quality Auditor" },
                         { value: "trainer", label: isAr ? "Trainer (تدريب)" : "Trainer" },
                         { value: "backoffice", label: isAr ? "Back Office (عمليات دعم)" : "Back Office" },
-                        { value: "custom", label: isAr ? "Specialist / Custom (مختص)" : "Specialist / Custom" },
+                        { value: "custom", label: isAr ? "Specialist / Custom (مختص / بوزيشن خاص)" : "Specialist / Custom" },
                       ]}
                       fullWidth
                       variant="input"
                     />
+                  </div>
+
+                  {empRoleType !== "custom" ? (
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        {isAr ? "المسمى الوظيفي (Job Title) *" : "Job Title *"}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={empRole}
+                        onChange={(e) => setEmpRole(e.target.value)}
+                        placeholder="e.g. Team Leader, Customer Care Specialist"
+                        className="w-full h-9 px-3 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden"
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-[11px] font-black text-[#1C6B53] dark:text-emerald-400 mb-1 flex items-center gap-1">
+                        <Sparkles size={12} />
+                        <span>{isAr ? "اكتب البوزيشن (Position) *" : "Custom Position *"}</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={empCustomPosition}
+                        onChange={(e) => {
+                          setEmpCustomPosition(e.target.value);
+                          setEmpRole(e.target.value);
+                        }}
+                        placeholder={isAr ? "اكتب المسمى الوظيفي الخاص..." : "Type custom position..."}
+                        className="w-full h-9 px-3 text-xs bg-emerald-50/50 dark:bg-emerald-950/40 border-2 border-[#1C6B53] dark:border-emerald-500 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden font-bold text-gray-900 dark:text-white"
+                        autoFocus
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
+                      {isAr ? "المدير المباشر (Direct Manager) *" : "Direct Manager *"}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      list="direct-managers-list"
+                      value={empDirectManager}
+                      onChange={(e) => {
+                        setEmpDirectManager(e.target.value);
+                        setEmpTeam(e.target.value ? `${e.target.value} Team` : "");
+                      }}
+                      placeholder={isAr ? "اسم المدير المباشر (مثل: عمر إياد، يونس كمال...)" : "e.g. Omer Ayad, Younis Kamal..."}
+                      className="w-full h-9 px-3 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden"
+                    />
+                    <datalist id="direct-managers-list">
+                      <option value="Omer Ayad" />
+                      <option value="Mohammed Dlshad" />
+                      <option value="Younis Kamal" />
+                      <option value="Ankido Buya" />
+                      <option value="Jalal Burghol" />
+                      {Array.from(new Set(employees.filter(e => e.role_type === 'tl' || (e.role || "").toLowerCase().includes('manager') || (e.role || "").toLowerCase().includes('leader')).map(e => e.name))).map(mgrName => (
+                        <option key={mgrName} value={mgrName} />
+                      ))}
+                    </datalist>
                   </div>
                 </div>
 
@@ -523,9 +592,23 @@ export function ManageStaffModal({
                             {emp.department}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">{emp.role}</span>
-                          {emp.team && <span>• {emp.team}</span>}
+                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
+                          <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
+                            emp.role_type === 'custom'
+                              ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                          }`}>
+                            {emp.custom_position || emp.role}
+                          </span>
+                          {(emp.direct_manager || emp.team) && (
+                            <span className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                              <span>•</span>
+                              <span>{isAr ? "المدير المباشر:" : "Direct Manager:"}</span>
+                              <strong className="text-gray-800 dark:text-gray-200 font-bold">
+                                {emp.direct_manager || emp.team?.replace(' Team', '')}
+                              </strong>
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

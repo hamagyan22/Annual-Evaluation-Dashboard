@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { auth, db, getSystemAuthor } from "@/lib/firebaseClient";
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs, getDoc, updateDoc, addDoc, deleteDoc, doc, setDoc, onSnapshot } from "firebase/firestore";
 import { Search, Trash2, UserPlus, UserMinus, Users, Moon, Sun, LogOut, Settings, Plus, X, Edit2, Briefcase, Columns, ChevronDown, Save, ShieldCheck, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff, LayoutDashboard, Sparkles, Check, Calendar, Award, CheckCircle2, TrendingUp, Clock, PhoneOff, Activity, PhoneCall, PhoneMissed, Timer, PhoneIncoming, PhoneOutgoing, Copy, Smartphone, Download, Share2, MessageSquare, Star, Trophy, Medal, BarChart3, ClipboardCheck, RefreshCw, RotateCcw, AlertCircle } from "lucide-react";
 import { fetchTopStarData, fetchTopStarCriteria, normalizeName, formatToMinutesAndSeconds, getTopStarMotivationalQuote, invalidateTopStarCache } from "@/lib/topStarUtils";
@@ -3346,6 +3346,7 @@ export default function Dashboard() {
       if (user) {
         const emailLower = user.email?.toLowerCase().trim() || '';
         const isMohammed = emailLower === 'mohammed.dlshad0@gmail.com';
+        const isOmar = emailLower === 'omar.ayad@fib.iq';
         const isJalal = emailLower === 'jalal.burghol@agent.com';
         const isYounis = emailLower === 'younis.kamal@agent.com' || emailLower === 'younis.kamal.tl@agent.com' || emailLower.includes('younis.kamal');
         const isAnkido = emailLower === 'ankido.buya@agent.com';
@@ -3358,8 +3359,8 @@ export default function Dashboard() {
         const isShireen = emailLower === 'shireen.waisi@agent.com' || emailLower.includes('shireen.waisi') || emailLower.includes('shireen');
         const isAgent = emailLower.endsWith('@agent.com');
 
-        // Instant optimistic role identification: Mohammed Dlshad (The Admin) is EXEMPT
-        if (isMohammed) {
+        // Instant optimistic role identification: Mohammed Dlshad & Omer Ayad (Admins) are EXEMPT
+        if (isMohammed || isOmar) {
           let existingData: any = {};
           try {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -3374,8 +3375,11 @@ export default function Dashboard() {
             ...existingData,
             role: 'admin',
             isAdmin: true,
-            team: 'Mohammed Dlshad Team',
-            name: existingData.name || 'Mohammed Dlshad',
+            team: isOmar ? 'Human Resources' : 'Mohammed Dlshad Team',
+            department: isOmar ? 'Human Resources' : 'Contact Center',
+            jobTitle: isOmar ? 'HR Manager' : 'General Administrator',
+            name: isOmar ? 'Omer Ayad' : (existingData.name || 'Mohammed Dlshad'),
+            agent_name: isOmar ? 'Omer Ayad' : (existingData.agent_name || 'Mohammed Dlshad'),
             email: user.email,
             photo_url: existingData.photo_url || '',
             mustChangePassword: false,
@@ -3384,7 +3388,7 @@ export default function Dashboard() {
           setUserProfile(adminProfile);
           const savedTeam = typeof window !== 'undefined' ? localStorage.getItem('app_selected_team') as TeamName : null;
           if (!savedTeam || !TEAMS.includes(savedTeam)) {
-            setSelectedTeam('Mohammed Dlshad Team');
+            setSelectedTeam(isOmar ? 'Younis Kamal Team' : 'Mohammed Dlshad Team');
           }
           setAuthLoading(false);
           setDoc(doc(db, 'users', user.uid), adminProfile, { merge: true }).catch(console.error);
@@ -3598,7 +3602,21 @@ export default function Dashboard() {
             }
           }
         } else {
-          throw firstErr;
+          // If user doesn't exist yet in the new Firebase Auth (annual-evaluation), auto-register them
+          const code = firstErr?.code || '';
+          if (code === 'auth/user-not-found' || code === 'auth/invalid-credential') {
+            try {
+              await createUserWithEmailAndPassword(auth, cleanEmail, password);
+            } catch (createErr: any) {
+              if (createErr?.code === 'auth/weak-password' && password.length < 6) {
+                await createUserWithEmailAndPassword(auth, cleanEmail, `${password}123456`);
+              } else {
+                throw firstErr;
+              }
+            }
+          } else {
+            throw firstErr;
+          }
         }
       }
       setLoginAttempts(0);
@@ -5314,7 +5332,7 @@ export default function Dashboard() {
                       setForgotSuccess(''); 
                       setShowForgotModal(true); 
                     }} 
-                    className="text-xs font-semibold text-[#1C6B53] dark:text-emerald-400 hover:underline transition"
+                    className="text-xs font-semibold text-[#a11d33] hover:underline transition"
                   >
                     Forgot Password?
                   </button>
@@ -5350,7 +5368,7 @@ export default function Dashboard() {
               <button 
                 type="submit" 
                 disabled={loginLoading || lockoutTimer > 0}
-                className="w-full py-4 rounded-2xl text-sm font-black text-white transition-all mt-6 bg-[#1C6B53] hover:bg-[#155a45] shadow-lg shadow-[#1C6B53]/25 hover:shadow-xl hover:shadow-[#1C6B53]/35 active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full py-4 rounded-2xl text-sm font-black text-white transition-all mt-6 bg-gradient-to-r from-[#881337] via-[#9f1239] to-[#be123c] hover:from-[#700f2d] hover:to-[#a11d33] shadow-lg shadow-rose-950/20 hover:shadow-xl hover:shadow-rose-950/30 active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <span>
                   {lockoutTimer > 0 
@@ -5362,12 +5380,8 @@ export default function Dashboard() {
             </form>
 
             <div className="mt-8 pt-5 border-t border-gray-100 dark:border-gray-800/80 flex flex-col items-center justify-center gap-1.5 text-gray-400 dark:text-gray-500 text-[11px] font-medium">
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={14} className="text-[#1C6B53] dark:text-emerald-400" />
-                <span>Protected By FIB Enterprise Security</span>
-              </div>
-              <div className="text-[10.5px] font-bold tracking-wide text-gray-400/90 dark:text-gray-500">
-                Designed &amp; Engineered by <span className="text-[#1C6B53] dark:text-emerald-400 font-black">{getSystemAuthor()}</span>
+              <div className="text-[11.5px] font-semibold tracking-wide text-gray-500 dark:text-gray-400">
+                Designed &amp; Engineered by <span className="text-[#a11d33] font-bold">Omer Ayad</span>
               </div>
             </div>
           </div>

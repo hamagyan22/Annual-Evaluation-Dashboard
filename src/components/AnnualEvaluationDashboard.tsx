@@ -12,7 +12,8 @@ import {
   PhoneCall, ShieldCheck, CheckCircle, Calendar,
   Clock, Eye, Lock, MessageSquare,
   ClipboardList, CheckCircle2, XCircle, AlertCircle,
-  Filter, Copy, ListChecks, ExternalLink
+  Filter, Copy, ListChecks, ExternalLink,
+  Building2, Sliders
 } from "lucide-react";
 import { getCanonicalAgentName } from "@/lib/canonicalAgents";
 import { isMemberActiveInPeriod } from "@/lib/companyRoster";
@@ -21,6 +22,15 @@ import { ModernDropdown } from "@/components/ModernDropdown";
 import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
 import { BASELINE_ANNUAL_EVALUATIONS } from "@/lib/baselineAnnualEvaluations";
 import { useBodyScrollLock } from "@/lib/scrollLock";
+import { ManageCriteriaModal } from "@/components/ManageCriteriaModal";
+import { ManageStaffModal } from "@/components/ManageStaffModal";
+import { 
+  loadStoredCriteria, saveStoredCriteria,
+  loadStoredSections, saveStoredSections,
+  loadStoredDepartments, saveStoredDepartments,
+  loadStoredEmployees, saveStoredEmployees,
+  DynamicCriterion, DynamicSection, DynamicDepartment, DynamicEmployee
+} from "@/lib/customCriteriaManager";
 
 export interface AnnualEvaluationDashboardProps {
   userProfile: any;
@@ -249,17 +259,18 @@ export interface SpecialStaffMember {
   role_type: "trainer" | "qa" | "tl" | "backoffice";
   department: string;
   manager_name: string;
+  direct_manager?: string;
   is_special_staff?: boolean;
 }
 
 export const SPECIAL_STAFF_MEMBERS: SpecialStaffMember[] = [
-  { id: "mohammed_azad", agent_name: "Mohammed Azad", name: "Mohammed Azad", employee_id: "353", team: "Training Team", role_type: "trainer", department: "Training", manager_name: "Jalal Burghol", is_special_staff: true },
-  { id: "mohammed_jihad", agent_name: "Mohammed Jihad", name: "Mohammed Jihad", employee_id: "356", team: "Quality Assurance Team", role_type: "qa", department: "Call center - Quality", manager_name: "Jalal Burghol", is_special_staff: true },
-  { id: "lara_kamil", agent_name: "Lara Kamil", name: "Lara Kamil", employee_id: "351", team: "Quality Assurance Team", role_type: "qa", department: "Quality", manager_name: "Jalal Burghol", is_special_staff: true },
-  { id: "shireen_waisi", agent_name: "Shireen Waisi", name: "Shireen Waisi", employee_id: "370", team: "Back Office", role_type: "backoffice", department: "Back Office", manager_name: "Jalal Burghol", is_special_staff: true },
-  { id: "ankido_buya", agent_name: "Ankido Buya", name: "Ankido Buya", employee_id: "340", team: "Ankido Buya Team", role_type: "tl", department: "Contact Center", manager_name: "Jalal Burghol", is_special_staff: true },
-  { id: "younis_kamal", agent_name: "Younis Kamal", name: "Younis Kamal", employee_id: "373", team: "Younis Kamal Team", role_type: "tl", department: "Contact Center", manager_name: "Jalal Burghol", is_special_staff: true },
-  { id: "mohammed_dlshad", agent_name: "Mohammed Dilshad", name: "Mohammed Dilshad", employee_id: "338", team: "Mohammed Dlshad Team", role_type: "tl", department: "Contact Center", manager_name: "Jalal Burghol", is_special_staff: true },
+  { id: "mohammed_azad", agent_name: "Mohammed Azad", name: "Mohammed Azad", employee_id: "353", team: "Training Team", role_type: "trainer", department: "Training", manager_name: "Omer Ayad", direct_manager: "Omer Ayad", is_special_staff: true },
+  { id: "mohammed_jihad", agent_name: "Mohammed Jihad", name: "Mohammed Jihad", employee_id: "356", team: "Quality Assurance Team", role_type: "qa", department: "Call center - Quality", manager_name: "Omer Ayad", direct_manager: "Omer Ayad", is_special_staff: true },
+  { id: "lara_kamil", agent_name: "Lara Kamil", name: "Lara Kamil", employee_id: "351", team: "Quality Assurance Team", role_type: "qa", department: "Quality", manager_name: "Omer Ayad", direct_manager: "Omer Ayad", is_special_staff: true },
+  { id: "shireen_waisi", agent_name: "Shireen Waisi", name: "Shireen Waisi", employee_id: "370", team: "Back Office", role_type: "backoffice", department: "Back Office", manager_name: "Omer Ayad", direct_manager: "Omer Ayad", is_special_staff: true },
+  { id: "ankido_buya", agent_name: "Ankido Buya", name: "Ankido Buya", employee_id: "340", team: "Ankido Buya Team", role_type: "tl", department: "Contact Center", manager_name: "Omer Ayad", direct_manager: "Omer Ayad", is_special_staff: true },
+  { id: "younis_kamal", agent_name: "Younis Kamal", name: "Younis Kamal", employee_id: "373", team: "Younis Kamal Team", role_type: "tl", department: "Contact Center", manager_name: "Omer Ayad", direct_manager: "Omer Ayad", is_special_staff: true },
+  { id: "mohammed_dlshad", agent_name: "Mohammed Dilshad", name: "Mohammed Dilshad", employee_id: "338", team: "Mohammed Dlshad Team", role_type: "tl", department: "Contact Center", manager_name: "Omer Ayad", direct_manager: "Omer Ayad", is_special_staff: true },
 ];
 
 export { DEFAULT_COMPANY_EMPLOYEES } from "@/lib/companyRoster";
@@ -375,16 +386,19 @@ export default function AnnualEvaluationDashboard({
   isDarkMode = false,
   toggleDarkMode
 }: AnnualEvaluationDashboardProps) {
-  const isAdmin = userProfile?.role === 'admin' || userProfile?.email?.toLowerCase() === 'mohammed.dlshad0@gmail.com';
-  const isManager = isAdmin || userProfile?.role === 'manager' || userProfile?.email?.toLowerCase() === 'jalal.burghol@agent.com';
-  const isTL = userProfile?.role === 'tl';
-  const isQA = userProfile?.role === 'qa' || userProfile?.role === 'trainer' || userProfile?.role === 'auditor';
-  const isAgent = userProfile?.role === 'agent';
-
   const emailLower = (userProfile?.email || "").toLowerCase().trim();
   const nameLower = (userProfile?.name || userProfile?.agent_name || "").toLowerCase().trim();
   const roleLower = (userProfile?.role || "").toLowerCase().trim();
   const userTeamLower = (userProfile?.team || userProfile?.name || userProfile?.email || "").toLowerCase();
+  const currentUserNameNorm = normalizeAgentName(userProfile?.name || userProfile?.agent_name || "");
+
+  const isAdmin = userProfile?.role === 'admin' || 
+                  emailLower === 'mohammed.dlshad0@gmail.com' ||
+                  emailLower === 'omar.ayad@fib.iq';
+  const isManager = isAdmin || userProfile?.role === 'manager' || emailLower === 'jalal.burghol@agent.com';
+  const isTL = userProfile?.role === 'tl';
+  const isQA = userProfile?.role === 'qa' || userProfile?.role === 'trainer' || userProfile?.role === 'auditor';
+  const isAgent = userProfile?.role === 'agent';
 
   // Role detection for specific special staff users
   const isUserMohammedAzad = (emailLower.includes("mohammed.azad") || nameLower.includes("mohammed azad") || roleLower === "trainer") && !emailLower.includes("azad.muhammad") && !emailLower.includes("azad.mohammed") && !nameLower.includes("azad muhammad") && !nameLower.includes("azad mohammed");
@@ -394,12 +408,37 @@ export default function AnnualEvaluationDashboard({
   const isUserYounis = emailLower.includes("younis") || nameLower.includes("younis");
   const isUserShireenWaisi = emailLower.includes("shireen") || nameLower.includes("shireen") || roleLower === "backoffice";
 
-  // Single-user self view only for Trainer, QA, Back Office, and Team Leaders:
-  // "التيم ليدر خلي بس يشوفون تقييمهم و ليس مال تيمهم"
-  const isUserSpecialStaffOnly = (isUserMohammedAzad || isUserMohammedJihad || isUserLaraKamil || isUserShireenWaisi || isTL || isUserAnkido || isUserYounis) && !isAdmin && !isManager;
+  // Dynamic Custom Criteria & Staff Modals State
+  const [showManageCriteriaModal, setShowManageCriteriaModal] = useState<boolean>(false);
+  const [showManageStaffModal, setShowManageStaffModal] = useState<boolean>(false);
+  const [dynamicCriteria, setDynamicCriteria] = useState<DynamicCriterion[]>([]);
+  const [dynamicSections, setDynamicSections] = useState<DynamicSection[]>([]);
+  const [dynamicDepartments, setDynamicDepartments] = useState<DynamicDepartment[]>([]);
+  const [dynamicEmployees, setDynamicEmployees] = useState<DynamicEmployee[]>([]);
 
-  // Strict Team Leader team scope (null for TLs now because they only view their own evaluation)
-  const tlAssignedTeam: "Younis" | "Ankido" | "Mohammed" | null = null;
+  useEffect(() => {
+    setDynamicCriteria(loadStoredCriteria());
+    setDynamicSections(loadStoredSections());
+    setDynamicDepartments(loadStoredDepartments());
+    setDynamicEmployees(loadStoredEmployees());
+  }, []);
+
+  const handleSaveCriteria = (newCriteria: DynamicCriterion[]) => {
+    setDynamicCriteria(newCriteria);
+    saveStoredCriteria(newCriteria);
+  };
+  const handleSaveSections = (newSections: DynamicSection[]) => {
+    setDynamicSections(newSections);
+    saveStoredSections(newSections);
+  };
+  const handleSaveDepartments = (newDepts: DynamicDepartment[]) => {
+    setDynamicDepartments(newDepts);
+    saveStoredDepartments(newDepts);
+  };
+  const handleSaveEmployees = (newEmps: DynamicEmployee[]) => {
+    setDynamicEmployees(newEmps);
+    saveStoredEmployees(newEmps);
+  };
 
   // Selected filters: Year (2026-2030) and Period (Semi-Annual & Annual only)
   const [selectedYear, setSelectedYear] = useState<string>(initialYear || "2026");
@@ -418,6 +457,7 @@ export default function AnnualEvaluationDashboard({
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState<string>("");
   const [employeeDropdownOpen, setEmployeeDropdownOpen] = useState<boolean>(false);
   const [teamTabFilter, setTeamTabFilter] = useState<string>("Younis");
+  const tlAssignedTeam: "Younis" | "Ankido" | "Mohammed" | null = null;
 
   // Guide Modal State
   const [showBenchmarkGuideModal, setShowBenchmarkGuideModal] = useState<boolean>(false);
@@ -445,6 +485,19 @@ export default function AnnualEvaluationDashboard({
   const [selfCompetencies, setSelfCompetencies] = useState<Record<string, number>>({});
   const [managerCompetencies, setManagerCompetencies] = useState<Record<string, number>>({});
 
+  // Per-Criterion Notes & Justification System ("على شنو النوت")
+  type CriterionNoteTopic = "achievement" | "justification" | "improvement" | "incident" | "general";
+  interface CriterionNoteEntry {
+    role: "manager" | "employee";
+    authorName?: string;
+    topic: CriterionNoteTopic;
+    text: string;
+    updatedAt?: string;
+  }
+  const [criterionNotes, setCriterionNotes] = useState<Record<string, { employee?: CriterionNoteEntry; manager?: CriterionNoteEntry }>>({});
+  const [openNoteCriterionId, setOpenNoteCriterionId] = useState<string | null>(null);
+  const [noteActiveTab, setNoteActiveTab] = useState<"manager" | "employee">("manager");
+
   // Qualitative Feedback
   const [keyStrengths, setKeyStrengths] = useState<string>("");
   const [areasForDevelopment, setAreasForDevelopment] = useState<string>("");
@@ -459,43 +512,30 @@ export default function AnnualEvaluationDashboard({
 
   // Self check: Is the user viewing their own evaluation?
   const isViewingSelf = useMemo(() => {
-    const myName = normalizeAgentName(userProfile?.name || userProfile?.agent_name || "");
+    const myName = currentUserNameNorm;
     const targetName = normalizeAgentName(selectedEmployeeName || "");
     if (!myName || !targetName) return false;
     if (myName === targetName || myName.includes(targetName) || targetName.includes(myName)) return true;
-    const myEmail = (userProfile?.email || "").toLowerCase();
-    if ((myEmail.includes("mohammed.azad") || roleLower === "trainer") && targetName.includes("mohammed azad")) return true;
-    if ((myEmail.includes("azad.muhammad") || myEmail.includes("azad.mohammed") || myName.includes("azad muhammad") || myName.includes("azad mohammed")) && (targetName.includes("azad muhammad") || targetName.includes("azad mohammed"))) return true;
-    if (myEmail.includes("jihad") && targetName.includes("jihad")) return true;
-    if (myEmail.includes("lara") && targetName.includes("lara")) return true;
-    if (myEmail.includes("shireen") && targetName.includes("shireen")) return true;
-    if (myEmail.includes("ankido") && targetName.includes("ankido")) return true;
-    if (myEmail.includes("younis") && targetName.includes("younis")) return true;
-    if (myEmail.includes("dlshad") && targetName.includes("dlshad")) return true;
+    if ((emailLower.includes("mohammed.azad") || roleLower === "trainer") && targetName.includes("mohammed azad")) return true;
+    if ((emailLower.includes("azad.muhammad") || emailLower.includes("azad.mohammed") || myName.includes("azad muhammad") || myName.includes("azad mohammed")) && (targetName.includes("azad muhammad") || targetName.includes("azad mohammed"))) return true;
+    if (emailLower.includes("jihad") && targetName.includes("jihad")) return true;
+    if (emailLower.includes("lara") && targetName.includes("lara")) return true;
+    if (emailLower.includes("shireen") && targetName.includes("shireen")) return true;
+    if (emailLower.includes("ankido") && targetName.includes("ankido")) return true;
+    if (emailLower.includes("younis") && targetName.includes("younis")) return true;
+    if (emailLower.includes("dlshad") && targetName.includes("dlshad")) return true;
     return false;
-  }, [userProfile, selectedEmployeeName]);
+  }, [currentUserNameNorm, selectedEmployeeName, emailLower, roleLower]);
 
   // Current member role type
-  const currentMemberRoleType: "trainer" | "qa" | "tl" | "backoffice" | "agent" = useMemo(() => {
+  const currentMemberRoleType: "trainer" | "qa" | "tl" | "backoffice" | "agent" | "custom" = useMemo(() => {
     const norm = normalizeAgentName(selectedEmployeeName || "");
     const special = SPECIAL_STAFF_MEMBERS.find(s => normalizeAgentName(s.agent_name) === norm);
     if (special) return special.role_type;
+    const dynamicEmp = dynamicEmployees.find(e => normalizeAgentName(e.name) === norm);
+    if (dynamicEmp?.role_type) return dynamicEmp.role_type;
     return "agent";
-  }, [selectedEmployeeName]);
-
-  // Permissions & Role Access:
-  // Team Leaders & Quality Team are view-only when viewing others, but can edit their OWN self-evaluation
-  // Manager (Jalal Burghol) evaluates Trainer, QA, and TLs later:
-  // "و النجر بعدين رح يقيمة هذا الاقيم الي هو مسوي"
-  const isReadOnly = (isTL || isQA) && !isViewingSelf;
-  const canEditSelf = (isViewingSelf || isAgent || isAdmin || isManager) && evaluationStatus !== 'manager_finalized';
-  const canEditManager = (isManager || isAdmin);
-  const canApplySuggestions = canEditManager && currentMemberRoleType === "agent";
-  const canEditEmployeeFeedback = (isAdmin || isManager || canEditSelf);
-
-  // Manager data visibility:
-  // Manager ratings and scores are only visible to the agent/staff AFTER manager finalizes
-  const isManagerDataVisible = isManager || isAdmin || evaluationStatus === 'manager_finalized';
+  }, [selectedEmployeeName, dynamicEmployees]);
 
   // Real actual metrics fetched for the period to assist evaluation
   const [actualMetricsSummary, setActualMetricsSummary] = useState<any | null>(null);
@@ -648,7 +688,7 @@ export default function AnnualEvaluationDashboard({
     return () => { isMounted = false; };
   }, [allMembers, selectedYear]);
 
-  // Combined master members list: 38 official agents + Special Staff (Trainer, QA, Team Leaders)
+  // Combined master members list: 38 official agents + Special Staff + Dynamic Employees
   const effectiveAllMembers = useMemo(() => {
     const map = new Map<string, any>();
     
@@ -668,6 +708,25 @@ export default function AnnualEvaluationDashboard({
       }
     });
 
+    // 1c. Add/merge Dynamic Employees from ManageStaffModal
+    dynamicEmployees.forEach(de => {
+      const k = normalizeAgentName(de.name);
+      const existing = map.get(k) || {};
+      map.set(k, {
+        ...existing,
+        id: de.id || existing.id,
+        agent_name: de.name,
+        name: de.name,
+        employee_id: de.employee_id || existing.employee_id,
+        department: de.department || existing.department || "Contact Center",
+        role: de.role || existing.role,
+        role_type: de.role_type || existing.role_type || "agent",
+        team: de.team || existing.team,
+        direct_manager: de.direct_manager || existing.direct_manager,
+        custom_position: de.custom_position || existing.custom_position,
+      });
+    });
+
     // 2. Attach any Firestore metadata
     (allMembers || []).concat(internalMembers || []).forEach(m => {
       const name = (m.agent_name || m.name || m.display_name || "").trim();
@@ -680,6 +739,7 @@ export default function AnnualEvaluationDashboard({
             ...m,
             id: m.id || existing.id,
             team: m.team || existing.team,
+            direct_manager: m.direct_manager || existing.direct_manager,
             is_deleted: m.is_deleted === true || existing.is_deleted === true,
             is_active: m.is_active === false ? false : (existing.is_active ?? true),
             resigned_month: m.resigned_month || existing.resigned_month,
@@ -692,7 +752,66 @@ export default function AnnualEvaluationDashboard({
     return Array.from(map.values())
       .filter(m => m.is_deleted !== true && m.is_active !== false)
       .sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
-  }, [allMembers, internalMembers]);
+  }, [allMembers, internalMembers, dynamicEmployees]);
+
+  // Detect direct subordinates under the current user (Multi-level evaluation hierarchy)
+  // "المنجر يكدر يشوف موظفين الي تحته و يقيمهم لكن ميشوف مال المدير الي فوكة"
+  const mySubordinates = useMemo(() => {
+    if (!currentUserNameNorm) return [];
+    return effectiveAllMembers.filter(m => {
+      const mNameNorm = normalizeAgentName(m.agent_name || m.name || "");
+      if (mNameNorm === currentUserNameNorm) return false;
+      const dm = normalizeAgentName(m.direct_manager || "");
+      const mgr = normalizeAgentName(m.manager_name || "");
+      const mTeam = (m.team || "").toLowerCase();
+      
+      // Match by direct_manager or manager_name
+      if (dm && (dm === currentUserNameNorm || dm.includes(currentUserNameNorm) || currentUserNameNorm.includes(dm))) return true;
+      if (mgr && (mgr === currentUserNameNorm || mgr.includes(currentUserNameNorm) || currentUserNameNorm.includes(mgr))) return true;
+
+      // Match by team for TLs
+      if (isTL || isManager || roleLower === 'tl' || (userProfile?.team && userProfile.team.toLowerCase().includes(mTeam))) {
+        if (currentUserNameNorm.includes("younis") && mTeam.includes("younis")) return true;
+        if (currentUserNameNorm.includes("ankido") && mTeam.includes("ankido")) return true;
+        if ((currentUserNameNorm.includes("mohammed") || currentUserNameNorm.includes("dlshad")) && (mTeam.includes("mohammed") || mTeam.includes("dlshad"))) {
+          if (mNameNorm.includes("dlshad")) return false;
+          return true;
+        }
+      }
+      return false;
+    });
+  }, [effectiveAllMembers, currentUserNameNorm, isTL, isManager, roleLower, userProfile?.team]);
+
+  const hasSubordinates = mySubordinates.length > 0;
+  const isDirectManager = hasSubordinates || isManager || isAdmin;
+
+  // Check if current user is viewing one of their own direct subordinates
+  const isViewingSubordinate = useMemo(() => {
+    if (isAdmin) return true;
+    const targetNorm = normalizeAgentName(selectedEmployeeName || "");
+    return mySubordinates.some(s => {
+      const sNorm = normalizeAgentName(s.agent_name || s.name || "");
+      return sNorm === targetNorm || sNorm.includes(targetNorm) || targetNorm.includes(sNorm);
+    });
+  }, [isAdmin, selectedEmployeeName, mySubordinates]);
+
+  // Permissions & Role Access:
+  // - Viewing self: can edit self-evaluation (unless finalized). CANNOT edit manager score unless Admin.
+  // - Viewing subordinate: Direct Manager or Admin CAN edit manager evaluation and finalize it!
+  // - Read-only: when not allowed to edit self or manager.
+  const canEditSelf = isViewingSelf && evaluationStatus !== 'manager_finalized';
+  const canEditManager = (isAdmin && !isViewingSelf) || (isViewingSubordinate && !isViewingSelf) || (isAdmin && isViewingSelf);
+  const isReadOnly = !canEditSelf && !canEditManager;
+  const canApplySuggestions = canEditManager && currentMemberRoleType === "agent";
+  const canEditEmployeeFeedback = (isAdmin || canEditManager || canEditSelf);
+
+  // Single user self view only when the user has NO subordinates and is not admin
+  const isSingleSelfViewOnly = !isAdmin && !hasSubordinates;
+
+  // Manager data visibility:
+  // Subordinates only see manager ratings AFTER manager finalizes
+  // Managers and Admins see manager data immediately
+  const isManagerDataVisible = isAdmin || isViewingSubordinate || evaluationStatus === 'manager_finalized';
 
   // Team counts for the 4 tabs (Younis, Ankido, Mohammed, QA & Training)
   const teamCounts = useMemo(() => {
@@ -705,104 +824,81 @@ export default function AnnualEvaluationDashboard({
     };
   }, [effectiveAllMembers, selectedPeriod, selectedYear]);
 
+  // Hierarchy-scoped member visibility:
+  // - Admin: see everyone across the entire organization
+  // - Manager / TL with subordinates: strictly see ONLY themselves + their direct subordinates (CANNOT see managers above them or peer TLs)
+  // - Staff / Agent with no subordinates: strictly see ONLY themselves
+  const allowedMembersForUser = useMemo(() => {
+    if (isAdmin) {
+      return effectiveAllMembers;
+    }
+
+    const myself = effectiveAllMembers.find(m => {
+      const mNorm = normalizeAgentName(m.agent_name || m.name || "");
+      if (mNorm === currentUserNameNorm) return true;
+      if (currentUserNameNorm && (mNorm.includes(currentUserNameNorm) || currentUserNameNorm.includes(mNorm))) return true;
+      return false;
+    });
+
+    if (hasSubordinates) {
+      const list: any[] = [];
+      if (myself) list.push(myself);
+      mySubordinates.forEach(s => {
+        const sNorm = normalizeAgentName(s.agent_name || s.name || "");
+        if (!list.some(item => normalizeAgentName(item.agent_name || item.name || "") === sNorm)) {
+          list.push(s);
+        }
+      });
+      return list;
+    }
+
+    if (myself) return [myself];
+
+    return effectiveAllMembers.slice(0, 1);
+  }, [isAdmin, hasSubordinates, effectiveAllMembers, currentUserNameNorm, mySubordinates]);
+
   // Filtered members list: Younis Kamal, Ankido Buya, Mohammed Dlshad, or QA & Training
   const filteredMembers = useMemo(() => {
-    let list = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, selectedPeriod === "Semi-Annual" ? "H1" : "YEAR - AVG", String(selectedYear)));
-    
-    // Special Staff & Team Leaders: strictly view only their own evaluation:
-    // "التيم ليدر خلي بس يشوفون تقييمهم و ليس مال تيمهم"
-    if (isUserSpecialStaffOnly) {
-      if (isUserMohammedAzad) {
-        return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("mohammed azad"));
-      }
-      if (isUserMohammedJihad) {
-        return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("jihad"));
-      }
-      if (isUserLaraKamil) {
-        return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("lara"));
-      }
-      if (isUserShireenWaisi) {
-        return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("shireen"));
-      }
-      if (isUserAnkido || (isTL && userTeamLower.includes("ankido"))) {
-        return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("ankido"));
-      }
-      if (isUserYounis || (isTL && userTeamLower.includes("younis"))) {
-        return effectiveAllMembers.filter(m => normalizeAgentName(m.agent_name).includes("younis"));
-      }
-      const myName = normalizeAgentName(userProfile?.name || userProfile?.agent_name || "");
-      if (myName) {
-        return effectiveAllMembers.filter(m => {
-          const aName = normalizeAgentName(m.agent_name || "");
-          return aName === myName || aName.includes(myName) || myName.includes(aName);
-        });
-      }
-    }
+    let list = allowedMembersForUser.filter(m => 
+      isMemberActiveInPeriod(m, selectedPeriod === "Semi-Annual" ? "H1" : "YEAR - AVG", String(selectedYear))
+    );
 
-    if (isAgent) {
-      const myName = normalizeAgentName(userProfile?.name || userProfile?.agent_name || "");
-      const me = list.filter(m => {
-        const aName = normalizeAgentName(m.agent_name || "");
-        return aName === myName || aName.includes(myName) || myName.includes(aName);
-      });
-      if (me.length > 0) return me;
-      return list.slice(0, 1);
-    }
-
-    // Team Leader: strictly restrict to their assigned team only (Team Leader + their team agents)
-    // "وممال انككيدو خلي يشوف مالته و مال تيمه"
-    // "و يونس هم"
-    if (tlAssignedTeam) {
-      if (tlAssignedTeam === "Ankido") {
-        list = list.filter(m => (m.team || "").toLowerCase().includes("ankido"));
-      } else if (tlAssignedTeam === "Mohammed") {
-        list = list.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad"));
-      } else {
-        list = list.filter(m => (m.team || "").toLowerCase().includes("younis"));
-      }
-
-      if (employeeSearchTerm.trim()) {
-        const term = normalizeAgentName(employeeSearchTerm);
-        list = list.filter(m => 
-          normalizeAgentName(m.agent_name).includes(term) ||
-          (m.team || "").toLowerCase().includes(term)
-        );
-      }
-      return list.sort((a, b) => {
-        if (a.role_type === "tl" && b.role_type !== "tl") return -1;
-        if (b.role_type === "tl" && a.role_type !== "tl") return 1;
-        return (a.agent_name || "").localeCompare(b.agent_name || "");
-      });
-    }
-
-    // Search Term Filter: When searching, search across all active agents & staff
+    // Search Term Filter: When searching, search across visible active agents & staff
     if (employeeSearchTerm.trim()) {
       const term = normalizeAgentName(employeeSearchTerm);
       return list.filter(m => 
-        normalizeAgentName(m.agent_name).includes(term) ||
+        normalizeAgentName(m.agent_name || m.name || "").includes(term) ||
         (m.team || "").toLowerCase().includes(term) ||
-        (m.department || "").toLowerCase().includes(term)
+        (m.department || "").toLowerCase().includes(term) ||
+        (m.role || "").toLowerCase().includes(term) ||
+        (m.custom_position || "").toLowerCase().includes(term)
       ).sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
     }
 
-    // Team Tab Filter: Younis, Ankido, Mohammed, or QA & Training
-    if (teamTabFilter === "Ankido") {
-      list = list.filter(m => (m.team || "").toLowerCase().includes("ankido"));
-    } else if (teamTabFilter === "Mohammed") {
-      list = list.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad"));
-    } else if (teamTabFilter === "QA_Training") {
-      list = list.filter(m => (m.team || "").toLowerCase().includes("quality") || (m.team || "").toLowerCase().includes("training") || (m.team || "").toLowerCase().includes("back office") || m.role_type === "trainer" || m.role_type === "qa" || m.role_type === "backoffice");
-    } else {
-      // Default to Younis
-      list = list.filter(m => (m.team || "").toLowerCase().includes("younis"));
+    // Only apply team tab filter for Admin (since Admin sees all teams)
+    if (isAdmin) {
+      if (teamTabFilter === "Ankido") {
+        list = list.filter(m => (m.team || "").toLowerCase().includes("ankido"));
+      } else if (teamTabFilter === "Mohammed") {
+        list = list.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad"));
+      } else if (teamTabFilter === "QA_Training") {
+        list = list.filter(m => (m.team || "").toLowerCase().includes("quality") || (m.team || "").toLowerCase().includes("training") || (m.team || "").toLowerCase().includes("back office") || m.role_type === "trainer" || m.role_type === "qa" || m.role_type === "backoffice");
+      } else {
+        list = list.filter(m => (m.team || "").toLowerCase().includes("younis"));
+      }
     }
-    
+
     return list.sort((a, b) => {
+      // Put oneself at top if present
+      const aNorm = normalizeAgentName(a.agent_name || a.name || "");
+      const bNorm = normalizeAgentName(b.agent_name || b.name || "");
+      if (aNorm === currentUserNameNorm) return -1;
+      if (bNorm === currentUserNameNorm) return 1;
       if (a.role_type === "tl" && b.role_type !== "tl") return -1;
       if (b.role_type === "tl" && a.role_type !== "tl") return 1;
       return (a.agent_name || "").localeCompare(b.agent_name || "");
     });
-  }, [effectiveAllMembers, employeeSearchTerm, teamTabFilter, isAgent, tlAssignedTeam, userProfile, selectedPeriod, selectedYear, isUserSpecialStaffOnly, isUserMohammedAzad, isUserMohammedJihad, isUserLaraKamil, isUserShireenWaisi]);
+  }, [allowedMembersForUser, employeeSearchTerm, teamTabFilter, isAdmin, selectedPeriod, selectedYear, currentUserNameNorm]);
 
   // Current selected member object
   const currentMember = useMemo(() => {
@@ -829,11 +925,11 @@ export default function AnnualEvaluationDashboard({
 
   // Coverage Tracking Computation (Who's evaluated and who's pending)
   const coverageData = useMemo(() => {
-    let activeMembers = effectiveAllMembers.filter(m => 
+    let activeMembers = (isAdmin ? effectiveAllMembers : (hasSubordinates ? mySubordinates : allowedMembersForUser)).filter(m => 
       isMemberActiveInPeriod(m, "YEAR - AVG", String(selectedYear))
     );
 
-    if (tlAssignedTeam) {
+    if (isAdmin && tlAssignedTeam) {
       if (tlAssignedTeam === "Ankido") {
         activeMembers = activeMembers.filter(m => (m.team || "").toLowerCase().includes("ankido"));
       } else if (tlAssignedTeam === "Mohammed") {
@@ -1007,66 +1103,35 @@ export default function AnnualEvaluationDashboard({
 
   // Initialize selected employee on load
   useEffect(() => {
-    // 1. Trainer, QA, Back Office, and Team Leaders: strictly lock to their own self profile
-    // "التيم ليدر خلي بس يشوفون تقييمهم و ليس مال تيمهم"
-    if (isUserSpecialStaffOnly) {
-      if (isUserMohammedAzad) {
-        setSelectedEmployeeName("Mohammed Azad");
-        setTeamTabFilter("QA_Training");
-        return;
-      }
-      if (isUserMohammedJihad) {
-        setSelectedEmployeeName("Mohammed Jihad");
-        setTeamTabFilter("QA_Training");
-        return;
-      }
-      if (isUserLaraKamil) {
-        setSelectedEmployeeName("Lara Kamil");
-        setTeamTabFilter("QA_Training");
-        return;
-      }
-      if (isUserShireenWaisi) {
-        setSelectedEmployeeName("Shireen Waisi");
-        setTeamTabFilter("Special_Staff");
-        return;
-      }
-      if (isUserAnkido || (isTL && userTeamLower.includes("ankido"))) {
-        setSelectedEmployeeName("Ankido Buya");
-        setTeamTabFilter("Ankido");
-        return;
-      }
-      if (isUserYounis || (isTL && userTeamLower.includes("younis"))) {
-        setSelectedEmployeeName("Younis Kamal");
-        setTeamTabFilter("Younis");
-        return;
-      }
+    // 1. Regular Agent / Staff with NO subordinates: strictly lock to their own self profile
+    if (!isAdmin && !hasSubordinates) {
       const myName = toTitleCase(userProfile?.name || userProfile?.agent_name || "");
-      if (myName) {
+      if (myName && selectedEmployeeName !== myName) {
         setSelectedEmployeeName(myName);
-        return;
       }
-    }
-
-    // 2. Regular Agent: strictly lock to their own self profile
-    if (isAgent) {
-      const agentName = userProfile?.agent_name || userProfile?.name || "";
-      if (agentName && selectedEmployeeName !== agentName) {
-        setSelectedEmployeeName(agentName);
-      }
-      const myTeam = (userProfile?.team || "").toLowerCase();
-      if (myTeam.includes("younis")) setTeamTabFilter("Younis");
-      else if (myTeam.includes("ankido")) setTeamTabFilter("Ankido");
-      else if (myTeam.includes("mohammed") || myTeam.includes("dlshad")) setTeamTabFilter("Mohammed");
       return;
     }
 
-    // 4. Admin / Manager: default to Younis Kamal (first team leader)
-    if (!selectedEmployeeName && effectiveAllMembers.length > 0) {
+    // 2. Direct Manager / TL with subordinates: default to themselves first, or first subordinate
+    if (!isAdmin && hasSubordinates) {
+      if (!selectedEmployeeName) {
+        const myName = toTitleCase(userProfile?.name || userProfile?.agent_name || "");
+        if (myName && allowedMembersForUser.some(m => normalizeAgentName(m.agent_name || m.name) === normalizeAgentName(myName))) {
+          setSelectedEmployeeName(myName);
+        } else if (allowedMembersForUser.length > 0) {
+          setSelectedEmployeeName(allowedMembersForUser[0].agent_name);
+        }
+      }
+      return;
+    }
+
+    // 3. Admin / Top Manager: default to Younis Kamal or first member
+    if (isAdmin && !selectedEmployeeName && effectiveAllMembers.length > 0) {
       const defaultMember = effectiveAllMembers.find(m => normalizeAgentName(m.agent_name) === "younis kamal") || effectiveAllMembers[0];
       setSelectedEmployeeName(defaultMember.agent_name);
       setTeamTabFilter("Younis");
     }
-  }, [isAgent, isUserSpecialStaffOnly, isUserMohammedAzad, isUserMohammedJihad, isUserLaraKamil, isUserShireenWaisi, userProfile, effectiveAllMembers, selectedEmployeeName, tlAssignedTeam]);
+  }, [isAdmin, hasSubordinates, allowedMembersForUser, userProfile, effectiveAllMembers, selectedEmployeeName]);
 
   // Auto-fill Employee info when currentMember changes
   useEffect(() => {
@@ -1124,6 +1189,7 @@ export default function AnnualEvaluationDashboard({
         setManagerKpis(data.manager_kpis || {});
         setSelfCompetencies(data.self_competencies || {});
         setManagerCompetencies(data.manager_competencies || {});
+        setCriterionNotes(data.criterion_notes || {});
         setKeyStrengths(data.manager_strengths || "");
         setAreasForDevelopment(data.manager_improvements || "");
         setManagerComments(data.manager_comments || "");
@@ -1149,6 +1215,7 @@ export default function AnnualEvaluationDashboard({
           setManagerKpis(baselineData.manager_kpis || {});
           setSelfCompetencies(baselineData.self_competencies || {});
           setManagerCompetencies(baselineData.manager_competencies || {});
+          setCriterionNotes(baselineData.criterion_notes || {});
           setKeyStrengths(baselineData.manager_strengths || "");
           setAreasForDevelopment(baselineData.manager_improvements || "");
           setManagerComments(baselineData.manager_comments || "");
@@ -1165,6 +1232,7 @@ export default function AnnualEvaluationDashboard({
           setManagerKpis({});
           setSelfCompetencies({});
           setManagerCompetencies({});
+          setCriterionNotes({});
           setKeyStrengths("");
           setAreasForDevelopment("");
           setManagerComments("");
@@ -1403,6 +1471,22 @@ export default function AnnualEvaluationDashboard({
     if (currentMemberRoleType === "backoffice") {
       return BACKOFFICE_KPIS;
     }
+    if (currentMemberRoleType === "custom") {
+      const customItems = dynamicCriteria.filter(c => c.sectionId === "kpi" || c.targetRole === "all");
+      if (customItems.length > 0) {
+        return customItems.map(c => ({
+          id: c.id,
+          name: c.name,
+          description: c.description,
+        }));
+      }
+      return [
+        { id: "custom_kpi_1", name: "Core Job Performance & Objectives", description: "Executing role-specific primary duties, accuracy, and operational KPIs." },
+        { id: "custom_kpi_2", name: "Process & Delivery Quality", description: "Maintaining zero defect rate, standard compliance, and timely execution." },
+        { id: "custom_kpi_3", name: "Problem Solving & Initiative", description: "Proactive issue diagnosis, innovative solutions, and independent workflow." },
+        { id: "custom_kpi_4", name: "Attendance & Professional Commitment", description: "Punctuality, SLA adherence, and team collaboration." },
+      ];
+    }
     if (isSelectedEmployeeChat) {
       return [
         { id: "qa", name: "Quality Assurance", actual: actualMetricsSummary?.qa },
@@ -1419,7 +1503,7 @@ export default function AnnualEvaluationDashboard({
       { id: "aht", name: "AHT", actual: actualMetricsSummary?.aht },
       { id: "knowledge", name: "Knowledge", actual: actualMetricsSummary?.exam },
     ];
-  }, [currentMemberRoleType, isSelectedEmployeeChat, actualMetricsSummary]);
+  }, [currentMemberRoleType, isSelectedEmployeeChat, actualMetricsSummary, dynamicCriteria]);
 
   // Dynamic Competencies List matching specific role templates
   const currentCompetenciesList = useMemo(() => {
@@ -1540,6 +1624,168 @@ export default function AnnualEvaluationDashboard({
     setTimeout(() => setSaveToast(null), 3500);
   };
 
+  const handleUpdateCriterionNote = (criterionId: string, role: "manager" | "employee", topic: CriterionNoteTopic, text: string) => {
+    const safeId = criterionId || "crit_default";
+    setCriterionNotes(prev => {
+      const existing = prev[safeId] || {};
+      const updated = {
+        ...existing,
+        [role]: {
+          role,
+          authorName: userProfile?.name || userProfile?.agent_name || (role === "manager" ? "Manager" : "Employee"),
+          topic,
+          text: text,
+          updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      };
+      return {
+        ...prev,
+        [safeId]: updated
+      };
+    });
+  };
+
+  const getCriterionNotesCount = (critId: string) => {
+    const safeId = critId || "";
+    const entry = criterionNotes[safeId];
+    if (!entry) return 0;
+    return (entry.manager?.text ? 1 : 0) + (entry.employee?.text ? 1 : 0);
+  };
+
+  const renderCriterionNoteDrawer = (critId: string, critTitle: string) => {
+    const safeCritId = critId || (critTitle ? critTitle.toLowerCase().replace(/[^a-z0-9]/g, '_') : 'crit_default');
+    const entry = criterionNotes[safeCritId] || {};
+    const activeEntry = noteActiveTab === "manager" ? entry.manager : entry.employee;
+    const canEditThisTab = noteActiveTab === "manager" ? canEditManager : canEditSelf;
+
+    return (
+      <div className="bg-white dark:bg-gray-900 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl p-4 shadow-sm animate-in fade-in duration-150">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-gray-200/80 dark:border-gray-800">
+          <div className="flex items-center gap-2">
+            <MessageSquare size={16} className="text-[#1C6B53] dark:text-emerald-400 shrink-0" />
+            <div>
+              <span className="text-xs font-black text-gray-900 dark:text-white">
+                Evaluation Notes for: <span className="text-[#1C6B53] dark:text-emerald-400 font-extrabold">{critTitle}</span>
+              </span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            {/* Tabs: Manager Note vs Employee Note */}
+            <div className="flex items-center p-0.5 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setNoteActiveTab("manager")}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition cursor-pointer ${
+                  noteActiveTab === "manager"
+                    ? "bg-[#1C6B53] text-white shadow-2xs font-black"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
+                }`}
+              >
+                <span>Manager Note</span>
+                {entry.manager?.text && <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setNoteActiveTab("employee")}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition cursor-pointer ${
+                  noteActiveTab === "employee"
+                    ? "bg-blue-600 text-white shadow-2xs font-black"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
+                }`}
+              >
+                <span>Employee Note</span>
+                {entry.employee?.text && <span className="w-1.5 h-1.5 rounded-full bg-blue-300" />}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setOpenNoteCriterionId(null)}
+              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg transition cursor-pointer"
+              title="Close"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Note Topic / Reason Selector ("على شنو النوت") */}
+        <div className="mb-3">
+          <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1.5">
+            Note Topic / Reason
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { id: "justification" as CriterionNoteTopic, label: "Score Justification", icon: "⚖️" },
+              { id: "achievement" as CriterionNoteTopic, label: "Standout Achievement", icon: "🏆" },
+              { id: "improvement" as CriterionNoteTopic, label: "Area for Improvement", icon: "🎯" },
+              { id: "incident" as CriterionNoteTopic, label: "Specific Case / Incident", icon: "⚠️" },
+              { id: "general" as CriterionNoteTopic, label: "General Observation", icon: "💬" }
+            ].map((top) => {
+              const currentTopic = activeEntry?.topic || "justification";
+              const isSelected = currentTopic === top.id;
+              return (
+                <button
+                  key={top.id}
+                  type="button"
+                  disabled={!canEditThisTab}
+                  onClick={() => {
+                    if (canEditThisTab) {
+                      handleUpdateCriterionNote(safeCritId, noteActiveTab, top.id, activeEntry?.text || "");
+                    }
+                  }}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition ${
+                    isSelected
+                      ? (noteActiveTab === "manager" ? "bg-[#1C6B53] text-white shadow-2xs" : "bg-blue-600 text-white shadow-2xs")
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200/80 border border-gray-200 dark:border-gray-700"
+                  } ${!canEditThisTab ? "opacity-75 cursor-default" : "cursor-pointer"}`}
+                >
+                  <span>{top.icon}</span>
+                  <span>{top.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Textarea */}
+        <div className="relative">
+          <textarea
+            rows={3}
+            value={activeEntry?.text || ""}
+            disabled={!canEditThisTab}
+            onChange={(e) => {
+              handleUpdateCriterionNote(
+                safeCritId, 
+                noteActiveTab, 
+                activeEntry?.topic || "justification", 
+                e.target.value
+              );
+            }}
+            placeholder={canEditThisTab ? "Enter specific feedback, observations, or rationale for this metric..." : "No note has been recorded yet."}
+            className="w-full text-xs p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-2 focus:ring-[#1C6B53]/20 focus:border-[#1C6B53] outline-none transition disabled:opacity-75 resize-none font-medium leading-relaxed"
+          />
+        </div>
+
+        <div className="flex justify-between items-center text-[10px] text-gray-400 mt-2">
+          <span>
+            {activeEntry?.updatedAt 
+              ? `Last updated: ${activeEntry.updatedAt} ${activeEntry.authorName ? `(${activeEntry.authorName})` : ''}`
+              : (canEditThisTab ? "Type your note and it saves automatically with the evaluation" : "Read-only view")}
+          </span>
+          <button
+            type="button"
+            onClick={() => setOpenNoteCriterionId(null)}
+            className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-xs font-bold text-gray-700 dark:text-gray-300 transition cursor-pointer"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   // Auto-stamp submission date on submit
   const getSubmissionFormattedDate = () => {
     const d = new Date();
@@ -1603,6 +1849,7 @@ export default function AnnualEvaluationDashboard({
         manager_strengths: keyStrengths,
         manager_improvements: areasForDevelopment,
         manager_comments: managerComments,
+        criterion_notes: criterionNotes,
 
         status: targetStatus,
         updated_at: new Date().toISOString(),
@@ -1666,10 +1913,10 @@ export default function AnnualEvaluationDashboard({
             <div className="h-8 sm:h-9 w-[1.5px] bg-gray-200 dark:bg-gray-700 shrink-0" />
             <div className="shrink-0">
               <h1 className="text-base sm:text-xl font-black tracking-tight text-gray-900 dark:text-white leading-none">
-                Performance Evaluation
+                Annual Evaluation Dashboard
               </h1>
               <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
-                Semi-Annual & Annual Performance Review
+                Annual Performance Review &amp; Scorecards
               </p>
             </div>
           </div>
@@ -1693,7 +1940,7 @@ export default function AnnualEvaluationDashboard({
           
           {/* Top Control Toolbar: Prominent, Spacious, Ultra-Modern Executive Control Bar */}
           <section className="relative z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl sm:rounded-3xl p-2.5 sm:p-3.5 shadow-sm mb-5 print:hidden">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2.5">
               
               {/* Left Controls: Year & Harmonized Period Switcher & Who's Pending */}
               <div className="flex flex-wrap items-center gap-2">
@@ -1735,8 +1982,39 @@ export default function AnnualEvaluationDashboard({
                   </button>
                 </div>
 
+                {/* Admin Management Buttons: Criteria & Staff Rosters */}
+                {isAdmin && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setShowManageCriteriaModal(true)}
+                      className="flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-xl bg-gray-100/90 hover:bg-gray-200/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/80 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
+                      title="Manage Custom Evaluation Criteria"
+                    >
+                      <Sliders size={15} className="text-[#1C6B53] dark:text-emerald-400" />
+                      <span>Criteria</span>
+                      <span className="px-1.5 py-0.5 bg-[#1C6B53] text-white rounded-full text-[10px] font-black shadow-2xs">
+                        {dynamicCriteria.length || 12}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowManageStaffModal(true)}
+                      className="flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-xl bg-gray-100/90 hover:bg-gray-200/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/80 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
+                      title="Manage Staff & Rosters"
+                    >
+                      <Building2 size={15} className="text-[#1C6B53] dark:text-emerald-400" />
+                      <span>Staff & Rosters</span>
+                      <span className="px-1.5 py-0.5 bg-blue-600 text-white rounded-full text-[10px] font-black shadow-2xs">
+                        {effectiveAllMembers.length}
+                      </span>
+                    </button>
+                  </>
+                )}
+
                 {/* Quick Button: Who's Pending - Manager & Admin Only */}
-                {(isManager || isAdmin) && (
+                {(isManager || isAdmin || hasSubordinates) && (
                   <button
                     type="button"
                     onClick={() => {
@@ -1757,7 +2035,7 @@ export default function AnnualEvaluationDashboard({
               </div>
 
               {/* Right Side: Print PDF & Employee Selector */}
-              <div className="flex items-center gap-2 flex-1 sm:flex-initial justify-end">
+              <div className="flex flex-wrap items-center gap-2 justify-end">
                 
                 {/* Print / Save PDF Button */}
                 <button
@@ -1772,7 +2050,7 @@ export default function AnnualEvaluationDashboard({
 
                 {/* Employee Selector */}
                 <div className="relative min-w-[220px] sm:min-w-[300px]">
-                  {(isAgent || isUserSpecialStaffOnly) ? (
+                  {isSingleSelfViewOnly ? (
                     <div className="h-10 flex items-center gap-2.5 px-3.5 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/80 rounded-xl text-xs sm:text-sm font-bold shrink-0">
                       <div className="w-6.5 h-6.5 rounded-lg bg-[#1C6B53] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-2xs">
                         {userProfile?.name?.charAt(0) || userProfile?.agent_name?.charAt(0) || "A"}
@@ -1781,11 +2059,12 @@ export default function AnnualEvaluationDashboard({
                         {toTitleCase(selectedEmployeeName)}
                       </span>
                       <span className="text-xs text-[#1C6B53] dark:text-emerald-400 font-bold shrink-0">
-                        • {currentMemberRoleType === 'trainer' ? 'Trainer' :
-                           currentMemberRoleType === 'qa' ? 'QA' :
-                           currentMemberRoleType === 'tl' ? 'Team Leader' :
-                           currentMemberRoleType === 'backoffice' ? 'Back Office' :
-                           currentMember?.team?.replace(' Team', '') || 'Contact Center'}
+                        • {currentMember?.custom_position ||
+                           (currentMemberRoleType === 'trainer' ? 'Trainer' :
+                            currentMemberRoleType === 'qa' ? 'QA' :
+                            currentMemberRoleType === 'tl' ? 'Team Leader' :
+                            currentMemberRoleType === 'backoffice' ? 'Back Office' :
+                            currentMember?.role || currentMember?.team?.replace(' Team', '') || 'Contact Center')}
                       </span>
                     </div>
                   ) : (
@@ -1850,10 +2129,10 @@ export default function AnnualEvaluationDashboard({
                         <div className="px-2 pt-1 pb-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
                           <div>
                             <h4 className="text-xs font-black text-gray-900 dark:text-white">
-                              Select Employee
+                              {isAdmin ? "Select Employee" : "Direct Team & Subordinates"}
                             </h4>
                             <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
-                              38 Official Contact Center Agents
+                              {isAdmin ? `${effectiveAllMembers.length} Total Employees` : `${mySubordinates.length} Subordinates in Your Reporting Line`}
                             </p>
                           </div>
                           <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
@@ -1866,7 +2145,7 @@ export default function AnnualEvaluationDashboard({
                           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
                           <input
                             type="text"
-                            placeholder={tlAssignedTeam ? "Search employee in your team..." : "Search employee across all teams..."}
+                            placeholder={isAdmin ? "Search employee across all teams..." : "Search employee in your reporting line..."}
                             value={employeeSearchTerm}
                             onChange={(e) => setEmployeeSearchTerm(e.target.value)}
                             className="w-full pl-9 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200/90 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-[#1C6B53]/20 focus:border-[#1C6B53] dark:focus:border-emerald-500 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 font-medium shadow-xs transition"
@@ -1884,54 +2163,57 @@ export default function AnnualEvaluationDashboard({
                           )}
                         </div>
 
-                        {/* Team Filter Pills: Younis Kamal, Ankido Buya, Mohammed Dlshad, QA & Training */}
-                        <div className={`grid ${tlAssignedTeam ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-4'} gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0`}>
-                          {[
-                            { id: "Younis", label: "Younis Kamal", count: teamCounts.Younis, icon: PhoneCall },
-                            { id: "Ankido", label: "Ankido Buya", count: teamCounts.Ankido, icon: PhoneCall },
-                            { id: "Mohammed", label: "Mohammed Dlshad", count: teamCounts.Mohammed, icon: MessageSquare },
-                            { id: "QA_Training", label: "QA, Training & Back Office", count: teamCounts.QA_Training, icon: ShieldCheck },
-                          ]
-                          .filter(tab => !tlAssignedTeam || tab.id === tlAssignedTeam)
-                          .map(tab => {
-                            const TabIcon = tab.icon;
-                            const isActive = teamTabFilter === tab.id;
-                            return (
-                              <button
-                                key={tab.id}
-                                type="button"
-                                title={tab.label}
-                                onClick={() => {
-                                  setTeamTabFilter(tab.id);
-                                  setEmployeeSearchTerm("");
-                                }}
-                                className={`flex items-center justify-center gap-1 py-1.5 px-1.5 rounded-xl text-[10px] font-bold transition cursor-pointer ${
-                                  isActive
-                                    ? 'bg-[#1C6B53] text-white shadow-xs font-black'
-                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-700'
-                                }`}
-                              >
-                                <TabIcon size={11} className={isActive ? 'text-emerald-200 shrink-0' : 'text-gray-400 shrink-0'} />
-                                <span className="truncate">{tab.id === 'QA_Training' ? 'QA & Ops' : tab.label.split(' ')[0]}</span>
-                                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black shrink-0 ${
-                                  isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                                }`}>
-                                  {tab.count}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
+                        {/* Team Filter Pills: Shown for Admin across all teams */}
+                        {isAdmin && (
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0">
+                            {[
+                              { id: "Younis", label: "Younis Kamal", count: teamCounts.Younis, icon: PhoneCall },
+                              { id: "Ankido", label: "Ankido Buya", count: teamCounts.Ankido, icon: PhoneCall },
+                              { id: "Mohammed", label: "Mohammed Dlshad", count: teamCounts.Mohammed, icon: MessageSquare },
+                              { id: "QA_Training", label: "QA, Training & Back Office", count: teamCounts.QA_Training, icon: ShieldCheck },
+                            ]
+                            .map(tab => {
+                              const TabIcon = tab.icon;
+                              const isActive = teamTabFilter === tab.id;
+                              return (
+                                <button
+                                  key={tab.id}
+                                  type="button"
+                                  title={tab.label}
+                                  onClick={() => {
+                                    setTeamTabFilter(tab.id);
+                                    setEmployeeSearchTerm("");
+                                  }}
+                                  className={`flex items-center justify-center gap-1 py-1.5 px-1.5 rounded-xl text-[10px] font-bold transition cursor-pointer ${
+                                    isActive
+                                      ? 'bg-[#1C6B53] text-white shadow-xs font-black'
+                                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-700'
+                                  }`}
+                                >
+                                  <TabIcon size={11} className={isActive ? 'text-emerald-200 shrink-0' : 'text-gray-400 shrink-0'} />
+                                  <span className="truncate">{tab.id === 'QA_Training' ? 'QA & Ops' : tab.label.split(' ')[0]}</span>
+                                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black shrink-0 ${
+                                    isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                                  }`}>
+                                    {tab.count}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
 
                         {/* Roster Count Summary */}
                         <div className="px-2 py-1 text-[10px] font-bold text-gray-500 dark:text-gray-400 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 mb-1.5">
                           <span>
                             {employeeSearchTerm.trim() 
                               ? `${filteredMembers.length} Matching Search` 
-                              : `${filteredMembers.length} Members in ${teamTabFilter === 'QA_Training' ? 'QA, Training & Back Office' : teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' : teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'}`}
+                              : isAdmin
+                              ? `${filteredMembers.length} Members in ${teamTabFilter === 'QA_Training' ? 'QA, Training & Back Office' : teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' : teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'}`
+                              : `${filteredMembers.length} Members in Your Evaluation Scope`}
                           </span>
                           <span className="text-[9px] font-bold text-[#1C6B53] dark:text-emerald-400">
-                            {teamTabFilter === 'QA_Training' ? 'Specialized Operations' : teamTabFilter === 'Mohammed' ? 'Digital Chat' : 'Voice Calls'}
+                            {isAdmin ? (teamTabFilter === 'QA_Training' ? 'Specialized Operations' : teamTabFilter === 'Mohammed' ? 'Digital Chat' : 'Voice Calls') : 'Direct Reporting'}
                           </span>
                         </div>
 
@@ -1983,24 +2265,46 @@ export default function AnnualEvaluationDashboard({
                                   }`}
                                 >
                                   <div className="flex items-center gap-2.5 truncate">
-                                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-black shrink-0 ${
-                                      isSelected
-                                        ? 'bg-[#1C6B53] text-white shadow-2xs'
-                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
-                                    }`}>
-                                      {m.agent_name?.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div className="truncate">
-                                      <div className="font-bold truncate text-gray-900 dark:text-gray-100">
-                                        {toTitleCase(m.agent_name)}
-                                      </div>
-                                      <div className="text-[10px] text-gray-400 dark:text-gray-500 font-medium truncate">
-                                        {teamStr.replace(' Team', '')}
-                                      </div>
-                                    </div>
+                                    {(() => {
+                                      const isSelf = normalizeAgentName(m.agent_name || m.name || "") === currentUserNameNorm;
+                                      return (
+                                        <>
+                                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-black shrink-0 ${
+                                            isSelected
+                                              ? 'bg-[#1C6B53] text-white shadow-2xs'
+                                              : isSelf
+                                              ? 'bg-amber-500 text-white shadow-2xs'
+                                              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                                          }`}>
+                                            {m.agent_name?.charAt(0).toUpperCase()}
+                                          </div>
+                                          <div className="truncate">
+                                            <div className="font-bold truncate text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                                              <span>{toTitleCase(m.agent_name)}</span>
+                                              {isSelf && (
+                                                <span className="text-[9px] font-black px-1.5 py-0.2 rounded-md bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 shrink-0">
+                                                  ⭐ Myself
+                                                </span>
+                                              )}
+                                            </div>
+                                            <div className="text-[10px] text-gray-400 dark:text-gray-500 font-medium truncate flex items-center gap-1">
+                                              <span>{m.custom_position || (m.role_type === "tl" ? "Team Leader" : teamStr.replace(' Team', ''))}</span>
+                                              {m.direct_manager && !isSelf && (
+                                                <span className="text-gray-400 dark:text-gray-500">• Mgr: {m.direct_manager}</span>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </>
+                                      );
+                                    })()}
                                   </div>
                                   <div className="flex items-center gap-2 shrink-0">
-                                    {m.role_type === "tl" ? (
+                                    {m.custom_position ? (
+                                      <span className="text-[10px] px-2 py-0.5 rounded-md border font-extrabold flex items-center gap-1 bg-fuchsia-50 dark:bg-fuchsia-950/60 text-fuchsia-700 dark:text-fuchsia-300 border-fuchsia-200 dark:border-fuchsia-800">
+                                        <Sparkles size={10} />
+                                        <span>{m.custom_position}</span>
+                                      </span>
+                                    ) : m.role_type === "tl" ? (
                                       <span className="text-[10px] px-2 py-0.5 rounded-md border font-extrabold flex items-center gap-1 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
                                         <Star size={10} />
                                         <span>Team Leader</span>
@@ -2238,6 +2542,7 @@ export default function AnnualEvaluationDashboard({
                       <span>Manager Evaluation</span>
                     </th>
                     <th className="p-3.5 text-center w-20">Gap</th>
+                    <th className="p-3.5 text-center w-24">Notes</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800 text-xs font-medium">
@@ -2245,9 +2550,12 @@ export default function AnnualEvaluationDashboard({
                     const selfVal = getKpiScore(selfKpis, kpi.id);
                     const mgrVal = getKpiScore(managerKpis, kpi.id);
                     const diff = mgrVal > 0 && selfVal > 0 ? (mgrVal - selfVal) : null;
+                    const notesCount = getCriterionNotesCount(kpi.id);
+                    const isDrawerOpen = openNoteCriterionId === kpi.id;
 
                     return (
-                      <tr key={kpi.id} className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors">
+                      <React.Fragment key={kpi.id}>
+                      <tr className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors">
                         <td className="p-3.5">
                           <div className="font-bold text-gray-900 dark:text-white text-sm">{kpi.name}</div>
                           {kpi.description && (
@@ -2350,7 +2658,36 @@ export default function AnnualEvaluationDashboard({
                             <span className="text-gray-400">-</span>
                           )}
                         </td>
+
+                        {/* Notes Column */}
+                        <td className="p-3.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenNoteCriterionId(isDrawerOpen ? null : kpi.id);
+                            }}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer shadow-2xs ${
+                              notesCount > 0
+                                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
+                                : 'bg-gray-100 hover:bg-gray-200/80 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
+                            }`}
+                            title="Criterion Note"
+                          >
+                            <MessageSquare size={13} className={notesCount > 0 ? 'text-[#1C6B53] dark:text-emerald-400' : 'text-gray-400'} />
+                            <span>{notesCount > 0 ? `Note (${notesCount})` : '+ Note'}</span>
+                          </button>
+                        </td>
                       </tr>
+
+                      {/* Expandable Note Drawer Row */}
+                      {isDrawerOpen && (
+                        <tr className="bg-emerald-50/20 dark:bg-emerald-950/10">
+                          <td colSpan={currentMemberRoleType === "agent" ? 6 : 5} className="p-3.5">
+                            {renderCriterionNoteDrawer(kpi.id, kpi.name)}
+                          </td>
+                        </tr>
+                      )}
+                      </React.Fragment>
                     );
                   })}
 
@@ -2379,6 +2716,7 @@ export default function AnnualEvaluationDashboard({
                         </span>
                       ) : "-"}
                     </td>
+                    <td className="p-3.5 text-center text-gray-400 font-normal">-</td>
                   </tr>
                 </tbody>
               </table>
@@ -2414,6 +2752,7 @@ export default function AnnualEvaluationDashboard({
                       <span>Manager Evaluation</span>
                     </th>
                     <th className="p-3.5 text-center w-20">Gap</th>
+                    <th className="p-3.5 text-center w-24">Notes</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800 text-xs font-medium">
@@ -2421,9 +2760,12 @@ export default function AnnualEvaluationDashboard({
                     const selfVal = selfCompetencies[comp.id] || 0;
                     const mgrVal = managerCompetencies[comp.id] || 0;
                     const diff = mgrVal > 0 && selfVal > 0 ? (mgrVal - selfVal) : null;
+                    const notesCount = getCriterionNotesCount(comp.id);
+                    const isDrawerOpen = openNoteCriterionId === comp.id;
 
                     return (
-                      <tr key={comp.id} className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors">
+                      <React.Fragment key={comp.id}>
+                      <tr className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors">
                         <td className="p-3.5">
                           <div className="font-bold text-gray-900 dark:text-white text-sm">{comp.name}</div>
                           <p className="text-[11px] text-gray-500 dark:text-gray-400 font-normal mt-0.5 leading-relaxed">
@@ -2512,7 +2854,36 @@ export default function AnnualEvaluationDashboard({
                             <span className="text-gray-400">-</span>
                           )}
                         </td>
+
+                        {/* Notes Column */}
+                        <td className="p-3.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenNoteCriterionId(isDrawerOpen ? null : comp.id);
+                            }}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer shadow-2xs ${
+                              notesCount > 0
+                                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
+                                : 'bg-gray-100 hover:bg-gray-200/80 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
+                            }`}
+                            title="Competency Note"
+                          >
+                            <MessageSquare size={13} className={notesCount > 0 ? 'text-[#1C6B53] dark:text-emerald-400' : 'text-gray-400'} />
+                            <span>{notesCount > 0 ? `Note (${notesCount})` : '+ Note'}</span>
+                          </button>
+                        </td>
                       </tr>
+
+                      {/* Expandable Note Drawer Row */}
+                      {isDrawerOpen && (
+                        <tr className="bg-emerald-50/20 dark:bg-emerald-950/10">
+                          <td colSpan={5} className="p-3.5">
+                            {renderCriterionNoteDrawer(comp.id, comp.name)}
+                          </td>
+                        </tr>
+                      )}
+                      </React.Fragment>
                     );
                   })}
 
@@ -2541,6 +2912,7 @@ export default function AnnualEvaluationDashboard({
                         </span>
                       ) : "-"}
                     </td>
+                    <td className="p-3.5 text-center text-gray-400 font-normal">-</td>
                   </tr>
                 </tbody>
               </table>
@@ -3636,6 +4008,34 @@ export default function AnnualEvaluationDashboard({
           <CheckCircle2 size={16} className="text-emerald-400 dark:text-emerald-600" />
           <span>Pending list copied to clipboard!</span>
         </div>
+      )}
+
+      {/* Manage Criteria Modal */}
+      {showManageCriteriaModal && (
+        <ManageCriteriaModal
+          isOpen={showManageCriteriaModal}
+          onClose={() => setShowManageCriteriaModal(false)}
+          criteria={dynamicCriteria}
+          sections={dynamicSections}
+          onSaveCriteria={handleSaveCriteria}
+          onSaveSections={handleSaveSections}
+        />
+      )}
+
+      {/* Manage Staff & Rosters Modal */}
+      {showManageStaffModal && (
+        <ManageStaffModal
+          isOpen={showManageStaffModal}
+          onClose={() => setShowManageStaffModal(false)}
+          employees={dynamicEmployees}
+          departments={dynamicDepartments}
+          onSaveEmployees={handleSaveEmployees}
+          onSaveDepartments={handleSaveDepartments}
+          onSelectEmployeeForEval={(empName) => {
+            setSelectedEmployeeName(empName);
+            setShowManageStaffModal(false);
+          }}
+        />
       )}
 
     </div>
