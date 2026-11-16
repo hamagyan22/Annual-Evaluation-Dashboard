@@ -3,7 +3,7 @@
 import React from "react";
 import { 
   BarChart3, LayoutDashboard, Award, Star, 
-  ClipboardCheck, Settings, Sun, Moon, 
+  ClipboardCheck, Sun, Moon, 
   LogOut, Users, ArrowLeft 
 } from "lucide-react";
 import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
@@ -227,19 +227,8 @@ export function UnifiedTopNavbar({
 
       <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-0.5 shrink-0" />
 
-      {/* Utilities: Settings, Dark Mode, Theme, Logout */}
+      {/* Utilities: Dark Mode, Theme, Logout */}
       <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-        {(isAdmin || isManager || isTL) && onOpenSettings && (
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-gray-500 hover:text-[#1C6B53] dark:text-gray-400 dark:hover:text-emerald-400 hover:bg-gray-100/90 dark:hover:bg-gray-800/80 transition-all group cursor-pointer shrink-0"
-            title="Settings"
-          >
-            <Settings size={15} className="group-hover:rotate-45 transition-transform duration-200" />
-          </button>
-        )}
-
         {/* Dark Mode Toggle */}
         {toggleDarkMode && (
           <button 
