@@ -812,6 +812,19 @@ export default function AnnualEvaluationDashboard({
   // Managers and Admins see manager data immediately
   const isManagerDataVisible = isAdmin || isViewingSubordinate || evaluationStatus === 'manager_finalized';
 
+  // Canonical Department Name Helper
+  const getCanonicalDept = (rawDept: string): string => {
+    const l = (rawDept || "").toLowerCase().trim();
+    if (l.includes("quality") || l.includes("qa")) return "Quality Assurance";
+    if (l.includes("train")) return "Training & Development";
+    if (l.includes("back") || l.includes("office")) return "Back Office Operations";
+    if (l.includes("contact") || l.includes("call")) return "Contact Center";
+    if (l.includes("it") || l.includes("digital")) return "IT & Digital Services";
+    if (l.includes("human") || l.includes("hr")) return "Human Resources";
+    if (l.includes("finan")) return "Finance & Accounts";
+    return rawDept || "Contact Center";
+  };
+
   // Team counts for the 4 tabs (Younis, Ankido, Mohammed, QA & Training)
   const teamCounts = useMemo(() => {
     const activeMembers = effectiveAllMembers.filter(m => isMemberActiveInPeriod(m, "YEAR - AVG", String(selectedYear)));
@@ -874,16 +887,34 @@ export default function AnnualEvaluationDashboard({
       ).sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
     }
 
-    // Only apply team tab filter for Admin (since Admin sees all teams)
-    if (isAdmin) {
+    // Only apply team / department filter for Admin (since Admin sees all teams)
+    if (isAdmin && teamTabFilter !== "all") {
       if (teamTabFilter === "Ankido") {
         list = list.filter(m => (m.team || "").toLowerCase().includes("ankido"));
       } else if (teamTabFilter === "Mohammed") {
         list = list.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad"));
       } else if (teamTabFilter === "QA_Training") {
         list = list.filter(m => (m.team || "").toLowerCase().includes("quality") || (m.team || "").toLowerCase().includes("training") || (m.team || "").toLowerCase().includes("back office") || m.role_type === "trainer" || m.role_type === "qa" || m.role_type === "backoffice");
-      } else {
+      } else if (teamTabFilter === "Younis") {
         list = list.filter(m => (m.team || "").toLowerCase().includes("younis"));
+      } else if (teamTabFilter.startsWith("dept_")) {
+        const targetDept = teamTabFilter.replace("dept_", "");
+        list = list.filter(m => {
+          const itemDept = getCanonicalDept(m.department || "");
+          if (targetDept === "Quality Assurance") {
+            return itemDept === targetDept || m.role_type === "qa";
+          }
+          if (targetDept === "Training & Development") {
+            return itemDept === targetDept || m.role_type === "trainer";
+          }
+          if (targetDept === "Back Office Operations") {
+            return itemDept === targetDept || m.role_type === "backoffice";
+          }
+          if (targetDept === "Contact Center") {
+            return itemDept === targetDept || (!m.role_type || m.role_type === "agent" || m.role_type === "tl");
+          }
+          return itemDept === targetDept || m.department === targetDept;
+        });
       }
     }
 
@@ -1027,19 +1058,6 @@ export default function AnnualEvaluationDashboard({
     };
   }, [effectiveAllMembers, allEvaluationsMap, selectedYear, tlAssignedTeam]);
 
-  // Canonical Department Name Helper
-  const getCanonicalDept = (rawDept: string): string => {
-    const l = (rawDept || "").toLowerCase().trim();
-    if (l.includes("quality") || l.includes("qa")) return "Quality Assurance";
-    if (l.includes("train")) return "Training & Development";
-    if (l.includes("back") || l.includes("office")) return "Back Office Operations";
-    if (l.includes("contact") || l.includes("call")) return "Contact Center";
-    if (l.includes("it") || l.includes("digital")) return "IT & Digital Services";
-    if (l.includes("human") || l.includes("hr")) return "Human Resources";
-    if (l.includes("finan")) return "Finance & Accounts";
-    return rawDept || "Contact Center";
-  };
-
   // Department options with member counts for the Coverage Modal dropdown
   const departmentOptions = useMemo(() => {
     const map = new Map<string, number>();
@@ -1062,6 +1080,52 @@ export default function AnnualEvaluationDashboard({
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
   }, [coverageData.membersList, dynamicDepartments]);
+
+  // Scope Filter Options for the Employee Selector Dropdown (Departments + Teams)
+  const scopeFilterOptions = useMemo(() => {
+    const activeMembers = allowedMembersForUser.filter(m => isMemberActiveInPeriod(m, "YEAR - AVG", String(selectedYear)));
+
+    const deptCounts = new Map<string, number>();
+    activeMembers.forEach(m => {
+      const cDept = getCanonicalDept(m.department || "");
+      deptCounts.set(cDept, (deptCounts.get(cDept) || 0) + 1);
+    });
+
+    dynamicDepartments.forEach(d => {
+      if (d.name) {
+        const cDept = getCanonicalDept(d.name);
+        if (!deptCounts.has(cDept)) deptCounts.set(cDept, 0);
+      }
+    });
+
+    const opts: any[] = [
+      {
+        value: "all",
+        label: `All Staff & Departments (${activeMembers.length})`,
+        icon: Users,
+      },
+    ];
+
+    // Departments
+    departmentOptions.forEach(dept => {
+      const count = deptCounts.get(dept.name) ?? dept.count;
+      opts.push({
+        value: `dept_${dept.name}`,
+        label: `${dept.name} (${count})`,
+        icon: Building2,
+      });
+    });
+
+    // Teams
+    opts.push(
+      { value: "Younis", label: `Younis Kamal Team (${teamCounts.Younis})`, icon: PhoneCall },
+      { value: "Ankido", label: `Ankido Buya Team (${teamCounts.Ankido})`, icon: PhoneCall },
+      { value: "Mohammed", label: `Mohammed Dlshad Team (${teamCounts.Mohammed})`, icon: MessageSquare },
+      { value: "QA_Training", label: `QA, Training & Operations (${teamCounts.QA_Training})`, icon: ShieldCheck }
+    );
+
+    return opts;
+  }, [allowedMembersForUser, selectedYear, dynamicDepartments, departmentOptions, teamCounts]);
 
   // Filtered members list for Coverage Modal
   const filteredCoverageList = useMemo(() => {
@@ -2151,43 +2215,20 @@ export default function AnnualEvaluationDashboard({
                           )}
                         </div>
 
-                        {/* Team Filter Pills: Shown for Admin across all teams */}
+                        {/* Scope, Department & Team Filter Dropdown */}
                         {isAdmin && (
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 shrink-0">
-                            {[
-                              { id: "Younis", label: "Younis Kamal", count: teamCounts.Younis, icon: PhoneCall },
-                              { id: "Ankido", label: "Ankido Buya", count: teamCounts.Ankido, icon: PhoneCall },
-                              { id: "Mohammed", label: "Mohammed Dlshad", count: teamCounts.Mohammed, icon: MessageSquare },
-                              { id: "QA_Training", label: "QA, Training & Back Office", count: teamCounts.QA_Training, icon: ShieldCheck },
-                            ]
-                            .map(tab => {
-                              const TabIcon = tab.icon;
-                              const isActive = teamTabFilter === tab.id;
-                              return (
-                                <button
-                                  key={tab.id}
-                                  type="button"
-                                  title={tab.label}
-                                  onClick={() => {
-                                    setTeamTabFilter(tab.id);
-                                    setEmployeeSearchTerm("");
-                                  }}
-                                  className={`flex items-center justify-center gap-1 py-1.5 px-1.5 rounded-xl text-[10px] font-bold transition cursor-pointer ${
-                                    isActive
-                                      ? 'bg-[#1C6B53] text-white shadow-xs font-black'
-                                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-700'
-                                  }`}
-                                >
-                                  <TabIcon size={11} className={isActive ? 'text-emerald-200 shrink-0' : 'text-gray-400 shrink-0'} />
-                                  <span className="truncate">{tab.id === 'QA_Training' ? 'QA & Ops' : tab.label.split(' ')[0]}</span>
-                                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black shrink-0 ${
-                                    isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                                  }`}>
-                                    {tab.count}
-                                  </span>
-                                </button>
-                              );
-                            })}
+                          <div className="mb-2 shrink-0">
+                            <ModernDropdown
+                              value={teamTabFilter}
+                              onChange={(val) => {
+                                setTeamTabFilter(val);
+                                setEmployeeSearchTerm("");
+                              }}
+                              options={scopeFilterOptions}
+                              variant="gray"
+                              size="sm"
+                              fullWidth
+                            />
                           </div>
                         )}
 
@@ -2197,11 +2238,22 @@ export default function AnnualEvaluationDashboard({
                             {employeeSearchTerm.trim() 
                               ? `${filteredMembers.length} Matching Search` 
                               : isAdmin
-                              ? `${filteredMembers.length} Members in ${teamTabFilter === 'QA_Training' ? 'QA, Training & Back Office' : teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' : teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'}`
+                              ? `${filteredMembers.length} Members in ${
+                                  teamTabFilter === 'all' ? 'All Staff & Departments' :
+                                  teamTabFilter.startsWith('dept_') ? teamTabFilter.replace('dept_', '') :
+                                  teamTabFilter === 'QA_Training' ? 'QA, Training & Back Office' :
+                                  teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' :
+                                  teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'
+                                }`
                               : `${filteredMembers.length} Members in Your Evaluation Scope`}
                           </span>
                           <span className="text-[9px] font-bold text-[#1C6B53] dark:text-emerald-400">
-                            {isAdmin ? (teamTabFilter === 'QA_Training' ? 'Specialized Operations' : teamTabFilter === 'Mohammed' ? 'Digital Chat' : 'Voice Calls') : 'Direct Reporting'}
+                            {isAdmin ? (
+                              teamTabFilter === 'all' ? 'All Organization' :
+                              teamTabFilter.startsWith('dept_') ? teamTabFilter.replace('dept_', '') :
+                              teamTabFilter === 'QA_Training' ? 'Specialized Operations' :
+                              teamTabFilter === 'Mohammed' ? 'Digital Chat' : 'Voice Calls'
+                            ) : 'Direct Reporting'}
                           </span>
                         </div>
 
