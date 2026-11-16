@@ -197,6 +197,11 @@ export function applyThemeToDocument(themeId: string) {
 
 export function getCurrentThemeId(): string {
   if (typeof window === "undefined") return DEFAULT_THEME_ID;
+  const activeUser = localStorage.getItem("app_active_user_email");
+  if (activeUser) {
+    const userTheme = localStorage.getItem(`app_color_theme_${activeUser.toLowerCase().trim()}`);
+    if (userTheme && THEMES.some(t => t.id === userTheme)) return userTheme;
+  }
   const saved = localStorage.getItem("app_color_theme");
   if (!saved) {
     try {
@@ -207,10 +212,16 @@ export function getCurrentThemeId(): string {
   return saved;
 }
 
-export function setAppTheme(themeId: string) {
+export function setAppTheme(themeId: string, userKey?: string) {
   if (typeof window === "undefined") return;
-  // Local-only persistence: Changes strictly apply to this device/browser only
+  // Local-only persistence: Changes strictly apply to this device/browser and user
   localStorage.setItem("app_color_theme", themeId);
+  const activeUser = userKey || localStorage.getItem("app_active_user_email");
+  if (activeUser) {
+    try {
+      localStorage.setItem(`app_color_theme_${activeUser.toLowerCase().trim()}`, themeId);
+    } catch (e) {}
+  }
   applyThemeToDocument(themeId);
   window.dispatchEvent(new CustomEvent("app-theme-changed", { detail: themeId }));
 }
@@ -239,7 +250,8 @@ export function useAppTheme() {
 
   const setTheme = useCallback((id: string) => {
     setThemeId(id);
-    setAppTheme(id);
+    const activeUser = typeof window !== "undefined" ? localStorage.getItem("app_active_user_email") : null;
+    setAppTheme(id, activeUser || undefined);
   }, []);
 
   const currentTheme = getThemeById(themeId);

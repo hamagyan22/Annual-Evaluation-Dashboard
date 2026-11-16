@@ -7,7 +7,7 @@ import { collection, doc, getDocs, query, where, onSnapshot, setDoc } from "fire
 import { 
   ArrowLeft, Search, Users, Check, Save, 
   Sun, Moon, ChevronDown, Sparkles,
-  Award, X, Printer, UserCheck, Star,
+  Award, X, Printer, User, UserCheck, Star,
   Info, ThumbsUp, Target, BookOpen, AlertTriangle,
   PhoneCall, ShieldCheck, CheckCircle, Calendar,
   Clock, Eye, Lock, MessageSquare,
@@ -3014,8 +3014,107 @@ export default function AnnualEvaluationDashboard({
             </div>
           </div>
 
+          {/* Section 4: Qualitative Notes & Feedback */}
+          <div className="p-6 sm:p-8 border-b border-gray-200/80 dark:border-gray-800 bg-white dark:bg-gray-900/60">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-7 h-7 rounded-lg bg-[#1C6B53]/15 text-[#1C6B53] dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
+                4
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
+                  Qualitative Notes &amp; Feedback
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Notes, self-reflection, and manager recommendations for this annual evaluation cycle
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Employee Notes Card */}
+              <div className="bg-gray-50/70 dark:bg-gray-800/70 p-5 rounded-2xl border border-blue-200/80 dark:border-blue-900/50 shadow-2xs flex flex-col">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                      <User size={13} />
+                    </div>
+                    <span className="text-xs font-black text-gray-900 dark:text-white">
+                      Employee Notes &amp; Self-Reflection
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200">
+                    Self Note
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-3">
+                  Key accomplishments, challenges faced, aspirations, and reflections on performance.
+                </p>
+                <textarea
+                  rows={4}
+                  value={employeeComments}
+                  onChange={(e) => setEmployeeComments(e.target.value)}
+                  disabled={!canEditEmployeeFeedback}
+                  placeholder={canEditEmployeeFeedback ? "Enter your self-reflection, personal milestones, and observations..." : "No employee notes recorded yet."}
+                  className="w-full flex-1 text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-gray-800 dark:text-gray-100 resize-none transition-all disabled:opacity-75 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              {/* Manager Notes Card */}
+              <div className="bg-gray-50/70 dark:bg-gray-800/70 p-5 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/50 shadow-2xs flex flex-col">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 text-[#1C6B53] dark:text-emerald-400 flex items-center justify-center">
+                      <Award size={13} />
+                    </div>
+                    <span className="text-xs font-black text-gray-900 dark:text-white">
+                      Manager Notes &amp; Recommendations
+                    </span>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    isManagerDataVisible
+                      ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200'
+                      : 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300'
+                  }`}>
+                    {isManagerDataVisible ? 'Official' : 'Pending'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-3">
+                  Direct manager review, strengths, coaching areas, and strategic feedback.
+                </p>
+                {isManagerDataVisible ? (
+                  <textarea
+                    rows={4}
+                    value={managerComments}
+                    onChange={(e) => setManagerComments(e.target.value)}
+                    disabled={!canEditManager}
+                    placeholder={canEditManager ? "Enter leadership feedback, guidance, and development recommendations..." : "No manager notes recorded yet."}
+                    className="w-full flex-1 text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none focus:border-[#1C6B53] focus:ring-2 focus:ring-emerald-500/20 text-gray-800 dark:text-gray-100 resize-none transition-all disabled:opacity-75 disabled:cursor-not-allowed"
+                  />
+                ) : (
+                  <div className="flex-1 min-h-[105px] flex flex-col items-center justify-center text-center p-4 bg-white/50 dark:bg-gray-900/40 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500">
+                    <Clock size={18} className="text-amber-500 mb-1" />
+                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">Awaiting Manager Finalization</span>
+                    <span className="text-[10px] text-gray-400 mt-0.5">Manager notes will appear once the review is submitted.</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Actions & Print Section */}
           <div className="p-6 sm:p-8 space-y-6">
+            {/* Notes Printout */}
+            <div className="hidden print:grid grid-cols-2 gap-6 pt-4 border-t border-gray-300">
+              <div className="border border-gray-300 rounded-xl p-4">
+                <div className="text-xs font-bold text-gray-700 mb-1">Employee Self-Reflection Notes:</div>
+                <div className="text-xs text-gray-800 whitespace-pre-wrap">{employeeComments || "None"}</div>
+              </div>
+              <div className="border border-gray-300 rounded-xl p-4">
+                <div className="text-xs font-bold text-gray-700 mb-1">Manager Feedback Notes:</div>
+                <div className="text-xs text-gray-800 whitespace-pre-wrap">{managerComments || "None"}</div>
+              </div>
+            </div>
+
             {/* Signature Line for Print */}
             <div className="hidden print:grid grid-cols-2 gap-8 pt-8 mt-6 border-t border-gray-300">
               <div>
@@ -3058,15 +3157,26 @@ export default function AnnualEvaluationDashboard({
                   </div>
                 )}
                 {!canEditManager && canEditSelf && (
-                  <button
-                    type="button"
-                    onClick={() => handleSaveEvaluation("self_submitted")}
-                    disabled={isSaving}
-                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer"
-                  >
-                    <CheckCircle size={14} />
-                    <span>{evaluationStatus === 'self_submitted' ? 'Update Self-Evaluation' : 'Submit Self-Evaluation'}</span>
-                  </button>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleSaveEvaluation("draft")}
+                      disabled={isSaving}
+                      className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                    >
+                      <Save size={14} />
+                      <span>Save Draft</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSaveEvaluation("self_submitted")}
+                      disabled={isSaving}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                    >
+                      <CheckCircle size={14} />
+                      <span>{evaluationStatus === 'self_submitted' ? 'Update Self-Evaluation' : 'Submit Self-Evaluation'}</span>
+                    </button>
+                  </div>
                 )}
 
                 {/* Manager actions */}

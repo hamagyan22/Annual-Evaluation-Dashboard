@@ -12,7 +12,7 @@ import { BASELINE_TEAM_METRICS } from "@/lib/baselineTeamMetrics";
 import { getCanonicalAgentName, getCanonicalAgent, getCanonicalSlug, getAllAgentSlugs, isSameAgent } from "@/lib/canonicalAgents";
 import { ModernDropdown } from "@/components/ModernDropdown";
 import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
-import { useAppTheme, applyThemeToDocument, getCurrentThemeId } from "@/lib/themeManager";
+import { useAppTheme, applyThemeToDocument, getCurrentThemeId, setAppTheme } from "@/lib/themeManager";
 import { TrendBadge, isLowerBetterMetric } from "@/components/TrendBadge";
 import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
 import { useBodyScrollLock, initGlobalModalScrollLock } from "@/lib/scrollLock";
@@ -2236,9 +2236,25 @@ function AgentDashboard({
 }
 
 export default function Dashboard() {
-  const { themeId } = useAppTheme();
+  const { themeId, currentTheme, setTheme } = useAppTheme();
   const [session, setSession] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
+
+  // Sync chosen theme to user document in Firestore so each user's theme belongs strictly to them
+  useEffect(() => {
+    const handler = async (e: any) => {
+      const newTheme = e.detail;
+      if (session?.uid && db) {
+        try {
+          await setDoc(doc(db, 'users', session.uid), { theme: newTheme }, { merge: true });
+        } catch (err) {
+          console.error("Error saving user theme to Firestore:", err);
+        }
+      }
+    };
+    window.addEventListener("app-theme-changed", handler);
+    return () => window.removeEventListener("app-theme-changed", handler);
+  }, [session]);
   const isAdmin = session?.email?.toLowerCase() === 'mohammed.dlshad0@gmail.com' || userProfile?.role === 'admin';
   const isManager = isAdmin || session?.email?.toLowerCase() === 'jalal.burghol@agent.com' || userProfile?.role === 'manager';
   const emailLower = (session?.email || userProfile?.email || '').toLowerCase().trim();
@@ -3343,6 +3359,13 @@ export default function Dashboard() {
       setSession(user);
       if (user) {
         const emailLower = user.email?.toLowerCase().trim() || '';
+        if (typeof window !== 'undefined' && emailLower) {
+          localStorage.setItem('app_active_user_email', emailLower);
+          const savedUserTheme = localStorage.getItem(`app_color_theme_${emailLower}`);
+          if (savedUserTheme) {
+            setAppTheme(savedUserTheme, emailLower);
+          }
+        }
         const isMohammed = emailLower === 'mohammed.dlshad0@gmail.com';
         const isOmar = emailLower === 'omar.ayad@fib.iq';
         const isJalal = emailLower === 'jalal.burghol@agent.com';
@@ -3369,6 +3392,9 @@ export default function Dashboard() {
             console.error("Error reading admin userDoc:", err);
           }
 
+          if (existingData?.theme) {
+            setAppTheme(existingData.theme, emailLower);
+          }
           const adminProfile: any = {
             ...existingData,
             role: 'admin',
@@ -3397,6 +3423,9 @@ export default function Dashboard() {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           const existingData = userDoc.exists() ? userDoc.data() : {};
+          if (existingData?.theme) {
+            setAppTheme(existingData.theme, emailLower);
+          }
 
           let role = existingData.role;
           let name = existingData.name;
@@ -3647,6 +3676,7 @@ export default function Dashboard() {
 
   const handleLogout = async () => {
     try {
+      localStorage.removeItem("app_active_user_email");
       localStorage.removeItem("app_show_quality_view");
       localStorage.removeItem("app_show_agent_preview");
       localStorage.removeItem("app_auth_session");
@@ -5266,11 +5296,12 @@ export default function Dashboard() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
 
           <div className="w-full max-w-[440px] p-6 sm:p-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl rounded-3xl sm:rounded-[2.5rem] shadow-[0_20px_50px_-10px_rgba(28,107,83,0.12)] dark:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.7)] border border-white/80 dark:border-emerald-500/20 relative z-10">
-            {/* Top Bar with Dark Mode Toggle */}
-            <div className="flex justify-end items-center mb-6">
+            {/* Top Bar with Theme Selector & Dark Mode Toggle */}
+            <div className="flex justify-end items-center gap-2 mb-6">
+              <ThemeSelectorModal align="right" className="!w-10 !h-10 rounded-2xl bg-gray-100/80 dark:bg-gray-800/80 hover:bg-gray-200/80 dark:hover:bg-gray-700 border border-gray-200/50 dark:border-gray-700/50 shadow-sm" />
               <button 
                 onClick={toggleDarkMode} 
-                className="w-10 h-10 rounded-2xl bg-gray-100/80 dark:bg-gray-800/80 hover:bg-gray-200/80 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-all flex items-center justify-center border border-gray-200/50 dark:border-gray-700/50 shadow-sm"
+                className="w-10 h-10 rounded-2xl bg-gray-100/80 dark:bg-gray-800/80 hover:bg-gray-200/80 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-all flex items-center justify-center border border-gray-200/50 dark:border-gray-700/50 shadow-sm cursor-pointer"
                 title="Toggle Dark Mode"
               >
                 {isDarkMode ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} />}
@@ -5283,7 +5314,7 @@ export default function Dashboard() {
                 <img src="/logo.webp" alt="FIB Logo" className="w-full h-full object-contain drop-shadow-sm" />
               </div>
               <h2 className="text-xl sm:text-[22px] font-bold tracking-tight text-gray-900 dark:text-white leading-snug">
-                Team Leader &amp; Agent Dashboard
+                Annual Evaluation Dashboard
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 font-medium">
                 Welcome back. Please sign in to access your scorecards.
@@ -5311,7 +5342,7 @@ export default function Dashboard() {
                     required 
                     value={email} 
                     onChange={e => setEmail(e.target.value)} 
-                    className="w-full pl-10 pr-4 py-3.5 bg-gray-50/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-2xl focus:outline-none transition-all text-gray-900 dark:text-white focus:bg-white dark:focus:bg-gray-800 focus:border-[#1C6B53] dark:focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 text-sm font-medium placeholder:text-gray-400" 
+                    className="w-full pl-10 pr-4 py-3.5 bg-gray-50/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-2xl focus:outline-none transition-all text-gray-900 dark:text-white focus:bg-white dark:focus:bg-gray-800 focus:border-[var(--brand-primary)] focus:ring-4 focus:ring-[var(--brand-glow)] text-sm font-medium placeholder:text-gray-400" 
                     placeholder="name@agent.com" 
                   />
                 </div>
@@ -5330,7 +5361,8 @@ export default function Dashboard() {
                       setForgotSuccess(''); 
                       setShowForgotModal(true); 
                     }} 
-                    className="text-xs font-semibold text-[#a11d33] hover:underline transition"
+                    style={{ color: currentTheme?.primary || '#1C6B53' }}
+                    className="text-xs font-semibold hover:underline transition cursor-pointer"
                   >
                     Forgot Password?
                   </button>
@@ -5344,7 +5376,7 @@ export default function Dashboard() {
                     required 
                     value={password} 
                     onChange={e => setPassword(e.target.value)} 
-                    className="w-full pl-10 pr-11 py-3.5 bg-gray-50/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-2xl focus:outline-none transition-all text-gray-900 dark:text-white focus:bg-white dark:focus:bg-gray-800 focus:border-[#1C6B53] dark:focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 text-sm font-medium placeholder:text-gray-400" 
+                    className="w-full pl-10 pr-11 py-3.5 bg-gray-50/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-2xl focus:outline-none transition-all text-gray-900 dark:text-white focus:bg-white dark:focus:bg-gray-800 focus:border-[var(--brand-primary)] focus:ring-4 focus:ring-[var(--brand-glow)] text-sm font-medium placeholder:text-gray-400" 
                     placeholder="••••••••" 
                   />
                   <button
@@ -5366,7 +5398,11 @@ export default function Dashboard() {
               <button 
                 type="submit" 
                 disabled={loginLoading || lockoutTimer > 0}
-                className="w-full py-4 rounded-2xl text-sm font-black text-white transition-all mt-6 bg-gradient-to-r from-[#881337] via-[#9f1239] to-[#be123c] hover:from-[#700f2d] hover:to-[#a11d33] shadow-lg shadow-rose-950/20 hover:shadow-xl hover:shadow-rose-950/30 active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                style={{
+                  background: currentTheme?.gradientStyle || 'linear-gradient(135deg, #10664F 0%, #0D523F 50%, #09382B 100%)',
+                  boxShadow: `0 10px 25px -5px ${currentTheme?.glow || 'rgba(16, 102, 79, 0.25)'}`
+                }}
+                className="w-full py-4 rounded-2xl text-sm font-black text-white transition-all mt-6 hover:opacity-95 active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg"
               >
                 <span>
                   {lockoutTimer > 0 
@@ -5379,7 +5415,7 @@ export default function Dashboard() {
 
             <div className="mt-8 pt-5 border-t border-gray-100 dark:border-gray-800/80 flex flex-col items-center justify-center gap-1.5 text-gray-400 dark:text-gray-500 text-[11px] font-medium">
               <div className="text-[11.5px] font-semibold tracking-wide text-gray-500 dark:text-gray-400">
-                Designed &amp; Engineered by <span className="text-[#a11d33] font-bold">Omer Ayad</span>
+                Designed &amp; Engineered by <span style={{ color: currentTheme?.primary || '#1C6B53' }} className="font-bold">Omer Ayad</span>
               </div>
             </div>
           </div>
