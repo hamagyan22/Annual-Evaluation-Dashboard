@@ -544,7 +544,7 @@ export default function AnnualEvaluationDashboard({
   const [allEvaluationsMap, setAllEvaluationsMap] = useState<Record<string, any>>({});
   const [showCoverageModal, setShowCoverageModal] = useState<boolean>(false);
   const [coverageFilterStatus, setCoverageFilterStatus] = useState<"pending" | "completed" | "all">("pending");
-  const [coverageTeamFilter, setCoverageTeamFilter] = useState<string>("all");
+  const [coverageDepartmentFilter, setCoverageDepartmentFilter] = useState<string>("all");
   const [coverageSearchTerm, setCoverageSearchTerm] = useState<string>("");
   const [coverageCopiedToast, setCoverageCopiedToast] = useState<boolean>(false);
   const [isClient, setIsClient] = useState<boolean>(false);
@@ -979,12 +979,19 @@ export default function AnnualEvaluationDashboard({
 
       const team = member.team || "Contact Center";
       const isChat = team.toLowerCase().includes('mohammed') || team.toLowerCase().includes('dlshad');
+      const dept = member.department || (
+        member.role_type === "trainer" ? "Training & Development" :
+        member.role_type === "qa" ? "Quality Assurance" :
+        member.role_type === "backoffice" ? "Back Office Operations" :
+        "Contact Center"
+      );
 
       return {
         member,
         name: rawName,
         knownId,
         team,
+        department: dept,
         isChat,
         isCompleted: annualCompleted,
         status: annualDoc?.status || (annualCompleted ? 'manager_finalized' : 'pending'),
@@ -1002,16 +1009,49 @@ export default function AnnualEvaluationDashboard({
     };
   }, [effectiveAllMembers, allEvaluationsMap, selectedYear, tlAssignedTeam]);
 
+  // Canonical Department Name Helper
+  const getCanonicalDept = (rawDept: string): string => {
+    const l = (rawDept || "").toLowerCase().trim();
+    if (l.includes("quality") || l.includes("qa")) return "Quality Assurance";
+    if (l.includes("train")) return "Training & Development";
+    if (l.includes("back") || l.includes("office")) return "Back Office Operations";
+    if (l.includes("contact") || l.includes("call")) return "Contact Center";
+    if (l.includes("it") || l.includes("digital")) return "IT & Digital Services";
+    if (l.includes("human") || l.includes("hr")) return "Human Resources";
+    if (l.includes("finan")) return "Finance & Accounts";
+    return rawDept || "Contact Center";
+  };
+
+  // Department options with member counts for the Coverage Modal dropdown
+  const departmentOptions = useMemo(() => {
+    const map = new Map<string, number>();
+
+    coverageData.membersList.forEach(item => {
+      const canonical = getCanonicalDept(item.department || item.member?.department || "");
+      map.set(canonical, (map.get(canonical) || 0) + 1);
+    });
+
+    dynamicDepartments.forEach(d => {
+      if (d.name) {
+        const canonical = getCanonicalDept(d.name);
+        if (!map.has(canonical)) {
+          map.set(canonical, 0);
+        }
+      }
+    });
+
+    return Array.from(map.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [coverageData.membersList, dynamicDepartments]);
+
   // Filtered members list for Coverage Modal
   const filteredCoverageList = useMemo(() => {
     return coverageData.membersList.filter(item => {
-      // 1. Team filter
-      if (coverageTeamFilter !== "all") {
-        const t = (item.team || "").toLowerCase();
-        if (coverageTeamFilter === "Younis" && !t.includes("younis")) return false;
-        if (coverageTeamFilter === "Ankido" && !t.includes("ankido")) return false;
-        if (coverageTeamFilter === "Mohammed" && !t.includes("mohammed") && !t.includes("dlshad")) return false;
-        if (coverageTeamFilter === "QA_Training" && !t.includes("quality") && !t.includes("training") && item.member?.role_type !== "trainer" && item.member?.role_type !== "qa") return false;
+      // 1. Department filter
+      if (coverageDepartmentFilter !== "all") {
+        const itemCanonical = getCanonicalDept(item.department || item.member?.department || "");
+        if (itemCanonical !== coverageDepartmentFilter) return false;
       }
 
       // 2. Search query filter
@@ -1019,7 +1059,9 @@ export default function AnnualEvaluationDashboard({
         const q = coverageSearchTerm.toLowerCase();
         const matchesName = item.name.toLowerCase().includes(q);
         const matchesId = String(item.knownId).toLowerCase().includes(q);
-        if (!matchesName && !matchesId) return false;
+        const matchesDept = (item.department || "").toLowerCase().includes(q);
+        const matchesTeam = (item.team || "").toLowerCase().includes(q);
+        if (!matchesName && !matchesId && !matchesDept && !matchesTeam) return false;
       }
 
       // 3. Status filter
@@ -1033,7 +1075,7 @@ export default function AnnualEvaluationDashboard({
 
       return true;
     });
-  }, [coverageData, coverageFilterStatus, coverageTeamFilter, coverageSearchTerm]);
+  }, [coverageData, coverageFilterStatus, coverageDepartmentFilter, coverageSearchTerm]);
 
   // Copy pending list to clipboard
   const handleCopyPendingList = () => {
@@ -3716,95 +3758,86 @@ export default function AnnualEvaluationDashboard({
             </div>
 
             {/* Filter & Control Toolbar */}
-            <div className="p-4 sm:p-5 border-b border-gray-200/80 dark:border-gray-800 space-y-3 bg-white dark:bg-gray-900 shrink-0">
-              
+            <div className="p-4 sm:p-5 border-b border-gray-200/80 dark:border-gray-800 bg-white dark:bg-gray-900 shrink-0">
               <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
                 
-                {/* Status Switcher Tabs: Pending, Completed, All */}
-                <div className="flex items-center bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-2xl border border-gray-200/60 dark:border-gray-700/60">
-                  <button
-                    type="button"
-                    onClick={() => setCoverageFilterStatus("pending")}
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
-                      coverageFilterStatus === "pending"
-                        ? "bg-amber-500 text-white shadow-xs"
-                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                    }`}
-                  >
-                    <AlertCircle size={13} />
-                    <span>Pending Only</span>
-                    <span className="text-[10px] px-1.5 py-0.2 bg-white/25 rounded-md font-black">
-                      {coverageData.pendingCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setCoverageFilterStatus("completed")}
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
-                      coverageFilterStatus === "completed"
-                        ? "bg-[#1C6B53] text-white shadow-xs"
-                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                    }`}
-                  >
-                    <CheckCircle2 size={13} />
-                    <span>Completed</span>
-                    <span className="text-[10px] px-1.5 py-0.2 bg-white/25 rounded-md font-black">
-                      {coverageData.completedCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setCoverageFilterStatus("all")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
-                      coverageFilterStatus === "all"
-                        ? "bg-gray-800 text-white dark:bg-gray-700 shadow-xs"
-                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                    }`}
-                  >
-                    <span>All ({coverageData.totalCount})</span>
-                  </button>
-                </div>
-
-              </div>
-
-              {/* Second Row: Team Filter Tabs and Live Search */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
-                
-                {/* Team Filter */}
-                <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400 mr-1">Team:</span>
-                  {[
-                    { id: "all", label: "All Teams" },
-                    { id: "Younis", label: "Younis Kamal" },
-                    { id: "Ankido", label: "Ankido Buya" },
-                    { id: "Mohammed", label: "Mohammed Dlshad" },
-                    { id: "QA_Training", label: "QA & Training" },
-                  ].map(t => (
+                {/* Left Controls: Status Switcher + Department Dropdown */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {/* Status Switcher Tabs: Pending, Completed, All */}
+                  <div className="flex items-center bg-gray-100/90 dark:bg-gray-800/90 p-1 rounded-2xl border border-gray-200/60 dark:border-gray-700/60 shadow-2xs">
                     <button
-                      key={t.id}
                       type="button"
-                      onClick={() => setCoverageTeamFilter(t.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                        coverageTeamFilter === t.id
-                          ? "bg-[#1C6B53] text-white shadow-2xs font-black"
-                          : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                      onClick={() => setCoverageFilterStatus("pending")}
+                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                        coverageFilterStatus === "pending"
+                          ? "bg-amber-500 text-white shadow-xs"
+                          : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                       }`}
                     >
-                      {t.label}
+                      <AlertCircle size={13} />
+                      <span>Pending Only</span>
+                      <span className="text-[10px] px-1.5 py-0.2 bg-white/25 rounded-md font-black">
+                        {coverageData.pendingCount}
+                      </span>
                     </button>
-                  ))}
+
+                    <button
+                      type="button"
+                      onClick={() => setCoverageFilterStatus("completed")}
+                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                        coverageFilterStatus === "completed"
+                          ? "bg-[#1C6B53] text-white shadow-xs"
+                          : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                      }`}
+                    >
+                      <CheckCircle2 size={13} />
+                      <span>Completed</span>
+                      <span className="text-[10px] px-1.5 py-0.2 bg-white/25 rounded-md font-black">
+                        {coverageData.completedCount}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setCoverageFilterStatus("all")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                        coverageFilterStatus === "all"
+                          ? "bg-gray-800 text-white dark:bg-gray-700 shadow-xs"
+                          : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                      }`}
+                    >
+                      <span>All ({coverageData.totalCount})</span>
+                    </button>
+                  </div>
+
+                  {/* Department Dropdown: Placed directly beside Status Switcher */}
+                  <div className="relative flex items-center min-w-[200px]">
+                    <Building2 size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                    <select
+                      value={coverageDepartmentFilter}
+                      onChange={(e) => setCoverageDepartmentFilter(e.target.value)}
+                      className="w-full appearance-none pl-8.5 pr-8 py-2 bg-gray-100/90 dark:bg-gray-800/90 hover:bg-gray-200/70 dark:hover:bg-gray-700/70 border border-gray-200/60 dark:border-gray-700/60 rounded-2xl text-xs font-bold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1C6B53] cursor-pointer transition shadow-2xs"
+                      title="Filter by Department"
+                    >
+                      <option value="all">All Departments ({coverageData.totalCount})</option>
+                      {departmentOptions.map(dept => (
+                        <option key={dept.name} value={dept.name}>
+                          {dept.name} {dept.count > 0 ? `(${dept.count})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                  </div>
                 </div>
 
-                {/* Search Bar */}
+                {/* Live Search Bar */}
                 <div className="relative min-w-[240px]">
                   <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     value={coverageSearchTerm}
                     onChange={(e) => setCoverageSearchTerm(e.target.value)}
-                    placeholder="Search by name or employee ID..."
+                    placeholder="Search by name, ID or team..."
                     className="w-full pl-9 pr-8 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C6B53]"
                   />
                   {coverageSearchTerm && (
@@ -3819,7 +3852,6 @@ export default function AnnualEvaluationDashboard({
                 </div>
 
               </div>
-
             </div>
 
             {/* Employee List Area */}
@@ -3865,8 +3897,10 @@ export default function AnnualEvaluationDashboard({
                             {item.isChat ? "Chat" : "Calls"}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                          {item.team}
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">{item.department || "Contact Center"}</span>
+                          <span>•</span>
+                          <span>{item.team}</span>
                         </div>
                       </div>
                     </div>
