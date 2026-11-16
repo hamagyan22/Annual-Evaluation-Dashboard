@@ -908,16 +908,20 @@ export default function AnnualEvaluationDashboard({
   // Direct Manager & Department Chief for current member
   const currentMemberDirectManager = useMemo(() => {
     if (currentMember?.direct_manager) return currentMember.direct_manager;
+    const matchedDept = dynamicDepartments.find(d => d.name === currentMember?.department);
+    if (matchedDept?.direct_manager) return matchedDept.direct_manager;
     if (currentMember?.manager_name) return currentMember.manager_name;
     if (teamLeader) return teamLeader;
     if (currentMember?.team) return resolveTeamLeader(currentMember.team);
     return "Omer Ayad";
-  }, [currentMember, teamLeader]);
+  }, [currentMember, dynamicDepartments, teamLeader]);
 
   const currentMemberDeptChief = useMemo(() => {
     if (currentMember?.department_chief) return currentMember.department_chief;
+    const matchedDept = dynamicDepartments.find(d => d.name === currentMember?.department);
+    if (matchedDept?.department_chief) return matchedDept.department_chief;
     return "Omer Ayad";
-  }, [currentMember]);
+  }, [currentMember, dynamicDepartments]);
 
   // Detect if current employee is Chat
   const isSelectedEmployeeChat = useMemo(() => {

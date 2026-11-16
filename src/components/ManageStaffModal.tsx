@@ -62,6 +62,8 @@ export function ManageStaffModal({
   const [deptName, setDeptName] = useState<string>("");
   const [deptNameAr, setDeptNameAr] = useState<string>("");
   const [deptDesc, setDeptDesc] = useState<string>("");
+  const [deptDirectManager, setDeptDirectManager] = useState<string>("");
+  const [deptChief, setDeptChief] = useState<string>("Omer Ayad");
   const [deptColor, setDeptColor] = useState<string>("emerald");
 
   // Modern Confirmation Popup State (Replaces browser alert/confirm)
@@ -128,7 +130,6 @@ export function ManageStaffModal({
       ? (empCustomPosition.trim() || empRole.trim() || "Specialist")
       : (empRole.trim() || "Staff");
     const finalDm = empDirectManager.trim() || empTeam.trim() || "Omer Ayad";
-    const finalChief = empDeptChief.trim() || undefined;
     const finalTeam = empTeam.trim() || (finalDm ? `${finalDm} Team` : "General");
 
     if (editingEmpId) {
@@ -142,7 +143,6 @@ export function ManageStaffModal({
             role: finalRole,
             team: finalTeam,
             direct_manager: finalDm,
-            department_chief: finalChief,
             custom_position: empRoleType === 'custom' ? finalRole : undefined,
             role_type: empRoleType
           };
@@ -159,7 +159,6 @@ export function ManageStaffModal({
         role: finalRole,
         team: finalTeam,
         direct_manager: finalDm,
-        department_chief: finalChief,
         custom_position: empRoleType === 'custom' ? finalRole : undefined,
         role_type: empRoleType
       };
@@ -185,6 +184,8 @@ export function ManageStaffModal({
     setDeptName("");
     setDeptNameAr("");
     setDeptDesc("");
+    setDeptDirectManager("");
+    setDeptChief("Omer Ayad");
     setDeptColor("emerald");
     setIsAddingDept(true);
   };
@@ -194,6 +195,8 @@ export function ManageStaffModal({
     setDeptName(dept.name);
     setDeptNameAr(dept.nameAr || "");
     setDeptDesc(dept.description || "");
+    setDeptDirectManager(dept.direct_manager || "");
+    setDeptChief(dept.department_chief || "Omer Ayad");
     setDeptColor(dept.color || "emerald");
     setIsAddingDept(true);
   };
@@ -210,6 +213,8 @@ export function ManageStaffModal({
             name: deptName.trim(),
             nameAr: deptNameAr.trim() || undefined,
             description: deptDesc.trim() || undefined,
+            direct_manager: deptDirectManager.trim() || undefined,
+            department_chief: deptChief.trim() || undefined,
             color: deptColor
           };
         }
@@ -222,6 +227,8 @@ export function ManageStaffModal({
         name: deptName.trim(),
         nameAr: deptNameAr.trim() || undefined,
         description: deptDesc.trim() || undefined,
+        direct_manager: deptDirectManager.trim() || undefined,
+        department_chief: deptChief.trim() || undefined,
         color: deptColor
       };
       onSaveDepartments([...departments, newDept]);
@@ -554,10 +561,26 @@ export function ManageStaffModal({
                             {dept.nameAr}
                           </div>
                         )}
-                        <div className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1.5">
+                        <div className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5 flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-[#1C6B53] dark:text-emerald-400">
                             {count} {isAr ? "موظف" : "Staff"}
                           </span>
+                          {dept.direct_manager && (
+                            <>
+                              <span>•</span>
+                              <span className="text-gray-600 dark:text-gray-300 font-medium">
+                                {isAr ? "المدير:" : "Manager:"} <strong className="font-bold text-gray-900 dark:text-white">{dept.direct_manager}</strong>
+                              </span>
+                            </>
+                          )}
+                          {dept.department_chief && (
+                            <>
+                              <span>•</span>
+                              <span className="text-purple-700 dark:text-purple-300 font-medium">
+                                {isAr ? "شيف القسم:" : "Chief:"} <strong className="font-bold text-purple-900 dark:text-purple-200">{dept.department_chief}</strong>
+                              </span>
+                            </>
+                          )}
                           {dept.description && (
                             <>
                               <span>•</span>
@@ -613,7 +636,7 @@ export function ManageStaffModal({
                       : (isAr ? "إضافة موظف جديد للتقييم السنوي" : "Add New Employee for Evaluation")}
                   </h3>
                   <p className="text-xs text-emerald-100 font-medium">
-                    {isAr ? "يرجى تعبئة كافة الحقول بدقة لحفظ الموظف وسجل التقييم" : "Fill out employee details, direct manager, and department chief"}
+                    {isAr ? "املأ بيانات الموظف، القسم، والمدير المباشر" : "Fill out employee details, role, and direct manager"}
                   </p>
                 </div>
               </div>
@@ -756,50 +779,33 @@ export function ManageStaffModal({
                 </div>
               </div>
 
-              {/* Direct Manager & Department Chief Fields (User Request) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-3.5 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl">
-                <div>
-                  <label className="block text-xs font-black text-[#1C6B53] dark:text-emerald-300 mb-1">
-                    {isAr ? "اسم المدير المباشر (Direct Manager) *" : "Direct Manager *"}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    list="modal-direct-managers-list"
-                    value={empDirectManager}
-                    onChange={(e) => {
-                      setEmpDirectManager(e.target.value);
-                      if (!empTeam) setEmpTeam(e.target.value ? `${e.target.value} Team` : "");
-                    }}
-                    placeholder={isAr ? "اسم المدير المباشر (مثل: عمر إياد، يونس كمال...)" : "e.g. Omer Ayad, Younis Kamal..."}
-                    className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border border-emerald-300 dark:border-emerald-700 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden font-bold"
-                  />
-                  <datalist id="modal-direct-managers-list">
-                    <option value="Omer Ayad" />
-                    <option value="Younis Kamal" />
-                    <option value="Ankido Buya" />
-                    <option value="Mohammed Dlshad" />
-                    <option value="Jalal Burghol" />
-                  </datalist>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-black text-[#1C6B53] dark:text-emerald-300 mb-1">
-                    {isAr ? "شيف / رئيس القسم (Chief of Department)" : "Department Chief / Head"}
-                  </label>
-                  <input
-                    type="text"
-                    list="modal-dept-chiefs-list"
-                    value={empDeptChief}
-                    onChange={(e) => setEmpDeptChief(e.target.value)}
-                    placeholder={isAr ? "اسم شيف القسم (مثل: عمر إياد)" : "e.g. Omer Ayad, Head of Department"}
-                    className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border border-emerald-300 dark:border-emerald-700 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden font-bold"
-                  />
-                  <datalist id="modal-dept-chiefs-list">
-                    <option value="Omer Ayad" />
-                    <option value="Jalal Burghol" />
-                  </datalist>
-                </div>
+              {/* Direct Manager Field Only (User Request: Employee modal only has Direct Manager) */}
+              <div className="p-3.5 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl">
+                <label className="block text-xs font-black text-[#1C6B53] dark:text-emerald-300 mb-1">
+                  {isAr ? "اسم المدير المباشر (Direct Manager) *" : "Direct Manager *"}
+                </label>
+                <input
+                  type="text"
+                  required
+                  list="modal-direct-managers-list"
+                  value={empDirectManager}
+                  onChange={(e) => {
+                    setEmpDirectManager(e.target.value);
+                    if (!empTeam) setEmpTeam(e.target.value ? `${e.target.value} Team` : "");
+                  }}
+                  placeholder={isAr ? "اسم المدير المباشر (مثل: يونس كمال، أنكيدو بويا، عمر إياد...)" : "e.g. Younis Kamal, Ankido Buya, Omer Ayad..."}
+                  className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border border-emerald-300 dark:border-emerald-700 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden font-bold"
+                />
+                <datalist id="modal-direct-managers-list">
+                  <option value="Younis Kamal" />
+                  <option value="Ankido Buya" />
+                  <option value="Mohammed Dlshad" />
+                  <option value="Mohammed Azad" />
+                  <option value="Lara Kamil" />
+                  <option value="Shireen Waisi" />
+                  <option value="Omer Ayad" />
+                  <option value="Jalal Burghol" />
+                </datalist>
               </div>
 
               {/* Dedicated Modal Footer */}
@@ -845,7 +851,7 @@ export function ManageStaffModal({
                       : (isAr ? "إضافة قسم تنظيمي جديد" : "Add New Department")}
                   </h3>
                   <p className="text-xs text-purple-200 font-medium">
-                    {isAr ? "تحديد مسمى القسم ونطاقه للتقييم السنوي" : "Define department scope and organizational structure"}
+                    {isAr ? "تحديد مسمى القسم، المدير المباشر مال التيم، والشيف" : "Define department scope, team direct manager, and department chief"}
                   </p>
                 </div>
               </div>
@@ -891,12 +897,55 @@ export function ManageStaffModal({
                 </div>
               </div>
 
+              {/* Direct Manager of the Team & Department Chief (User Request) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-3.5 bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/80 rounded-2xl">
+                <div>
+                  <label className="block text-xs font-black text-purple-900 dark:text-purple-200 mb-1">
+                    {isAr ? "المدير المباشر مال التيم (Team Direct Manager)" : "Team Direct Manager"}
+                  </label>
+                  <input
+                    type="text"
+                    list="modal-dept-team-direct-managers"
+                    value={deptDirectManager}
+                    onChange={(e) => setDeptDirectManager(e.target.value)}
+                    placeholder={isAr ? "اسم المدير المباشر للتيم (مثل: يونس كمال، أنكيدو بويا...)" : "e.g. Younis Kamal, Ankido Buya, Team Leader"}
+                    className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border border-purple-300 dark:border-purple-700 rounded-xl focus:ring-2 focus:ring-purple-600 outline-hidden font-bold"
+                  />
+                  <datalist id="modal-dept-team-direct-managers">
+                    <option value="Younis Kamal" />
+                    <option value="Ankido Buya" />
+                    <option value="Mohammed Dlshad" />
+                    <option value="Lara Kamil" />
+                    <option value="Mohammed Azad" />
+                    <option value="Shireen Waisi" />
+                  </datalist>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-purple-900 dark:text-purple-200 mb-1">
+                    {isAr ? "شيف القسم (Department Chief / Head)" : "Department Chief / Head"}
+                  </label>
+                  <input
+                    type="text"
+                    list="modal-dept-chiefs-list"
+                    value={deptChief}
+                    onChange={(e) => setDeptChief(e.target.value)}
+                    placeholder={isAr ? "اسم شيف القسم (مثل: عمر إياد)" : "e.g. Omer Ayad"}
+                    className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border border-purple-300 dark:border-purple-700 rounded-xl focus:ring-2 focus:ring-purple-600 outline-hidden font-bold"
+                  />
+                  <datalist id="modal-dept-chiefs-list">
+                    <option value="Omer Ayad" />
+                    <option value="Jalal Burghol" />
+                  </datalist>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                   {isAr ? "وصف القسم أو نطاق المهام" : "Department Description / Scope"}
                 </label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={deptDesc}
                   onChange={(e) => setDeptDesc(e.target.value)}
                   placeholder={isAr ? "وصف مختصر لمسؤوليات القسم وأهدافه..." : "Brief overview of department functions and KPIs..."}
