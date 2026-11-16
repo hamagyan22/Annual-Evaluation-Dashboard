@@ -905,6 +905,20 @@ export default function AnnualEvaluationDashboard({
     return effectiveAllMembers.find(m => normalizeAgentName(m.agent_name) === targetNorm) || null;
   }, [effectiveAllMembers, selectedEmployeeName]);
 
+  // Direct Manager & Department Chief for current member
+  const currentMemberDirectManager = useMemo(() => {
+    if (currentMember?.direct_manager) return currentMember.direct_manager;
+    if (currentMember?.manager_name) return currentMember.manager_name;
+    if (teamLeader) return teamLeader;
+    if (currentMember?.team) return resolveTeamLeader(currentMember.team);
+    return "Omer Ayad";
+  }, [currentMember, teamLeader]);
+
+  const currentMemberDeptChief = useMemo(() => {
+    if (currentMember?.department_chief) return currentMember.department_chief;
+    return "Omer Ayad";
+  }, [currentMember]);
+
   // Detect if current employee is Chat
   const isSelectedEmployeeChat = useMemo(() => {
     const t = (currentMember?.team || "").toLowerCase();
@@ -2319,7 +2333,7 @@ export default function AnnualEvaluationDashboard({
           {/* Header Card: Rich Brand Emerald Gradient Design */}
           <div 
             style={{ background: 'var(--brand-gradient)' }}
-            className="bg-gradient-to-r from-[#0C382E] via-[#135B47] to-[#1C6B53] border-b border-white/20 p-6 sm:p-8 relative overflow-hidden text-white"
+            className="eval-header-gradient bg-gradient-to-r from-[#0C382E] via-[#135B47] to-[#1C6B53] border-b border-white/20 p-6 sm:p-8 relative overflow-hidden text-white print:rounded-2xl print:p-5 print:mb-4"
           >
             <div className="absolute -right-16 -top-16 w-80 h-80 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute left-1/3 -bottom-16 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
@@ -2330,7 +2344,7 @@ export default function AnnualEvaluationDashboard({
               <div className="flex items-center gap-4 sm:gap-5">
                 
                 {/* Modern FIB Logo Emblem: Crisp white container popping against emerald background */}
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white shadow-md flex items-center justify-center p-2.5 shrink-0 ring-4 ring-white/10">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white shadow-md flex items-center justify-center p-2.5 shrink-0 ring-4 ring-white/10 print:ring-0">
                   <img 
                     src="/logo.webp" 
                     alt="First Iraqi Bank" 
@@ -2340,7 +2354,7 @@ export default function AnnualEvaluationDashboard({
 
                 <div>
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-[11px] font-black tracking-wider uppercase bg-white/15 text-emerald-100 px-3 py-0.5 rounded-full border border-white/20 backdrop-blur-sm shadow-xs">
+                    <span className="text-[11px] font-black tracking-wider uppercase bg-white/15 text-emerald-100 px-3 py-0.5 rounded-full border border-white/20 backdrop-blur-sm shadow-xs print-card-badge">
                       ANNUAL • {selectedYear}
                     </span>
                     {evaluationDate && (
@@ -2349,7 +2363,7 @@ export default function AnnualEvaluationDashboard({
                       </span>
                     )}
                     {isReadOnly && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-white border border-white/20 flex items-center gap-1 backdrop-blur-sm">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-white border border-white/20 flex items-center gap-1 backdrop-blur-sm print:hidden">
                         <Eye size={11} />
                         <span>View Only</span>
                       </span>
@@ -2367,8 +2381,24 @@ export default function AnnualEvaluationDashboard({
                     {currentMemberRoleType !== 'agent' && (
                       <>
                         <span>•</span>
-                        <span className="px-2 py-0.5 rounded-full bg-white/20 text-white font-black text-[10px] uppercase tracking-wider">
+                        <span className="px-2 py-0.5 rounded-full bg-white/20 text-white font-black text-[10px] uppercase tracking-wider print-card-badge">
                           {currentMemberRoleType === 'trainer' ? 'Trainer' : currentMemberRoleType === 'qa' ? 'Quality Assurance' : currentMemberRoleType === 'backoffice' ? 'Back Office' : 'Team Leader'}
+                        </span>
+                      </>
+                    )}
+                    {currentMemberDirectManager && (
+                      <>
+                        <span>•</span>
+                        <span className="bg-emerald-950/40 text-emerald-100 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold border border-white/15 print-card-badge">
+                          Direct Manager: <strong className="text-white font-bold">{currentMemberDirectManager}</strong>
+                        </span>
+                      </>
+                    )}
+                    {currentMemberDeptChief && (
+                      <>
+                        <span>•</span>
+                        <span className="bg-emerald-950/40 text-emerald-100 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold border border-white/15 print-card-badge">
+                          Department Chief: <strong className="text-white font-bold">{currentMemberDeptChief}</strong>
                         </span>
                       </>
                     )}
@@ -2379,46 +2409,46 @@ export default function AnnualEvaluationDashboard({
               {/* Status Badge & Score Highlights — Right-aligned, larger, premium */}
               <div className="flex items-stretch gap-3 self-start lg:self-auto">
                 {/* Final Score Card */}
-                <div className="w-[140px] sm:w-[160px] h-[90px] bg-white/12 backdrop-blur-md border border-white/25 rounded-2xl p-3 sm:p-4 flex flex-col justify-between items-center text-center shadow-sm">
-                  <div className="text-[10px] font-black text-emerald-200 uppercase tracking-widest leading-none">
+                <div className="w-[140px] sm:w-[160px] h-[90px] bg-white/15 backdrop-blur-md border border-white/30 rounded-2xl p-3 sm:p-4 flex flex-col justify-between items-center text-center shadow-sm print-card-badge">
+                  <div className="text-[10px] font-black text-emerald-100 uppercase tracking-widest leading-none">
                     Final Score
                   </div>
                   <div className="flex-1 flex items-center justify-center">
                     {isManagerDataVisible && officialOverallScore > 0 ? (
                       <div className="text-3xl font-black text-white leading-none">
                         <span>{officialOverallScore.toFixed(2)}</span>
-                        <span className="text-sm text-emerald-200/80 font-normal"> / 5.0</span>
+                        <span className="text-sm text-emerald-200/90 font-normal"> / 5.0</span>
                       </div>
                     ) : (
-                      <span className="text-xl font-bold text-white/40">--</span>
+                      <span className="text-xl font-bold text-white/60">--</span>
                     )}
                   </div>
                 </div>
 
                 {/* Rating Tier Card */}
-                <div className="min-w-[160px] sm:min-w-[190px] px-4 h-[90px] bg-white/12 backdrop-blur-md border border-white/25 rounded-2xl py-3 sm:py-4 flex flex-col justify-between items-center text-center shadow-sm">
-                  <div className="text-[10px] font-black text-emerald-200 uppercase tracking-widest leading-none">
+                <div className="min-w-[160px] sm:min-w-[190px] px-4 h-[90px] bg-white/15 backdrop-blur-md border border-white/30 rounded-2xl py-3 sm:py-4 flex flex-col justify-between items-center text-center shadow-sm print-card-badge">
+                  <div className="text-[10px] font-black text-emerald-100 uppercase tracking-widest leading-none">
                     Rating Tier
                   </div>
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-sm sm:text-[15px] font-black text-white flex items-center gap-2 leading-none whitespace-nowrap">
-                      <Award size={17} className={isManagerDataVisible && officialOverallScore > 0 ? "text-amber-300 shrink-0" : "text-white/40 shrink-0"} />
+                      <Award size={17} className={isManagerDataVisible && officialOverallScore > 0 ? "text-amber-300 shrink-0" : "text-white/60 shrink-0"} />
                       <span>{isManagerDataVisible && officialOverallScore > 0 ? ratingTier.label : "Pending"}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Status Card */}
-                <div className="w-[140px] sm:w-[155px] h-[90px] bg-white/12 backdrop-blur-md border border-white/25 rounded-2xl p-3 sm:p-4 flex flex-col justify-between items-center text-center shadow-sm">
-                  <div className="text-[10px] font-black text-emerald-200 uppercase tracking-widest leading-none">
+                <div className="w-[140px] sm:w-[155px] h-[90px] bg-white/15 backdrop-blur-md border border-white/30 rounded-2xl p-3 sm:p-4 flex flex-col justify-between items-center text-center shadow-sm print-card-badge">
+                  <div className="text-[10px] font-black text-emerald-100 uppercase tracking-widest leading-none">
                     Status
                   </div>
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-sm font-bold text-white flex items-center gap-2 leading-none">
                       <span className={`w-3 h-3 rounded-full shrink-0 ${
-                        evaluationStatus === 'manager_finalized' ? 'bg-emerald-400 ring-4 ring-emerald-400/25' :
-                        evaluationStatus === 'self_submitted' ? 'bg-amber-400 ring-4 ring-amber-400/25' : 
-                        'bg-white/40 ring-4 ring-white/10'
+                        evaluationStatus === 'manager_finalized' ? 'bg-emerald-300 ring-4 ring-emerald-400/30' :
+                        evaluationStatus === 'self_submitted' ? 'bg-amber-300 ring-4 ring-amber-400/30' : 
+                        'bg-white/60 ring-4 ring-white/20'
                       }`} />
                       <span>
                         {evaluationStatus === 'manager_finalized' ? 'Finalized' :
@@ -3093,29 +3123,51 @@ export default function AnnualEvaluationDashboard({
 
           {/* Actions & Print Section */}
           <div className="p-6 sm:p-8 space-y-6">
-            {/* Notes Printout */}
+            {/* Notes Printout - Ultra-Modern Colorful Boxes */}
             <div className="hidden print:grid grid-cols-2 gap-6 pt-4 border-t border-gray-300">
-              <div className="border border-gray-300 rounded-xl p-4">
-                <div className="text-xs font-bold text-gray-700 mb-1">Employee Self-Reflection Notes:</div>
-                <div className="text-xs text-gray-800 whitespace-pre-wrap">{employeeComments || "None"}</div>
+              <div className="border border-blue-200 bg-blue-50/40 rounded-2xl p-4 shadow-2xs">
+                <div className="text-xs font-black text-blue-900 mb-1 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                  <span>Employee Self-Reflection Notes:</span>
+                </div>
+                <div className="text-xs text-gray-800 whitespace-pre-wrap leading-relaxed">{employeeComments || "None"}</div>
               </div>
-              <div className="border border-gray-300 rounded-xl p-4">
-                <div className="text-xs font-bold text-gray-700 mb-1">Manager Feedback Notes:</div>
-                <div className="text-xs text-gray-800 whitespace-pre-wrap">{managerComments || "None"}</div>
+              <div className="border border-emerald-200 bg-emerald-50/40 rounded-2xl p-4 shadow-2xs">
+                <div className="text-xs font-black text-emerald-900 mb-1 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>Manager Feedback & Recommendations:</span>
+                </div>
+                <div className="text-xs text-gray-800 whitespace-pre-wrap leading-relaxed">{managerComments || "None"}</div>
               </div>
             </div>
 
-            {/* Signature Line for Print */}
-            <div className="hidden print:grid grid-cols-2 gap-8 pt-8 mt-6 border-t border-gray-300">
-              <div>
-                <div className="text-xs font-bold text-gray-600">Employee Signature:</div>
-                <div className="h-14 border-b border-gray-400 mt-2"></div>
-                <div className="text-[10px] text-gray-500 mt-1">{toTitleCase(selectedEmployeeName)}</div>
+            {/* Signature Line for Print - 3 Columns: Employee, Direct Manager, Department Chief */}
+            <div className="hidden print:grid grid-cols-3 gap-6 pt-8 mt-6 border-t border-gray-300">
+              <div className="p-3.5 border border-gray-300 rounded-2xl bg-gray-50/60 shadow-2xs">
+                <div className="text-xs font-black text-gray-700">Employee Signature:</div>
+                <div className="h-12 border-b border-gray-400 mt-2"></div>
+                <div className="text-[11px] font-bold text-gray-600 mt-1.5">{toTitleCase(selectedEmployeeName)}</div>
               </div>
-              <div>
-                <div className="text-xs font-bold text-gray-600">Team Leader / Manager Signature:</div>
-                <div className="h-14 border-b border-gray-400 mt-2"></div>
-                <div className="text-[10px] text-gray-500 mt-1">{teamLeader || "Team Leader"}</div>
+              <div className="p-3.5 border border-gray-300 rounded-2xl bg-gray-50/60 shadow-2xs">
+                <div className="text-xs font-black text-gray-700">Direct Manager Signature:</div>
+                <div className="h-12 border-b border-gray-400 mt-2"></div>
+                <div className="text-[11px] font-bold text-gray-600 mt-1.5">{currentMemberDirectManager || teamLeader || "Direct Manager"}</div>
+              </div>
+              <div className="p-3.5 border border-gray-300 rounded-2xl bg-gray-50/60 shadow-2xs">
+                <div className="text-xs font-black text-gray-700">Department Chief Signature:</div>
+                <div className="h-12 border-b border-gray-400 mt-2"></div>
+                <div className="text-[11px] font-bold text-gray-600 mt-1.5">{currentMemberDeptChief || "Omer Ayad"}</div>
+              </div>
+            </div>
+
+            {/* Official Report Print Footer: Designed by Omer Ayad */}
+            <div className="hidden print:flex items-center justify-between pt-6 mt-4 border-t border-gray-300 text-xs text-gray-500 font-medium">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-600 inline-block"></span>
+                <span>Designed by <strong className="text-[#1C6B53] font-black">Omer Ayad</strong> • © {new Date().getFullYear()}</span>
+              </div>
+              <div className="text-[11px] font-bold text-gray-400">
+                First Iraqi Bank • Annual Performance Evaluation Report
               </div>
             </div>
 

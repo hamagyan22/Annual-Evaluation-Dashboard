@@ -53,6 +53,13 @@ export function ManageCriteriaModal({
   const [secTitleAr, setSecTitleAr] = useState<string>("");
   const [secDesc, setSecDesc] = useState<string>("");
 
+  // Modern Confirmation Popup State
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: "criterion" | "reset";
+    id?: string;
+    name?: string;
+  } | null>(null);
+
   if (!isOpen) return null;
 
   const handleStartAdd = () => {
@@ -123,11 +130,12 @@ export function ManageCriteriaModal({
   };
 
   const handleDeleteCriterion = (id: string) => {
-    const confirmMsg = isAr ? "هل أنت متأكد من حذف هذا المعيار من التقييم السنوي؟" : "Are you sure you want to delete this criterion from the annual evaluation?";
-    if (confirm(confirmMsg)) {
-      const filtered = criteria.filter(c => c.id !== id);
-      onSaveCriteria(filtered);
-    }
+    const matched = criteria.find(c => c.id === id);
+    setDeleteTarget({
+      type: "criterion",
+      id,
+      name: matched?.name || "Criterion"
+    });
   };
 
   const handleAddSectionSubmit = (e: React.FormEvent) => {
@@ -151,11 +159,24 @@ export function ManageCriteriaModal({
   };
 
   const handleResetDefaults = () => {
-    const confirmMsg = isAr ? "هل تريد استعادة المعايير الافتراضية الرسمية؟" : "Do you want to restore the official default criteria?";
-    if (confirm(confirmMsg)) {
+    setDeleteTarget({
+      type: "reset",
+      name: isAr ? "استعادة المعايير الافتراضية" : "Restore Official Default Criteria"
+    });
+  };
+
+  const handleConfirmAction = () => {
+    if (!deleteTarget) return;
+
+    if (deleteTarget.type === "criterion" && deleteTarget.id) {
+      const filtered = criteria.filter(c => c.id !== deleteTarget.id);
+      onSaveCriteria(filtered);
+    } else if (deleteTarget.type === "reset") {
       onSaveCriteria(DEFAULT_CRITERIA);
       onSaveSections(DEFAULT_SECTIONS);
     }
+
+    setDeleteTarget(null);
   };
 
   const filteredCriteria = activeSectionId === "all" 
@@ -703,6 +724,65 @@ export function ManageCriteriaModal({
         </div>
 
       </div>
+
+      {/* Confirmation Dialog */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl text-center animate-in zoom-in-95 duration-200">
+            {deleteTarget.type === "reset" ? (
+              <div className="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 mx-auto flex items-center justify-center mb-4 ring-8 ring-blue-50 dark:ring-blue-950/30">
+                <RefreshCw size={26} />
+              </div>
+            ) : (
+              <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center mb-4 ring-8 ring-rose-50 dark:ring-rose-950/30">
+                <Trash2 size={26} />
+              </div>
+            )}
+
+            <h4 className="text-lg font-black text-gray-900 dark:text-white mb-1.5">
+              {deleteTarget.type === "reset"
+                ? (isAr ? "استعادة المعايير الافتراضية" : "Restore Defaults")
+                : (isAr ? "تأكيد الحذف" : "Confirm Deletion")}
+            </h4>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-6 font-medium">
+              {deleteTarget.type === "reset" ? (
+                isAr 
+                  ? "هل تريد بالتأكيد استعادة قائمة المعايير والأقسام الافتراضية الرسمية؟"
+                  : "Are you sure you want to restore the official default criteria and sections?"
+              ) : (
+                isAr 
+                  ? <>هل أنت متأكد من حذف المعيار <strong className="text-gray-900 dark:text-white">{deleteTarget.name}</strong>؟ لا يمكن التراجع عن هذا الإجراء.</>
+                  : <>Are you sure you want to delete criterion <strong className="text-gray-900 dark:text-white">{deleteTarget.name}</strong>? This action cannot be undone.</>
+              )}
+            </p>
+
+            <div className="flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 transition cursor-pointer"
+              >
+                {isAr ? "إلغاء" : "Cancel"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmAction}
+                className={`px-6 py-2.5 rounded-xl text-xs font-black text-white shadow-sm transition active:scale-95 cursor-pointer ${
+                  deleteTarget.type === "reset"
+                    ? "bg-blue-600 hover:bg-blue-700 shadow-blue-500/20"
+                    : "bg-rose-600 hover:bg-rose-700 shadow-rose-500/20"
+                }`}
+              >
+                {deleteTarget.type === "reset" 
+                  ? (isAr ? "نعم، استعادة" : "Yes, Restore")
+                  : (isAr ? "نعم، احذف" : "Yes, Delete")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

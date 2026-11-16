@@ -524,3 +524,52 @@ body.modal-open {
 .fixed.inset-0 > * {
   overscroll-behavior: contain !important;
 }
+
+/* =========================================================================
+   ULTRA-MODERN COLORFUL PDF & PRINT STYLING
+   ========================================================================= */
+@media print {
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  @page {
+    margin: 10mm 8mm;
+    size: A4 portrait;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #111827 !important;
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .eval-header-gradient {
+    background: linear-gradient(135deg, #0C382E 0%, #135B47 50%, #1C6B53 100%) !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-card-badge {
+    background-color: rgba(255, 255, 255, 0.18) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  tr, .print-avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-hidden, nav, [data-theme-modal], button {
+    display: none !important;
+  }
+}

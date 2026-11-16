@@ -39,6 +39,7 @@ export interface DynamicEmployee {
   role: string;
   team?: string;
   direct_manager?: string;
+  department_chief?: string;
   custom_position?: string;
   email?: string;
   role_type?: "trainer" | "qa" | "tl" | "backoffice" | "agent" | "custom";
