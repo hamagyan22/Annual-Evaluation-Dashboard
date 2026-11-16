@@ -5946,9 +5946,9 @@ export default function QualityDashboard({
                         </th>
                       ))}
                       <th className="px-3 py-2.5 text-center min-w-[135px] font-black border-l border-teal-100/80 dark:border-gray-800 bg-teal-50/70 dark:bg-teal-950/20">
-                        <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black shadow-xs tracking-tight bg-gradient-to-r from-teal-600 via-[#0d9488] to-emerald-700 text-white border border-teal-400/30 select-none">
-                          <Award size={12} className="text-amber-300 shrink-0" />
-                          <span>{MONTH_NAMES[trainerMonth]} Avg</span>
+                        <div className="inline-flex flex-col items-center justify-center gap-0.5 select-none">
+                          <span className="text-xs font-black text-teal-700 dark:text-teal-300 tracking-wide uppercase">{MONTH_NAMES[trainerMonth]} Avg</span>
+                          <span className="block w-8 h-0.5 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500" />
                         </div>
                       </th>
                     </>
@@ -5963,9 +5963,9 @@ export default function QualityDashboard({
                         </th>
                       ))}
                       <th className="px-3 py-2.5 text-center min-w-[135px] font-black border-l border-teal-100/80 dark:border-gray-800 bg-teal-50/70 dark:bg-teal-950/20">
-                        <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black shadow-xs tracking-tight bg-gradient-to-r from-teal-600 via-[#00A991] to-emerald-700 text-white border border-teal-400/30 select-none">
-                          <Award size={12} className="text-amber-300 shrink-0" />
-                          <span>{selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Avg` : `Week ${selectedWeek} Score`}</span>
+                        <div className="inline-flex flex-col items-center justify-center gap-0.5 select-none">
+                          <span className="text-xs font-black text-teal-700 dark:text-teal-300 tracking-wide uppercase">{selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Avg` : `Week ${selectedWeek} Score`}</span>
+                          <span className="block w-8 h-0.5 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500" />
                         </div>
                       </th>
                       {selectedMonthFilter === null && (
@@ -6004,9 +6004,9 @@ export default function QualityDashboard({
                         </th>
                       ))}
                       <th className="px-3 py-2.5 text-center min-w-[135px] font-black border-l border-teal-100/80 dark:border-gray-800 bg-teal-50/70 dark:bg-teal-950/20">
-                        <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black shadow-xs tracking-tight bg-gradient-to-r from-teal-600 via-[#00A991] to-emerald-700 text-white border border-teal-400/30 select-none">
-                          <Award size={12} className="text-amber-300 shrink-0" />
-                          <span>Bonus Score</span>
+                        <div className="inline-flex flex-col items-center justify-center gap-0.5 select-none">
+                          <span className="text-xs font-black text-teal-700 dark:text-teal-300 tracking-wide uppercase">Bonus Score</span>
+                          <span className="block w-8 h-0.5 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500" />
                         </div>
                       </th>
                     </>
@@ -6029,9 +6029,9 @@ export default function QualityDashboard({
                         </th>
                       )}
                       <th className="px-3 py-2.5 text-center min-w-[135px] font-black border-l border-emerald-100/80 dark:border-gray-800 bg-emerald-50/70 dark:bg-emerald-950/20">
-                        <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black shadow-xs tracking-tight bg-gradient-to-r from-emerald-600 via-[#1C6B53] to-teal-700 text-white border border-emerald-400/30 select-none">
-                          <Award size={12} className="text-amber-300 shrink-0" />
-                          <span>{selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Avg` : `Week ${selectedWeek} Score`}</span>
+                        <div className="inline-flex flex-col items-center justify-center gap-0.5 select-none">
+                          <span className="text-xs font-black text-[var(--brand-primary)] dark:text-emerald-400 tracking-wide uppercase">{selectedMonthFilter !== null ? `${MONTH_NAMES[selectedMonthFilter]} Avg` : `Week ${selectedWeek} Score`}</span>
+                          <span className="block w-8 h-0.5 rounded-full bg-gradient-to-r from-[var(--brand-primary)] to-emerald-500" />
                         </div>
                       </th>
                       {selectedMonthFilter === null && (
@@ -6819,11 +6819,10 @@ export default function QualityDashboard({
                             <td className="p-2 text-center border-l border-teal-200/70 dark:border-gray-700/80 bg-teal-50/40 dark:bg-gray-800/40">
                               <div className="flex items-center justify-center">
                                 {totalTrainerAvg !== "-" ? (
-                                  <span className={`inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl font-black text-xs sm:text-sm text-white shadow-md shadow-teal-800/25 border border-teal-400/30 tracking-tight min-w-[76px] select-none ${
-                                    isCallMon ? "bg-gradient-to-r from-teal-700 to-teal-900" : "bg-gradient-to-r from-teal-600 via-[#0d9488] to-emerald-700"
+                                  <span className={`inline-flex items-center justify-center px-4 py-1.5 rounded-xl font-black text-sm tabular-nums tracking-tight min-w-[76px] select-none border-2 ${
+                                    isCallMon ? "text-teal-700 dark:text-teal-300 border-teal-400/60 dark:border-teal-700/60 bg-teal-50/80 dark:bg-teal-950/40" : "text-teal-700 dark:text-teal-300 border-teal-400/60 dark:border-teal-700/60 bg-teal-50/80 dark:bg-teal-950/40"
                                   }`}>
-                                    <Award size={12} className="text-amber-300 shrink-0" />
-                                    <span>{totalTrainerAvg}%</span>
+                                    {totalTrainerAvg}%
                                   </span>
                                 ) : (
                                   <span className="text-gray-400 dark:text-gray-500 font-bold text-xs sm:text-sm">
@@ -6889,9 +6888,8 @@ export default function QualityDashboard({
                             <td className="p-2 text-center border-l border-teal-200/70 dark:border-gray-700/80 bg-teal-50/40 dark:bg-gray-800/40">
                               <div className="flex items-center justify-center">
                                 {totalAvg !== "-" ? (
-                                  <span className="inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-teal-600 via-[#00A991] to-emerald-700 shadow-md shadow-teal-800/25 border border-teal-400/30 tracking-tight min-w-[76px] select-none">
-                                    <Award size={12} className="text-amber-300 shrink-0" />
-                                    <span>{totalAvg}%</span>
+                                  <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-xl font-black text-sm tabular-nums tracking-tight min-w-[76px] select-none border-2 text-teal-700 dark:text-teal-300 border-teal-400/60 dark:border-teal-700/60 bg-teal-50/80 dark:bg-teal-950/40">
+                                    {totalAvg}%
                                   </span>
                                 ) : (
                                   <span className="text-gray-400 dark:text-gray-500 font-bold text-xs sm:text-sm">
@@ -6947,9 +6945,8 @@ export default function QualityDashboard({
                             <td className="p-2 text-center border-l border-teal-200/70 dark:border-gray-700/80 bg-teal-50/40 dark:bg-gray-800/40">
                               <div className="flex items-center justify-center">
                                 {totalAvg !== "-" ? (
-                                  <span className="inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-teal-600 via-[#00A991] to-emerald-700 shadow-md shadow-teal-800/25 border border-teal-400/30 tracking-tight min-w-[76px] select-none">
-                                    <Award size={12} className="text-amber-300 shrink-0" />
-                                    <span>{totalAvg}%</span>
+                                  <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-xl font-black text-sm tabular-nums tracking-tight min-w-[76px] select-none border-2 text-teal-700 dark:text-teal-300 border-teal-400/60 dark:border-teal-700/60 bg-teal-50/80 dark:bg-teal-950/40">
+                                    {totalAvg}%
                                   </span>
                                 ) : (
                                   <span className="text-gray-400 dark:text-gray-500 font-bold text-xs sm:text-sm">
@@ -7048,10 +7045,9 @@ export default function QualityDashboard({
                                 <div className="flex items-center justify-center">
                                   {totalAvg !== "-" ? (
                                     <span 
-                                      className="inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-emerald-600 via-[#1C6B53] to-teal-700 shadow-md shadow-emerald-800/25 border border-emerald-400/30 tracking-tight min-w-[76px] select-none"
+                                      className="inline-flex items-center justify-center px-4 py-1.5 rounded-xl font-black text-sm tabular-nums tracking-tight min-w-[76px] select-none border-2 text-[var(--brand-primary)] dark:text-emerald-400 border-[var(--brand-primary)]/30 dark:border-emerald-700/60 bg-[var(--brand-bg-light)] dark:bg-emerald-950/40"
                                     >
-                                      <Award size={12} className="text-amber-300 shrink-0" />
-                                      <span>{totalAvg}%</span>
+                                      {totalAvg}%
                                     </span>
                                   ) : (
                                     <span className="text-gray-400 dark:text-gray-500 font-bold text-xs sm:text-sm">
