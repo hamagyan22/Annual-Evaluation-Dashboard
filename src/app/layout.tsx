@@ -15,16 +15,16 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "FIB Performance Scorecards",
-  description: "Performance & Quality Analytics Dashboard for Team Leaders, Managers, and Agents — Engineered by Mohammed Dlshad",
-  applicationName: "FIB Scorecard",
-  authors: [{ name: "Mohammed Dlshad" }],
-  creator: "Mohammed Dlshad",
-  publisher: "Mohammed Dlshad",
+  title: "Annual Evaluation Dashboard",
+  description: "Annual Evaluation & Performance Analytics Dashboard — Designed by Omer Ayad",
+  applicationName: "Annual Evaluation Dashboard",
+  authors: [{ name: "Omer Ayad" }],
+  creator: "Omer Ayad",
+  publisher: "Omer Ayad",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "FIB Scorecard",
+    title: "Annual Evaluation",
   },
   formatDetection: {
     telephone: false,
@@ -54,9 +54,9 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="FIB Scorecard" />
-        <meta name="author" content="Mohammed Dlshad" />
-        <meta name="copyright" content="Mohammed Dlshad" />
+        <meta name="apple-mobile-web-app-title" content="Annual Evaluation" />
+        <meta name="author" content="Omer Ayad" />
+        <meta name="copyright" content="Omer Ayad" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <script
           dangerouslySetInnerHTML={{

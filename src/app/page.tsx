@@ -2347,14 +2347,11 @@ export default function Dashboard() {
   });
   const [showAnnualEvalView, setShowAnnualEvalView] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
-      try {
-        localStorage.removeItem("app_show_annual_eval_view");
-      } catch (e) {}
       const sp = new URLSearchParams(window.location.search);
-      if (sp.get("view") === "evaluation" || sp.get("tab") === "evaluation") return true;
-      return false;
+      if (sp.get("view") === "cc" || sp.get("tab") === "cc") return false;
+      return true;
     }
-    return false;
+    return true;
   });
   const [isPageTransitioning, setIsPageTransitioning] = useState<boolean>(false);
   const [isCombinedCallCenter, setIsCombinedCallCenter] = useState<boolean>(() => {
@@ -5319,10 +5316,10 @@ export default function Dashboard() {
                 <img src="/logo.webp" alt="FIB Logo" className="w-full h-full object-contain drop-shadow-sm" />
               </div>
               <h2 className="text-xl sm:text-[22px] font-bold tracking-tight text-gray-900 dark:text-white leading-snug">
-                Team Leader &amp; Agent Dashboard
+                Annual Evaluation Dashboard
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 font-medium">
-                Welcome back. Please sign in to access your scorecards.
+                Welcome back. Please sign in to access your annual evaluations.
               </p>
             </div>
             
@@ -5420,7 +5417,7 @@ export default function Dashboard() {
 
             <div className="mt-8 pt-5 border-t border-gray-100 dark:border-gray-800/80 flex flex-col items-center justify-center gap-1.5 text-gray-400 dark:text-gray-500 text-[11px] font-medium">
               <div className="text-[11.5px] font-semibold tracking-wide text-gray-500 dark:text-gray-400">
-                Designed &amp; Engineered by <span style={{ color: currentTheme?.primary || '#1C6B53' }} className="font-bold">{getSystemAuthor()}</span>
+                Designed by <span style={{ color: currentTheme?.primary || '#1C6B53' }} className="font-bold">{getSystemAuthor()}</span>
               </div>
             </div>
           </div>

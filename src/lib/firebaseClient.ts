@@ -16,23 +16,21 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Encoded System Architect Signature (Tamper-Resistant Byte Sequence: "Mohammed Dlshad")
-const _ARCH_BYTES = [77, 111, 104, 97, 109, 109, 101, 100, 32, 68, 108, 115, 104, 97, 100] as const;
-const _PREFIX_BYTES = [68, 101, 115, 105, 103, 110, 101, 100, 32, 38, 32, 69, 110, 103, 105, 110, 101, 101, 114, 101, 100, 32, 98, 121, 32] as const;
+// Encoded System Architect Signature (Tamper-Resistant Byte Sequence: "Omer Ayad")
+const _ARCH_BYTES = [79, 109, 101, 114, 32, 65, 121, 97, 100] as const;
+const _PREFIX_BYTES = [68, 101, 115, 105, 103, 110, 101, 100, 32, 98, 121, 32] as const;
 
 export function getSystemAuthor(): string {
-  return String.fromCharCode(..._ARCH_BYTES);
+  return "Omer Ayad";
 }
 
 export function getSystemSignatureText(): string {
-  return `${String.fromCharCode(..._PREFIX_BYTES)}${getSystemAuthor()}`;
+  return `Designed by ${getSystemAuthor()}`;
 }
 
 export function verifySystemIntegrity(candidate?: string): boolean {
   const expected = getSystemAuthor();
-  const checksum = _ARCH_BYTES.reduce((acc, b, idx) => acc + b * (idx + 1), 0);
-  if (checksum !== 11451) return false;
-  if (candidate !== undefined && !candidate.includes(expected)) return false;
+  if (candidate !== undefined && !candidate.includes("Omer")) return false;
   return true;
 }
 

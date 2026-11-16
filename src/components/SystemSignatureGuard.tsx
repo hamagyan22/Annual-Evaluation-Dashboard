@@ -42,7 +42,7 @@ export default function SystemSignatureGuard() {
         el.innerHTML = `
           <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:9999px;background:rgba(28,107,83,0.06);border:1px solid rgba(28,107,83,0.15);font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.2px;">
             <span style="width:6px;height:6px;border-radius:9999px;background:#10b981;display:inline-block;"></span>
-            <span>Designed &amp; Engineered by <strong style="color:#1C6B53;font-weight:900;">${author}</strong> • © ${new Date().getFullYear()}</span>
+            <span>Designed by <strong style="color:#1C6B53;font-weight:900;">${author}</strong> • © ${new Date().getFullYear()}</span>
           </div>
         `;
       }
@@ -101,7 +101,7 @@ export default function SystemSignatureGuard() {
       <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#1C6B53]/[0.06] dark:bg-emerald-950/40 border border-[#1C6B53]/15 dark:border-emerald-800/40 text-[11px] font-bold text-gray-500 dark:text-gray-400 tracking-wide shadow-2xs">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
         <span>
-          Designed &amp; Engineered by{" "}
+          Designed by{" "}
           <strong className="text-[#1C6B53] dark:text-emerald-400 font-black">
             {author}
           </strong>{" "}
