@@ -1831,7 +1831,11 @@ export default function AnnualEvaluationDashboard({
   };
 
   const handlePrint = () => {
-    window.print();
+    setTimeout(() => {
+      try {
+        window.print();
+      } catch (e) {}
+    }, 100);
   };
 
   return (

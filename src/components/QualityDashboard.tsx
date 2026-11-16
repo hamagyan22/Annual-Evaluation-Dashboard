@@ -20,6 +20,7 @@ import { ThemeSelectorModal } from "@/components/ThemeSelectorModal";
 import { TrendBadge } from "@/components/TrendBadge";
 import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
 import { useBodyScrollLock, initGlobalModalScrollLock } from "@/lib/scrollLock";
+import { openSafePrintWindow } from "@/lib/safePrintExport";
 
 interface QualityDashboardProps {
   userProfile: any;
@@ -3957,9 +3958,6 @@ export default function QualityDashboard({
       });
       const totalMonthAvg = allCnt > 0 ? (allSum / allCnt).toFixed(1) + "%" : "-";
 
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) return;
-
       const reportTitle = isCallMon ? "Random Call Monitoring Report" : "Call Training Evaluation Report";
       const reportSubtitle = isCallMon
         ? "Random Call Listening & Monitoring Evaluation • Younis Kamal & Ankido Buya Teams"
@@ -4065,15 +4063,17 @@ export default function QualityDashboard({
             <div>System Engineered by <strong style="color: #0d9488;">${getSystemAuthor()}</strong></div>
           </div>
           <script>
-            window.onload = function() { window.print(); }
+            window.addEventListener('load', function() {
+              setTimeout(function() {
+                try { window.print(); } catch(e) {}
+              }, 350);
+            });
           </script>
         </body>
         </html>
       `;
 
-      printWindow.document.open();
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
+      openSafePrintWindow(htmlContent, `${reportTitle} - ${MONTH_NAMES[trainerMonth]} ${selectedYear}`);
       return;
     }
 
@@ -4139,9 +4139,6 @@ export default function QualityDashboard({
         }
       });
       const totalWeekTeamAvg = weekAverages.length > 0 ? (weekAverages.reduce((a, b) => a + b, 0) / weekAverages.length).toFixed(1) + "%" : "-";
-
-      const printWindow = window.open("", "_blank");
-      if (!printWindow) return;
 
       const html = `
         <!DOCTYPE html>
@@ -4261,23 +4258,22 @@ export default function QualityDashboard({
               <div>System Engineered by <strong style="color: #00A991;">${getSystemAuthor()}</strong></div>
             </div>
             <script>
-              window.onload = function() { window.print(); }
+              window.addEventListener('load', function() {
+                setTimeout(function() {
+                  try { window.print(); } catch(e) {}
+                }, 350);
+              });
             </script>
           </body>
         </html>
       `;
-      printWindow.document.open();
-      printWindow.document.write(html);
-      printWindow.document.close();
+      openSafePrintWindow(html, `FIB_Quality_CShift_${selectedYear}_${selectedQuarter}_Week${selectedWeek}`);
       return;
     }
 
     const exportSectionSlug = getActiveSectionSlug(currentSection.evaluator);
 
     if (isBonus) {
-      const printWindow = window.open("", "_blank");
-      if (!printWindow) return;
-
       const rowsData = currentCsrs.map((csrName, idx) => {
         const slug = csrName.toLowerCase().replace(/[^a-z0-9]/g, "_");
         const docId = `${selectedYear}_${selectedQuarter}_${exportSectionSlug}_${slug}`;
@@ -4390,14 +4386,16 @@ export default function QualityDashboard({
               <div>System Engineered by <strong style="color: #00A991;">${getSystemAuthor()}</strong></div>
             </div>
             <script>
-              window.onload = function() { window.print(); }
+              window.addEventListener('load', function() {
+                setTimeout(function() {
+                  try { window.print(); } catch(e) {}
+                }, 350);
+              });
             </script>
           </body>
         </html>
       `;
-      printWindow.document.open();
-      printWindow.document.write(html);
-      printWindow.document.close();
+      openSafePrintWindow(html, `FIB_Quality_CShift_${selectedYear}_${selectedQuarter}_Week${selectedWeek}`);
       return;
     }
 
@@ -4488,9 +4486,6 @@ export default function QualityDashboard({
       }
     });
     const totalWeekTeamAvg = weekAverages.length > 0 ? (weekAverages.reduce((a, b) => a + b, 0) / weekAverages.length).toFixed(1) + "%" : "-";
-
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
 
     const html = `
       <!DOCTYPE html>
@@ -4820,19 +4815,17 @@ export default function QualityDashboard({
           </div>
 
           <script>
-            window.onload = function() {
+            window.addEventListener('load', function() {
               setTimeout(() => {
-                window.print();
-              }, 250);
-            };
+                try { window.print(); } catch(e) {}
+              }, 350);
+            });
           </script>
         </body>
       </html>
     `;
 
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
+    openSafePrintWindow(html, `FIB_Quality_${selectedYear}_${selectedQuarter}_Week${selectedWeek}_${currentSection.team.replace(/\s+/g, '_')}`);
   };
 
   // Synchronize completed quality evaluations to Team Leader and Agent dashboards (SEP 2026 onwards only)

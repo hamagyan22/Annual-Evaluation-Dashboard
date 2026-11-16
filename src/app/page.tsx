@@ -17,6 +17,7 @@ import { TrendBadge, isLowerBetterMetric } from "@/components/TrendBadge";
 import { UnifiedTopNavbar, ActiveDashboardType } from "@/components/UnifiedTopNavbar";
 import { useBodyScrollLock, initGlobalModalScrollLock } from "@/lib/scrollLock";
 import { QualitySessionModal } from "@/components/QualitySessionModal";
+import { openSafePrintWindow } from "@/lib/safePrintExport";
 
 type TeamName = 'Younis Kamal Team' | 'Ankido Buya Team' | 'Mohammed Dlshad Team';
 const TEAMS: TeamName[] = ['Younis Kamal Team', 'Ankido Buya Team', 'Mohammed Dlshad Team'];
@@ -6274,12 +6275,6 @@ export default function Dashboard() {
       : getEffectiveColumns(selectedTeam, selectedMonth, selectedYear, columnsMap[selectedTeam] || []);
 
     const handleExportTlPdf = () => {
-      const printWindow = window.open("", "_blank");
-      if (!printWindow) {
-        alert("Popup blocked! Please allow popups in your browser to download the Team Leader PDF report.");
-        return;
-      }
-
       const escapeHtml = (val: string) =>
         String(val || "")
           .replace(/&/g, "&amp;")
@@ -6816,13 +6811,17 @@ export default function Dashboard() {
     <span>FIB Contact Center &bull; Official Team Leader Weekly KPI Sign-off Sheet</span>
     <span>Electronic signatures &amp; timestamps synced from Q.S &amp; KPI Portal</span>
   </div>
-  <script>window.onload = function() { setTimeout(function(){ window.print(); }, 350); };</script>
+  <script>
+    window.addEventListener("load", function() {
+      setTimeout(function() {
+        try { window.print(); } catch (e) {}
+      }, 350);
+    });
+  </script>
 </body>
 </html>`;
 
-      printWindow.document.open();
-      printWindow.document.write(html);
-      printWindow.document.close();
+      openSafePrintWindow(html, docTitle);
       setShowTlPdfModal(false);
     };
 

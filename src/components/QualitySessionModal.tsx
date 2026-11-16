@@ -15,6 +15,7 @@ import {
   mergeQualityDocs, 
   SLUG_ALIASES 
 } from "@/lib/baselineQualityData";
+import { openSafePrintWindow } from "@/lib/safePrintExport";
 
 export interface QualitySessionModalProps {
   isOpen: boolean;
@@ -490,9 +491,6 @@ export function QualitySessionModal({
 
   // Export / Print Individual Session Sheet
   const handlePrintSessionSheet = () => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
     const escapeHtml = (val: string) =>
       String(val || "")
         .replace(/&/g, "&amp;")
@@ -616,12 +614,16 @@ export function QualitySessionModal({
       <span>Document ID: ${escapeHtml(kpiSessionDocId)}</span>
     </div>
   </div>
-  <script>window.onload = function() { setTimeout(function(){ window.print(); }, 300); };</script>
+  <script>
+    window.addEventListener("load", function() {
+      setTimeout(function() {
+        try { window.print(); } catch (e) {}
+      }, 350);
+    });
+  </script>
 </body>
 </html>`;
-      printWindow.document.open();
-      printWindow.document.write(kpiHtml);
-      printWindow.document.close();
+      openSafePrintWindow(kpiHtml, `KPI_Signoff_${agentName}_${selectedYear}_${selectedQuarter}_W${selectedWeek}`);
       return;
     }
 
@@ -745,15 +747,17 @@ export function QualitySessionModal({
           </div>
 
           <script>
-            window.onload = function() { window.print(); };
+            window.addEventListener("load", function() {
+              setTimeout(function() {
+                try { window.print(); } catch (e) {}
+              }, 350);
+            });
           </script>
         </body>
       </html>
     `;
 
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
+    openSafePrintWindow(html, `Quality_Session_${agentName}_${selectedYear}_${selectedQuarter}_W${selectedWeek}`);
   };
 
   if (!isOpen) return null;
