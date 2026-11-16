@@ -9,18 +9,33 @@ export interface Translations {
   languageButton: string;
 
   // Toolbar
-  annualBadge: string;
-  manageCriteria: string;
-  manageStaff: string;
-  whosPending: string;
-  printPdf: string;
+  criteriaButton: string;
+  staffButton: string;
+  whosPendingButton: string;
+  printPdfButton: string;
   selectEmployeePrompt: string;
+  totalEmployees: string;
   availableCount: string;
+  directTeamSubordinates: string;
   searchEmployeePlaceholder: string;
+  searchEmployeeSubordinatesPlaceholder: string;
+  allStaffAndDepts: string;
+  matchingSearch: string;
+  membersInScope: string;
+  membersIn: string;
+  directReportingScope: string;
+  voiceCallsScope: string;
+  digitalChatScope: string;
+  specializedOpsScope: string;
+  allOrgScope: string;
+  noEmployeesFound: string;
 
   // Hero Card
+  annualBadge: string;
   submittedAt: string;
   viewOnly: string;
+  directManagerLabel: string;
+  departmentChiefLabel: string;
   finalScore: string;
   ratingTier: string;
   status: string;
@@ -42,63 +57,98 @@ export interface Translations {
   tier2: string;
   tier1: string;
 
-  // Evaluation Table
-  section1Title: string;
-  section1Desc: string;
-  section2Title: string;
-  section2Desc: string;
-  colMetric: string;
+  // Section 1
+  sec1TrainerTitle: string;
+  sec1QaTitle: string;
+  sec1TlTitle: string;
+  sec1BackOfficeTitle: string;
+  sec1DefaultTitle: string;
+  sec1DescLeadership: string;
+  sec1DescAgent: string;
+  colKpiMetric: string;
+  colActualResult: string;
   colSelf: string;
   colManager: string;
   colGap: string;
-  colAction: string;
-  sectionAverage: string;
+  colNotes: string;
+  addNoteBtn: string;
+  noteCountBtn: string;
   awaitingReview: string;
-  addCriterionToSection: string;
+  finalScoreAverage: string;
 
-  // Summary Section
-  overallSummaryTitle: string;
+  // Section 2
+  sec2Title: string;
+  sec2Desc: string;
+  colCompetency: string;
+  competencyAverageRow: string;
+
+  // Section 3
+  sec3Title: string;
+  agentSelfReviewCard: string;
   selfReviewCard: string;
   managerReviewCard: string;
   officialFinalRatingCard: string;
   kpiAverage: string;
   competencyAverage: string;
   combinedScore: string;
-  officialRatingDescription: string;
+  officialBadge: string;
+  selfBadge: string;
+  pendingBadge: string;
+  awaitingManagerApproval: string;
+  completeEvalMsg: string;
 
-  // Qualitative Feedback & Notes
-  keyStrengths: string;
-  areasForDevelopment: string;
-  managerComments: string;
-  employeeComments: string;
-  strengthsPlaceholder: string;
-  improvementsPlaceholder: string;
-  managerCommentsPlaceholder: string;
-  employeeCommentsPlaceholder: string;
-  colNotes: string;
-  addNote: string;
-  noteAdded: string;
-  notesSectionTitle: string;
-  notesSectionSubtitle: string;
-  noteAuthorManager: string;
-  noteAuthorEmployee: string;
-  noteTopicLabel: string;
-  topicAchievement: string;
+  // Section 4
+  sec4Title: string;
+  sec4Subtitle: string;
+  employeeNotesTitle: string;
+  employeeNotesDesc: string;
+  managerNotesTitle: string;
+  managerNotesDesc: string;
+  empPlaceholderActive: string;
+  empPlaceholderEmpty: string;
+  mgrPlaceholderActive: string;
+  mgrPlaceholderEmpty: string;
+
+  // Print Section
+  empSig: string;
+  mgrSig: string;
+  chiefSig: string;
+  designedBy: string;
+  reportFooterOrg: string;
+
+  // Bottom Actions Bar
+  lastSavedText: string;
+  noChangesSaved: string;
+  saveDraftBtn: string;
+  submitSelfBtn: string;
+  updateSelfBtn: string;
+  approveFinalizeBtn: string;
+  updateFinalizeBtn: string;
+  evalFinalizedBadge: string;
+
+  // Criterion Drawer
+  drawerTitle: string;
+  drawerManagerTab: string;
+  drawerEmployeeTab: string;
+  drawerTopicLabel: string;
+  drawerClose: string;
   topicJustification: string;
+  topicAchievement: string;
   topicImprovement: string;
   topicIncident: string;
   topicGeneral: string;
-  noteTextPlaceholder: string;
-  closeNote: string;
-  saveNote: string;
 
-  // Footer Actions
-  lastSaved: string;
-  saveDraft: string;
-  submitSelf: string;
-  updateSelf: string;
-  approveFinalize: string;
-  updateFinalize: string;
+  // Coverage Modal
+  coverageTitle: string;
+  coverageSubtitle: string;
+  filterAll: string;
+  filterPending: string;
+  filterCompleted: string;
+  coverageSearchPlaceholder: string;
+  noEmployeesMatch: string;
+  evaluateEmployeeBtn: string;
+  closeBtn: string;
+  showingCount: string;
 
   // Modals
   criteriaModalTitle: string;
@@ -114,7 +164,6 @@ export interface Translations {
   existingCriteriaTitle: string;
   newSectionBtn: string;
   resetDefaultsBtn: string;
-  closeBtn: string;
 
   staffModalTitle: string;
   staffModalSubtitle: string;
@@ -139,32 +188,47 @@ export interface Translations {
 export const TRANSLATIONS: Record<Language, Translations> = {
   en: {
     // Top Header
-    appTitle: "Performance Evaluation",
-    appSubtitle: "Annual Performance Review",
+    appTitle: "Annual Evaluation Dashboard",
+    appSubtitle: "Annual Performance Review & Scorecards",
     evaluationTab: "Evaluation",
     adminBadge: "ADMIN",
     languageButton: "العربية",
 
     // Toolbar
-    annualBadge: "Annual Evaluation",
-    manageCriteria: "Manage Criteria",
-    manageStaff: "Employees & Departments",
-    whosPending: "Who's Pending?",
-    printPdf: "Print / PDF",
+    criteriaButton: "Criteria",
+    staffButton: "Staff & Rosters",
+    whosPendingButton: "Who's Pending?",
+    printPdfButton: "Print / PDF",
     selectEmployeePrompt: "Select Employee...",
+    totalEmployees: "Total Employees",
     availableCount: "Available",
+    directTeamSubordinates: "Direct Team & Subordinates",
     searchEmployeePlaceholder: "Search employee across all teams...",
+    searchEmployeeSubordinatesPlaceholder: "Search employee in your reporting line...",
+    allStaffAndDepts: "All Staff & Departments",
+    matchingSearch: "Matching Search",
+    membersInScope: "Members in Your Evaluation Scope",
+    membersIn: "Members in",
+    directReportingScope: "Direct Reporting",
+    voiceCallsScope: "Voice Calls",
+    digitalChatScope: "Digital Chat",
+    specializedOpsScope: "Specialized Operations",
+    allOrgScope: "All Organization",
+    noEmployeesFound: "No employees found",
 
     // Hero Card
+    annualBadge: "ANNUAL",
     submittedAt: "Submitted:",
     viewOnly: "View Only",
+    directManagerLabel: "Direct Manager:",
+    departmentChiefLabel: "Department Chief:",
     finalScore: "Final Score",
     ratingTier: "Rating Tier",
     status: "Status",
     draft: "Draft",
     selfDone: "Self Done",
     finalized: "Finalized",
-    pendingReview: "Pending Review",
+    pendingReview: "Pending",
     contactCenter: "Contact Center",
     teamLeader: "Team Leader",
     trainer: "Trainer",
@@ -179,63 +243,98 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     tier2: "Developing",
     tier1: "Needs Improvement",
 
-    // Evaluation Table
-    section1Title: "Leadership & Role KPI Evaluation",
-    section1Desc: "Role-specific operational and leadership KPIs evaluated manually on an executive 1 to 5 scale.",
-    section2Title: "Core Competencies Evaluation",
-    section2Desc: "Assessment of core institutional competencies and behavioral indicators (Rate 1 to 5).",
-    colMetric: "Role KPI Metric & Objectives",
+    // Section 1
+    sec1TrainerTitle: "Training Performance KPI Evaluation",
+    sec1QaTitle: "Quality Assurance KPI Evaluation",
+    sec1TlTitle: "Leadership & Team Management KPI Evaluation",
+    sec1BackOfficeTitle: "Back Office Operational KPI Evaluation",
+    sec1DefaultTitle: "Operational KPI Evaluation",
+    sec1DescLeadership: "Role-specific operational KPIs evaluated manually on an executive 1 to 5 scale.",
+    sec1DescAgent: "Operational performance metrics evaluation (Rate 1 to 5).",
+    colKpiMetric: "Role KPI Metric & Objectives",
+    colActualResult: "Actual Result",
     colSelf: "Self-Evaluation",
     colManager: "Manager Evaluation",
     colGap: "Gap",
-    colAction: "Action",
-    sectionAverage: "Section Average (1-5):",
+    colNotes: "Notes",
+    addNoteBtn: "+ Note",
+    noteCountBtn: "Note",
     awaitingReview: "Awaiting Review",
-    addCriterionToSection: "Add Criterion to Section",
+    finalScoreAverage: "Final Score (1-5 Average)",
 
-    // Summary Section
-    overallSummaryTitle: "Overall Performance Summary",
+    // Section 2
+    sec2Title: "Core Competencies Evaluation",
+    sec2Desc: "Assessment of the core institutional competencies (Rate 1 to 5).",
+    colCompetency: "Competency & Behavioral Indicators",
+    competencyAverageRow: "Competency Average (1-5)",
+
+    // Section 3
+    sec3Title: "Overall Performance Summary",
+    agentSelfReviewCard: "Agent Self-Review",
     selfReviewCard: "Self-Review",
     managerReviewCard: "Manager Review",
-    officialFinalRatingCard: "OFFICIAL FINAL RATING",
+    officialFinalRatingCard: "Official Final Rating",
     kpiAverage: "KPI Average:",
     competencyAverage: "Competency Average:",
     combinedScore: "Combined Score:",
-    officialRatingDescription: "Frequently performs above expectations and consistently delivers high-quality work.",
+    officialBadge: "Official",
+    selfBadge: "Self",
+    pendingBadge: "Pending",
+    awaitingManagerApproval: "Awaiting Manager Approval",
+    completeEvalMsg: "Complete evaluation to compute official final score.",
 
-    // Qualitative Feedback & Notes
-    keyStrengths: "Key Strengths",
-    areasForDevelopment: "Areas for Development",
-    managerComments: "Manager Comments & Recommendations",
-    employeeComments: "Employee Self-Reflection & Goals",
-    strengthsPlaceholder: "Highlight key accomplishments, standout contributions, and exemplary performance...",
-    improvementsPlaceholder: "Identify focus areas, skill development targets, and training priorities...",
-    managerCommentsPlaceholder: "Official management review, observations, and recommendations for the year...",
-    employeeCommentsPlaceholder: "Employee self-reflection, achievements, challenges, and goals for the upcoming year...",
-    colNotes: "Notes",
-    addNote: "+ Note",
-    noteAdded: "Note Added",
-    notesSectionTitle: "Performance Notes & Development Plans",
-    notesSectionSubtitle: "Executive feedback, employee self-reflection, strengths, and areas for improvement.",
-    noteAuthorManager: "Manager Note",
-    noteAuthorEmployee: "Employee Note",
-    noteTopicLabel: "Note Topic / Reason",
-    topicAchievement: "Standout Achievement",
+    // Section 4
+    sec4Title: "Qualitative Notes & Feedback",
+    sec4Subtitle: "Notes, self-reflection, and manager recommendations for this annual evaluation cycle",
+    employeeNotesTitle: "Employee Notes & Self-Reflection",
+    employeeNotesDesc: "Key accomplishments, challenges faced, aspirations, and reflections on performance.",
+    managerNotesTitle: "Manager Notes & Recommendations",
+    managerNotesDesc: "Direct manager review, strengths, coaching areas, and strategic feedback.",
+    empPlaceholderActive: "Enter your self-reflection, personal milestones, and observations...",
+    empPlaceholderEmpty: "No employee notes recorded yet.",
+    mgrPlaceholderActive: "Enter leadership feedback, guidance, and development recommendations...",
+    mgrPlaceholderEmpty: "No manager notes recorded yet.",
+
+    // Print Section
+    empSig: "Employee Signature:",
+    mgrSig: "Direct Manager Signature:",
+    chiefSig: "Department Chief Signature:",
+    designedBy: "Designed by Omer Ayad • © 2026",
+    reportFooterOrg: "First Iraqi Bank • Annual Performance Evaluation Report",
+
+    // Bottom Actions Bar
+    lastSavedText: "Last Saved:",
+    noChangesSaved: "No changes saved yet",
+    saveDraftBtn: "Save Draft",
+    submitSelfBtn: "Submit Self-Evaluation",
+    updateSelfBtn: "Update Self-Evaluation",
+    approveFinalizeBtn: "Approve & Finalize Evaluation",
+    updateFinalizeBtn: "Update & Finalize Evaluation",
+    evalFinalizedBadge: "Evaluation Finalized by Management",
+
+    // Criterion Drawer
+    drawerTitle: "Evaluation Notes for:",
+    drawerManagerTab: "Manager Note",
+    drawerEmployeeTab: "Employee Note",
+    drawerTopicLabel: "Note Topic / Reason",
+    drawerClose: "Close",
     topicJustification: "Score Justification",
+    topicAchievement: "Standout Achievement",
     topicImprovement: "Area for Improvement",
     topicIncident: "Specific Case / Incident",
     topicGeneral: "General Observation",
-    noteTextPlaceholder: "Enter specific feedback, observations, or rationale for this metric...",
-    closeNote: "Done",
-    saveNote: "Save Note",
 
-    // Footer Actions
-    lastSaved: "Last Saved:",
-    saveDraft: "Save Draft",
-    submitSelf: "Submit Self-Evaluation",
-    updateSelf: "Update Self-Evaluation",
-    approveFinalize: "Approve & Finalize Evaluation",
-    updateFinalize: "Update & Finalize Evaluation",
+    // Coverage Modal
+    coverageTitle: "Employee Evaluation Coverage Tracker",
+    coverageSubtitle: "Real-time annual evaluation status across all teams",
+    filterAll: "All Statuses",
+    filterPending: "Pending Only",
+    filterCompleted: "Completed Only",
+    coverageSearchPlaceholder: "Search by name, ID or team...",
+    noEmployeesMatch: "No employees match the selected filter",
+    evaluateEmployeeBtn: "Evaluate Employee",
+    closeBtn: "Close",
+    showingCount: "Showing {0} of {1} employees",
 
     // Modals
     criteriaModalTitle: "Annual Criteria Management",
@@ -251,7 +350,6 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     existingCriteriaTitle: "Active Criteria",
     newSectionBtn: "New Section",
     resetDefaultsBtn: "Reset to Defaults",
-    closeBtn: "Done & Close",
 
     staffModalTitle: "Employees & Departments Management",
     staffModalSubtitle: "Add, edit, and organize staff rosters and departments for annual evaluation",
@@ -274,31 +372,46 @@ export const TRANSLATIONS: Record<Language, Translations> = {
   },
   ar: {
     // Top Header
-    appTitle: "تقييم الأداء",
-    appSubtitle: "مراجعة وتقييم الأداء السنوي",
+    appTitle: "لوحة التقييم السنوي",
+    appSubtitle: "مراجعة وتقييم الأداء السنوي وبطاقات الأداء المعتمدة",
     evaluationTab: "التقييم",
     adminBadge: "مسؤول",
     languageButton: "English",
 
     // Toolbar
-    annualBadge: "التقييم السنوي",
-    manageCriteria: "معايير التقييم",
-    manageStaff: "الموظفين والأقسام",
-    whosPending: "المتبقون للتقييم",
-    printPdf: "طباعة / PDF",
+    criteriaButton: "معايير التقييم",
+    staffButton: "الموظفين والأقسام",
+    whosPendingButton: "المتبقون للتقييم",
+    printPdfButton: "طباعة / PDF",
     selectEmployeePrompt: "اختر الموظف...",
+    totalEmployees: "إجمالي الموظفين",
     availableCount: "متاح",
-    searchEmployeePlaceholder: "بحث عن موظف في كافة الفرق...",
+    directTeamSubordinates: "الفريق المباشر والمرؤوسون",
+    searchEmployeePlaceholder: "بحث عن موظف في كافة الفرق والأقسام...",
+    searchEmployeeSubordinatesPlaceholder: "بحث عن موظف في نطاق إشرافك...",
+    allStaffAndDepts: "كافة الموظفين والأقسام",
+    matchingSearch: "مطابق للبحث",
+    membersInScope: "موظف في نطاق التقييم الخاص بك",
+    membersIn: "موظف في",
+    directReportingScope: "التبعية المباشرة",
+    voiceCallsScope: "المكالمات الصوتية",
+    digitalChatScope: "المحادثة الرقمية",
+    specializedOpsScope: "العمليات التخصصية",
+    allOrgScope: "كافة المنظمة",
+    noEmployeesFound: "لم يتم العثور على موظفين",
 
     // Hero Card
-    submittedAt: "تاريخ الإرسال:",
+    annualBadge: "التقييم السنوي",
+    submittedAt: "تاريخ الاعتماد / الإرسال:",
     viewOnly: "للقراءة فقط",
+    directManagerLabel: "المدير المباشر:",
+    departmentChiefLabel: "شيف / رئيس القسم:",
     finalScore: "الدرجة النهائية",
     ratingTier: "فئة التقييم",
     status: "الحالة",
     draft: "مسودة",
     selfDone: "تم الذاتي",
-    finalized: "معتمد رسمي",
+    finalized: "معتمد نهائياً",
     pendingReview: "قيد المراجعة",
     contactCenter: "مركز خدمة العملاء",
     teamLeader: "قائد فريق",
@@ -307,70 +420,105 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     backOffice: "العمليات والدعم",
 
     // Rating Scale Legend
-    ratingScaleTitle: "مقياس التقييم الرسمي (1 إلى 5):",
+    ratingScaleTitle: "مقياس التقييم الرسمي المعتمد (1 إلى 5):",
     tier5: "متميز جداً",
     tier4: "يفوق التوقعات",
     tier3: "يلبي التوقعات",
     tier2: "يحتاج تطوير",
-    tier1: "غير مرضٍ",
+    tier1: "غير مرضٍ / يحتاج تحسين",
 
-    // Evaluation Table
-    section1Title: "تقييم مؤشرات الأداء الوظيفي والقيادي",
-    section1Desc: "مؤشرات أداء تشغيلية وقيادية يتم تقييمها على مقياس تنفيذي من 1 إلى 5 درجات.",
-    section2Title: "تقييم الكفاءات والسلوكيات المؤسسية",
-    section2Desc: "تقييم الكفاءات والسلوكيات المؤسسية الأساسية المعتمدة (من 1 إلى 5 درجات).",
-    colMetric: "معيار التقييم والمؤشرات السلوكية",
+    // Section 1
+    sec1TrainerTitle: "تقييم مؤشرات أداء التدريب والتأهيل",
+    sec1QaTitle: "تقييم مؤشرات أداء إدارة الجودة",
+    sec1TlTitle: "تقييم مؤشرات القيادة وإدارة الفرق التشغيلية",
+    sec1BackOfficeTitle: "تقييم مؤشرات أداء العمليات الخلفية",
+    sec1DefaultTitle: "تقييم مؤشرات الأداء التشغيلي",
+    sec1DescLeadership: "مؤشرات أداء تشغيلية وقيادية يتم تقييمها على مقياس تنفيذي من 1 إلى 5 درجات.",
+    sec1DescAgent: "تقييم مؤشرات الأداء التشغيلي والمستهدفات (من 1 إلى 5 درجات).",
+    colKpiMetric: "معيار التقييم والمؤشرات المستهدفة",
+    colActualResult: "النتيجة الفعلية",
     colSelf: "التقييم الذاتي",
     colManager: "تقييم المدير المسؤول",
     colGap: "الفارق",
-    colAction: "إجراء",
-    sectionAverage: "معدل القسم (1-5):",
+    colNotes: "الملاحظات",
+    addNoteBtn: "+ ملاحظة",
+    noteCountBtn: "ملاحظة",
     awaitingReview: "بانتظار تقييم المدير",
-    addCriterionToSection: "إضافة معيار لهذا القسم",
+    finalScoreAverage: "الدرجة النهائية (معدل 1-5)",
 
-    // Summary Section
-    overallSummaryTitle: "ملخص التقييم العام لأداء الموظف",
-    selfReviewCard: "التقييم الذاتي للموظف",
+    // Section 2
+    sec2Title: "تقييم الكفاءات والسلوكيات المؤسسية",
+    sec2Desc: "تقييم الكفاءات والسلوكيات المؤسسية الأساسية المعتمدة (من 1 إلى 5 درجات).",
+    colCompetency: "الكفاءة والمؤشرات السلوكية",
+    competencyAverageRow: "معدل الكفاءات (1-5)",
+
+    // Section 3
+    sec3Title: "ملخص التقييم العام لأداء الموظف",
+    agentSelfReviewCard: "التقييم الذاتي للموظف",
+    selfReviewCard: "التقييم الذاتي",
     managerReviewCard: "تقييم المدير المسؤول",
     officialFinalRatingCard: "التقييم النهائي المعتمد",
     kpiAverage: "معدل مؤشرات الأداء:",
     competencyAverage: "معدل الكفاءات:",
     combinedScore: "الدرجة المشتركة:",
-    officialRatingDescription: "أداء متميز يفوق التوقعات المحددة بانتظام وبجودة عمل عالية.",
+    officialBadge: "معتمد رسمي",
+    selfBadge: "ذاتي",
+    pendingBadge: "قيد المراجعة",
+    awaitingManagerApproval: "بانتظار اعتماد المدير",
+    completeEvalMsg: "أكمل درجات التقييم لاحتساب النتيجة الرسمية المعتمدة.",
 
-    // Qualitative Feedback & Notes
-    keyStrengths: "أبرز نقاط القوة والإنجازات",
-    areasForDevelopment: "مجالات التحسين والتطوير المستقبلي",
-    managerComments: "ملاحظات وتوصيات الإدارة والمدير",
-    employeeComments: "ملاحظات وتطلعات الموظف الذاتية",
-    strengthsPlaceholder: "أبرز الإنجازات والمهارات الاستثنائية التي قدمها الموظف خلال العام...",
-    improvementsPlaceholder: "الفرص التدريبية ومجالات التطوير المقترحة للمرحلة القادمة...",
-    managerCommentsPlaceholder: "التقييم النهائي والتوجيهات الإدارية السنوية وتوصيات التطوير من قبل المسؤول...",
-    employeeCommentsPlaceholder: "التقييم الذاتي للموظف، التحديات، والأهداف المهنية للعام القادم...",
-    colNotes: "الملاحظات",
-    addNote: "+ ملاحظة",
-    noteAdded: "ملاحظة مسجلة",
-    notesSectionTitle: "قسم الملاحظات والتوصيات وخطط التطوير",
-    notesSectionSubtitle: "ملاحظات تفصيلية وتوصيات إدارية، تطلعات الموظف، نقاط القوة، ومجالات التطوير.",
-    noteAuthorManager: "ملاحظة المدير",
-    noteAuthorEmployee: "ملاحظة الموظف",
-    noteTopicLabel: "محور الملاحظة (على شنو النوت)",
-    topicAchievement: "إنجاز متميز واستثنائي",
+    // Section 4
+    sec4Title: "الملاحظات النوعية والتوصيات وخطط التطوير",
+    sec4Subtitle: "ملاحظات تفصيلية وتطلعات الموظف الذاتية وتوصيات المدير للدورة التقييمية",
+    employeeNotesTitle: "ملاحظات وتطلعات الموظف الذاتية",
+    employeeNotesDesc: "أبرز الإنجازات المحققة، التحديات التي واجهها، والتطلعات المهنية لتطوير الأداء.",
+    managerNotesTitle: "ملاحظات وتوجيهات المدير والمسؤول المباشر",
+    managerNotesDesc: "تقييم المسؤول المباشر، نقاط القوة، مجالات التوجيه، والتوصيات الاستراتيجية للمرحلة القادمة.",
+    empPlaceholderActive: "اكتب ملاحظاتك وتطلعاتك الذاتية وأبرز إنجازاتك خلال العام...",
+    empPlaceholderEmpty: "لم تسجل أي ملاحظات ذاتية حتى الآن.",
+    mgrPlaceholderActive: "اكتب توجيهات الإدارة، الملاحظات التقييمية، وتوصيات التطوير المهني...",
+    mgrPlaceholderEmpty: "لم تسجل أي ملاحظات للمدير حتى الآن.",
+
+    // Print Section
+    empSig: "توقيع الموظف:",
+    mgrSig: "توقيع المدير المباشر:",
+    chiefSig: "توقيع شيف / رئيس القسم:",
+    designedBy: "تصميم وتطوير: عمر إياد • © 2026",
+    reportFooterOrg: "المصرف العراقي الأول • تقرير التقييم السنوي للأداء",
+
+    // Bottom Actions Bar
+    lastSavedText: "آخر حفظ:",
+    noChangesSaved: "لم يتم حفظ أي تغييرات بعد",
+    saveDraftBtn: "حفظ كمسودة",
+    submitSelfBtn: "إرسال التقييم الذاتي",
+    updateSelfBtn: "تحديث التقييم الذاتي",
+    approveFinalizeBtn: "اعتماد وتثبيت التقييم السنوي",
+    updateFinalizeBtn: "تحديث واعتماد التقييم السنوي",
+    evalFinalizedBadge: "تم اعتماد التقييم نهائياً من قبل الإدارة",
+
+    // Criterion Drawer
+    drawerTitle: "ملاحظات التقييم لمعيار:",
+    drawerManagerTab: "ملاحظة المدير",
+    drawerEmployeeTab: "ملاحظة الموظف",
+    drawerTopicLabel: "محور الملاحظة (على شنو النوت)",
+    drawerClose: "إغلاق",
     topicJustification: "تبرير الدرجة والأدلة",
+    topicAchievement: "إنجاز متميز واستثنائي",
     topicImprovement: "نقطة للتحسين وخطة عمل",
     topicIncident: "متابعة حالة أو موقف محدد",
     topicGeneral: "ملاحظة عامة",
-    noteTextPlaceholder: "اكتب الملاحظات، تبرير الدرجة، أو شواهد الأداء لهذا المعيار...",
-    closeNote: "تم",
-    saveNote: "حفظ الملاحظة",
 
-    // Footer Actions
-    lastSaved: "آخر حفظ:",
-    saveDraft: "حفظ كمسودة",
-    submitSelf: "إرسال التقييم الذاتي",
-    updateSelf: "تحديث التقييم الذاتي",
-    approveFinalize: "اعتماد وتثبيت التقييم السنوي",
-    updateFinalize: "تحديث واعتماد التقييم السنوي",
+    // Coverage Modal
+    coverageTitle: "متابعة تغطية التقييم السنوي للموظفين",
+    coverageSubtitle: "حالة التقييم السنوي اللحظية لكافة الأقسام والفرق",
+    filterAll: "كافة الحالات",
+    filterPending: "المتبقون فقط",
+    filterCompleted: "المكتملون فقط",
+    coverageSearchPlaceholder: "بحث بالاسم، الرقم الوظيفي، أو الفريق...",
+    noEmployeesMatch: "لا يوجد موظفون مطابقون لهذا الفلتر",
+    evaluateEmployeeBtn: "تقييم الموظف",
+    closeBtn: "إغلاق",
+    showingCount: "عرض {0} من أصل {1} موظف",
 
     // Modals
     criteriaModalTitle: "إدارة معايير التقييم السنوي",
@@ -386,7 +534,6 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     existingCriteriaTitle: "المعايير المسجلة حالياً",
     newSectionBtn: "قسم جديد",
     resetDefaultsBtn: "إعادة التعيين للافتراضي",
-    closeBtn: "تم وإغلاق",
 
     staffModalTitle: "إدارة الموظفين والأقسام",
     staffModalSubtitle: "إضافة وتعديل بيانات الموظفين والأقسام للتقييم السنوي",

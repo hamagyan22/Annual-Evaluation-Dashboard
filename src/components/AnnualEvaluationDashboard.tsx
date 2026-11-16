@@ -24,6 +24,7 @@ import { BASELINE_ANNUAL_EVALUATIONS } from "@/lib/baselineAnnualEvaluations";
 import { useBodyScrollLock } from "@/lib/scrollLock";
 import { ManageCriteriaModal } from "@/components/ManageCriteriaModal";
 import { ManageStaffModal } from "@/components/ManageStaffModal";
+import { TRANSLATIONS, Language } from "@/lib/translations";
 import { 
   loadStoredCriteria, saveStoredCriteria,
   loadStoredSections, saveStoredSections,
@@ -127,12 +128,130 @@ export function getRatingButtonClass(level: number, isActive: boolean) {
   }
 }
 
-export function getRatingInfo(score: number) {
-  if (score >= 4.5) return RATING_LEVELS[0];
-  if (score >= 3.5) return RATING_LEVELS[1];
-  if (score >= 2.5) return RATING_LEVELS[2];
-  if (score >= 1.5) return RATING_LEVELS[3];
-  return RATING_LEVELS[4];
+export const COMPETENCY_DEFINITIONS_AR: Record<string, { id: string; name: string; description: string }> = {
+  communication: {
+    id: "communication",
+    name: "التواصل الفعّال واللباقة",
+    description: "نقل المعلومات بوضوح ولباقة واحترافية، والاستماع الفعّال، والتعاطف، والالتزام بأعلى معايير اللباقة مع العملاء والزملاء."
+  },
+  problem_solving: {
+    id: "problem_solving",
+    name: "حل المشكلات والتعامل مع الحالات",
+    description: "تشخيص احتياجات العملاء بسرعة ودقة وتقديم حلول عملية متوافقة مع السياسات المصرفية، مع الحفاظ على الهدوء والوضوح أثناء التصعيد."
+  },
+  accountability: {
+    id: "accountability",
+    name: "المسؤولية وتحمل النتائج",
+    description: "تحمل الملكية الكاملة للمهام والنتائج، والوفاء بالالتزامات، وتصحيح الأخطاء بصورة بناءة دون الحاجة لإشراف مستمر."
+  },
+  initiative: {
+    id: "initiative",
+    name: "المبادرة والتطوير المستمر",
+    description: "المبادرة باقتراح تحسينات لإجراءات العمل، ومساعدة أعضاء الفريق، والبحث المستمر عن فرص التطوير المهني والذاتي."
+  },
+  responsibility: {
+    id: "responsibility",
+    name: "الالتزام والنزاهة المؤسسية",
+    description: "الالتزام التام بسياسات المصرف وضوابط أمن البيانات والسرية المصرفية ومواعيد العمل، مع التحلي بأعلى درجات النزاهة والموثوقية."
+  },
+  team_work: {
+    id: "team_work",
+    name: "العمل الجماعي والتعاون",
+    description: "التعاون الإيجابي مع الزملاء والقادة، ومشاركة المعرفة والخبرات، ودعم أعضاء الفريق في أوقات ضغط العمل وتعزيز الروح الإيجابية."
+  },
+  digitalization: {
+    id: "digitalization",
+    name: "التحول الرقمي والتقنيات الحديثة",
+    description: "الاستفادة الفعّالة من الأدوات الرقمية الحديثة والأنظمة المصرفية وأتمتة المهام لرفع جودة وكفاءة العمليات."
+  }
+};
+
+export const KPI_DEFINITIONS_AR: Record<string, { name: string; description?: string }> = {
+  qa: { name: "معدل جودة الخدمة (QA)", description: "تحقيق المستهدف المعتمد لجودة المكالمات والمحادثات وخدمة العملاء والالتزام بالمعايير المصرفية." },
+  aht: { name: "معدل وقت معالجة المكالمة (AHT)", description: "كفاءة إدارة المكالمة والتحكم في وقت المعالجة بما يطابق مستهدفات البنك." },
+  productivity: { name: "معدل الإنتاجية المستهدفة (Productivity)", description: "نسبة تحقيق مستهدفات الإنتاجية وحجم المعاملات المنجزة." },
+  attendance: { name: "الالتزام ومواعيد الدوام (Attendance)", description: "الالتزام التام بجدول الشفتات ومواعيد العمل والسياسات المصرفية." },
+  attendance_commitment: { name: "الالتزام ومواعيد الدوام", description: "الالتزام التام بجدول الشفتات ومواعيد العمل والسياسات المصرفية." },
+  exam: { name: "اختبار المعرفة المصرفية (Exam)", description: "تحقيق نتائج متميزة في اختبارات المعرفة والمنتجات المصرفية الدورية." },
+  knowledge: { name: "المعرفة بالمنتجات المصرفية (Knowledge)", description: "الإلمام الكامل بالمنتجات والخدمات المصرفية وإجراءات العمل." },
+  art: { name: "معدل زمن الاستجابة (ART)", description: "سرعة وكفاءة الرد على رسائل واستفسارات المحادثة الرقمية للعملاء." },
+  first_response: { name: "زمن أول استجابة (First Response)", description: "سرعة الرد على المحادثة فور بدء العميل للتواصل." },
+  leadership: { name: "القيادة وإدارة الفريق", description: "التوجيه الفعّال والتحفيز ودعم أعضاء الفريق لتحقيق التميز التشغيلي." },
+  team_kpi: { name: "تحقيق مؤشرات أداء الفريق (Team KPI)", description: "تحقيق مستهدفات مستوى الخدمة والجودة والإنتاجية لكافة أعضاء الفريق." },
+  evaluation_accuracy: { name: "دقة التقييم والمعايرة", description: "ضمان دقة وموثوقية تدقيق المكالمات وتطابق المعايرة مع المعايير المعتمدة." },
+  team_improvement: { name: "تطوير أداء الفريق وتقليل الأخطاء", description: "تحقيق تحسن ملموس في أداء الموظفين ومعالجة نقاط الضعف عبر التوجيه المستمر." },
+  reporting: { name: "التقارير وسير العمل التشغيلي", description: "تقديم تقارير الأداء اليومية والتسليم والتحليلات والخطط التصحيحية في مواعيدها." },
+  accuracy: { name: "دقة العمليات والبيانات (Accuracy)", description: "تنفيذ العمليات بنسبة خطأ صفر وضمان صحة وسلامة البيانات المصرفية." },
+  sla_compliance: { name: "الالتزام باتفاقية مستوى الخدمة (SLA)", description: "إنجاز المعاملات ضمن الأوقات المحددة للخدمة والالتزام بالمواعيد النهائية." },
+  followup_efficiency: { name: "كفاءة المتابعة والإنجاز", description: "متابعة الحالات المعلقة والتنسيق بين الأقسام لحل استفسارات العملاء." },
+  ticket_management: { name: "إدارة التذاكر والطلبات", description: "إدارة طابور التذاكر وتوثيق الحالة وإغلاق المعاملات بدقة وسرعة." },
+  session: { name: "جلسات التدريب والمعايرة", description: "عقد جلسات تدريبية وتوجيهية وتغذية راجعة دورية لرفع الكفاءة." }
+};
+
+export function getLocalizedDeptName(deptName: string, isAr: boolean) {
+  if (!deptName) return isAr ? "مركز خدمة العملاء" : "Contact Center";
+  if (!isAr) return deptName;
+  const l = deptName.toLowerCase();
+  if (l.includes("quality") || l.includes("qa")) return "إدارة الجودة (Quality Assurance)";
+  if (l.includes("train")) return "التدريب والتطوير (Training & Development)";
+  if (l.includes("back") || l.includes("office")) return "العمليات والدعم (Back Office)";
+  if (l.includes("contact") || l.includes("call")) return "مركز خدمة العملاء (Contact Center)";
+  if (l.includes("it") || l.includes("digital")) return "تكنولوجيا المعلومات والخدمات الرقمية";
+  if (l.includes("human") || l.includes("hr")) return "الموارد البشرية (Human Resources)";
+  if (l.includes("finan")) return "المالية والحسابات (Finance & Accounts)";
+  return deptName;
+}
+
+export function getRatingInfo(score: number, lang: Language = "en") {
+  const isAr = lang === "ar";
+  if (score >= 4.5) {
+    return {
+      level: 5,
+      label: isAr ? "متميز جداً" : "Outstanding",
+      color: "text-white",
+      bg: "bg-[#1C6B53] text-white border-emerald-600 shadow-xs",
+      badgeBg: "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300",
+      desc: isAr ? "أداء متميز واستثنائي يفوق كافة الأهداف المحددة بانتظام وبكفاءة عالية." : "Consistently exceeds all performance targets and delivers exceptional quality across all operational responsibilities."
+    };
+  }
+  if (score >= 3.5) {
+    return {
+      level: 4,
+      label: isAr ? "يفوق التوقعات" : "Exceeds Expectations",
+      color: "text-white",
+      bg: "bg-blue-600 text-white border-blue-700 shadow-xs",
+      badgeBg: "bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-300",
+      desc: isAr ? "أداء متفوق يتجاوز الأهداف المحددة بانتظام بجودة عمل ممتازة." : "Frequently performs above expectations and consistently delivers high-quality work."
+    };
+  }
+  if (score >= 2.5) {
+    return {
+      level: 3,
+      label: isAr ? "يلبي التوقعات" : "Meets Expectations",
+      color: "text-white",
+      bg: "bg-slate-600 text-white border-slate-700 shadow-xs",
+      badgeBg: "bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200",
+      desc: isAr ? "أداء يلبي كافة المتطلبات والمعايير التشغيلية المحددة بدقة واحترافية." : "Consistently meets the job requirements and performance standards set for the role."
+    };
+  }
+  if (score >= 1.5) {
+    return {
+      level: 2,
+      label: isAr ? "يحتاج إلى تطوير" : "Developing",
+      color: "text-white",
+      bg: "bg-amber-600 text-white border-amber-700 shadow-xs",
+      badgeBg: "bg-amber-50 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300",
+      desc: isAr ? "أداء يلبي بعض المعايير ولكنه يحتاج لمزيد من التدريب والمتابعة لتحقيق المستوى المطلوب." : "Meets some job requirements but needs development and coaching to reach the expected standard."
+    };
+  }
+  return {
+    level: 1,
+    label: isAr ? "غير مرضٍ / يحتاج تحسين" : "Needs Improvement",
+    color: "text-white",
+    bg: "bg-rose-600 text-white border-rose-700 shadow-xs",
+    badgeBg: "bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-700 text-rose-800 dark:text-rose-300",
+    desc: isAr ? "الأداء أقل من المتوقع ويتطلب خطة تحسين عاجلة ومتابعة فورية ومكثفة." : "Performance is below expectations and significant improvement is required to meet the role requirements."
+  };
 }
 
 export const COMPETENCIES_LIST = [
@@ -407,6 +526,27 @@ export default function AnnualEvaluationDashboard({
   const isUserAnkido = emailLower.includes("ankido") || nameLower.includes("ankido");
   const isUserYounis = emailLower.includes("younis") || nameLower.includes("younis");
   const isUserShireenWaisi = emailLower.includes("shireen") || nameLower.includes("shireen") || roleLower === "backoffice";
+
+  // Language State: default 'en', toggleable to 'ar'
+  const [lang, setLang] = useState<Language>("en");
+  const isAr = lang === "ar";
+  const t = TRANSLATIONS[lang];
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("fib_eval_language") as Language;
+      if (saved === "ar" || saved === "en") {
+        setLang(saved);
+      }
+    }
+  }, []);
+
+  const handleLanguageChange = (newLang: Language) => {
+    setLang(newLang);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("fib_eval_language", newLang);
+    }
+  };
 
   // Dynamic Custom Criteria & Staff Modals State
   const [showManageCriteriaModal, setShowManageCriteriaModal] = useState<boolean>(false);
@@ -1101,7 +1241,7 @@ export default function AnnualEvaluationDashboard({
     const opts: any[] = [
       {
         value: "all",
-        label: `All Staff & Departments (${activeMembers.length})`,
+        label: isAr ? `كافة الموظفين والأقسام (${activeMembers.length})` : `All Staff & Departments (${activeMembers.length})`,
         icon: Users,
       },
     ];
@@ -1109,23 +1249,24 @@ export default function AnnualEvaluationDashboard({
     // Departments
     departmentOptions.forEach(dept => {
       const count = deptCounts.get(dept.name) ?? dept.count;
+      const deptDisplayName = isAr ? getLocalizedDeptName(dept.name, true) : dept.name;
       opts.push({
         value: `dept_${dept.name}`,
-        label: `${dept.name} (${count})`,
+        label: `${deptDisplayName} (${count})`,
         icon: Building2,
       });
     });
 
     // Teams
     opts.push(
-      { value: "Younis", label: `Younis Kamal Team (${teamCounts.Younis})`, icon: PhoneCall },
-      { value: "Ankido", label: `Ankido Buya Team (${teamCounts.Ankido})`, icon: PhoneCall },
-      { value: "Mohammed", label: `Mohammed Dlshad Team (${teamCounts.Mohammed})`, icon: MessageSquare },
-      { value: "QA_Training", label: `QA, Training & Operations (${teamCounts.QA_Training})`, icon: ShieldCheck }
+      { value: "Younis", label: isAr ? `فريق يونس كمال (${teamCounts.Younis})` : `Younis Kamal Team (${teamCounts.Younis})`, icon: PhoneCall },
+      { value: "Ankido", label: isAr ? `فريق أنكيدو بويا (${teamCounts.Ankido})` : `Ankido Buya Team (${teamCounts.Ankido})`, icon: PhoneCall },
+      { value: "Mohammed", label: isAr ? `فريق محمد دلشاد (${teamCounts.Mohammed})` : `Mohammed Dlshad Team (${teamCounts.Mohammed})`, icon: MessageSquare },
+      { value: "QA_Training", label: isAr ? `الجودة، التدريب والعمليات (${teamCounts.QA_Training})` : `QA, Training & Operations (${teamCounts.QA_Training})`, icon: ShieldCheck }
     );
 
     return opts;
-  }, [allowedMembersForUser, selectedYear, dynamicDepartments, departmentOptions, teamCounts]);
+  }, [allowedMembersForUser, selectedYear, dynamicDepartments, departmentOptions, teamCounts, isAr]);
 
   // Filtered members list for Coverage Modal
   const filteredCoverageList = useMemo(() => {
@@ -1534,59 +1675,70 @@ export default function AnnualEvaluationDashboard({
 
   // Operational KPIs dynamic definitions matching Role and Templates
   const kpiDefinitions: KpiItemDefinition[] = useMemo(() => {
+    let list: KpiItemDefinition[];
     if (currentMemberRoleType === "trainer") {
-      return TRAINER_KPIS;
-    }
-    if (currentMemberRoleType === "qa") {
-      return QA_KPIS;
-    }
-    if (currentMemberRoleType === "tl") {
-      return TL_KPIS;
-    }
-    if (currentMemberRoleType === "backoffice") {
-      return BACKOFFICE_KPIS;
-    }
-    if (currentMemberRoleType === "custom") {
+      list = TRAINER_KPIS;
+    } else if (currentMemberRoleType === "qa") {
+      list = QA_KPIS;
+    } else if (currentMemberRoleType === "tl") {
+      list = TL_KPIS;
+    } else if (currentMemberRoleType === "backoffice") {
+      list = BACKOFFICE_KPIS;
+    } else if (currentMemberRoleType === "custom") {
       const customItems = dynamicCriteria.filter(c => c.sectionId === "kpi" || c.targetRole === "all");
       if (customItems.length > 0) {
-        return customItems.map(c => ({
+        list = customItems.map(c => ({
           id: c.id,
           name: c.name,
           description: c.description,
         }));
+      } else {
+        list = [
+          { id: "custom_kpi_1", name: "Core Job Performance & Objectives", description: "Executing role-specific primary duties, accuracy, and operational KPIs." },
+          { id: "custom_kpi_2", name: "Process & Delivery Quality", description: "Maintaining zero defect rate, standard compliance, and timely execution." },
+          { id: "custom_kpi_3", name: "Problem Solving & Initiative", description: "Proactive issue diagnosis, innovative solutions, and independent workflow." },
+          { id: "custom_kpi_4", name: "Attendance & Professional Commitment", description: "Punctuality, SLA adherence, and team collaboration." },
+        ];
       }
-      return [
-        { id: "custom_kpi_1", name: "Core Job Performance & Objectives", description: "Executing role-specific primary duties, accuracy, and operational KPIs." },
-        { id: "custom_kpi_2", name: "Process & Delivery Quality", description: "Maintaining zero defect rate, standard compliance, and timely execution." },
-        { id: "custom_kpi_3", name: "Problem Solving & Initiative", description: "Proactive issue diagnosis, innovative solutions, and independent workflow." },
-        { id: "custom_kpi_4", name: "Attendance & Professional Commitment", description: "Punctuality, SLA adherence, and team collaboration." },
-      ];
-    }
-    if (isSelectedEmployeeChat) {
-      return [
+    } else if (isSelectedEmployeeChat) {
+      list = [
         { id: "qa", name: "Quality Assurance", actual: actualMetricsSummary?.qa },
         { id: "art", name: "ART", actual: actualMetricsSummary?.art },
         { id: "attendance", name: "Attendance", actual: null },
         { id: "aht", name: "AHT", actual: actualMetricsSummary?.aht },
         { id: "knowledge", name: "Knowledge", actual: actualMetricsSummary?.exam },
       ];
+    } else {
+      list = [
+        { id: "qa", name: "Quality Assurance", actual: actualMetricsSummary?.qa },
+        { id: "productivity", name: "Productivity", actual: actualMetricsSummary?.productivity },
+        { id: "attendance", name: "Attendance", actual: null },
+        { id: "aht", name: "AHT", actual: actualMetricsSummary?.aht },
+        { id: "knowledge", name: "Knowledge", actual: actualMetricsSummary?.exam },
+      ];
     }
-    return [
-      { id: "qa", name: "Quality Assurance", actual: actualMetricsSummary?.qa },
-      { id: "productivity", name: "Productivity", actual: actualMetricsSummary?.productivity },
-      { id: "attendance", name: "Attendance", actual: null },
-      { id: "aht", name: "AHT", actual: actualMetricsSummary?.aht },
-      { id: "knowledge", name: "Knowledge", actual: actualMetricsSummary?.exam },
-    ];
-  }, [currentMemberRoleType, isSelectedEmployeeChat, actualMetricsSummary, dynamicCriteria]);
+
+    if (isAr) {
+      return list.map(item => {
+        const ar = KPI_DEFINITIONS_AR[item.id];
+        return {
+          ...item,
+          name: ar?.name || item.name,
+          description: ar?.description || item.description
+        };
+      });
+    }
+    return list;
+  }, [currentMemberRoleType, isSelectedEmployeeChat, actualMetricsSummary, dynamicCriteria, isAr]);
 
   // Dynamic Competencies List matching specific role templates
   const currentCompetenciesList = useMemo(() => {
     const norm = normalizeAgentName(selectedEmployeeName || currentMember?.agent_name || "");
     const isJihad = norm.includes("jihad");
 
+    let list: { id: string; name: string; description: string }[];
     if (isJihad) {
-      return [
+      list = [
         COMPETENCY_DEFINITIONS.communication,
         COMPETENCY_DEFINITIONS.problem_solving,
         COMPETENCY_DEFINITIONS.accountability,
@@ -1595,10 +1747,8 @@ export default function AnnualEvaluationDashboard({
         COMPETENCY_DEFINITIONS.team_work,
         COMPETENCY_DEFINITIONS.digitalization,
       ];
-    }
-
-    if (currentMemberRoleType === "qa" || currentMemberRoleType === "tl") {
-      return [
+    } else if (currentMemberRoleType === "qa" || currentMemberRoleType === "tl") {
+      list = [
         COMPETENCY_DEFINITIONS.communication,
         COMPETENCY_DEFINITIONS.problem_solving,
         COMPETENCY_DEFINITIONS.accountability,
@@ -1607,18 +1757,27 @@ export default function AnnualEvaluationDashboard({
         COMPETENCY_DEFINITIONS.team_work,
         COMPETENCY_DEFINITIONS.digitalization,
       ];
+    } else {
+      // Trainer & Regular Agents (6 standard competencies)
+      list = [
+        COMPETENCY_DEFINITIONS.communication,
+        COMPETENCY_DEFINITIONS.problem_solving,
+        COMPETENCY_DEFINITIONS.accountability,
+        COMPETENCY_DEFINITIONS.initiative,
+        COMPETENCY_DEFINITIONS.responsibility,
+        COMPETENCY_DEFINITIONS.team_work,
+      ];
     }
 
-    // Trainer & Regular Agents (6 standard competencies)
-    return [
-      COMPETENCY_DEFINITIONS.communication,
-      COMPETENCY_DEFINITIONS.problem_solving,
-      COMPETENCY_DEFINITIONS.accountability,
-      COMPETENCY_DEFINITIONS.initiative,
-      COMPETENCY_DEFINITIONS.responsibility,
-      COMPETENCY_DEFINITIONS.team_work,
-    ];
-  }, [selectedEmployeeName, currentMember, currentMemberRoleType]);
+    if (isAr) {
+      return list.map(c => ({
+        ...c,
+        name: COMPETENCY_DEFINITIONS_AR[c.id]?.name || c.name,
+        description: COMPETENCY_DEFINITIONS_AR[c.id]?.description || c.description
+      }));
+    }
+    return list;
+  }, [selectedEmployeeName, currentMember, currentMemberRoleType, isAr]);
 
   // Helper to reliably read KPI score whether keyed by 'exam' or 'knowledge'
   const getKpiScore = (kpisMap: Record<string, number>, id: string) => {
@@ -1684,7 +1843,7 @@ export default function AnnualEvaluationDashboard({
 
   // Official Score (only visible when manager data is visible or manager finalized)
   const officialOverallScore = managerOverall > 0 ? managerOverall : (isManagerDataVisible ? selfOverall : 0);
-  const ratingTier = getRatingInfo(officialOverallScore > 0 ? officialOverallScore : 3.0);
+  const ratingTier = getRatingInfo(officialOverallScore > 0 ? officialOverallScore : 3.0, lang);
 
   // Apply suggestions (Manager only)
   const handleApplySuggestions = () => {
@@ -1740,7 +1899,7 @@ export default function AnnualEvaluationDashboard({
             <MessageSquare size={16} className="text-[#1C6B53] dark:text-emerald-400 shrink-0" />
             <div>
               <span className="text-xs font-black text-gray-900 dark:text-white">
-                Evaluation Notes for: <span className="text-[#1C6B53] dark:text-emerald-400 font-extrabold">{critTitle}</span>
+                {t.drawerTitle} <span className="text-[#1C6B53] dark:text-emerald-400 font-extrabold">{critTitle}</span>
               </span>
             </div>
           </div>
@@ -1757,7 +1916,7 @@ export default function AnnualEvaluationDashboard({
                     : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
                 }`}
               >
-                <span>Manager Note</span>
+                <span>{t.drawerManagerTab}</span>
                 {entry.manager?.text && <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />}
               </button>
               <button
@@ -1769,7 +1928,7 @@ export default function AnnualEvaluationDashboard({
                     : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
                 }`}
               >
-                <span>Employee Note</span>
+                <span>{t.drawerEmployeeTab}</span>
                 {entry.employee?.text && <span className="w-1.5 h-1.5 rounded-full bg-blue-300" />}
               </button>
             </div>
@@ -1788,15 +1947,15 @@ export default function AnnualEvaluationDashboard({
         {/* Note Topic / Reason Selector ("على شنو النوت") */}
         <div className="mb-3">
           <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1.5">
-            Note Topic / Reason
+            {t.drawerTopicLabel}
           </label>
           <div className="flex flex-wrap gap-1.5">
             {[
-              { id: "justification" as CriterionNoteTopic, label: "Score Justification", icon: "⚖️" },
-              { id: "achievement" as CriterionNoteTopic, label: "Standout Achievement", icon: "🏆" },
-              { id: "improvement" as CriterionNoteTopic, label: "Area for Improvement", icon: "🎯" },
-              { id: "incident" as CriterionNoteTopic, label: "Specific Case / Incident", icon: "⚠️" },
-              { id: "general" as CriterionNoteTopic, label: "General Observation", icon: "💬" }
+              { id: "justification" as CriterionNoteTopic, label: t.topicJustification, icon: "⚖️" },
+              { id: "achievement" as CriterionNoteTopic, label: t.topicAchievement, icon: "🏆" },
+              { id: "improvement" as CriterionNoteTopic, label: t.topicImprovement, icon: "🎯" },
+              { id: "incident" as CriterionNoteTopic, label: t.topicIncident, icon: "⚠️" },
+              { id: "general" as CriterionNoteTopic, label: t.topicGeneral, icon: "💬" }
             ].map((top) => {
               const currentTopic = activeEntry?.topic || "justification";
               const isSelected = currentTopic === top.id;
@@ -1838,7 +1997,7 @@ export default function AnnualEvaluationDashboard({
                 e.target.value
               );
             }}
-            placeholder={canEditThisTab ? "Enter specific feedback, observations, or rationale for this metric..." : "No note has been recorded yet."}
+            placeholder={canEditThisTab ? (isAr ? "اكتب الملاحظة، الشواهد، أو تبرير الدرجة لهذا المعيار..." : "Enter specific feedback, observations, or rationale for this metric...") : (isAr ? "لم تسجل أي ملاحظة بعد." : "No note has been recorded yet.")}
             className="w-full text-xs p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-2 focus:ring-[#1C6B53]/20 focus:border-[#1C6B53] outline-none transition disabled:opacity-75 resize-none font-medium leading-relaxed"
           />
         </div>
@@ -1846,15 +2005,15 @@ export default function AnnualEvaluationDashboard({
         <div className="flex justify-between items-center text-[10px] text-gray-400 mt-2">
           <span>
             {activeEntry?.updatedAt 
-              ? `Last updated: ${activeEntry.updatedAt} ${activeEntry.authorName ? `(${activeEntry.authorName})` : ''}`
-              : (canEditThisTab ? "Type your note and it saves automatically with the evaluation" : "Read-only view")}
+              ? `${isAr ? 'آخر تحديث:' : 'Last updated:'} ${activeEntry.updatedAt} ${activeEntry.authorName ? `(${activeEntry.authorName})` : ''}`
+              : (canEditThisTab ? (isAr ? "اكتب ملاحظتك وسيتم حفظها تلقائياً مع التقييم" : "Type your note and it saves automatically with the evaluation") : (isAr ? "عرض فقط" : "Read-only view"))}
           </span>
           <button
             type="button"
             onClick={() => setOpenNoteCriterionId(null)}
             className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-xs font-bold text-gray-700 dark:text-gray-300 transition cursor-pointer"
           >
-            Done
+            {t.drawerClose}
           </button>
         </div>
       </div>
@@ -1963,7 +2122,7 @@ export default function AnnualEvaluationDashboard({
   };
 
   return (
-    <div className="min-h-screen p-3.5 sm:p-6 md:p-8 font-sans bg-[#F9F8F4] dark:bg-gray-950 text-gray-800 dark:text-gray-100 transition-colors pb-16 print:bg-white print:text-black print:p-0">
+    <div dir={isAr ? "rtl" : "ltr"} className="min-h-screen p-3.5 sm:p-6 md:p-8 font-sans bg-[#F9F8F4] dark:bg-gray-950 text-gray-800 dark:text-gray-100 transition-colors pb-16 print:bg-white print:text-black print:p-0">
       
       {/* Toast Notification */}
       {saveToast && (
@@ -1985,10 +2144,10 @@ export default function AnnualEvaluationDashboard({
             <div className="h-8 sm:h-9 w-[1.5px] bg-gray-200 dark:bg-gray-700 shrink-0" />
             <div className="shrink-0">
               <h1 className="text-base sm:text-xl font-black tracking-tight text-gray-900 dark:text-white leading-none">
-                Annual Evaluation Dashboard
+                {t.appTitle}
               </h1>
               <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
-                Annual Performance Review &amp; Scorecards
+                {t.appSubtitle}
               </p>
             </div>
           </div>
@@ -2004,6 +2163,8 @@ export default function AnnualEvaluationDashboard({
               isDarkMode={isDarkMode}
               toggleDarkMode={toggleDarkMode}
               showOnlyEvaluation={true}
+              lang={lang}
+              onLanguageChange={handleLanguageChange}
             />
           </div>
         </div>
@@ -2031,7 +2192,7 @@ export default function AnnualEvaluationDashboard({
                 {/* Annual Evaluation Badge */}
                 <div className="flex items-center gap-1.5 px-3.5 h-9 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/80 text-[#1C6B53] dark:text-emerald-300 rounded-xl text-xs sm:text-sm font-black shrink-0 shadow-2xs">
                   <Award size={15} />
-                  <span>Annual Evaluation</span>
+                  <span>{t.annualBadge}</span>
                 </div>
 
                 {/* Admin Management Buttons: Criteria & Staff Rosters */}
@@ -2044,7 +2205,7 @@ export default function AnnualEvaluationDashboard({
                       title="Manage Custom Evaluation Criteria"
                     >
                       <Sliders size={15} className="text-[#1C6B53] dark:text-emerald-400" />
-                      <span>Criteria</span>
+                      <span>{t.criteriaButton}</span>
                       <span className="px-1.5 py-0.5 bg-[#1C6B53] text-white rounded-full text-[10px] font-black shadow-2xs">
                         {dynamicCriteria.length || 12}
                       </span>
@@ -2057,7 +2218,7 @@ export default function AnnualEvaluationDashboard({
                       title="Manage Staff & Rosters"
                     >
                       <Building2 size={15} className="text-[#1C6B53] dark:text-emerald-400" />
-                      <span>Staff & Rosters</span>
+                      <span>{t.staffButton}</span>
                       <span className="px-1.5 py-0.5 bg-blue-600 text-white rounded-full text-[10px] font-black shadow-2xs">
                         {effectiveAllMembers.length}
                       </span>
@@ -2077,7 +2238,7 @@ export default function AnnualEvaluationDashboard({
                     title="View Pending Employees"
                   >
                     <ListChecks size={15} className="text-amber-600 dark:text-amber-400" />
-                    <span>Who&apos;s Pending?</span>
+                    <span>{t.whosPendingButton}</span>
                     <span className="px-1.5 py-0.5 bg-amber-500 text-white rounded-full text-xs font-black shadow-2xs">
                       {coverageData.pendingCount}
                     </span>
@@ -2097,7 +2258,7 @@ export default function AnnualEvaluationDashboard({
                   title="Print / Save PDF"
                 >
                   <Printer size={15} className="text-[#1C6B53] dark:text-emerald-400" />
-                  <span className="hidden sm:inline">Print / PDF</span>
+                  <span className="hidden sm:inline">{t.printPdfButton}</span>
                 </button>
 
                 {/* Employee Selector */}
@@ -2132,7 +2293,7 @@ export default function AnnualEvaluationDashboard({
                           </div>
                           <div className="flex items-center gap-1.5 truncate text-left">
                             <span className="truncate font-black text-xs sm:text-sm text-gray-900 dark:text-white leading-tight">
-                              {toTitleCase(selectedEmployeeName) || "Select Employee..."}
+                              {toTitleCase(selectedEmployeeName) || t.selectEmployeePrompt}
                             </span>
                             {!selectedEmployeeName?.toLowerCase().includes((currentMember?.team || '').toLowerCase().split(' ')[0]) && (
                               <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium truncate">
@@ -2181,14 +2342,14 @@ export default function AnnualEvaluationDashboard({
                         <div className="px-2 pt-1 pb-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
                           <div>
                             <h4 className="text-xs font-black text-gray-900 dark:text-white">
-                              {isAdmin ? "Select Employee" : "Direct Team & Subordinates"}
+                              {isAdmin ? t.selectEmployeePrompt.replace('...', '') : t.directTeamSubordinates}
                             </h4>
                             <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
-                              {isAdmin ? `${effectiveAllMembers.length} Total Employees` : `${mySubordinates.length} Subordinates in Your Reporting Line`}
+                              {isAdmin ? `${effectiveAllMembers.length} ${t.totalEmployees}` : `${mySubordinates.length} ${t.membersInScope}`}
                             </p>
                           </div>
                           <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                            {filteredMembers.length} Available
+                            {filteredMembers.length} {t.availableCount}
                           </span>
                         </div>
 
@@ -2197,7 +2358,7 @@ export default function AnnualEvaluationDashboard({
                           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
                           <input
                             type="text"
-                            placeholder={isAdmin ? "Search employee across all teams..." : "Search employee in your reporting line..."}
+                            placeholder={isAdmin ? t.searchEmployeePlaceholder : t.searchEmployeeSubordinatesPlaceholder}
                             value={employeeSearchTerm}
                             onChange={(e) => setEmployeeSearchTerm(e.target.value)}
                             className="w-full pl-9 pr-8 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200/90 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-[#1C6B53]/20 focus:border-[#1C6B53] dark:focus:border-emerald-500 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 font-medium shadow-xs transition"
@@ -2236,24 +2397,24 @@ export default function AnnualEvaluationDashboard({
                         <div className="px-2 py-1 text-[10px] font-bold text-gray-500 dark:text-gray-400 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 mb-1.5">
                           <span>
                             {employeeSearchTerm.trim() 
-                              ? `${filteredMembers.length} Matching Search` 
+                              ? `${filteredMembers.length} ${t.matchingSearch}` 
                               : isAdmin
-                              ? `${filteredMembers.length} Members in ${
-                                  teamTabFilter === 'all' ? 'All Staff & Departments' :
-                                  teamTabFilter.startsWith('dept_') ? teamTabFilter.replace('dept_', '') :
-                                  teamTabFilter === 'QA_Training' ? 'QA, Training & Back Office' :
-                                  teamTabFilter === 'Mohammed' ? 'Mohammed Dlshad Team (Chat)' :
-                                  teamTabFilter === 'Ankido' ? 'Ankido Buya Team (Calls)' : 'Younis Kamal Team (Calls)'
+                              ? `${filteredMembers.length} ${t.membersIn} ${
+                                  teamTabFilter === 'all' ? t.allStaffAndDepts :
+                                  teamTabFilter.startsWith('dept_') ? (isAr ? getLocalizedDeptName(teamTabFilter.replace('dept_', ''), true) : teamTabFilter.replace('dept_', '')) :
+                                  teamTabFilter === 'QA_Training' ? (isAr ? 'الجودة، التدريب والعمليات' : 'QA, Training & Back Office') :
+                                  teamTabFilter === 'Mohammed' ? (isAr ? 'فريق محمد دلشاد (شات)' : 'Mohammed Dlshad Team (Chat)') :
+                                  teamTabFilter === 'Ankido' ? (isAr ? 'فريق أنكيدو بويا (اتصال)' : 'Ankido Buya Team (Calls)') : (isAr ? 'فريق يونس كمال (اتصال)' : 'Younis Kamal Team (Calls)')
                                 }`
-                              : `${filteredMembers.length} Members in Your Evaluation Scope`}
+                              : `${filteredMembers.length} ${t.membersInScope}`}
                           </span>
                           <span className="text-[9px] font-bold text-[#1C6B53] dark:text-emerald-400">
                             {isAdmin ? (
-                              teamTabFilter === 'all' ? 'All Organization' :
-                              teamTabFilter.startsWith('dept_') ? teamTabFilter.replace('dept_', '') :
-                              teamTabFilter === 'QA_Training' ? 'Specialized Operations' :
-                              teamTabFilter === 'Mohammed' ? 'Digital Chat' : 'Voice Calls'
-                            ) : 'Direct Reporting'}
+                              teamTabFilter === 'all' ? t.allOrgScope :
+                              teamTabFilter.startsWith('dept_') ? (isAr ? getLocalizedDeptName(teamTabFilter.replace('dept_', ''), true) : teamTabFilter.replace('dept_', '')) :
+                              teamTabFilter === 'QA_Training' ? t.specializedOpsScope :
+                              teamTabFilter === 'Mohammed' ? t.digitalChatScope : t.voiceCallsScope
+                            ) : t.directReportingScope}
                           </span>
                         </div>
 
@@ -2264,12 +2425,12 @@ export default function AnnualEvaluationDashboard({
                               {isLoadingMembers ? (
                                 <>
                                   <div className="w-5 h-5 border-2 border-[#1C6B53] border-t-transparent rounded-full animate-spin" />
-                                  <span>Loading employees list...</span>
+                                  <span>{isAr ? "جاري تحميل قائمة الموظفين..." : "Loading employees list..."}</span>
                                 </>
                               ) : (
                                 <>
                                   <Users size={20} className="text-gray-300 dark:text-gray-600" />
-                                  <span>{employeeSearchTerm.trim() ? `No employees matching "${employeeSearchTerm}"` : "No employees found"}</span>
+                                  <span>{employeeSearchTerm.trim() ? `${isAr ? 'لا يوجد موظف مطابق لـ' : 'No employees matching'} "${employeeSearchTerm}"` : t.noEmployeesFound}</span>
                                 </>
                               )}
                             </div>
@@ -2411,17 +2572,17 @@ export default function AnnualEvaluationDashboard({
                 <div>
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="text-[11px] font-black tracking-wider uppercase bg-white/15 text-emerald-100 px-3 py-0.5 rounded-full border border-white/20 backdrop-blur-sm shadow-xs print-card-badge">
-                      ANNUAL • {selectedYear}
+                      {isAr ? 'التقييم السنوي • ' : 'ANNUAL • '}{selectedYear}
                     </span>
                     {evaluationDate && (
                       <span className="text-xs font-semibold text-emerald-200">
-                        Submitted: {evaluationDate}
+                        {t.submittedAt} {evaluationDate}
                       </span>
                     )}
                     {isReadOnly && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-white border border-white/20 flex items-center gap-1 backdrop-blur-sm print:hidden">
                         <Eye size={11} />
-                        <span>View Only</span>
+                        <span>{t.viewOnly}</span>
                       </span>
                     )}
                   </div>
@@ -2446,7 +2607,7 @@ export default function AnnualEvaluationDashboard({
                       <>
                         <span>•</span>
                         <span className="bg-emerald-950/40 text-emerald-100 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold border border-white/15 print-card-badge">
-                          Direct Manager: <strong className="text-white font-bold">{currentMemberDirectManager}</strong>
+                          {t.directManagerLabel} <strong className="text-white font-bold">{currentMemberDirectManager}</strong>
                         </span>
                       </>
                     )}
@@ -2454,7 +2615,7 @@ export default function AnnualEvaluationDashboard({
                       <>
                         <span>•</span>
                         <span className="bg-emerald-950/40 text-emerald-100 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold border border-white/15 print-card-badge">
-                          Department Chief: <strong className="text-white font-bold">{currentMemberDeptChief}</strong>
+                          {t.departmentChiefLabel} <strong className="text-white font-bold">{currentMemberDeptChief}</strong>
                         </span>
                       </>
                     )}
@@ -2467,7 +2628,7 @@ export default function AnnualEvaluationDashboard({
                 {/* Final Score Card */}
                 <div className="w-[140px] sm:w-[160px] h-[90px] bg-white/15 backdrop-blur-md border border-white/30 rounded-2xl p-3 sm:p-4 flex flex-col justify-between items-center text-center shadow-sm print-card-badge">
                   <div className="text-[10px] font-black text-emerald-100 uppercase tracking-widest leading-none">
-                    Final Score
+                    {t.finalScore}
                   </div>
                   <div className="flex-1 flex items-center justify-center">
                     {isManagerDataVisible && officialOverallScore > 0 ? (
@@ -2484,12 +2645,12 @@ export default function AnnualEvaluationDashboard({
                 {/* Rating Tier Card */}
                 <div className="min-w-[160px] sm:min-w-[190px] px-4 h-[90px] bg-white/15 backdrop-blur-md border border-white/30 rounded-2xl py-3 sm:py-4 flex flex-col justify-between items-center text-center shadow-sm print-card-badge">
                   <div className="text-[10px] font-black text-emerald-100 uppercase tracking-widest leading-none">
-                    Rating Tier
+                    {t.ratingTier}
                   </div>
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-sm sm:text-[15px] font-black text-white flex items-center gap-2 leading-none whitespace-nowrap">
                       <Award size={17} className={isManagerDataVisible && officialOverallScore > 0 ? "text-amber-300 shrink-0" : "text-white/60 shrink-0"} />
-                      <span>{isManagerDataVisible && officialOverallScore > 0 ? ratingTier.label : "Pending"}</span>
+                      <span>{isManagerDataVisible && officialOverallScore > 0 ? ratingTier.label : t.pendingReview}</span>
                     </div>
                   </div>
                 </div>
@@ -2497,7 +2658,7 @@ export default function AnnualEvaluationDashboard({
                 {/* Status Card */}
                 <div className="w-[140px] sm:w-[155px] h-[90px] bg-white/15 backdrop-blur-md border border-white/30 rounded-2xl p-3 sm:p-4 flex flex-col justify-between items-center text-center shadow-sm print-card-badge">
                   <div className="text-[10px] font-black text-emerald-100 uppercase tracking-widest leading-none">
-                    Status
+                    {t.status}
                   </div>
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-sm font-bold text-white flex items-center gap-2 leading-none">
@@ -2507,8 +2668,8 @@ export default function AnnualEvaluationDashboard({
                         'bg-white/60 ring-4 ring-white/20'
                       }`} />
                       <span>
-                        {evaluationStatus === 'manager_finalized' ? 'Finalized' :
-                         evaluationStatus === 'self_submitted' ? 'Self Done' : 'Draft'}
+                        {evaluationStatus === 'manager_finalized' ? t.finalized :
+                         evaluationStatus === 'self_submitted' ? t.selfDone : t.draft}
                       </span>
                     </div>
                   </div>
@@ -2523,7 +2684,7 @@ export default function AnnualEvaluationDashboard({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Info size={14} className="text-[#1C6B53] dark:text-emerald-400" />
-                <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Rating Scale (1 to 5):</span>
+                <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">{t.ratingScaleTitle}</span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 {RATING_LEVELS.map(r => (
@@ -2531,7 +2692,14 @@ export default function AnnualEvaluationDashboard({
                     <span className="w-4 h-4 rounded-full bg-white/25 flex items-center justify-center text-[10px] font-black">
                       {r.level}
                     </span>
-                    <span>{r.label}</span>
+                    <span>
+                      {isAr ? (
+                        r.level === 5 ? t.tier5 :
+                        r.level === 4 ? t.tier4 :
+                        r.level === 3 ? t.tier3 :
+                        r.level === 2 ? t.tier2 : t.tier1
+                      ) : r.label}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -2547,17 +2715,15 @@ export default function AnnualEvaluationDashboard({
                     1
                   </div>
                   <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                    {currentMemberRoleType === "trainer" ? "Training Performance KPI Evaluation" :
-                     currentMemberRoleType === "qa" ? "Quality Assurance KPI Evaluation" :
-                     currentMemberRoleType === "tl" ? "Leadership & Team Management KPI Evaluation" :
-                     currentMemberRoleType === "backoffice" ? "Back Office Operational KPI Evaluation" :
-                     "Operational KPI Evaluation"}
+                    {currentMemberRoleType === "trainer" ? t.sec1TrainerTitle :
+                     currentMemberRoleType === "qa" ? t.sec1QaTitle :
+                     currentMemberRoleType === "tl" ? t.sec1TlTitle :
+                     currentMemberRoleType === "backoffice" ? t.sec1BackOfficeTitle :
+                     t.sec1DefaultTitle}
                   </h3>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-9">
-                  {currentMemberRoleType !== "agent" 
-                    ? "Role-specific operational KPIs evaluated manually on an executive 1 to 5 scale." 
-                    : "Operational performance metrics evaluation (Rate 1 to 5)."}
+                  {currentMemberRoleType !== "agent" ? t.sec1DescLeadership : t.sec1DescAgent}
                 </p>
               </div>
 
@@ -2586,19 +2752,19 @@ export default function AnnualEvaluationDashboard({
                 <thead>
                   <tr className="bg-gray-100/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-black border-b border-gray-200 dark:border-gray-700">
                     <th className={`p-3.5 text-left ${currentMemberRoleType === "agent" ? "w-1/3" : "w-1/2"}`}>
-                      {currentMemberRoleType === "agent" ? "KPI Metric" : "Role KPI Metric & Objectives"}
+                      {currentMemberRoleType === "agent" ? (isAr ? "مؤشر الأداء" : "KPI Metric") : t.colKpiMetric}
                     </th>
                     {currentMemberRoleType === "agent" && (
-                      <th className="p-3.5 text-center w-28">Actual Result</th>
+                      <th className="p-3.5 text-center w-28">{t.colActualResult}</th>
                     )}
                     <th className="p-3.5 text-center bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
-                      <span>Self-Evaluation {currentMemberRoleType === "agent" ? "(Agent)" : ""}</span>
+                      <span>{t.colSelf} {currentMemberRoleType === "agent" ? (isAr ? "(الموظف)" : "(Agent)") : ""}</span>
                     </th>
                     <th className="p-3.5 text-center bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
-                      <span>Manager Evaluation</span>
+                      <span>{t.colManager}</span>
                     </th>
-                    <th className="p-3.5 text-center w-20">Gap</th>
-                    <th className="p-3.5 text-center w-24">Notes</th>
+                    <th className="p-3.5 text-center w-20">{t.colGap}</th>
+                    <th className="p-3.5 text-center w-24">{t.colNotes}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800 text-xs font-medium">
@@ -2667,7 +2833,7 @@ export default function AnnualEvaluationDashboard({
                           {!isManagerDataVisible ? (
                             <div className="flex items-center justify-center gap-1.5 py-1 text-gray-400 dark:text-gray-500 text-[11px] font-semibold">
                               <Clock size={13} className="text-amber-500" />
-                              <span>Awaiting Review</span>
+                              <span>{t.awaitingReview}</span>
                             </div>
                           ) : (
                             <div className="flex items-center justify-center gap-1">
@@ -2730,7 +2896,7 @@ export default function AnnualEvaluationDashboard({
                             title="Criterion Note"
                           >
                             <MessageSquare size={13} className={notesCount > 0 ? 'text-[#1C6B53] dark:text-emerald-400' : 'text-gray-400'} />
-                            <span>{notesCount > 0 ? `Note (${notesCount})` : '+ Note'}</span>
+                            <span>{notesCount > 0 ? `${t.noteCountBtn} (${notesCount})` : t.addNoteBtn}</span>
                           </button>
                         </td>
                       </tr>
@@ -2752,7 +2918,7 @@ export default function AnnualEvaluationDashboard({
                     <td className="p-3.5" colSpan={currentMemberRoleType === "agent" ? 2 : 1}>
                       <div className="flex items-center gap-2">
                         <Target size={16} className="text-[#1C6B53] dark:text-emerald-400" />
-                        <span className="text-sm">Final Score (1-5 Average)</span>
+                        <span className="text-sm">{t.finalScoreAverage}</span>
                       </div>
                     </td>
                     <td className="p-3.5 text-center bg-blue-100/50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200">
@@ -2787,11 +2953,11 @@ export default function AnnualEvaluationDashboard({
                   2
                 </div>
                 <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                  Core Competencies Evaluation
+                  {t.sec2Title}
                 </h3>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-9">
-                Assessment of the {currentCompetenciesList.length} core institutional competencies (Rate 1 to 5).
+                {isAr ? `تقييم الكفاءات والسلوكيات المؤسسية الأساسية المعتمدة (${currentCompetenciesList.length} كفاءات - من 1 إلى 5 درجات).` : t.sec2Desc}
               </p>
             </div>
 
@@ -2800,15 +2966,15 @@ export default function AnnualEvaluationDashboard({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-100/90 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-black border-b border-gray-200 dark:border-gray-700">
-                    <th className="p-3.5 text-left w-1/2">Competency & Behavioral Indicators</th>
+                    <th className="p-3.5 text-left w-1/2">{t.colCompetency}</th>
                     <th className="p-3.5 text-center bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300">
-                      <span>Self-Evaluation {currentMemberRoleType === "agent" ? "(Agent)" : ""}</span>
+                      <span>{t.colSelf} {currentMemberRoleType === "agent" ? (isAr ? "(الموظف)" : "(Agent)") : ""}</span>
                     </th>
                     <th className="p-3.5 text-center bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300">
-                      <span>Manager Evaluation</span>
+                      <span>{t.colManager}</span>
                     </th>
-                    <th className="p-3.5 text-center w-20">Gap</th>
-                    <th className="p-3.5 text-center w-24">Notes</th>
+                    <th className="p-3.5 text-center w-20">{t.colGap}</th>
+                    <th className="p-3.5 text-center w-24">{t.colNotes}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800 text-xs font-medium">
@@ -2863,7 +3029,7 @@ export default function AnnualEvaluationDashboard({
                           {!isManagerDataVisible ? (
                             <div className="flex items-center justify-center gap-1.5 py-1 text-gray-400 dark:text-gray-500 text-[11px] font-semibold">
                               <Clock size={13} className="text-amber-500" />
-                              <span>Awaiting Review</span>
+                              <span>{t.awaitingReview}</span>
                             </div>
                           ) : (
                             <div className="flex items-center justify-center gap-1">
@@ -2926,7 +3092,7 @@ export default function AnnualEvaluationDashboard({
                             title="Competency Note"
                           >
                             <MessageSquare size={13} className={notesCount > 0 ? 'text-[#1C6B53] dark:text-emerald-400' : 'text-gray-400'} />
-                            <span>{notesCount > 0 ? `Note (${notesCount})` : '+ Note'}</span>
+                            <span>{notesCount > 0 ? `${t.noteCountBtn} (${notesCount})` : t.addNoteBtn}</span>
                           </button>
                         </td>
                       </tr>
@@ -2948,7 +3114,7 @@ export default function AnnualEvaluationDashboard({
                     <td className="p-3.5">
                       <div className="flex items-center gap-2">
                         <Users size={16} className="text-[#1C6B53] dark:text-emerald-400" />
-                        <span className="text-sm">Competency Average (1-5)</span>
+                        <span className="text-sm">{t.competencyAverageRow}</span>
                       </div>
                     </td>
                     <td className="p-3.5 text-center bg-blue-100/50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200">
@@ -2982,7 +3148,7 @@ export default function AnnualEvaluationDashboard({
                 3
               </div>
               <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                Overall Performance Summary
+                {t.sec3Title}
               </h3>
             </div>
 
@@ -2991,22 +3157,22 @@ export default function AnnualEvaluationDashboard({
               {/* Employee Summary Card */}
               <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-blue-200 dark:border-blue-900/60 shadow-2xs">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-blue-700 dark:text-blue-300">{currentMemberRoleType === 'agent' ? 'Agent Self-Review' : 'Self-Review'}</span>
+                  <span className="text-xs font-bold text-blue-700 dark:text-blue-300">{currentMemberRoleType === 'agent' ? t.agentSelfReviewCard : t.selfReviewCard}</span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">
                     Self
                   </span>
                 </div>
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between items-center text-gray-600 dark:text-gray-300">
-                    <span>KPI Average:</span>
+                    <span>{t.kpiAverage}</span>
                     <span className="font-bold font-mono">{selfKpiAvg > 0 ? selfKpiAvg.toFixed(2) : "--"} / 5.0</span>
                   </div>
                   <div className="flex justify-between items-center text-gray-600 dark:text-gray-300">
-                    <span>Competency Average:</span>
+                    <span>{t.competencyAverage}</span>
                     <span className="font-bold font-mono">{selfCompAvg > 0 ? selfCompAvg.toFixed(2) : "--"} / 5.0</span>
                   </div>
                   <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-sm font-black text-gray-900 dark:text-white">
-                    <span>Combined Score:</span>
+                    <span>{t.combinedScore}</span>
                     <span className="font-mono text-base text-blue-600 dark:text-blue-400">
                       {selfOverall > 0 ? selfOverall.toFixed(2) : "--"}
                     </span>
@@ -3017,7 +3183,7 @@ export default function AnnualEvaluationDashboard({
               {/* Manager Summary Card */}
               <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 shadow-2xs flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-[#1C6B53] dark:text-emerald-300">Manager Review</span>
+                  <span className="text-xs font-bold text-[#1C6B53] dark:text-emerald-300">{t.managerReviewCard}</span>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                     isManagerDataVisible && managerOverall > 0
                       ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200'
@@ -3029,15 +3195,15 @@ export default function AnnualEvaluationDashboard({
                 {isManagerDataVisible ? (
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between items-center text-gray-600 dark:text-gray-300">
-                      <span>KPI Average:</span>
+                      <span>{t.kpiAverage}</span>
                       <span className="font-bold font-mono">{managerKpiAvg > 0 ? managerKpiAvg.toFixed(2) : "--"} / 5.0</span>
                     </div>
                     <div className="flex justify-between items-center text-gray-600 dark:text-gray-300">
-                      <span>Competency Average:</span>
+                      <span>{t.competencyAverage}</span>
                       <span className="font-bold font-mono">{managerCompAvg > 0 ? managerCompAvg.toFixed(2) : "--"} / 5.0</span>
                     </div>
                     <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-sm font-black text-gray-900 dark:text-white">
-                      <span>Combined Score:</span>
+                      <span>{t.combinedScore}</span>
                       <span className="font-mono text-base text-[#1C6B53] dark:text-emerald-400">
                         {managerOverall > 0 ? managerOverall.toFixed(2) : "--"}
                       </span>
@@ -3059,7 +3225,7 @@ export default function AnnualEvaluationDashboard({
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-gray-200">
-                      Official Final Rating
+                      {t.officialFinalRatingCard}
                     </span>
                     {isManagerDataVisible && officialOverallScore > 0 ? (
                       <Star size={16} className="text-amber-500 fill-amber-500" />
@@ -3078,12 +3244,12 @@ export default function AnnualEvaluationDashboard({
                     )}
                   </div>
                   <div className="text-sm font-black mt-1">
-                    {isManagerDataVisible && officialOverallScore > 0 ? ratingTier.label : "Awaiting Manager Approval"}
+                    {isManagerDataVisible && officialOverallScore > 0 ? ratingTier.label : t.awaitingManagerApproval}
                   </div>
                 </div>
 
                 <div className="text-[11px] text-gray-600 dark:text-gray-400 mt-3 pt-2 border-t border-gray-200/60 dark:border-gray-700/60">
-                  {isManagerDataVisible && officialOverallScore > 0 ? ratingTier.desc : "Complete evaluation to compute official final score."}
+                  {isManagerDataVisible && officialOverallScore > 0 ? ratingTier.desc : t.completeEvalMsg}
                 </div>
               </div>
 
@@ -3098,10 +3264,10 @@ export default function AnnualEvaluationDashboard({
               </div>
               <div>
                 <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                  Qualitative Notes &amp; Feedback
+                  {t.sec4Title}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Notes, self-reflection, and manager recommendations for this annual evaluation cycle
+                  {t.sec4Subtitle}
                 </p>
               </div>
             </div>
@@ -3115,7 +3281,7 @@ export default function AnnualEvaluationDashboard({
                       <User size={13} />
                     </div>
                     <span className="text-xs font-black text-gray-900 dark:text-white">
-                      Employee Notes &amp; Self-Reflection
+                      {t.employeeNotesTitle}
                     </span>
                   </div>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200">
@@ -3123,14 +3289,14 @@ export default function AnnualEvaluationDashboard({
                   </span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-3">
-                  Key accomplishments, challenges faced, aspirations, and reflections on performance.
+                  {t.employeeNotesDesc}
                 </p>
                 <textarea
                   rows={4}
                   value={employeeComments}
                   onChange={(e) => setEmployeeComments(e.target.value)}
                   disabled={!canEditEmployeeFeedback}
-                  placeholder={canEditEmployeeFeedback ? "Enter your self-reflection, personal milestones, and observations..." : "No employee notes recorded yet."}
+                  placeholder={canEditEmployeeFeedback ? t.empPlaceholderActive : t.empPlaceholderEmpty}
                   className="w-full flex-1 text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-gray-800 dark:text-gray-100 resize-none transition-all disabled:opacity-75 disabled:cursor-not-allowed"
                 />
               </div>
@@ -3143,7 +3309,7 @@ export default function AnnualEvaluationDashboard({
                       <Award size={13} />
                     </div>
                     <span className="text-xs font-black text-gray-900 dark:text-white">
-                      Manager Notes &amp; Recommendations
+                      {t.managerNotesTitle}
                     </span>
                   </div>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -3155,7 +3321,7 @@ export default function AnnualEvaluationDashboard({
                   </span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-3">
-                  Direct manager review, strengths, coaching areas, and strategic feedback.
+                  {t.managerNotesDesc}
                 </p>
                 {isManagerDataVisible ? (
                   <textarea
@@ -3163,7 +3329,7 @@ export default function AnnualEvaluationDashboard({
                     value={managerComments}
                     onChange={(e) => setManagerComments(e.target.value)}
                     disabled={!canEditManager}
-                    placeholder={canEditManager ? "Enter leadership feedback, guidance, and development recommendations..." : "No manager notes recorded yet."}
+                    placeholder={canEditManager ? t.mgrPlaceholderActive : t.mgrPlaceholderEmpty}
                     className="w-full flex-1 text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none focus:border-[#1C6B53] focus:ring-2 focus:ring-emerald-500/20 text-gray-800 dark:text-gray-100 resize-none transition-all disabled:opacity-75 disabled:cursor-not-allowed"
                   />
                 ) : (
@@ -3184,14 +3350,14 @@ export default function AnnualEvaluationDashboard({
               <div className="border border-blue-200 bg-blue-50/40 rounded-2xl p-4 shadow-2xs">
                 <div className="text-xs font-black text-blue-900 mb-1 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                  <span>Employee Self-Reflection Notes:</span>
+                  <span>{isAr ? "ملاحظات وتطلعات الموظف الذاتية:" : "Employee Self-Reflection Notes:"}</span>
                 </div>
                 <div className="text-xs text-gray-800 whitespace-pre-wrap leading-relaxed">{employeeComments || "None"}</div>
               </div>
               <div className="border border-emerald-200 bg-emerald-50/40 rounded-2xl p-4 shadow-2xs">
                 <div className="text-xs font-black text-emerald-900 mb-1 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  <span>Manager Feedback & Recommendations:</span>
+                  <span>{isAr ? "توجيهات وتوصيات المدير المسؤول:" : "Manager Feedback & Recommendations:"}</span>
                 </div>
                 <div className="text-xs text-gray-800 whitespace-pre-wrap leading-relaxed">{managerComments || "None"}</div>
               </div>
@@ -3200,17 +3366,17 @@ export default function AnnualEvaluationDashboard({
             {/* Signature Line for Print - 3 Columns: Employee, Direct Manager, Department Chief */}
             <div className="hidden print:grid grid-cols-3 gap-6 pt-8 mt-6 border-t border-gray-300">
               <div className="p-3.5 border border-gray-300 rounded-2xl bg-gray-50/60 shadow-2xs">
-                <div className="text-xs font-black text-gray-700">Employee Signature:</div>
+                <div className="text-xs font-black text-gray-700">{t.empSig}</div>
                 <div className="h-12 border-b border-gray-400 mt-2"></div>
                 <div className="text-[11px] font-bold text-gray-600 mt-1.5">{toTitleCase(selectedEmployeeName)}</div>
               </div>
               <div className="p-3.5 border border-gray-300 rounded-2xl bg-gray-50/60 shadow-2xs">
-                <div className="text-xs font-black text-gray-700">Direct Manager Signature:</div>
+                <div className="text-xs font-black text-gray-700">{t.mgrSig}</div>
                 <div className="h-12 border-b border-gray-400 mt-2"></div>
                 <div className="text-[11px] font-bold text-gray-600 mt-1.5">{currentMemberDirectManager || teamLeader || "Direct Manager"}</div>
               </div>
               <div className="p-3.5 border border-gray-300 rounded-2xl bg-gray-50/60 shadow-2xs">
-                <div className="text-xs font-black text-gray-700">Department Chief Signature:</div>
+                <div className="text-xs font-black text-gray-700">{t.chiefSig}</div>
                 <div className="h-12 border-b border-gray-400 mt-2"></div>
                 <div className="text-[11px] font-bold text-gray-600 mt-1.5">{currentMemberDeptChief || "Omer Ayad"}</div>
               </div>
@@ -3220,10 +3386,10 @@ export default function AnnualEvaluationDashboard({
             <div className="hidden print:flex items-center justify-between pt-6 mt-4 border-t border-gray-300 text-xs text-gray-500 font-medium">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-600 inline-block"></span>
-                <span>Designed by <strong className="text-[#1C6B53] font-black">Omer Ayad</strong> • © {new Date().getFullYear()}</span>
+                <span>{t.designedBy}</span>
               </div>
               <div className="text-[11px] font-bold text-gray-400">
-                First Iraqi Bank • Annual Performance Evaluation Report
+                {t.reportFooterOrg}
               </div>
             </div>
 
@@ -3233,10 +3399,10 @@ export default function AnnualEvaluationDashboard({
                 {lastSavedAt ? (
                   <>
                     <CheckCircle size={14} className="text-emerald-500" />
-                    <span>Last Saved: {lastSavedAt}</span>
+                    <span>{t.lastSavedText} {lastSavedAt}</span>
                   </>
                 ) : (
-                  <span>No changes saved yet</span>
+                  <span>{t.noChangesSaved}</span>
                 )}
                 {isReadOnly && (
                   <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md ml-2 flex items-center gap-1">
@@ -3251,7 +3417,7 @@ export default function AnnualEvaluationDashboard({
                 {!canEditManager && isViewingSelf && (evaluationStatus as string) === 'manager_finalized' && (
                   <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-[#1C6B53] dark:text-emerald-400">
                     <CheckCircle size={15} />
-                    <span>Evaluation Finalized by Management</span>
+                    <span>{t.evalFinalizedBadge}</span>
                   </div>
                 )}
                 {!canEditManager && canEditSelf && (
@@ -3263,7 +3429,7 @@ export default function AnnualEvaluationDashboard({
                       className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 disabled:opacity-50 cursor-pointer"
                     >
                       <Save size={14} />
-                      <span>Save Draft</span>
+                      <span>{t.saveDraftBtn}</span>
                     </button>
                     <button
                       type="button"
@@ -3272,7 +3438,7 @@ export default function AnnualEvaluationDashboard({
                       className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer"
                     >
                       <CheckCircle size={14} />
-                      <span>{evaluationStatus === 'self_submitted' ? 'Update Self-Evaluation' : 'Submit Self-Evaluation'}</span>
+                      <span>{evaluationStatus === 'self_submitted' ? t.updateSelfBtn : t.submitSelfBtn}</span>
                     </button>
                   </div>
                 )}
@@ -3287,7 +3453,7 @@ export default function AnnualEvaluationDashboard({
                       className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 disabled:opacity-50 cursor-pointer"
                     >
                       <Save size={14} />
-                      <span>Save Draft</span>
+                      <span>{t.saveDraftBtn}</span>
                     </button>
                     <button
                       type="button"
@@ -3296,7 +3462,7 @@ export default function AnnualEvaluationDashboard({
                       className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-gradient-to-r from-[#1C6B53] to-emerald-600 hover:opacity-95 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer"
                     >
                       <ShieldCheck size={15} />
-                      <span>{evaluationStatus === 'manager_finalized' ? 'Update & Finalize Evaluation' : 'Approve & Finalize Evaluation'}</span>
+                      <span>{evaluationStatus === 'manager_finalized' ? t.updateFinalizeBtn : t.approveFinalizeBtn}</span>
                     </button>
                   </div>
                 )}
@@ -3312,7 +3478,7 @@ export default function AnnualEvaluationDashboard({
 
       {/* KPI Benchmark Informational Guide Modal */}
       {showBenchmarkGuideModal && isClient && typeof document !== "undefined" && createPortal(
-        <div data-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain">
+        <div data-modal="true" dir={isAr ? "rtl" : "ltr"} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain">
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 overscroll-contain">
             
             {/* Modal Header */}
@@ -3776,7 +3942,7 @@ export default function AnnualEvaluationDashboard({
                 onClick={() => setShowBenchmarkGuideModal(false)}
                 className="px-5 py-2 rounded-xl text-xs font-bold bg-[#1C6B53] text-white hover:bg-[#155340] transition cursor-pointer"
               >
-                Close Guide
+                {isAr ? "إغلاق الدليل" : "Close Guide"}
               </button>
             </div>
 
@@ -3787,7 +3953,7 @@ export default function AnnualEvaluationDashboard({
 
       {/* Evaluation Coverage & Tracking Modal (Who's Evaluated / Who's Pending) - Manager & Admin Only */}
       {showCoverageModal && (isManager || isAdmin) && isClient && typeof document !== "undefined" && createPortal(
-        <div data-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain">
+        <div data-modal="true" dir={isAr ? "rtl" : "ltr"} className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain">
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 overscroll-contain">
             
             {/* Modal Header */}
@@ -3799,14 +3965,14 @@ export default function AnnualEvaluationDashboard({
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-base sm:text-lg font-black tracking-tight">
-                      Evaluation Coverage Tracker
+                      {t.coverageTitle}
                     </h3>
                     <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-xs">
-                      Year {selectedYear}
+                      {selectedYear}
                     </span>
                   </div>
                   <p className="text-xs text-emerald-100/90 font-medium mt-0.5">
-                    Real-time tracking of completed and pending annual evaluations
+                    {t.coverageSubtitle}
                   </p>
                 </div>
               </div>
@@ -3827,11 +3993,11 @@ export default function AnnualEvaluationDashboard({
               {/* Card 1: Total Employees */}
               <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-4 shadow-2xs">
                 <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
-                  <span>Total Active Members</span>
+                  <span>{isAr ? "إجمالي الموظفين النشطين" : "Total Active Members"}</span>
                   <Users size={15} className="text-gray-400" />
                 </div>
                 <div className="text-2xl font-black text-gray-900 dark:text-white">
-                  {coverageData.totalCount} <span className="text-xs font-semibold text-gray-500">Employees</span>
+                  {coverageData.totalCount} <span className="text-xs font-semibold text-gray-500">{isAr ? "موظف" : "Employees"}</span>
                 </div>
                 <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
                   Across 3 Contact Center Teams
@@ -3841,15 +4007,15 @@ export default function AnnualEvaluationDashboard({
               {/* Card 2: Annual Review Progress */}
               <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-4 shadow-2xs">
                 <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
-                  <span>Annual Review Progress</span>
+                  <span>{isAr ? "نسبة إنجاز التقييم السنوي" : "Annual Review Progress"}</span>
                   <Award size={15} className="text-[#1C6B53] dark:text-emerald-400" />
                 </div>
                 <div className="flex items-baseline justify-between">
                   <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
-                    {coverageData.completedCount} <span className="text-xs font-semibold text-gray-500">Completed</span>
+                    {coverageData.completedCount} <span className="text-xs font-semibold text-gray-500">{isAr ? "مكتمل" : "Completed"}</span>
                   </div>
                   <span className="text-xs font-black text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
-                    {coverageData.pendingCount} Pending
+                    {coverageData.pendingCount} {isAr ? "متبقي" : "Pending"}
                   </span>
                 </div>
                 <div className="w-full bg-gray-100 dark:bg-gray-700 h-2.5 rounded-full mt-2.5 overflow-hidden">
@@ -3859,7 +4025,7 @@ export default function AnnualEvaluationDashboard({
                   />
                 </div>
                 <div className="text-[10px] text-right font-bold text-gray-500 dark:text-gray-400 mt-1">
-                  {coverageData.percent}% Completed
+                  {coverageData.percent}% {isAr ? "نسبة الإنجاز" : "Completed"}
                 </div>
               </div>
 
@@ -3883,7 +4049,7 @@ export default function AnnualEvaluationDashboard({
                       }`}
                     >
                       <AlertCircle size={13} />
-                      <span>Pending Only</span>
+                      <span>{t.filterPending}</span>
                       <span className="text-[10px] px-1.5 py-0.2 bg-white/25 rounded-md font-black">
                         {coverageData.pendingCount}
                       </span>
@@ -3899,7 +4065,7 @@ export default function AnnualEvaluationDashboard({
                       }`}
                     >
                       <CheckCircle2 size={13} />
-                      <span>Completed</span>
+                      <span>{t.filterCompleted}</span>
                       <span className="text-[10px] px-1.5 py-0.2 bg-white/25 rounded-md font-black">
                         {coverageData.completedCount}
                       </span>
@@ -3914,7 +4080,7 @@ export default function AnnualEvaluationDashboard({
                           : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                       }`}
                     >
-                      <span>All ({coverageData.totalCount})</span>
+                      <span>{isAr ? `الكل (${coverageData.totalCount})` : `All (${coverageData.totalCount})`}</span>
                     </button>
                   </div>
 
@@ -3949,7 +4115,7 @@ export default function AnnualEvaluationDashboard({
                     type="text"
                     value={coverageSearchTerm}
                     onChange={(e) => setCoverageSearchTerm(e.target.value)}
-                    placeholder="Search by name, ID or team..."
+                    placeholder={t.coverageSearchPlaceholder}
                     className="w-full pl-9 pr-8 py-2 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C6B53] shadow-2xs"
                   />
                   {coverageSearchTerm && (
@@ -4049,7 +4215,7 @@ export default function AnnualEvaluationDashboard({
                         onClick={() => handleSelectForEvaluation(item.name)}
                         className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1C6B53] hover:bg-[#155340] text-white text-xs font-black transition active:scale-95 shadow-2xs cursor-pointer ml-auto md:ml-0"
                       >
-                        <span>Evaluate Employee</span>
+                        <span>{t.evaluateEmployeeBtn}</span>
                         <ExternalLink size={12} />
                       </button>
 
@@ -4062,7 +4228,7 @@ export default function AnnualEvaluationDashboard({
             {/* Modal Footer */}
             <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between shrink-0">
               <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
-                Showing {filteredCoverageList.length} of {coverageData.totalCount} employees
+                {isAr ? `عرض ${filteredCoverageList.length} من أصل ${coverageData.totalCount} موظف` : `Showing ${filteredCoverageList.length} of ${coverageData.totalCount} employees`}
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -4070,7 +4236,7 @@ export default function AnnualEvaluationDashboard({
                   onClick={() => setShowCoverageModal(false)}
                   className="px-5 py-2 rounded-xl text-xs font-bold bg-[#1C6B53] text-white hover:bg-[#155340] transition cursor-pointer"
                 >
-                  Close
+                  {t.closeBtn}
                 </button>
               </div>
             </div>
@@ -4084,13 +4250,14 @@ export default function AnnualEvaluationDashboard({
       {coverageCopiedToast && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-2xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 border border-gray-800 dark:border-gray-200 text-xs font-black animate-in fade-in slide-in-from-bottom-3 duration-200">
           <CheckCircle2 size={16} className="text-emerald-400 dark:text-emerald-600" />
-          <span>Pending list copied to clipboard!</span>
+          <span>{isAr ? "تم نسخ قائمة المتبقين إلى الحافظة بنجاح!" : "Pending list copied to clipboard!"}</span>
         </div>
       )}
 
       {/* Manage Criteria Modal */}
       {showManageCriteriaModal && (
         <ManageCriteriaModal
+          lang={lang}
           isOpen={showManageCriteriaModal}
           onClose={() => setShowManageCriteriaModal(false)}
           criteria={dynamicCriteria}
@@ -4103,6 +4270,7 @@ export default function AnnualEvaluationDashboard({
       {/* Manage Staff & Rosters Modal */}
       {showManageStaffModal && (
         <ManageStaffModal
+          lang={lang}
           isOpen={showManageStaffModal}
           onClose={() => setShowManageStaffModal(false)}
           employees={dynamicEmployees}

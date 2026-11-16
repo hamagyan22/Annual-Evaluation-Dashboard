@@ -65,26 +65,26 @@ export function UnifiedTopNavbar({
   const canAccessEvaluation = true; // All staff have evaluation access (self or full review)
 
   // Role Badge Display
-  let roleBadgeText = "AGENT";
+  let roleBadgeText = lang === "ar" ? "موظف" : "AGENT";
   let roleBadgeClass = "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-400 border-sky-300 dark:border-sky-700/60";
 
   if (isAdmin) {
-    roleBadgeText = "ADMIN";
+    roleBadgeText = lang === "ar" ? "مسؤول" : "ADMIN";
     roleBadgeClass = "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700/60";
   } else if (isManager) {
-    roleBadgeText = "MANAGER";
+    roleBadgeText = lang === "ar" ? "مدير" : "MANAGER";
     roleBadgeClass = "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-700/60";
   } else if (isTL) {
-    roleBadgeText = "TL";
+    roleBadgeText = lang === "ar" ? "قائد فريق" : "TL";
     roleBadgeClass = "bg-emerald-50 dark:bg-emerald-950/60 text-[#1C6B53] dark:text-emerald-400 border-emerald-300 dark:border-emerald-700/60";
   } else if (isQA) {
-    roleBadgeText = "QA";
+    roleBadgeText = lang === "ar" ? "الجودة" : "QA";
     roleBadgeClass = "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700/60";
   } else if (isTrainer) {
-    roleBadgeText = "TRAINER";
+    roleBadgeText = lang === "ar" ? "مدرب" : "TRAINER";
     roleBadgeClass = "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700/60";
   } else if (isBackOffice) {
-    roleBadgeText = "BACK OFFICE";
+    roleBadgeText = lang === "ar" ? "العمليات" : "BACK OFFICE";
     roleBadgeClass = "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700/60";
   }
 
@@ -187,6 +187,36 @@ export function UnifiedTopNavbar({
             <span className="whitespace-nowrap tracking-tight font-medium">Q.S &amp; KPI</span>
           </button>
         )}
+
+        {/* Language Switcher Pill: English & عربي */}
+        {onLanguageChange && (
+          <div className="flex items-center p-0.5 bg-gray-200/80 dark:bg-gray-700/80 rounded-lg text-xs font-bold gap-0.5 shrink-0 ml-1">
+            <button
+              type="button"
+              onClick={() => onLanguageChange('en')}
+              className={`flex items-center gap-1 px-2.5 h-7 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                lang === 'en'
+                  ? 'bg-white dark:bg-gray-900 text-[#1C6B53] dark:text-emerald-400 shadow-xs font-black'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+              title="Switch to English"
+            >
+              <span>English</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onLanguageChange('ar')}
+              className={`flex items-center gap-1 px-2.5 h-7 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                lang === 'ar'
+                  ? 'bg-white dark:bg-gray-900 text-[#1C6B53] dark:text-emerald-400 shadow-xs font-black'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+              title="التبديل إلى العربية"
+            >
+              <span>عربي</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Extra Dashboard Actions (e.g. Criteria, Save indicator, etc.) */}
@@ -206,7 +236,7 @@ export function UnifiedTopNavbar({
         type="button"
         onClick={onOpenProfile}
         className="flex items-center gap-2 sm:gap-2.5 h-9 px-2.5 sm:px-3 rounded-xl text-[13px] font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/90 dark:hover:bg-gray-800/80 transition-all group cursor-pointer shrink-0"
-        title="Profile Settings"
+        title={lang === "ar" ? "إعدادات الحساب" : "Profile Settings"}
       >
         <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-tr from-[#1C6B53] to-emerald-400 flex items-center justify-center overflow-hidden ring-2 ring-[#1C6B53]/20 dark:ring-emerald-400/25 text-white font-black text-[11px] sm:text-xs shadow-sm shrink-0">
           {userProfile?.photo_url ? (
@@ -235,7 +265,7 @@ export function UnifiedTopNavbar({
             type="button"
             onClick={toggleDarkMode} 
             className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-amber-500 dark:text-gray-400 dark:hover:text-amber-400 hover:bg-gray-100/90 dark:hover:bg-gray-800/80 transition-colors cursor-pointer shrink-0"
-            title="Toggle Dark Mode"
+            title={lang === "ar" ? (isDarkMode ? "الوضع الفاتح" : "الوضع الليلي") : "Toggle Dark Mode"}
           >
             {isDarkMode ? <Sun size={15} className="text-amber-500" /> : <Moon size={15} />}
           </button>
