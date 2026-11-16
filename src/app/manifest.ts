@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Annual Evaluation Dashboard',
-    short_name: 'Annual Evaluation',
-    description: 'Annual Evaluation & Performance Analytics Dashboard',
+    name: 'FIB Performance Scorecards',
+    short_name: 'FIB Scorecard',
+    description: 'Performance & Quality Analytics Dashboard',
     start_url: '/',
     display: 'standalone',
     background_color: '#07130F',
