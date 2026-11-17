@@ -19,6 +19,7 @@ import {
   getDepartmentIconMeta 
 } from "@/lib/bankDepartmentIcons";
 import { Language } from "@/lib/translations";
+import { useAppTheme } from "@/lib/themeManager";
 import ModernDropdown from "@/components/ModernDropdown";
 
 interface ManageStaffModalProps {
@@ -43,6 +44,13 @@ export function ManageStaffModal({
   lang = "en"
 }: ManageStaffModalProps) {
   const isAr = lang === "ar";
+  const { currentTheme } = useAppTheme();
+  const brandGradient = currentTheme?.gradientStyle || "linear-gradient(135deg, #10664F 0%, #0D523F 50%, #09382B 100%)";
+  const brandPrimary = currentTheme?.primary || "#10664F";
+  const brandHover = currentTheme?.hover || "#0D523F";
+  const brandLightBg = currentTheme?.bgLight || "#ECFDF5";
+  const brandLightText = currentTheme?.textLight || "#065F46";
+  const brandLightBorder = currentTheme?.borderLight || "#A7F3D0";
   const [activeTab, setActiveTab] = useState<"employees" | "departments">("employees");
 
   // Employee Search & Filters
@@ -345,7 +353,7 @@ export function ManageStaffModal({
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
         
         {/* Modal Header */}
-        <div className="p-5 sm:p-6 bg-gradient-to-r from-[#0E3A2F] to-[#1C6B53] text-white flex items-center justify-between">
+        <div className="p-5 sm:p-6 text-white flex items-center justify-between shadow-xs" style={{ background: brandGradient }}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white backdrop-blur-sm shadow-xs">
               <Users size={20} />
@@ -355,11 +363,11 @@ export function ManageStaffModal({
                 <h3 className="text-lg sm:text-xl font-black tracking-tight">
                   {isAr ? "إدارة الموظفين والأقسام" : "Employees & Departments Management"}
                 </h3>
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/20 text-emerald-100">
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/20 text-white">
                   {employees.length} {isAr ? "موظف" : "Employees"} • {departments.length} {isAr ? "أقسام" : "Departments"}
                 </span>
               </div>
-              <p className="text-xs text-emerald-100/90 font-medium mt-0.5">
+              <p className="text-xs text-white/90 font-medium mt-0.5">
                 {isAr ? "إضافة وتعديل بيانات الموظفين والأقسام للتقييم السنوي" : "Add, edit, and organize staff rosters and departments for annual evaluation"}
               </p>
             </div>
@@ -367,7 +375,7 @@ export function ManageStaffModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-[#0c3a2d] hover:bg-[#07241c] text-white flex items-center justify-center transition border border-white/30 shadow-md cursor-pointer shrink-0"
+            className="w-9 h-9 rounded-full bg-black/25 hover:bg-black/45 text-white flex items-center justify-center transition border border-white/30 shadow-md cursor-pointer shrink-0"
             title={isAr ? "إغلاق" : "Close"}
           >
             <X size={20} strokeWidth={2.5} />
@@ -383,9 +391,10 @@ export function ManageStaffModal({
               onClick={() => setActiveTab("employees")}
               className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
                 activeTab === "employees"
-                  ? "bg-white dark:bg-gray-800 text-[#1C6B53] dark:text-emerald-300 shadow-xs"
+                  ? "bg-white dark:bg-gray-800 shadow-xs"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
               }`}
+              style={activeTab === "employees" ? { color: brandPrimary } : {}}
             >
               <Users size={15} />
               <span>{isAr ? `الموظفين (${employees.length})` : `Employees (${employees.length})`}</span>
@@ -395,9 +404,10 @@ export function ManageStaffModal({
               onClick={() => setActiveTab("departments")}
               className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
                 activeTab === "departments"
-                  ? "bg-white dark:bg-gray-800 text-[#1C6B53] dark:text-emerald-300 shadow-xs"
+                  ? "bg-white dark:bg-gray-800 shadow-xs"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
               }`}
+              style={activeTab === "departments" ? { color: brandPrimary } : {}}
             >
               <Building2 size={15} />
               <span>{isAr ? `الأقسام (${departments.length})` : `Departments (${departments.length})`}</span>
@@ -410,7 +420,8 @@ export function ManageStaffModal({
               <button
                 type="button"
                 onClick={handleStartAddEmployee}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1C6B53] hover:bg-[#155340] text-white text-xs font-black shadow-xs transition active:scale-95 cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-white text-xs font-black shadow-xs transition active:scale-95 cursor-pointer hover:opacity-90"
+                style={{ backgroundColor: brandPrimary }}
               >
                 <Plus size={15} />
                 <span>{isAr ? "إضافة موظف جديد" : "Add Employee"}</span>
@@ -419,7 +430,8 @@ export function ManageStaffModal({
               <button
                 type="button"
                 onClick={handleStartAddDept}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1C6B53] hover:bg-[#155340] text-white text-xs font-black shadow-xs transition active:scale-95 cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-white text-xs font-black shadow-xs transition active:scale-95 cursor-pointer hover:opacity-90"
+                style={{ backgroundColor: brandPrimary }}
               >
                 <Plus size={15} />
                 <span>{isAr ? "إضافة قسم جديد" : "Add Department"}</span>
@@ -667,7 +679,14 @@ export function ManageStaffModal({
                       {(() => {
                         const DeptCardIcon = getDepartmentIcon(dept.icon);
                         return (
-                          <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                          <div 
+                            className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border"
+                            style={{ 
+                              backgroundColor: brandLightBg, 
+                              color: brandPrimary, 
+                              borderColor: brandLightBorder 
+                            }}
+                          >
                             <DeptCardIcon size={20} />
                           </div>
                         );
@@ -744,7 +763,7 @@ export function ManageStaffModal({
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Dedicated Modal Header */}
-            <div className="p-5 bg-gradient-to-r from-[#0E3A2F] to-[#1C6B53] text-white flex items-center justify-between">
+            <div className="p-5 text-white flex items-center justify-between shadow-xs" style={{ background: brandGradient }}>
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-white backdrop-blur-sm">
                   <Sparkles size={18} />
@@ -755,7 +774,7 @@ export function ManageStaffModal({
                       ? (isAr ? `تعديل بيانات الموظف: ${empName}` : `Edit Employee: ${empName}`) 
                       : (isAr ? "إضافة موظف جديد للتقييم السنوي" : "Add New Employee for Evaluation")}
                   </h3>
-                  <p className="text-xs text-emerald-100 font-medium">
+                  <p className="text-xs text-white/90 font-medium">
                     {isAr ? "املأ بيانات الموظف، القسم، والمدير المباشر" : "Fill out employee details, role, and direct manager"}
                   </p>
                 </div>
@@ -763,7 +782,7 @@ export function ManageStaffModal({
               <button
                 type="button"
                 onClick={() => setIsAddingEmployee(false)}
-                className="w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 text-white flex items-center justify-center transition cursor-pointer"
+                className="w-8 h-8 rounded-full bg-black/25 hover:bg-black/45 text-white flex items-center justify-center transition cursor-pointer"
                 title={isAr ? "إغلاق" : "Close"}
               >
                 <X size={18} />
@@ -900,8 +919,14 @@ export function ManageStaffModal({
               </div>
 
               {/* Direct Manager Field Only (User Request: Pure text input, no datalist) */}
-              <div className="p-3.5 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl">
-                <label className="block text-xs font-black text-[#1C6B53] dark:text-emerald-300 mb-1">
+              <div 
+                className="p-3.5 rounded-2xl border transition"
+                style={{ 
+                  backgroundColor: brandLightBg,
+                  borderColor: brandLightBorder 
+                }}
+              >
+                <label className="block text-xs font-black mb-1" style={{ color: brandPrimary }}>
                   {isAr ? "اسم المدير المباشر (Direct Manager) *" : "Direct Manager *"}
                 </label>
                 <input
@@ -913,7 +938,12 @@ export function ManageStaffModal({
                     if (!empTeam) setEmpTeam(e.target.value ? `${e.target.value} Team` : "");
                   }}
                   placeholder={isAr ? "اكتب اسم المدير المباشر..." : "Enter direct manager name..."}
-                  className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border border-emerald-300 dark:border-emerald-700 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden font-bold"
+                  className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border rounded-xl outline-hidden font-bold transition focus:ring-2"
+                  style={{
+                    borderColor: brandLightBorder,
+                    // @ts-ignore
+                    "--tw-ring-color": brandPrimary
+                  }}
                 />
               </div>
 
@@ -928,7 +958,8 @@ export function ManageStaffModal({
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 rounded-xl text-xs font-black text-white bg-[#1C6B53] hover:bg-[#155340] shadow-sm transition active:scale-95 cursor-pointer flex items-center gap-1.5"
+                  className="px-6 py-2 rounded-xl text-xs font-black text-white shadow-sm transition active:scale-95 cursor-pointer flex items-center gap-1.5 hover:opacity-90"
+                  style={{ backgroundColor: brandPrimary }}
                 >
                   <Check size={14} />
                   <span>
@@ -948,7 +979,7 @@ export function ManageStaffModal({
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="p-5 bg-gradient-to-r from-purple-800 to-indigo-900 text-white flex items-center justify-between">
+            <div className="p-5 text-white flex items-center justify-between shadow-xs" style={{ background: brandGradient }}>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
@@ -957,7 +988,10 @@ export function ManageStaffModal({
                   title={isAr ? "اضغط لاختيار أيقونة القسم المصرفي" : "Click to choose bank department icon"}
                 >
                   {React.createElement(getDepartmentIcon(deptIcon), { size: 22, className: "group-hover:scale-110 transition" })}
-                  <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-purple-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs">
+                  <span 
+                    className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full text-white text-[9px] font-black flex items-center justify-center shadow-xs"
+                    style={{ backgroundColor: brandPrimary }}
+                  >
                     ✦
                   </span>
                 </button>
@@ -967,7 +1001,7 @@ export function ManageStaffModal({
                       ? (isAr ? `تعديل القسم: ${deptName}` : `Edit Department: ${deptName}`) 
                       : (isAr ? "إضافة قسم تنظيمي جديد" : "Add New Department")}
                   </h3>
-                  <p className="text-xs text-purple-200 font-medium">
+                  <p className="text-xs text-white/90 font-medium">
                     {isAr ? "تحديد مسمى القسم، مدير القسم، وشيف القسم" : "Define department scope, department manager, and department chief"}
                   </p>
                 </div>
@@ -975,7 +1009,7 @@ export function ManageStaffModal({
               <button
                 type="button"
                 onClick={() => setIsAddingDept(false)}
-                className="w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 text-white flex items-center justify-center transition cursor-pointer"
+                className="w-8 h-8 rounded-full bg-black/25 hover:bg-black/45 text-white flex items-center justify-center transition cursor-pointer"
                 title={isAr ? "إغلاق" : "Close"}
               >
                 <X size={18} />
@@ -995,7 +1029,11 @@ export function ManageStaffModal({
                     value={deptName}
                     onChange={(e) => setDeptName(e.target.value)}
                     placeholder="e.g. IT, Risk & Compliance, Finance"
-                    className="w-full h-10 px-3.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-600 outline-hidden font-bold"
+                    className="w-full h-10 px-3.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl outline-hidden font-bold transition focus:ring-2"
+                    style={{
+                      // @ts-ignore
+                      "--tw-ring-color": brandPrimary
+                    }}
                     autoFocus
                   />
                 </div>
@@ -1008,28 +1046,50 @@ export function ManageStaffModal({
                     value={deptNameAr}
                     onChange={(e) => setDeptNameAr(e.target.value)}
                     placeholder="مثال: إدارة تكنولوجيا المعلومات، المالية"
-                    className="w-full h-10 px-3.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-600 outline-hidden font-bold text-right"
+                    className="w-full h-10 px-3.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl outline-hidden font-bold text-right transition focus:ring-2"
+                    style={{
+                      // @ts-ignore
+                      "--tw-ring-color": brandPrimary
+                    }}
                     dir="rtl"
                   />
                 </div>
               </div>
 
-              {/* Department Banking Icon Picker Row (User Request: Choose Banking Department Icon) */}
+              {/* Department Banking Icon Picker Row (Themed dynamically to matched user selection) */}
               {(() => {
                 const iconMeta = getDepartmentIconMeta(deptIcon);
                 const CurrentIconComp = getDepartmentIcon(deptIcon);
                 return (
-                  <div className="p-3.5 bg-gradient-to-r from-purple-50/90 via-indigo-50/70 to-purple-50/90 dark:from-purple-950/40 dark:via-indigo-950/30 dark:to-purple-950/40 border border-purple-200/90 dark:border-purple-800/80 rounded-2xl flex items-center justify-between gap-3 shadow-2xs">
+                  <div 
+                    className="p-3.5 rounded-2xl flex items-center justify-between gap-3 shadow-2xs border transition"
+                    style={{ 
+                      backgroundColor: brandLightBg,
+                      borderColor: brandLightBorder 
+                    }}
+                  >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 text-purple-700 dark:text-purple-300 border-2 border-purple-300 dark:border-purple-700 flex items-center justify-center shrink-0 shadow-sm">
+                      <div 
+                        className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 flex items-center justify-center shrink-0 shadow-sm border-2 transition"
+                        style={{ 
+                          color: brandPrimary,
+                          borderColor: brandLightBorder
+                        }}
+                      >
                         <CurrentIconComp size={24} />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300">
+                          <span className="text-[11px] font-bold" style={{ color: brandPrimary }}>
                             {isAr ? "أيقونة القسم المصرفي" : "Department Banking Icon"}
                           </span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-purple-200/80 dark:bg-purple-900/60 text-purple-900 dark:text-purple-200 font-bold">
+                          <span 
+                            className="text-[10px] px-2 py-0.5 rounded-md font-bold"
+                            style={{ 
+                              backgroundColor: brandLightBorder,
+                              color: brandPrimary 
+                            }}
+                          >
                             {deptIcon}
                           </span>
                         </div>
@@ -1045,7 +1105,8 @@ export function ManageStaffModal({
                     <button
                       type="button"
                       onClick={() => setShowIconPicker(true)}
-                      className="px-3.5 py-2 rounded-xl text-xs font-black bg-purple-700 hover:bg-purple-800 text-white shadow-xs transition active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
+                      className="px-3.5 py-2 rounded-xl text-xs font-black text-white shadow-xs transition active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0 hover:opacity-90"
+                      style={{ backgroundColor: brandPrimary }}
                     >
                       <Sparkles size={13} />
                       <span>{isAr ? "اختيار أيقونة..." : "Choose Icon..."}</span>
@@ -1054,10 +1115,16 @@ export function ManageStaffModal({
                 );
               })()}
 
-              {/* Department Manager & Department Chief Fields (User Request: Free Text Inputs, no dropdown/datalist) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-3.5 bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/80 rounded-2xl">
+              {/* Department Manager & Department Chief Fields (Themed dynamically) */}
+              <div 
+                className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-3.5 rounded-2xl border transition"
+                style={{ 
+                  backgroundColor: brandLightBg,
+                  borderColor: brandLightBorder 
+                }}
+              >
                 <div>
-                  <label className="block text-xs font-black text-purple-900 dark:text-purple-200 mb-1">
+                  <label className="block text-xs font-black mb-1" style={{ color: brandPrimary }}>
                     {isAr ? "مدير القسم (Department Manager)" : "Department Manager"}
                   </label>
                   <input
@@ -1065,12 +1132,17 @@ export function ManageStaffModal({
                     value={deptDirectManager}
                     onChange={(e) => setDeptDirectManager(e.target.value)}
                     placeholder={isAr ? "اكتب اسم مدير القسم..." : "Enter department manager name..."}
-                    className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border border-purple-300 dark:border-purple-700 rounded-xl focus:ring-2 focus:ring-purple-600 outline-hidden font-bold"
+                    className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border rounded-xl outline-hidden font-bold transition focus:ring-2"
+                    style={{ 
+                      borderColor: brandLightBorder,
+                      // @ts-ignore
+                      "--tw-ring-color": brandPrimary 
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-purple-900 dark:text-purple-200 mb-1">
+                  <label className="block text-xs font-black mb-1" style={{ color: brandPrimary }}>
                     {isAr ? "شيف القسم (Department Chief / Head)" : "Department Chief / Head"}
                   </label>
                   <input
@@ -1078,7 +1150,12 @@ export function ManageStaffModal({
                     value={deptChief}
                     onChange={(e) => setDeptChief(e.target.value)}
                     placeholder={isAr ? "اكتب اسم شيف القسم..." : "Enter department chief name..."}
-                    className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border border-purple-300 dark:border-purple-700 rounded-xl focus:ring-2 focus:ring-purple-600 outline-hidden font-bold"
+                    className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border rounded-xl outline-hidden font-bold transition focus:ring-2"
+                    style={{ 
+                      borderColor: brandLightBorder,
+                      // @ts-ignore
+                      "--tw-ring-color": brandPrimary 
+                    }}
                   />
                 </div>
               </div>
@@ -1092,7 +1169,11 @@ export function ManageStaffModal({
                   value={deptDesc}
                   onChange={(e) => setDeptDesc(e.target.value)}
                   placeholder={isAr ? "وصف مختصر لمسؤوليات القسم وأهدافه..." : "Brief overview of department functions and KPIs..."}
-                  className="w-full p-3 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-600 outline-hidden font-medium"
+                  className="w-full p-3 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl outline-hidden font-medium transition focus:ring-2"
+                  style={{
+                    // @ts-ignore
+                    "--tw-ring-color": brandPrimary
+                  }}
                 />
               </div>
 
@@ -1107,7 +1188,8 @@ export function ManageStaffModal({
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 rounded-xl text-xs font-black text-white bg-purple-700 hover:bg-purple-800 shadow-sm transition active:scale-95 cursor-pointer flex items-center gap-1.5"
+                  className="px-6 py-2 rounded-xl text-xs font-black text-white shadow-sm transition active:scale-95 cursor-pointer flex items-center gap-1.5 hover:opacity-90"
+                  style={{ backgroundColor: brandPrimary }}
                 >
                   <Check size={14} />
                   <span>
@@ -1127,7 +1209,7 @@ export function ManageStaffModal({
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Picker Header */}
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-purple-900 via-indigo-900 to-purple-800 text-white flex items-center justify-between shrink-0">
+            <div className="p-4 sm:p-5 text-white flex items-center justify-between shrink-0 shadow-xs" style={{ background: brandGradient }}>
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white backdrop-blur-sm shadow-xs">
                   <Sparkles size={20} />
@@ -1136,7 +1218,7 @@ export function ManageStaffModal({
                   <h3 className="text-base sm:text-lg font-black tracking-tight">
                     {isAr ? "اختيار أيقونة للقسم المصرفي" : "Choose Bank Department Icon"}
                   </h3>
-                  <p className="text-xs text-purple-200 font-medium">
+                  <p className="text-xs text-white/90 font-medium">
                     {isAr 
                       ? "أيقونات معتمدة لكافة أقسام ووحدات المصرف التنظيمية" 
                       : "Approved icons covering bank departments and business units"}
@@ -1146,7 +1228,7 @@ export function ManageStaffModal({
               <button
                 type="button"
                 onClick={() => setShowIconPicker(false)}
-                className="w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 text-white flex items-center justify-center transition cursor-pointer"
+                className="w-8 h-8 rounded-full bg-black/25 hover:bg-black/45 text-white flex items-center justify-center transition cursor-pointer"
                 title={isAr ? "إغلاق" : "Close"}
               >
                 <X size={18} />
@@ -1163,7 +1245,11 @@ export function ManageStaffModal({
                   value={iconPickerSearch}
                   onChange={(e) => setIconPickerSearch(e.target.value)}
                   placeholder={isAr ? "بحث بالاسم أو القسم (مثل: بطاقات، خزينة، اتصال، جودة، IT، قروض...)" : "Search by name or department (e.g. Cards, Treasury, QA, IT, Loans...)"}
-                  className={`w-full h-10 ${isAr ? "pr-10 pl-8 text-right" : "pl-10 pr-8 text-left"} text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-purple-600 outline-hidden font-bold`}
+                  className={`w-full h-10 ${isAr ? "pr-10 pl-8 text-right" : "pl-10 pr-8 text-left"} text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl outline-hidden font-bold transition focus:ring-2`}
+                  style={{
+                    // @ts-ignore
+                    "--tw-ring-color": brandPrimary
+                  }}
                   autoFocus
                 />
                 {iconPickerSearch && (
@@ -1194,9 +1280,10 @@ export function ManageStaffModal({
                     onClick={() => setIconPickerCategory(cat.id as BankIconCategory)}
                     className={`px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition cursor-pointer ${
                       iconPickerCategory === cat.id
-                        ? "bg-purple-700 text-white shadow-xs"
+                        ? "text-white shadow-xs"
                         : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100"
                     }`}
+                    style={iconPickerCategory === cat.id ? { backgroundColor: brandPrimary, color: '#ffffff' } : {}}
                   >
                     {isAr ? cat.labelAr : cat.labelEn}
                   </button>
@@ -1226,19 +1313,35 @@ export function ManageStaffModal({
                         }}
                         className={`p-3 rounded-2xl border text-left transition cursor-pointer flex items-center gap-3 relative group ${
                           isSelected
-                            ? "bg-purple-50 dark:bg-purple-950/60 border-purple-600 dark:border-purple-500 shadow-sm ring-2 ring-purple-600/20"
-                            : "bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700/80 hover:border-purple-400 hover:bg-purple-50/40 dark:hover:bg-purple-950/20"
+                            ? "shadow-sm ring-2"
+                            : "bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700/80 hover:bg-gray-50 dark:hover:bg-gray-800"
                         }`}
+                        style={isSelected ? { 
+                          backgroundColor: brandLightBg, 
+                          borderColor: brandPrimary,
+                          // @ts-ignore
+                          "--tw-ring-color": brandPrimary + "40"
+                        } : {}}
                       >
-                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition ${
-                          isSelected
-                            ? "bg-purple-700 text-white shadow-xs"
-                            : "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 group-hover:bg-purple-100 group-hover:scale-105"
-                        }`}>
+                        <div 
+                          className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition ${
+                            isSelected ? "shadow-xs" : "group-hover:scale-105"
+                          }`}
+                          style={isSelected ? {
+                            backgroundColor: brandPrimary,
+                            color: '#ffffff'
+                          } : {
+                            backgroundColor: brandLightBg,
+                            color: brandPrimary
+                          }}
+                        >
                           <IconComp size={22} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h6 className={`text-xs font-black truncate ${isSelected ? "text-purple-950 dark:text-purple-100" : "text-gray-900 dark:text-white"}`}>
+                          <h6 
+                            className="text-xs font-black truncate"
+                            style={isSelected ? { color: brandPrimary } : {}}
+                          >
                             {isAr ? item.nameAr : item.nameEn}
                           </h6>
                           <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium truncate block">
@@ -1246,7 +1349,10 @@ export function ManageStaffModal({
                           </span>
                         </div>
                         {isSelected && (
-                          <div className="w-5 h-5 rounded-full bg-purple-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+                          <div 
+                            className="w-5 h-5 rounded-full text-white flex items-center justify-center shrink-0 shadow-xs"
+                            style={{ backgroundColor: brandPrimary }}
+                          >
                             <Check size={12} />
                           </div>
                         )}
