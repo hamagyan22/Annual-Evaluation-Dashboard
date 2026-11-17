@@ -12,6 +12,12 @@ import {
   DEFAULT_DEPARTMENTS, 
   DEFAULT_EMPLOYEES 
 } from "@/lib/customCriteriaManager";
+import { 
+  getDepartmentIcon, 
+  BANK_DEPARTMENT_ICONS, 
+  BankIconCategory, 
+  getDepartmentIconMeta 
+} from "@/lib/bankDepartmentIcons";
 import { Language } from "@/lib/translations";
 import ModernDropdown from "@/components/ModernDropdown";
 
@@ -69,6 +75,27 @@ export function ManageStaffModal({
   const [deptDirectManager, setDeptDirectManager] = useState<string>("");
   const [deptChief, setDeptChief] = useState<string>("Omer Ayad");
   const [deptColor, setDeptColor] = useState<string>("emerald");
+  const [deptIcon, setDeptIcon] = useState<string>("Landmark");
+  const [showIconPicker, setShowIconPicker] = useState<boolean>(false);
+  const [iconPickerSearch, setIconPickerSearch] = useState<string>("");
+  const [iconPickerCategory, setIconPickerCategory] = useState<BankIconCategory>("all");
+
+  // Filtered Bank Icons for Picker
+  const filteredBankIcons = useMemo(() => {
+    return BANK_DEPARTMENT_ICONS.filter(item => {
+      if (iconPickerCategory !== "all" && item.category !== iconPickerCategory) {
+        return false;
+      }
+      if (!iconPickerSearch.trim()) return true;
+      const q = iconPickerSearch.trim().toLowerCase();
+      return (
+        item.nameEn.toLowerCase().includes(q) ||
+        item.nameAr.toLowerCase().includes(q) ||
+        item.id.toLowerCase().includes(q) ||
+        item.keywords.some(k => k.toLowerCase().includes(q))
+      );
+    });
+  }, [iconPickerCategory, iconPickerSearch]);
 
   // Modern Confirmation Popup State (Replaces browser alert/confirm)
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -207,6 +234,10 @@ export function ManageStaffModal({
     setDeptDirectManager("");
     setDeptChief("Omer Ayad");
     setDeptColor("emerald");
+    setDeptIcon("Landmark");
+    setShowIconPicker(false);
+    setIconPickerSearch("");
+    setIconPickerCategory("all");
     setIsAddingDept(true);
   };
 
@@ -218,6 +249,10 @@ export function ManageStaffModal({
     setDeptDirectManager(dept.direct_manager || "");
     setDeptChief(dept.department_chief || "Omer Ayad");
     setDeptColor(dept.color || "emerald");
+    setDeptIcon(dept.icon || "Building2");
+    setShowIconPicker(false);
+    setIconPickerSearch("");
+    setIconPickerCategory("all");
     setIsAddingDept(true);
   };
 
@@ -235,7 +270,8 @@ export function ManageStaffModal({
             description: deptDesc.trim() || undefined,
             direct_manager: deptDirectManager.trim() || undefined,
             department_chief: deptChief.trim() || undefined,
-            color: deptColor
+            color: deptColor,
+            icon: deptIcon
           };
         }
         return d;
@@ -249,7 +285,8 @@ export function ManageStaffModal({
         description: deptDesc.trim() || undefined,
         direct_manager: deptDirectManager.trim() || undefined,
         department_chief: deptChief.trim() || undefined,
-        color: deptColor
+        color: deptColor,
+        icon: deptIcon
       };
       onSaveDepartments([...departments, newDept]);
     }
@@ -445,7 +482,7 @@ export function ManageStaffModal({
                         label: isAr
                           ? `${d.nameAr || d.name} (${count})`
                           : `${d.name} (${count})`,
-                        icon: Building2,
+                        icon: getDepartmentIcon(d.icon),
                       };
                     }),
                   ]}
@@ -600,7 +637,7 @@ export function ManageStaffModal({
                         label: isAr
                           ? `${d.nameAr || d.name} (${count})`
                           : `${d.name} (${count})`,
-                        icon: Building2,
+                        icon: getDepartmentIcon(d.icon),
                       };
                     }),
                   ]}
@@ -627,9 +664,14 @@ export function ManageStaffModal({
                     className="p-4 bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/80 rounded-2xl flex items-center justify-between gap-3 shadow-2xs hover:border-[#1C6B53]/40 transition"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 flex items-center justify-center font-bold text-xs shrink-0">
-                        <Building2 size={18} />
-                      </div>
+                      {(() => {
+                        const DeptCardIcon = getDepartmentIcon(dept.icon);
+                        return (
+                          <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                            <DeptCardIcon size={20} />
+                          </div>
+                        );
+                      })()}
                       <div className="min-w-0">
                         <h4 className="text-sm font-black text-gray-900 dark:text-white truncate">
                           {dept.name}
@@ -907,10 +949,18 @@ export function ManageStaffModal({
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Header */}
             <div className="p-5 bg-gradient-to-r from-purple-800 to-indigo-900 text-white flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-white backdrop-blur-sm">
-                  <Building2 size={18} />
-                </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowIconPicker(true)}
+                  className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 border border-white/30 flex items-center justify-center text-white backdrop-blur-sm transition cursor-pointer shadow-md group relative shrink-0"
+                  title={isAr ? "اضغط لاختيار أيقونة القسم المصرفي" : "Click to choose bank department icon"}
+                >
+                  {React.createElement(getDepartmentIcon(deptIcon), { size: 22, className: "group-hover:scale-110 transition" })}
+                  <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-purple-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs">
+                    ✦
+                  </span>
+                </button>
                 <div>
                   <h3 className="text-base sm:text-lg font-black tracking-tight">
                     {editingDeptId 
@@ -963,6 +1013,46 @@ export function ManageStaffModal({
                   />
                 </div>
               </div>
+
+              {/* Department Banking Icon Picker Row (User Request: Choose Banking Department Icon) */}
+              {(() => {
+                const iconMeta = getDepartmentIconMeta(deptIcon);
+                const CurrentIconComp = getDepartmentIcon(deptIcon);
+                return (
+                  <div className="p-3.5 bg-gradient-to-r from-purple-50/90 via-indigo-50/70 to-purple-50/90 dark:from-purple-950/40 dark:via-indigo-950/30 dark:to-purple-950/40 border border-purple-200/90 dark:border-purple-800/80 rounded-2xl flex items-center justify-between gap-3 shadow-2xs">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 text-purple-700 dark:text-purple-300 border-2 border-purple-300 dark:border-purple-700 flex items-center justify-center shrink-0 shadow-sm">
+                        <CurrentIconComp size={24} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300">
+                            {isAr ? "أيقونة القسم المصرفي" : "Department Banking Icon"}
+                          </span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-purple-200/80 dark:bg-purple-900/60 text-purple-900 dark:text-purple-200 font-bold">
+                            {deptIcon}
+                          </span>
+                        </div>
+                        <h5 className="text-xs font-black text-gray-900 dark:text-white truncate mt-0.5">
+                          {isAr ? iconMeta.nameAr : iconMeta.nameEn}
+                        </h5>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium truncate">
+                          {isAr ? iconMeta.nameEn : iconMeta.nameAr}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowIconPicker(true)}
+                      className="px-3.5 py-2 rounded-xl text-xs font-black bg-purple-700 hover:bg-purple-800 text-white shadow-xs transition active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
+                    >
+                      <Sparkles size={13} />
+                      <span>{isAr ? "اختيار أيقونة..." : "Choose Icon..."}</span>
+                    </button>
+                  </div>
+                );
+              })()}
 
               {/* Department Manager & Department Chief Fields (User Request: Free Text Inputs, no dropdown/datalist) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-3.5 bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/80 rounded-2xl">
@@ -1028,6 +1118,158 @@ export function ManageStaffModal({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* DEDICATED MODAL: Bank Department Icon Picker (User Request) */}
+      {showIconPicker && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Picker Header */}
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-purple-900 via-indigo-900 to-purple-800 text-white flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white backdrop-blur-sm shadow-xs">
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black tracking-tight">
+                    {isAr ? "اختيار أيقونة للقسم المصرفي" : "Choose Bank Department Icon"}
+                  </h3>
+                  <p className="text-xs text-purple-200 font-medium">
+                    {isAr 
+                      ? "أيقونات معتمدة لكافة أقسام ووحدات المصرف التنظيمية" 
+                      : "Approved icons covering bank departments and business units"}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowIconPicker(false)}
+                className="w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 text-white flex items-center justify-center transition cursor-pointer"
+                title={isAr ? "إغلاق" : "Close"}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Picker Search & Category Filters */}
+            <div className="p-4 bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-800 space-y-3 shrink-0">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search size={15} className={`absolute ${isAr ? "right-3.5" : "left-3.5"} top-1/2 -translate-y-1/2 text-gray-400`} />
+                <input
+                  type="text"
+                  value={iconPickerSearch}
+                  onChange={(e) => setIconPickerSearch(e.target.value)}
+                  placeholder={isAr ? "بحث بالاسم أو القسم (مثل: بطاقات، خزينة، اتصال، جودة، IT، قروض...)" : "Search by name or department (e.g. Cards, Treasury, QA, IT, Loans...)"}
+                  className={`w-full h-10 ${isAr ? "pr-10 pl-8 text-right" : "pl-10 pr-8 text-left"} text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-purple-600 outline-hidden font-bold`}
+                  autoFocus
+                />
+                {iconPickerSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setIconPickerSearch("")}
+                    className={`absolute ${isAr ? "left-2.5" : "right-2.5"} top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1`}
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {/* Category Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                {[
+                  { id: "all", labelEn: "All Icons", labelAr: "الكل" },
+                  { id: "management", labelEn: "HQ & Legal", labelAr: "الإدارة والقانونية" },
+                  { id: "finance", labelEn: "Finance & Cards", labelAr: "المالية والبطاقات" },
+                  { id: "customer", labelEn: "Customer & Ops", labelAr: "العملاء والعمليات" },
+                  { id: "audit", labelEn: "Quality & Risk", labelAr: "الجودة والمخاطر" },
+                  { id: "tech", labelEn: "IT & Systems", labelAr: "التقنية والأنظمة" },
+                  { id: "hr", labelEn: "HR & Training", labelAr: "الموارد والتدريب" }
+                ].map(cat => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setIconPickerCategory(cat.id as BankIconCategory)}
+                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition cursor-pointer ${
+                      iconPickerCategory === cat.id
+                        ? "bg-purple-700 text-white shadow-xs"
+                        : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    {isAr ? cat.labelAr : cat.labelEn}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Icon Grid */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+              {filteredBankIcons.length === 0 ? (
+                <div className="p-10 text-center text-gray-400 bg-gray-50 dark:bg-gray-800/40 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+                  <AlertCircle size={28} className="mx-auto mb-2 text-gray-300" />
+                  <p className="text-xs font-bold">{isAr ? "لم يتم العثور على أيقونة مطابقة لبحثك" : "No matching icons found"}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  {filteredBankIcons.map((item) => {
+                    const IconComp = getDepartmentIcon(item.id);
+                    const isSelected = deptIcon === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setDeptIcon(item.id);
+                          setShowIconPicker(false);
+                        }}
+                        className={`p-3 rounded-2xl border text-left transition cursor-pointer flex items-center gap-3 relative group ${
+                          isSelected
+                            ? "bg-purple-50 dark:bg-purple-950/60 border-purple-600 dark:border-purple-500 shadow-sm ring-2 ring-purple-600/20"
+                            : "bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700/80 hover:border-purple-400 hover:bg-purple-50/40 dark:hover:bg-purple-950/20"
+                        }`}
+                      >
+                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition ${
+                          isSelected
+                            ? "bg-purple-700 text-white shadow-xs"
+                            : "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 group-hover:bg-purple-100 group-hover:scale-105"
+                        }`}>
+                          <IconComp size={22} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h6 className={`text-xs font-black truncate ${isSelected ? "text-purple-950 dark:text-purple-100" : "text-gray-900 dark:text-white"}`}>
+                            {isAr ? item.nameAr : item.nameEn}
+                          </h6>
+                          <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium truncate block">
+                            {isAr ? item.nameEn : item.nameAr}
+                          </span>
+                        </div>
+                        {isSelected && (
+                          <div className="w-5 h-5 rounded-full bg-purple-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+                            <Check size={12} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Picker Footer */}
+            <div className="p-3.5 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between shrink-0">
+              <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                {isAr ? `${filteredBankIcons.length} أيقونة مصرفية معتمدة` : `${filteredBankIcons.length} approved banking icons`}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowIconPicker(false)}
+                className="px-4 py-1.5 rounded-xl text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 transition cursor-pointer"
+              >
+                {isAr ? "إغلاق" : "Close"}
+              </button>
+            </div>
           </div>
         </div>
       )}

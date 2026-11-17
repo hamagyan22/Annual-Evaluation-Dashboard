@@ -32,6 +32,7 @@ import {
   loadStoredEmployees, saveStoredEmployees,
   DynamicCriterion, DynamicSection, DynamicDepartment, DynamicEmployee
 } from "@/lib/customCriteriaManager";
+import { getDepartmentIcon } from "@/lib/bankDepartmentIcons";
 
 export interface AnnualEvaluationDashboardProps {
   userProfile: any;
@@ -1250,10 +1251,11 @@ export default function AnnualEvaluationDashboard({
     departmentOptions.forEach(dept => {
       const count = deptCounts.get(dept.name) ?? dept.count;
       const deptDisplayName = isAr ? getLocalizedDeptName(dept.name, true) : dept.name;
+      const deptObj = dynamicDepartments.find(d => d.name === dept.name);
       opts.push({
         value: `dept_${dept.name}`,
         label: `${deptDisplayName} (${count})`,
-        icon: Building2,
+        icon: getDepartmentIcon(deptObj?.icon),
       });
     });
 
@@ -4095,11 +4097,14 @@ export default function AnnualEvaluationDashboard({
                           label: `All Departments (${coverageData.totalCount})`,
                           icon: Building2,
                         },
-                        ...departmentOptions.map((dept) => ({
-                          value: dept.name,
-                          label: `${dept.name} (${dept.count})`,
-                          icon: Building2,
-                        })),
+                        ...departmentOptions.map((dept) => {
+                          const deptObj = dynamicDepartments.find(d => d.name === dept.name);
+                          return {
+                            value: dept.name,
+                            label: `${dept.name} (${dept.count})`,
+                            icon: getDepartmentIcon(deptObj?.icon),
+                          };
+                        }),
                       ]}
                       variant="gray"
                       size="sm"

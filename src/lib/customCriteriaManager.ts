@@ -31,6 +31,7 @@ export interface DynamicDepartment {
   color?: string;
   direct_manager?: string;
   department_chief?: string;
+  icon?: string;
 }
 
 export interface DynamicEmployee {
@@ -194,13 +195,13 @@ export const DEFAULT_CRITERIA: DynamicCriterion[] = [
 
 // Default Departments
 export const DEFAULT_DEPARTMENTS: DynamicDepartment[] = [
-  { id: "dept_cc", name: "Contact Center", nameAr: "مركز خدمة العملاء", color: "emerald", description: "Customer Support & Contact Center Operations", direct_manager: "Team Leaders", department_chief: "Omer Ayad" },
-  { id: "dept_qa", name: "Quality Assurance", nameAr: "إدارة الجودة والتدقيق", color: "purple", description: "Call & Chat Quality Auditing and Compliance", direct_manager: "Lara Kamil", department_chief: "Omer Ayad" },
-  { id: "dept_training", name: "Training & Development", nameAr: "التدريب والتطوير", color: "indigo", description: "Onboarding and Continuous Professional Training", direct_manager: "Mohammed Azad", department_chief: "Omer Ayad" },
-  { id: "dept_backoffice", name: "Back Office Operations", nameAr: "العمليات المصرفية والدعم", color: "blue", description: "Backend Case Processing, Ticketing and SLA Tracking", direct_manager: "Shireen Waisi", department_chief: "Omer Ayad" },
-  { id: "dept_it", name: "IT & Digital Services", nameAr: "تكنولوجيا المعلومات والخدمات الرقمية", color: "slate", description: "Infrastructure, Systems & Digital Applications", department_chief: "Omer Ayad" },
-  { id: "dept_hr", name: "Human Resources", nameAr: "الموارد البشرية", color: "amber", description: "People, Talent and Performance Management", department_chief: "Omer Ayad" },
-  { id: "dept_finance", name: "Finance & Accounts", nameAr: "المالية والحسابات", color: "emerald", description: "Financial Operations, Budgeting & Audits", department_chief: "Omer Ayad" }
+  { id: "dept_cc", name: "Contact Center", nameAr: "مركز خدمة العملاء", color: "emerald", description: "Customer Support & Contact Center Operations", direct_manager: "Team Leaders", department_chief: "Omer Ayad", icon: "Headphones" },
+  { id: "dept_qa", name: "Quality Assurance", nameAr: "إدارة الجودة والتدقيق", color: "purple", description: "Call & Chat Quality Auditing and Compliance", direct_manager: "Lara Kamil", department_chief: "Omer Ayad", icon: "ShieldCheck" },
+  { id: "dept_training", name: "Training & Development", nameAr: "التدريب والتطوير", color: "indigo", description: "Onboarding and Continuous Professional Training", direct_manager: "Mohammed Azad", department_chief: "Omer Ayad", icon: "GraduationCap" },
+  { id: "dept_backoffice", name: "Back Office Operations", nameAr: "العمليات المصرفية والدعم", color: "blue", description: "Backend Case Processing, Ticketing and SLA Tracking", direct_manager: "Shireen Waisi", department_chief: "Omer Ayad", icon: "Briefcase" },
+  { id: "dept_it", name: "IT & Digital Services", nameAr: "تكنولوجيا المعلومات والخدمات الرقمية", color: "slate", description: "Infrastructure, Systems & Digital Applications", department_chief: "Omer Ayad", icon: "Laptop" },
+  { id: "dept_hr", name: "Human Resources", nameAr: "الموارد البشرية", color: "amber", description: "People, Talent and Performance Management", department_chief: "Omer Ayad", icon: "Users" },
+  { id: "dept_finance", name: "Finance & Accounts", nameAr: "المالية والحسابات", color: "emerald", description: "Financial Operations, Budgeting & Audits", department_chief: "Omer Ayad", icon: "CircleDollarSign" }
 ];
 
 // Default Initial Employees
