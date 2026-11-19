@@ -206,18 +206,18 @@ export const DEFAULT_DEPARTMENTS: DynamicDepartment[] = [
 
 // Default Initial Employees
 export const DEFAULT_EMPLOYEES: DynamicEmployee[] = [
-  { id: "emp_373", name: "Younis Kamal", employee_id: "373", department: "Contact Center", role: "Team Leader", team: "Younis Kamal Team", direct_manager: "Omer Ayad", role_type: "tl" },
-  { id: "emp_340", name: "Ankido Buya", employee_id: "340", department: "Contact Center", role: "Team Leader", team: "Ankido Buya Team", direct_manager: "Omer Ayad", role_type: "tl" },
-  { id: "emp_338", name: "Mohammed Dlshad", employee_id: "338", department: "Contact Center", role: "Team Leader", team: "Mohammed Dlshad Team", direct_manager: "Omer Ayad", role_type: "tl" },
-  { id: "emp_353", name: "Mohammed Azad", employee_id: "353", department: "Training & Development", role: "Trainer", team: "Training Team", direct_manager: "Omer Ayad", role_type: "trainer" },
-  { id: "emp_356", name: "Mohammed Jihad", employee_id: "356", department: "Quality Assurance", role: "QA Auditor", team: "Quality Assurance Team", direct_manager: "Omer Ayad", role_type: "qa" },
-  { id: "emp_351", name: "Lara Kamil", employee_id: "351", department: "Quality Assurance", role: "QA Specialist", team: "Quality Assurance Team", direct_manager: "Omer Ayad", role_type: "qa" },
-  { id: "emp_370", name: "Shireen Waisi", employee_id: "370", department: "Back Office Operations", role: "Senior Operations Specialist", team: "Back Office", direct_manager: "Omer Ayad", role_type: "backoffice" },
-  { id: "emp_339", name: "Alla Satar", employee_id: "339", department: "Contact Center", role: "Customer Care Agent", team: "Younis Kamal Team", direct_manager: "Younis Kamal", role_type: "agent" },
-  { id: "emp_377", name: "Zhalla Salam", employee_id: "377", department: "Contact Center", role: "Customer Care Agent", team: "Ankido Buya Team", direct_manager: "Ankido Buya", role_type: "agent" },
-  { id: "emp_364", name: "Rabar Mohammed", employee_id: "364", department: "Contact Center", role: "Customer Care Agent", team: "Mohammed Dlshad Team", direct_manager: "Mohammed Dlshad", role_type: "agent" },
-  { id: "emp_372", name: "Taban Sirwan", employee_id: "372", department: "Contact Center", role: "Customer Care Agent", team: "Younis Kamal Team", direct_manager: "Younis Kamal", role_type: "agent" },
-  { id: "emp_344", name: "Dhuha Khanjer", employee_id: "344", department: "Contact Center", role: "Customer Care Agent", team: "Ankido Buya Team", direct_manager: "Ankido Buya", role_type: "agent" }
+  { id: "emp_373", name: "Younis Kamal", employee_id: "373", department: "Contact Center", role: "Team Leader", team: "Younis Kamal Team", direct_manager: "Omer Ayad", department_chief: "Omer Ayad", role_type: "tl" },
+  { id: "emp_340", name: "Ankido Buya", employee_id: "340", department: "Contact Center", role: "Team Leader", team: "Ankido Buya Team", direct_manager: "Omer Ayad", department_chief: "Omer Ayad", role_type: "tl" },
+  { id: "emp_338", name: "Mohammed Dlshad", employee_id: "338", department: "Contact Center", role: "Team Leader", team: "Mohammed Dlshad Team", direct_manager: "Omer Ayad", department_chief: "Omer Ayad", role_type: "tl" },
+  { id: "emp_353", name: "Mohammed Azad", employee_id: "353", department: "Training & Development", role: "Trainer", team: "Training Team", direct_manager: "Omer Ayad", department_chief: "Omer Ayad", role_type: "trainer" },
+  { id: "emp_356", name: "Mohammed Jihad", employee_id: "356", department: "Quality Assurance", role: "QA Auditor", team: "Quality Assurance Team", direct_manager: "Lara Kamil", department_chief: "Omer Ayad", role_type: "qa" },
+  { id: "emp_351", name: "Lara Kamil", employee_id: "351", department: "Quality Assurance", role: "QA Specialist", team: "Quality Assurance Team", direct_manager: "Omer Ayad", department_chief: "Omer Ayad", role_type: "qa" },
+  { id: "emp_370", name: "Shireen Waisi", employee_id: "370", department: "Back Office Operations", role: "Senior Operations Specialist", team: "Back Office", direct_manager: "Omer Ayad", department_chief: "Omer Ayad", role_type: "backoffice" },
+  { id: "emp_339", name: "Alla Satar", employee_id: "339", department: "Contact Center", role: "Customer Care Agent", team: "Younis Kamal Team", direct_manager: "Younis Kamal", department_chief: "Omer Ayad", role_type: "agent" },
+  { id: "emp_377", name: "Zhalla Salam", employee_id: "377", department: "Contact Center", role: "Customer Care Agent", team: "Ankido Buya Team", direct_manager: "Ankido Buya", department_chief: "Omer Ayad", role_type: "agent" },
+  { id: "emp_364", name: "Rabar Mohammed", employee_id: "364", department: "Contact Center", role: "Customer Care Agent", team: "Mohammed Dlshad Team", direct_manager: "Mohammed Dlshad", department_chief: "Omer Ayad", role_type: "agent" },
+  { id: "emp_372", name: "Taban Sirwan", employee_id: "372", department: "Contact Center", role: "Customer Care Agent", team: "Younis Kamal Team", direct_manager: "Younis Kamal", department_chief: "Omer Ayad", role_type: "agent" },
+  { id: "emp_344", name: "Dhuha Khanjer", employee_id: "344", department: "Contact Center", role: "Customer Care Agent", team: "Ankido Buya Team", direct_manager: "Ankido Buya", department_chief: "Omer Ayad", role_type: "agent" }
 ];
 
 // LocalStorage Keys

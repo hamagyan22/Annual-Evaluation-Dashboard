@@ -863,6 +863,7 @@ export default function AnnualEvaluationDashboard({
         role_type: de.role_type || existing.role_type || "agent",
         team: de.team || existing.team,
         direct_manager: de.direct_manager || existing.direct_manager,
+        department_chief: de.department_chief || existing.department_chief,
         custom_position: de.custom_position || existing.custom_position,
       });
     });
@@ -880,6 +881,7 @@ export default function AnnualEvaluationDashboard({
             id: m.id || existing.id,
             team: m.team || existing.team,
             direct_manager: m.direct_manager || existing.direct_manager,
+            department_chief: m.department_chief || existing.department_chief,
             is_deleted: m.is_deleted === true || existing.is_deleted === true,
             is_active: m.is_active === false ? false : (existing.is_active ?? true),
             resigned_month: m.resigned_month || existing.resigned_month,
@@ -1081,11 +1083,18 @@ export default function AnnualEvaluationDashboard({
   const currentMemberDirectManager = useMemo(() => {
     if (currentMember?.direct_manager) return currentMember.direct_manager;
     const matchedDept = dynamicDepartments.find(d => d.name === currentMember?.department);
-    if (matchedDept?.direct_manager) return matchedDept.direct_manager;
+    const isMgr = currentMember?.role_type === "tl" || /leader|manager|head|chief|director|supervisor|lead|مدير|قائد|رئيس|مشرف/i.test(currentMember?.role || "");
+    if (isMgr) {
+      if (matchedDept?.department_chief) return matchedDept.department_chief;
+    } else {
+      if (matchedDept?.direct_manager && matchedDept.direct_manager.toLowerCase() !== "team leaders") {
+        return matchedDept.direct_manager;
+      }
+    }
     if (currentMember?.manager_name) return currentMember.manager_name;
     if (teamLeader) return teamLeader;
     if (currentMember?.team) return resolveTeamLeader(currentMember.team);
-    return "Omer Ayad";
+    return matchedDept?.department_chief || "Omer Ayad";
   }, [currentMember, dynamicDepartments, teamLeader]);
 
   const currentMemberDeptChief = useMemo(() => {

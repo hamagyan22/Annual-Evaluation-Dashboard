@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react";
 import { 
   X, Plus, Trash2, Edit2, Users, Building2, 
   Search, Sparkles, UserCheck, RefreshCw, AlertCircle,
-  AlertTriangle, Check, ShieldAlert
+  AlertTriangle, Check, ShieldAlert, Crown
 } from "lucide-react";
 import { 
   DynamicDepartment, 
@@ -148,18 +148,71 @@ export function ManageStaffModal({
 
   if (!isOpen) return null;
 
+  // Check if role is managerial / leadership
+  const isManagerialRole = (roleType?: string, roleName?: string, customPos?: string): boolean => {
+    if (roleType === "tl") return true;
+    const combined = `${roleName || ""} ${customPos || ""}`.toLowerCase();
+    return /leader|manager|head|chief|director|supervisor|lead|مدير|قائد|رئيس|مشرف/i.test(combined);
+  };
+
+  // Smart resolution for Direct Manager & Chief based on department and role
+  const resolveManagerHierarchy = (
+    deptName: string,
+    roleType?: string,
+    roleName?: string,
+    customPos?: string
+  ) => {
+    const dept = departments.find(d => d.name === deptName || d.nameAr === deptName) || departments[0];
+    const isMgr = isManagerialRole(roleType, roleName, customPos);
+    const chief = (dept?.department_chief || "Omer Ayad").trim();
+    
+    let deptMgr = (dept?.direct_manager || "").trim();
+    // If empty or "Team Leaders", look for specific team leader if available
+    if (!deptMgr || deptMgr.toLowerCase() === "team leaders") {
+      const firstTL = employees.find(e => 
+        e.department === deptName && 
+        (e.role_type === "tl" || (e.role && /leader|manager/i.test(e.role)))
+      );
+      deptMgr = firstTL ? firstTL.name : chief;
+    }
+
+    // Key rule requested by user:
+    // If the employee is a manager -> Direct Manager is the Department Chief
+    // If the employee is regular staff -> Direct Manager is the Department Manager
+    const targetDm = isMgr ? chief : (deptMgr || chief);
+
+    return {
+      directManager: targetDm,
+      departmentChief: chief,
+      deptManager: deptMgr,
+      isManager: isMgr,
+      deptName: dept?.name || deptName,
+      deptNameAr: dept?.nameAr
+    };
+  };
+
   // Handle Employee Form Open
   const handleStartAddEmployee = () => {
     setEditingEmpId(null);
     setEmpName("");
     setEmpIdNum(String(Math.floor(100 + Math.random() * 900)));
-    setEmpDept(departments[0]?.name || "Contact Center");
-    setEmpRole("Team Leader");
+    const initialDept = (selectedDeptFilter !== "all" && departments.some(d => d.name === selectedDeptFilter))
+      ? selectedDeptFilter
+      : (departments[0]?.name || "Contact Center");
+    setEmpDept(initialDept);
+    setEmpRoleType("agent");
+    setEmpRole("Customer Care Agent");
     setEmpTeam("");
-    setEmpDirectManager("Omer Ayad");
-    setEmpDeptChief("Omer Ayad");
     setEmpCustomPosition("");
-    setEmpRoleType("tl");
+
+    const hierarchy = resolveManagerHierarchy(initialDept, "agent", "Customer Care Agent", "");
+    setEmpDirectManager(hierarchy.directManager);
+    setEmpDeptChief(hierarchy.departmentChief);
+    if (hierarchy.directManager && hierarchy.directManager !== "Omer Ayad") {
+      setEmpTeam(`${hierarchy.directManager} Team`);
+    } else {
+      setEmpTeam("");
+    }
     setIsAddingEmployee(true);
   };
 
@@ -170,11 +223,70 @@ export function ManageStaffModal({
     setEmpDept(emp.department);
     setEmpRole(emp.role);
     setEmpTeam(emp.team || "");
-    setEmpDirectManager(emp.direct_manager || emp.team?.replace(' Team', '') || "Omer Ayad");
-    setEmpDeptChief(emp.department_chief || "Omer Ayad");
-    setEmpCustomPosition(emp.custom_position || (emp.role_type === 'custom' ? emp.role : ""));
     setEmpRoleType(emp.role_type || "agent");
+    setEmpCustomPosition(emp.custom_position || (emp.role_type === 'custom' ? emp.role : ""));
+
+    const hierarchy = resolveManagerHierarchy(emp.department, emp.role_type || "agent", emp.role, emp.custom_position);
+    setEmpDirectManager(emp.direct_manager || hierarchy.directManager);
+    setEmpDeptChief(emp.department_chief || hierarchy.departmentChief);
     setIsAddingEmployee(true);
+  };
+
+  const handleEmpDeptChange = (newDept: string) => {
+    setEmpDept(newDept);
+    const hierarchy = resolveManagerHierarchy(newDept, empRoleType, empRole, empCustomPosition);
+    setEmpDirectManager(hierarchy.directManager);
+    setEmpDeptChief(hierarchy.departmentChief);
+    if (!empTeam || empTeam.endsWith("Team")) {
+      setEmpTeam(hierarchy.directManager ? `${hierarchy.directManager} Team` : "");
+    }
+  };
+
+  const handleEmpRoleTypeChange = (val: any) => {
+    setEmpRoleType(val);
+    let newRole = empRole;
+    if (val === "custom") {
+      if (empRole === "Team Leader" || empRole === "Staff / Agent" || !empCustomPosition) {
+        newRole = "";
+      }
+    } else if (!empRole || empRoleType === "custom" || empRole === "Team Leader" || empRole === "Staff / Agent") {
+      if (val === "tl") newRole = "Team Leader";
+      else if (val === "qa") newRole = "Quality Auditor";
+      else if (val === "trainer") newRole = "Trainer";
+      else if (val === "backoffice") newRole = "Back Office Specialist";
+      else newRole = "Customer Care Agent";
+    }
+    setEmpRole(newRole);
+
+    const hierarchy = resolveManagerHierarchy(empDept, val, newRole, empCustomPosition);
+    setEmpDirectManager(hierarchy.directManager);
+    setEmpDeptChief(hierarchy.departmentChief);
+    if (!empTeam || empTeam.endsWith("Team")) {
+      setEmpTeam(hierarchy.directManager ? `${hierarchy.directManager} Team` : "");
+    }
+  };
+
+  const handleEmpRoleChange = (val: string) => {
+    setEmpRole(val);
+    const wasMgr = isManagerialRole(empRoleType, empRole, empCustomPosition);
+    const isNowMgr = isManagerialRole(empRoleType, val, empCustomPosition);
+    if (wasMgr !== isNowMgr) {
+      const hierarchy = resolveManagerHierarchy(empDept, empRoleType, val, empCustomPosition);
+      setEmpDirectManager(hierarchy.directManager);
+      setEmpDeptChief(hierarchy.departmentChief);
+    }
+  };
+
+  const handleEmpCustomPositionChange = (val: string) => {
+    setEmpCustomPosition(val);
+    setEmpRole(val);
+    const wasMgr = isManagerialRole(empRoleType, empRole, empCustomPosition);
+    const isNowMgr = isManagerialRole(empRoleType, val, val);
+    if (wasMgr !== isNowMgr) {
+      const hierarchy = resolveManagerHierarchy(empDept, empRoleType, val, val);
+      setEmpDirectManager(hierarchy.directManager);
+      setEmpDeptChief(hierarchy.departmentChief);
+    }
   };
 
   const handleSaveEmployeeSubmit = (e: React.FormEvent) => {
@@ -185,6 +297,7 @@ export function ManageStaffModal({
       ? (empCustomPosition.trim() || empRole.trim() || "Specialist")
       : (empRole.trim() || "Staff");
     const finalDm = empDirectManager.trim() || empTeam.trim() || "Omer Ayad";
+    const finalChief = empDeptChief.trim() || "Omer Ayad";
     const finalTeam = empTeam.trim() || (finalDm ? `${finalDm} Team` : "General");
 
     if (editingEmpId) {
@@ -198,6 +311,7 @@ export function ManageStaffModal({
             role: finalRole,
             team: finalTeam,
             direct_manager: finalDm,
+            department_chief: finalChief,
             custom_position: empRoleType === 'custom' ? finalRole : undefined,
             role_type: empRoleType
           };
@@ -214,6 +328,7 @@ export function ManageStaffModal({
         role: finalRole,
         team: finalTeam,
         direct_manager: finalDm,
+        department_chief: finalChief,
         custom_position: empRoleType === 'custom' ? finalRole : undefined,
         role_type: empRoleType
       };
@@ -825,7 +940,7 @@ export function ManageStaffModal({
                   </label>
                   <ModernDropdown
                     value={empDept}
-                    onChange={(val) => setEmpDept(val)}
+                    onChange={(val) => handleEmpDeptChange(val)}
                     options={departments.map(d => ({
                       value: d.name,
                       label: isAr ? (d.nameAr ? `${d.nameAr} (${d.name})` : d.name) : d.name
@@ -842,24 +957,11 @@ export function ManageStaffModal({
                     {isAr ? "نوع الدور الوظيفي *" : "Role Category *"}
                   </label>
                   <ModernDropdown
-                    value={empRoleType || "tl"}
-                    onChange={(val: any) => {
-                      setEmpRoleType(val);
-                      if (val === "custom") {
-                        if (empRole === "Team Leader" || empRole === "Staff / Agent" || !empCustomPosition) {
-                          setEmpRole("");
-                        }
-                      } else if (!empRole || empRoleType === "custom") {
-                        if (val === "tl") setEmpRole("Team Leader");
-                        else if (val === "qa") setEmpRole("Quality Auditor");
-                        else if (val === "trainer") setEmpRole("Trainer");
-                        else if (val === "backoffice") setEmpRole("Back Office Specialist");
-                        else setEmpRole("Customer Care Agent");
-                      }
-                    }}
+                    value={empRoleType || "agent"}
+                    onChange={(val: any) => handleEmpRoleTypeChange(val)}
                     options={[
-                      { value: "tl", label: isAr ? "Team Leader (قائد فريق)" : "Team Leader" },
                       { value: "agent", label: isAr ? "Staff / Agent (موظف أداء)" : "Staff / Agent" },
+                      { value: "tl", label: isAr ? "Team Leader / Manager (قائد فريق / مدير)" : "Team Leader / Manager" },
                       { value: "qa", label: isAr ? "Quality Auditor (جودة)" : "Quality Auditor" },
                       { value: "trainer", label: isAr ? "Trainer (تدريب)" : "Trainer" },
                       { value: "backoffice", label: isAr ? "Back Office (عمليات دعم)" : "Back Office" },
@@ -879,8 +981,8 @@ export function ManageStaffModal({
                       type="text"
                       required
                       value={empRole}
-                      onChange={(e) => setEmpRole(e.target.value)}
-                      placeholder="e.g. Team Leader, Customer Care Specialist"
+                      onChange={(e) => handleEmpRoleChange(e.target.value)}
+                      placeholder="e.g. Customer Care Agent, Team Leader"
                       className="w-full h-10 px-3.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden font-bold"
                     />
                   </div>
@@ -894,10 +996,7 @@ export function ManageStaffModal({
                       type="text"
                       required
                       value={empCustomPosition}
-                      onChange={(e) => {
-                        setEmpCustomPosition(e.target.value);
-                        setEmpRole(e.target.value);
-                      }}
+                      onChange={(e) => handleEmpCustomPositionChange(e.target.value)}
                       placeholder={isAr ? "اكتب المسمى الوظيفي..." : "Type custom position..."}
                       className="w-full h-10 px-3.5 text-xs bg-emerald-50/50 dark:bg-emerald-950/40 border-2 border-[#1C6B53] dark:border-emerald-500 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden font-bold text-gray-900 dark:text-white"
                     />
@@ -912,40 +1011,150 @@ export function ManageStaffModal({
                     type="text"
                     value={empTeam}
                     onChange={(e) => setEmpTeam(e.target.value)}
-                    placeholder="e.g. Younis Kamal Team, Calls Team"
+                    placeholder="e.g. Calls Team, Operations Team"
                     className="w-full h-10 px-3.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden font-bold"
                   />
                 </div>
               </div>
 
-              {/* Direct Manager Field Only (User Request: Pure text input, no datalist) */}
-              <div 
-                className="p-3.5 rounded-2xl border transition"
-                style={{ 
-                  backgroundColor: brandLightBg,
-                  borderColor: brandLightBorder 
-                }}
-              >
-                <label className="block text-xs font-black mb-1" style={{ color: brandPrimary }}>
-                  {isAr ? "اسم المدير المباشر (Direct Manager) *" : "Direct Manager *"}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={empDirectManager}
-                  onChange={(e) => {
-                    setEmpDirectManager(e.target.value);
-                    if (!empTeam) setEmpTeam(e.target.value ? `${e.target.value} Team` : "");
-                  }}
-                  placeholder={isAr ? "اكتب اسم المدير المباشر..." : "Enter direct manager name..."}
-                  className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border rounded-xl outline-hidden font-bold transition focus:ring-2"
-                  style={{
-                    borderColor: brandLightBorder,
-                    // @ts-ignore
-                    "--tw-ring-color": brandPrimary
-                  }}
-                />
-              </div>
+              {/* Direct Manager Field with Smart Auto-Hierarchy & Quick Suggestion Pills */}
+              {(() => {
+                const currentDeptObj = departments.find(d => d.name === empDept || d.nameAr === empDept);
+                const isMgr = isManagerialRole(empRoleType, empRole, empCustomPosition);
+                const currentDeptMgr = currentDeptObj?.direct_manager?.trim();
+                const currentDeptChief = currentDeptObj?.department_chief?.trim() || "Omer Ayad";
+                
+                // Available TLs in this department
+                const availableDeptTLs = employees.filter(e => 
+                  e.department === empDept && 
+                  (e.role_type === "tl" || (e.role && /leader|manager/i.test(e.role)))
+                ).map(e => e.name);
+
+                return (
+                  <div 
+                    className="p-3.5 rounded-2xl border transition space-y-2.5"
+                    style={{ 
+                      backgroundColor: brandLightBg,
+                      borderColor: brandLightBorder 
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <label className="block text-xs font-black" style={{ color: brandPrimary }}>
+                        {isAr ? "اسم المدير المباشر (Direct Manager) *" : "Direct Manager *"}
+                      </label>
+                      <span 
+                        className="text-[10px] font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs"
+                        style={{
+                          backgroundColor: isMgr ? "#7e22ce" : brandPrimary,
+                          color: "#ffffff"
+                        }}
+                      >
+                        {isMgr ? <Crown size={11} /> : <Building2 size={11} />}
+                        <span>
+                          {isMgr 
+                            ? (isAr ? "يتبع لشيف القسم (دور قيادي/إداري)" : "Reports to Chief (Manager Role)")
+                            : (isAr ? "يتبع لمدير القسم (موظف أداء)" : "Reports to Dept Manager (Staff)")}
+                        </span>
+                      </span>
+                    </div>
+
+                    <input
+                      type="text"
+                      required
+                      value={empDirectManager}
+                      onChange={(e) => {
+                        setEmpDirectManager(e.target.value);
+                        if (!empTeam) setEmpTeam(e.target.value ? `${e.target.value} Team` : "");
+                      }}
+                      placeholder={isAr ? "اكتب اسم المدير المباشر..." : "Enter direct manager name..."}
+                      className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border rounded-xl outline-hidden font-bold transition focus:ring-2"
+                      style={{
+                        borderColor: brandLightBorder,
+                        // @ts-ignore
+                        "--tw-ring-color": brandPrimary
+                      }}
+                    />
+
+                    {/* Quick Suggestion Pills */}
+                    <div className="pt-0.5 flex flex-wrap items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                        {isAr ? "الاقتراحات السريعة:" : "Quick Suggestions:"}
+                      </span>
+
+                      {/* Pill 1: Department Manager (from added department) */}
+                      {currentDeptMgr && currentDeptMgr.toLowerCase() !== "team leaders" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEmpDirectManager(currentDeptMgr);
+                            if (!empTeam || empTeam.endsWith("Team")) setEmpTeam(`${currentDeptMgr} Team`);
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1 cursor-pointer border shadow-2xs ${
+                            empDirectManager === currentDeptMgr
+                              ? 'bg-emerald-600 text-white border-emerald-600'
+                              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:border-emerald-500'
+                          }`}
+                        >
+                          <Building2 size={11} />
+                          <span>{isAr ? "مدير القسم:" : "Dept Manager:"} {currentDeptMgr}</span>
+                        </button>
+                      )}
+
+                      {/* Pill 2: Department Chief */}
+                      {currentDeptChief && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEmpDirectManager(currentDeptChief);
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1 cursor-pointer border shadow-2xs ${
+                            empDirectManager === currentDeptChief
+                              ? 'bg-purple-600 text-white border-purple-600'
+                              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:border-purple-500'
+                          }`}
+                        >
+                          <Crown size={11} />
+                          <span>{isAr ? "شيف القسم:" : "Dept Chief:"} {currentDeptChief}</span>
+                        </button>
+                      )}
+
+                      {/* Contact Center / Specific Team Leaders */}
+                      {availableDeptTLs.map(tlName => (
+                        <button
+                          key={tlName}
+                          type="button"
+                          onClick={() => {
+                            setEmpDirectManager(tlName);
+                            if (!empTeam || empTeam.endsWith("Team")) setEmpTeam(`${tlName} Team`);
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1 cursor-pointer border shadow-2xs ${
+                            empDirectManager === tlName
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:border-blue-500'
+                          }`}
+                        >
+                          <UserCheck size={11} />
+                          <span>{tlName}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Explanatory Text */}
+                    <div className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1 font-medium">
+                      <Sparkles size={11} className="shrink-0 text-amber-500" />
+                      <span>
+                        {isMgr 
+                          ? (isAr 
+                              ? `تم اختيار شيف القسم (${currentDeptChief}) تلقائياً لأن الدور قيادي/إداري.` 
+                              : `Auto-selected Department Chief (${currentDeptChief}) because this is a managerial/leadership role.`)
+                          : (isAr 
+                              ? `تم اختيار مدير القسم (${currentDeptMgr || currentDeptChief}) تلقائياً كمدير مباشر.` 
+                              : `Auto-selected Department Manager (${currentDeptMgr || currentDeptChief}) as direct manager.`)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Dedicated Modal Footer */}
               <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-200 dark:border-gray-800">
