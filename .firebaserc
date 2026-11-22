@@ -1,6 +1,7 @@
 {
   "projects": {
-    "default": "annual-evaluation",
+    "default": "fib-annual-evaluation",
+    "annual": "fib-annual-evaluation",
     "backup": "bo-dashboard-e4603"
   }
 }
