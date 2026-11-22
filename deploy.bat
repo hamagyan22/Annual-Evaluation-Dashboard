@@ -10,10 +10,10 @@ echo.
 echo [1/2] Authenticating with your Google Account...
 echo       A browser tab will open now. Please select your account.
 echo.
-call npx firebase login --reauth
+call npx firebase-tools login --reauth
 echo.
 echo [2/2] Deploying website to bo-dashboard-e4603...
-call npx firebase deploy --only hosting --project bo-dashboard-e4603
+call npx firebase-tools deploy --only hosting --project bo-dashboard-e4603
 echo.
 echo ======================================================================
 echo   🎉 DEPLOYMENT FINISHED!
