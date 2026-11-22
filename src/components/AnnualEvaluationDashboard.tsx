@@ -566,7 +566,7 @@ export default function AnnualEvaluationDashboard({
 
   // One-time automatic cleanup to wipe old defaults and start 100% clean for custom entries
   useEffect(() => {
-    const WIPE_FLAG_KEY = "fib_annual_eval_wiped_v4";
+    const WIPE_FLAG_KEY = "fib_annual_eval_clean_slate_v5";
     if (typeof window !== "undefined" && !localStorage.getItem(WIPE_FLAG_KEY)) {
       localStorage.setItem(WIPE_FLAG_KEY, "true");
       localStorage.removeItem("fib_annual_eval_criteria_v2");
@@ -585,6 +585,7 @@ export default function AnnualEvaluationDashboard({
 
       const docRef = doc(db, "annual_evaluations", "config_roster_and_criteria");
       setDoc(docRef, {
+        is_clean_slate_v5: true,
         departments: [],
         employees: [],
         criteria: [],
@@ -614,6 +615,38 @@ export default function AnnualEvaluationDashboard({
     const unsub = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
+
+        // If the Firestore document was from the old legacy seed (not clean slate v5), wipe it clean immediately!
+        if (!data.is_clean_slate_v5) {
+          const cleanDoc = {
+            is_clean_slate_v5: true,
+            departments: [],
+            employees: [],
+            criteria: [],
+            sections: DEFAULT_SECTIONS,
+            deletedEmployeeNames: [],
+            deletedDepartmentIds: [],
+            deletedCriteriaIds: [],
+            updatedAt: new Date().toISOString()
+          };
+          setDoc(docRef, cleanDoc, { merge: false }).catch(() => null);
+          setDynamicDepartments([]);
+          setDynamicEmployees([]);
+          setDynamicCriteria([]);
+          setDeletedEmployeeNames([]);
+          setDeletedDepartmentIds([]);
+          setDeletedCriteriaIds([]);
+          saveStoredDepartments([]);
+          saveStoredEmployees([]);
+          saveStoredCriteria([]);
+          saveStoredDeletedEmployees([]);
+          saveStoredDeletedDepartments([]);
+          saveStoredDeletedCriteria([]);
+          setSelectedEmployeeName("");
+          return;
+        }
+
+        // Clean-slate document verified: load custom user data
         if (Array.isArray(data.departments)) {
           setDynamicDepartments(data.departments);
           saveStoredDepartments(data.departments);
@@ -643,24 +676,22 @@ export default function AnnualEvaluationDashboard({
           saveStoredDeletedCriteria(data.deletedCriteriaIds);
         }
       } else {
-        // Initialize Firestore with current configuration so all devices & users share the exact state
-        const initDepts = loadStoredDepartments();
-        const initEmps = loadStoredEmployees();
-        const initCrits = loadStoredCriteria();
-        const initSecs = loadStoredSections();
-        const initDelEmps = loadStoredDeletedEmployees();
-        const initDelDepts = loadStoredDeletedDepartments();
-        const initDelCrits = loadStoredDeletedCriteria();
+        // Initialize Firestore with clean empty state so all users start fresh
         setDoc(docRef, {
-          departments: initDepts,
-          employees: initEmps,
-          criteria: initCrits,
-          sections: initSecs,
-          deletedEmployeeNames: initDelEmps,
-          deletedDepartmentIds: initDelDepts,
-          deletedCriteriaIds: initDelCrits,
+          is_clean_slate_v5: true,
+          departments: [],
+          employees: [],
+          criteria: [],
+          sections: DEFAULT_SECTIONS,
+          deletedEmployeeNames: [],
+          deletedDepartmentIds: [],
+          deletedCriteriaIds: [],
           updatedAt: new Date().toISOString()
-        }, { merge: true }).catch(() => null);
+        }, { merge: false }).catch(() => null);
+
+        setDynamicDepartments([]);
+        setDynamicEmployees([]);
+        setDynamicCriteria([]);
       }
     }, (err) => {
       console.warn("Firestore config_roster_and_criteria listener warning:", err);
@@ -685,6 +716,7 @@ export default function AnnualEvaluationDashboard({
 
     try {
       await setDoc(doc(db, "annual_evaluations", "config_roster_and_criteria"), {
+        is_clean_slate_v5: true,
         criteria: newCriteria,
         deletedCriteriaIds: nextDeleted,
         updatedAt: new Date().toISOString()
@@ -699,6 +731,7 @@ export default function AnnualEvaluationDashboard({
     saveStoredSections(newSections);
     try {
       await setDoc(doc(db, "annual_evaluations", "config_roster_and_criteria"), {
+        is_clean_slate_v5: true,
         sections: newSections,
         updatedAt: new Date().toISOString()
       }, { merge: true });
@@ -724,6 +757,7 @@ export default function AnnualEvaluationDashboard({
 
     try {
       await setDoc(doc(db, "annual_evaluations", "config_roster_and_criteria"), {
+        is_clean_slate_v5: true,
         departments: newDepts,
         deletedDepartmentIds: nextDeleted,
         updatedAt: new Date().toISOString()
@@ -755,6 +789,7 @@ export default function AnnualEvaluationDashboard({
 
     try {
       await setDoc(doc(db, "annual_evaluations", "config_roster_and_criteria"), {
+        is_clean_slate_v5: true,
         employees: newEmps,
         deletedEmployeeNames: nextDeleted,
         updatedAt: new Date().toISOString()
@@ -930,18 +965,7 @@ export default function AnnualEvaluationDashboard({
       }).filter(m => Boolean(m.agent_name));
 
       if (members.length > 0) {
-        setInternalMembers(prev => {
-          const map = new Map<string, any>();
-          DEFAULT_COMPANY_EMPLOYEES.forEach(m => map.set(normalizeAgentName(m.agent_name), { ...m }));
-          members.forEach(m => {
-            const k = normalizeAgentName(m.agent_name);
-            const existing = map.get(k);
-            if (existing) {
-              map.set(k, { ...existing, ...m, id: m.id, team: m.team || existing.team });
-            }
-          });
-          return Array.from(map.values()).sort((a, b) => a.agent_name.localeCompare(b.agent_name));
-        });
+        setInternalMembers(members.sort((a, b) => a.agent_name.localeCompare(b.agent_name)));
       }
     }, (err) => {
       console.warn("Annual eval team_members live listener warning:", err);
@@ -959,9 +983,6 @@ export default function AnnualEvaluationDashboard({
     const fetchAllCompanyEmployees = async () => {
       try {
         const membersMap = new Map<string, any>();
-        DEFAULT_COMPANY_EMPLOYEES.forEach(m => {
-          membersMap.set(normalizeAgentName(m.agent_name), { ...m });
-        });
 
         // Add from team_members direct getDocs
         try {
@@ -2242,18 +2263,8 @@ export default function AnnualEvaluationDashboard({
           <section className="relative z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-gray-800 rounded-2xl sm:rounded-3xl p-2.5 sm:p-3.5 shadow-sm mb-5 print:hidden">
             <div className="flex flex-wrap items-center justify-between gap-2.5">
               
-              {/* Left Controls: Year & Annual Badge & Who's Pending */}
+              {/* Left Controls: Annual Badge & Management & Who's Pending */}
               <div className="flex flex-wrap items-center gap-2">
-                
-                {/* Year Dropdown using ModernDropdown */}
-                <ModernDropdown
-                  value={selectedYear}
-                  onChange={(val) => setSelectedYear(val)}
-                  options={AVAILABLE_YEARS}
-                  variant="gray"
-                  size="lg"
-                  ariaLabel="Select Year"
-                />
 
                 {/* Annual Evaluation Badge */}
                 <div className="flex items-center gap-1.5 px-3.5 h-9 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/80 text-[#1C6B53] dark:text-emerald-300 rounded-xl text-xs sm:text-sm font-black shrink-0 shadow-2xs">
@@ -2273,7 +2284,7 @@ export default function AnnualEvaluationDashboard({
                       <Sliders size={15} className="text-[#1C6B53] dark:text-emerald-400" />
                       <span>{t.criteriaButton}</span>
                       <span className="px-1.5 py-0.5 bg-[#1C6B53] text-white rounded-full text-[10px] font-black shadow-2xs">
-                        {dynamicCriteria.length || 12}
+                        {dynamicCriteria.length}
                       </span>
                     </button>
 
