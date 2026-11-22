@@ -8,17 +8,17 @@ echo           FIB Annual Evaluation - Firebase Auto Deploy
 echo ======================================================================
 echo.
 echo [1/2] Authenticating with your Google Account...
-echo       A browser tab will open now. Please select your Mohammed account.
+echo       A browser tab will open now. Please select your account.
 echo.
 call npx firebase login --reauth
 echo.
-echo [2/2] Deploying website and database rules to fib-annual-evaluation...
-call npx firebase deploy --project fib-annual-evaluation
+echo [2/2] Deploying website to bo-dashboard-e4603...
+call npx firebase deploy --only hosting --project bo-dashboard-e4603
 echo.
 echo ======================================================================
 echo   🎉 DEPLOYMENT FINISHED!
 echo   Your website is LIVE at:
-echo   https://fib-annual-evaluation.web.app/evaluation
+echo   https://bo-dashboard-e4603.web.app
 echo ======================================================================
 echo.
 echo Press any key to close this window.
