@@ -226,6 +226,66 @@ const STORAGE_SECTIONS_KEY = "fib_annual_eval_sections_v2";
 const STORAGE_DEPARTMENTS_KEY = "fib_annual_eval_departments_v2";
 const STORAGE_EMPLOYEES_KEY = "fib_annual_eval_employees_v2";
 const STORAGE_EVALUATIONS_PREFIX = "fib_annual_evaluation_doc_";
+export const STORAGE_DELETED_EMPLOYEES_KEY = "fib_annual_eval_deleted_employees_v2";
+export const STORAGE_DELETED_DEPARTMENTS_KEY = "fib_annual_eval_deleted_departments_v2";
+export const STORAGE_DELETED_CRITERIA_KEY = "fib_annual_eval_deleted_criteria_v2";
+
+export function loadStoredDeletedEmployees(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_DELETED_EMPLOYEES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveStoredDeletedEmployees(namesOrIds: string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(STORAGE_DELETED_EMPLOYEES_KEY, JSON.stringify(namesOrIds));
+  } catch (e) {
+    console.error("Error saving deleted employees to localStorage:", e);
+  }
+}
+
+export function loadStoredDeletedDepartments(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_DELETED_DEPARTMENTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveStoredDeletedDepartments(namesOrIds: string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(STORAGE_DELETED_DEPARTMENTS_KEY, JSON.stringify(namesOrIds));
+  } catch (e) {
+    console.error("Error saving deleted departments to localStorage:", e);
+  }
+}
+
+export function loadStoredDeletedCriteria(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_DELETED_CRITERIA_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveStoredDeletedCriteria(ids: string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(STORAGE_DELETED_CRITERIA_KEY, JSON.stringify(ids));
+  } catch (e) {
+    console.error("Error saving deleted criteria to localStorage:", e);
+  }
+}
 
 export function sanitizeCriterion(c: DynamicCriterion): DynamicCriterion {
   // If name contains Arabic in parentheses, e.g. "Leadership (القيادة)", strip it for clean English
@@ -248,23 +308,24 @@ export function sanitizeCriterion(c: DynamicCriterion): DynamicCriterion {
 // Helpers
 export function loadStoredCriteria(): DynamicCriterion[] {
   if (typeof window === "undefined") return DEFAULT_CRITERIA.map(sanitizeCriterion);
+  const deletedIds = new Set(loadStoredDeletedCriteria());
   try {
     const raw = localStorage.getItem(STORAGE_CRITERIA_KEY);
     if (!raw) {
-      const sanitized = DEFAULT_CRITERIA.map(sanitizeCriterion);
+      const sanitized = DEFAULT_CRITERIA.filter(c => !deletedIds.has(c.id)).map(sanitizeCriterion);
       localStorage.setItem(STORAGE_CRITERIA_KEY, JSON.stringify(sanitized));
       return sanitized;
     }
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      const sanitized = parsed.map(sanitizeCriterion);
-      localStorage.setItem(STORAGE_CRITERIA_KEY, JSON.stringify(sanitized));
+    if (Array.isArray(parsed)) {
+      const filtered = parsed.filter(c => !deletedIds.has(c.id));
+      const sanitized = filtered.map(sanitizeCriterion);
       return sanitized;
     }
-    return DEFAULT_CRITERIA.map(sanitizeCriterion);
+    return DEFAULT_CRITERIA.filter(c => !deletedIds.has(c.id)).map(sanitizeCriterion);
   } catch (e) {
     console.error("Error loading criteria from localStorage:", e);
-    return DEFAULT_CRITERIA.map(sanitizeCriterion);
+    return DEFAULT_CRITERIA.filter(c => !deletedIds.has(c.id)).map(sanitizeCriterion);
   }
 }
 
@@ -286,7 +347,7 @@ export function loadStoredSections(): DynamicSection[] {
       return DEFAULT_SECTIONS;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_SECTIONS;
+    return Array.isArray(parsed) ? parsed : DEFAULT_SECTIONS;
   } catch (e) {
     console.error("Error loading sections from localStorage:", e);
     return DEFAULT_SECTIONS;
@@ -304,17 +365,22 @@ export function saveStoredSections(sections: DynamicSection[]): void {
 
 export function loadStoredDepartments(): DynamicDepartment[] {
   if (typeof window === "undefined") return DEFAULT_DEPARTMENTS;
+  const deletedSet = new Set(loadStoredDeletedDepartments());
   try {
     const raw = localStorage.getItem(STORAGE_DEPARTMENTS_KEY);
     if (!raw) {
-      localStorage.setItem(STORAGE_DEPARTMENTS_KEY, JSON.stringify(DEFAULT_DEPARTMENTS));
-      return DEFAULT_DEPARTMENTS;
+      const filtered = DEFAULT_DEPARTMENTS.filter(d => !deletedSet.has(d.id) && !deletedSet.has(d.name));
+      localStorage.setItem(STORAGE_DEPARTMENTS_KEY, JSON.stringify(filtered));
+      return filtered;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_DEPARTMENTS;
+    if (Array.isArray(parsed)) {
+      return parsed.filter(d => !deletedSet.has(d.id) && !deletedSet.has(d.name));
+    }
+    return DEFAULT_DEPARTMENTS.filter(d => !deletedSet.has(d.id) && !deletedSet.has(d.name));
   } catch (e) {
     console.error("Error loading departments from localStorage:", e);
-    return DEFAULT_DEPARTMENTS;
+    return DEFAULT_DEPARTMENTS.filter(d => !deletedSet.has(d.id) && !deletedSet.has(d.name));
   }
 }
 
@@ -329,17 +395,34 @@ export function saveStoredDepartments(depts: DynamicDepartment[]): void {
 
 export function loadStoredEmployees(): DynamicEmployee[] {
   if (typeof window === "undefined") return DEFAULT_EMPLOYEES;
+  const deletedSet = new Set(loadStoredDeletedEmployees().map(s => s.toLowerCase().trim()));
   try {
     const raw = localStorage.getItem(STORAGE_EMPLOYEES_KEY);
     if (!raw) {
-      localStorage.setItem(STORAGE_EMPLOYEES_KEY, JSON.stringify(DEFAULT_EMPLOYEES));
-      return DEFAULT_EMPLOYEES;
+      const filtered = DEFAULT_EMPLOYEES.filter(e => 
+        !deletedSet.has(e.id.toLowerCase().trim()) && 
+        !deletedSet.has(e.name.toLowerCase().trim())
+      );
+      localStorage.setItem(STORAGE_EMPLOYEES_KEY, JSON.stringify(filtered));
+      return filtered;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_EMPLOYEES;
+    if (Array.isArray(parsed)) {
+      return parsed.filter(e => 
+        !deletedSet.has(e.id.toLowerCase().trim()) && 
+        !deletedSet.has(e.name.toLowerCase().trim())
+      );
+    }
+    return DEFAULT_EMPLOYEES.filter(e => 
+      !deletedSet.has(e.id.toLowerCase().trim()) && 
+      !deletedSet.has(e.name.toLowerCase().trim())
+    );
   } catch (e) {
     console.error("Error loading employees from localStorage:", e);
-    return DEFAULT_EMPLOYEES;
+    return DEFAULT_EMPLOYEES.filter(e => 
+      !deletedSet.has(e.id.toLowerCase().trim()) && 
+      !deletedSet.has(e.name.toLowerCase().trim())
+    );
   }
 }
 

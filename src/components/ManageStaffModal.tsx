@@ -27,8 +27,8 @@ interface ManageStaffModalProps {
   onClose: () => void;
   departments: DynamicDepartment[];
   employees: DynamicEmployee[];
-  onSaveDepartments: (depts: DynamicDepartment[]) => void;
-  onSaveEmployees: (emps: DynamicEmployee[]) => void;
+  onSaveDepartments: (depts: DynamicDepartment[], deletedIdOrFlag?: string, deletedName?: string) => void;
+  onSaveEmployees: (emps: DynamicEmployee[], deletedName?: string, deletedId?: string) => void;
   onSelectEmployeeForEval?: (employeeName: string) => void;
   lang?: Language;
 }
@@ -110,6 +110,7 @@ export function ManageStaffModal({
     type: "employee" | "department" | "reset";
     id?: string;
     name?: string;
+    affectedCount?: number;
     warning?: string;
   } | null>(null);
 
@@ -420,23 +421,12 @@ export function ManageStaffModal({
 
   // Modern Delete Department Request
   const handleRequestDeleteDept = (dept: DynamicDepartment) => {
-    const hasStaff = employees.some(e => e.department === dept.name);
-    if (hasStaff) {
-      setDeleteTarget({
-        type: "department",
-        id: dept.id,
-        name: dept.name,
-        warning: isAr
-          ? `لا يمكن حذف قسم "${dept.name}" لأنه يحتوي على موظفين مسجلين حالياً. يرجى إعادة تعيين موظفي القسم أولاً.`
-          : `Cannot delete department "${dept.name}" because it currently has registered employees. Please reassign them first.`
-      });
-      return;
-    }
-
+    const affectedCount = employees.filter(e => e.department === dept.name || (dept.nameAr && e.department === dept.nameAr)).length;
     setDeleteTarget({
       type: "department",
       id: dept.id,
-      name: dept.name
+      name: dept.name,
+      affectedCount
     });
   };
 
@@ -451,13 +441,29 @@ export function ManageStaffModal({
     if (!deleteTarget) return;
 
     if (deleteTarget.type === "employee" && deleteTarget.id) {
-      const filtered = employees.filter(e => e.id !== deleteTarget.id);
-      onSaveEmployees(filtered);
+      const deletedEmp = employees.find(e => e.id === deleteTarget.id);
+      const filtered = employees.filter(e => e.id !== deleteTarget.id && e.name !== deleteTarget.name);
+      onSaveEmployees(filtered, deletedEmp?.name || deleteTarget.name, deleteTarget.id);
     } else if (deleteTarget.type === "department" && deleteTarget.id) {
-      onSaveDepartments(departments.filter(d => d.id !== deleteTarget.id));
+      const targetDept = departments.find(d => d.id === deleteTarget.id);
+      const filteredDepts = departments.filter(d => d.id !== deleteTarget.id);
+      
+      // If department had registered employees, safely reassign them to the fallback department
+      const fallbackDeptName = filteredDepts[0]?.name || "Contact Center";
+      const hasAffectedEmployees = employees.some(e => e.department === targetDept?.name || e.department === deleteTarget.name);
+      if (hasAffectedEmployees) {
+        const reassignedEmployees = employees.map(e => {
+          if (e.department === targetDept?.name || e.department === deleteTarget.name) {
+            return { ...e, department: fallbackDeptName };
+          }
+          return e;
+        });
+        onSaveEmployees(reassignedEmployees);
+      }
+      onSaveDepartments(filteredDepts, targetDept?.id || deleteTarget.id, targetDept?.name || deleteTarget.name);
     } else if (deleteTarget.type === "reset") {
-      onSaveDepartments(DEFAULT_DEPARTMENTS);
-      onSaveEmployees(DEFAULT_EMPLOYEES);
+      onSaveDepartments(DEFAULT_DEPARTMENTS, "__RESET__");
+      onSaveEmployees(DEFAULT_EMPLOYEES, "__RESET__");
     }
 
     setDeleteTarget(null);
@@ -1612,22 +1618,38 @@ export function ManageStaffModal({
                 ? (isAr ? "تنبيه" : "Action Blocked")
                 : deleteTarget.type === "reset"
                 ? (isAr ? "استعادة الإعدادات الافتراضية" : "Restore Defaults")
-                : (isAr ? "تأكيد الحذف" : "Confirm Deletion")}
+                : (isAr ? "تأكيد الحذف النهائي" : "Confirm Permanent Deletion")}
             </h4>
 
-            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-6 font-medium">
+            <div className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-6 font-medium">
               {deleteTarget.warning ? (
                 deleteTarget.warning
               ) : deleteTarget.type === "reset" ? (
                 isAr 
                   ? "هل تريد بالتأكيد استعادة قائمة الموظفين والأقسام الافتراضية؟ سيتم الاحتفاظ بالسجلات المحفوظة."
                   : "Are you sure you want to restore the default employees and departments roster?"
+              ) : deleteTarget.type === "department" && deleteTarget.affectedCount && deleteTarget.affectedCount > 0 ? (
+                isAr ? (
+                  <div>
+                    هل أنت متأكد من حذف قسم <strong className="text-gray-900 dark:text-white">{deleteTarget.name}</strong>؟
+                    <div className="p-3 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-800 dark:text-amber-300 font-bold mt-2.5 text-right" dir="rtl">
+                      ⚠️ يحتوي هذا القسم على ({deleteTarget.affectedCount}) موظف مسجل حالياً. عند التأكيد، سيتم نقل جميع موظفي هذا القسم تلقائياً إلى قسم (مركز خدمة العملاء) وحذف هذا القسم نهائياً.
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    Are you sure you want to delete department <strong className="text-gray-900 dark:text-white">{deleteTarget.name}</strong>?
+                    <div className="p-3 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-800 dark:text-amber-300 font-bold mt-2.5 text-left">
+                      ⚠️ This department has ({deleteTarget.affectedCount}) registered employees. Upon confirmation, all employees will be reassigned to Contact Center, and this department will be permanently deleted.
+                    </div>
+                  </div>
+                )
               ) : (
                 isAr 
-                  ? <>هل أنت متأكد من حذف <strong className="text-gray-900 dark:text-white">{deleteTarget.name}</strong>؟ لا يمكن التراجع عن هذا الإجراء.</>
-                  : <>Are you sure you want to delete <strong className="text-gray-900 dark:text-white">{deleteTarget.name}</strong>? This action cannot be undone.</>
+                  ? <>هل أنت متأكد من حذف <strong className="text-gray-900 dark:text-white">{deleteTarget.name}</strong> نهائياً؟ لا يمكن التراجع عن هذا الإجراء.</>
+                  : <>Are you sure you want to permanently delete <strong className="text-gray-900 dark:text-white">{deleteTarget.name}</strong>? This action cannot be undone.</>
               )}
-            </p>
+            </div>
 
             <div className="flex items-center justify-center gap-3">
               <button
@@ -1650,7 +1672,9 @@ export function ManageStaffModal({
                 >
                   {deleteTarget.type === "reset" 
                     ? (isAr ? "نعم، استعادة" : "Yes, Restore")
-                    : (isAr ? "نعم، احذف" : "Yes, Delete")}
+                    : (deleteTarget.type === "department" && deleteTarget.affectedCount && deleteTarget.affectedCount > 0)
+                    ? (isAr ? "نعم، احذف وانقل الموظفين" : "Yes, Delete & Reassign")
+                    : (isAr ? "نعم، احذف نهائياً" : "Yes, Delete Permanently")}
                 </button>
               )}
             </div>

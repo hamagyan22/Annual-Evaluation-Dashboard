@@ -20,8 +20,8 @@ interface ManageCriteriaModalProps {
   onClose: () => void;
   criteria: DynamicCriterion[];
   sections: DynamicSection[];
-  onSaveCriteria: (criteria: DynamicCriterion[]) => void;
-  onSaveSections: (sections: DynamicSection[]) => void;
+  onSaveCriteria: (criteria: DynamicCriterion[], deletedId?: string) => void;
+  onSaveSections: (sections: DynamicSection[], deletedId?: string) => void;
   lang?: Language;
 }
 
@@ -214,10 +214,15 @@ export function ManageCriteriaModal({
 
     if (deleteTarget.type === "criterion" && deleteTarget.id) {
       const filtered = criteria.filter(c => c.id !== deleteTarget.id);
-      onSaveCriteria(filtered);
+      onSaveCriteria(filtered, deleteTarget.id);
+    } else if (deleteTarget.type === "section" && deleteTarget.id) {
+      const filteredSecs = sections.filter(s => s.id !== deleteTarget.id);
+      onSaveSections(filteredSecs, deleteTarget.id);
+      const filteredCrits = criteria.filter(c => c.sectionId !== deleteTarget.id);
+      onSaveCriteria(filteredCrits);
     } else if (deleteTarget.type === "reset") {
-      onSaveCriteria(DEFAULT_CRITERIA);
-      onSaveSections(DEFAULT_SECTIONS);
+      onSaveCriteria(DEFAULT_CRITERIA, "__RESET__");
+      onSaveSections(DEFAULT_SECTIONS, "__RESET__");
     }
 
     setDeleteTarget(null);

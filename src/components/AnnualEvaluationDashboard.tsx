@@ -30,6 +30,9 @@ import {
   loadStoredSections, saveStoredSections,
   loadStoredDepartments, saveStoredDepartments,
   loadStoredEmployees, saveStoredEmployees,
+  loadStoredDeletedEmployees, saveStoredDeletedEmployees,
+  loadStoredDeletedDepartments, saveStoredDeletedDepartments,
+  loadStoredDeletedCriteria, saveStoredDeletedCriteria,
   DynamicCriterion, DynamicSection, DynamicDepartment, DynamicEmployee
 } from "@/lib/customCriteriaManager";
 import { getDepartmentIcon } from "@/lib/bankDepartmentIcons";
@@ -556,29 +559,175 @@ export default function AnnualEvaluationDashboard({
   const [dynamicSections, setDynamicSections] = useState<DynamicSection[]>([]);
   const [dynamicDepartments, setDynamicDepartments] = useState<DynamicDepartment[]>([]);
   const [dynamicEmployees, setDynamicEmployees] = useState<DynamicEmployee[]>([]);
+  const [deletedEmployeeNames, setDeletedEmployeeNames] = useState<string[]>([]);
+  const [deletedDepartmentIds, setDeletedDepartmentIds] = useState<string[]>([]);
+  const [deletedCriteriaIds, setDeletedCriteriaIds] = useState<string[]>([]);
 
+  // Initial local loading for instant rendering
   useEffect(() => {
     setDynamicCriteria(loadStoredCriteria());
     setDynamicSections(loadStoredSections());
     setDynamicDepartments(loadStoredDepartments());
     setDynamicEmployees(loadStoredEmployees());
+    setDeletedEmployeeNames(loadStoredDeletedEmployees());
+    setDeletedDepartmentIds(loadStoredDeletedDepartments());
+    setDeletedCriteriaIds(loadStoredDeletedCriteria());
   }, []);
 
-  const handleSaveCriteria = (newCriteria: DynamicCriterion[]) => {
+  // Live real-time synchronization with Firestore config document for permanent, universal persistence
+  useEffect(() => {
+    const docRef = doc(db, "annual_evaluations", "config_roster_and_criteria");
+    const unsub = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (Array.isArray(data.departments)) {
+          setDynamicDepartments(data.departments);
+          saveStoredDepartments(data.departments);
+        }
+        if (Array.isArray(data.employees)) {
+          setDynamicEmployees(data.employees);
+          saveStoredEmployees(data.employees);
+        }
+        if (Array.isArray(data.criteria)) {
+          setDynamicCriteria(data.criteria);
+          saveStoredCriteria(data.criteria);
+        }
+        if (Array.isArray(data.sections)) {
+          setDynamicSections(data.sections);
+          saveStoredSections(data.sections);
+        }
+        if (Array.isArray(data.deletedEmployeeNames)) {
+          setDeletedEmployeeNames(data.deletedEmployeeNames);
+          saveStoredDeletedEmployees(data.deletedEmployeeNames);
+        }
+        if (Array.isArray(data.deletedDepartmentIds)) {
+          setDeletedDepartmentIds(data.deletedDepartmentIds);
+          saveStoredDeletedDepartments(data.deletedDepartmentIds);
+        }
+        if (Array.isArray(data.deletedCriteriaIds)) {
+          setDeletedCriteriaIds(data.deletedCriteriaIds);
+          saveStoredDeletedCriteria(data.deletedCriteriaIds);
+        }
+      } else {
+        // Initialize Firestore with current configuration so all devices & users share the exact state
+        const initDepts = loadStoredDepartments();
+        const initEmps = loadStoredEmployees();
+        const initCrits = loadStoredCriteria();
+        const initSecs = loadStoredSections();
+        const initDelEmps = loadStoredDeletedEmployees();
+        const initDelDepts = loadStoredDeletedDepartments();
+        const initDelCrits = loadStoredDeletedCriteria();
+        setDoc(docRef, {
+          departments: initDepts,
+          employees: initEmps,
+          criteria: initCrits,
+          sections: initSecs,
+          deletedEmployeeNames: initDelEmps,
+          deletedDepartmentIds: initDelDepts,
+          deletedCriteriaIds: initDelCrits,
+          updatedAt: new Date().toISOString()
+        }, { merge: true }).catch(() => null);
+      }
+    }, (err) => {
+      console.warn("Firestore config_roster_and_criteria listener warning:", err);
+    });
+
+    return () => unsub();
+  }, []);
+
+  const handleSaveCriteria = async (newCriteria: DynamicCriterion[], deletedId?: string) => {
+    let nextDeleted = deletedCriteriaIds;
+    if (deletedId === "__RESET__") {
+      nextDeleted = [];
+      setDeletedCriteriaIds([]);
+      saveStoredDeletedCriteria([]);
+    } else if (deletedId) {
+      nextDeleted = Array.from(new Set([...deletedCriteriaIds, deletedId]));
+      setDeletedCriteriaIds(nextDeleted);
+      saveStoredDeletedCriteria(nextDeleted);
+    }
     setDynamicCriteria(newCriteria);
     saveStoredCriteria(newCriteria);
+
+    try {
+      await setDoc(doc(db, "annual_evaluations", "config_roster_and_criteria"), {
+        criteria: newCriteria,
+        deletedCriteriaIds: nextDeleted,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (e) {
+      console.warn("Error syncing criteria to Firestore:", e);
+    }
   };
-  const handleSaveSections = (newSections: DynamicSection[]) => {
+
+  const handleSaveSections = async (newSections: DynamicSection[]) => {
     setDynamicSections(newSections);
     saveStoredSections(newSections);
+    try {
+      await setDoc(doc(db, "annual_evaluations", "config_roster_and_criteria"), {
+        sections: newSections,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (e) {
+      console.warn("Error syncing sections to Firestore:", e);
+    }
   };
-  const handleSaveDepartments = (newDepts: DynamicDepartment[]) => {
+
+  const handleSaveDepartments = async (newDepts: DynamicDepartment[], deletedIdOrFlag?: string, deletedName?: string) => {
+    let nextDeleted = deletedDepartmentIds;
+    if (deletedIdOrFlag === "__RESET__") {
+      nextDeleted = [];
+      setDeletedDepartmentIds([]);
+      saveStoredDeletedDepartments([]);
+    } else if (deletedIdOrFlag) {
+      const toAdd = [deletedIdOrFlag, deletedName].filter(Boolean) as string[];
+      nextDeleted = Array.from(new Set([...deletedDepartmentIds, ...toAdd]));
+      setDeletedDepartmentIds(nextDeleted);
+      saveStoredDeletedDepartments(nextDeleted);
+    }
     setDynamicDepartments(newDepts);
     saveStoredDepartments(newDepts);
+
+    try {
+      await setDoc(doc(db, "annual_evaluations", "config_roster_and_criteria"), {
+        departments: newDepts,
+        deletedDepartmentIds: nextDeleted,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (e) {
+      console.warn("Error syncing departments to Firestore:", e);
+    }
   };
-  const handleSaveEmployees = (newEmps: DynamicEmployee[]) => {
+
+  const handleSaveEmployees = async (newEmps: DynamicEmployee[], deletedName?: string, deletedId?: string) => {
+    let nextDeleted = deletedEmployeeNames;
+    if (deletedName === "__RESET__") {
+      nextDeleted = [];
+      setDeletedEmployeeNames([]);
+      saveStoredDeletedEmployees([]);
+    } else if (deletedName || deletedId) {
+      const itemsToAdd = [
+        deletedName ? normalizeAgentName(deletedName) : null,
+        deletedName ? deletedName.trim() : null,
+        deletedId ? deletedId.trim() : null
+      ].filter(Boolean) as string[];
+
+      nextDeleted = Array.from(new Set([...deletedEmployeeNames, ...itemsToAdd]));
+      setDeletedEmployeeNames(nextDeleted);
+      saveStoredDeletedEmployees(nextDeleted);
+    }
     setDynamicEmployees(newEmps);
     saveStoredEmployees(newEmps);
+
+    try {
+      await setDoc(doc(db, "annual_evaluations", "config_roster_and_criteria"), {
+        employees: newEmps,
+        deletedEmployeeNames: nextDeleted,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (e) {
+      console.warn("Error syncing employees to Firestore:", e);
+    }
   };
 
   // Selected filter: Year (2026-2030) (Pure Annual Evaluation)
@@ -828,44 +977,53 @@ export default function AnnualEvaluationDashboard({
     return () => { isMounted = false; };
   }, [allMembers, selectedYear]);
 
-  // Combined master members list: 38 official agents + Special Staff + Dynamic Employees
+  // Combined master members list: 38 official agents + Special Staff + Dynamic Employees (Respecting permanent deletions)
   const effectiveAllMembers = useMemo(() => {
+    const deletedNormSet = new Set((deletedEmployeeNames || []).map(normalizeAgentName));
+    const deletedRawSet = new Set((deletedEmployeeNames || []).map(s => s.toLowerCase().trim()));
     const map = new Map<string, any>();
     
     // 1. Initial base: All 38 Company employees
     DEFAULT_COMPANY_EMPLOYEES.forEach(m => {
-      map.set(normalizeAgentName(m.agent_name), { ...m });
+      const k = normalizeAgentName(m.agent_name);
+      if (!deletedNormSet.has(k) && !deletedRawSet.has(m.id?.toLowerCase().trim())) {
+        map.set(k, { ...m });
+      }
     });
 
     // 1b. Add Special Staff (Trainer, QA, Team Leaders)
     SPECIAL_STAFF_MEMBERS.forEach(s => {
       const k = normalizeAgentName(s.agent_name);
-      if (!map.has(k)) {
-        map.set(k, { ...s });
-      } else {
-        const existing = map.get(k);
-        map.set(k, { ...existing, ...s });
+      if (!deletedNormSet.has(k) && !deletedRawSet.has(s.id?.toLowerCase().trim())) {
+        if (!map.has(k)) {
+          map.set(k, { ...s });
+        } else {
+          const existing = map.get(k);
+          map.set(k, { ...existing, ...s });
+        }
       }
     });
 
     // 1c. Add/merge Dynamic Employees from ManageStaffModal
     dynamicEmployees.forEach(de => {
       const k = normalizeAgentName(de.name);
-      const existing = map.get(k) || {};
-      map.set(k, {
-        ...existing,
-        id: de.id || existing.id,
-        agent_name: de.name,
-        name: de.name,
-        employee_id: de.employee_id || existing.employee_id,
-        department: de.department || existing.department || "Contact Center",
-        role: de.role || existing.role,
-        role_type: de.role_type || existing.role_type || "agent",
-        team: de.team || existing.team,
-        direct_manager: de.direct_manager || existing.direct_manager,
-        department_chief: de.department_chief || existing.department_chief,
-        custom_position: de.custom_position || existing.custom_position,
-      });
+      if (!deletedNormSet.has(k) && !deletedRawSet.has(de.id?.toLowerCase().trim())) {
+        const existing = map.get(k) || {};
+        map.set(k, {
+          ...existing,
+          id: de.id || existing.id,
+          agent_name: de.name,
+          name: de.name,
+          employee_id: de.employee_id || existing.employee_id,
+          department: de.department || existing.department || "Contact Center",
+          role: de.role || existing.role,
+          role_type: de.role_type || existing.role_type || "agent",
+          team: de.team || existing.team,
+          direct_manager: de.direct_manager || existing.direct_manager,
+          department_chief: de.department_chief || existing.department_chief,
+          custom_position: de.custom_position || existing.custom_position,
+        });
+      }
     });
 
     // 2. Attach any Firestore metadata
@@ -873,28 +1031,34 @@ export default function AnnualEvaluationDashboard({
       const name = (m.agent_name || m.name || m.display_name || "").trim();
       if (name) {
         const key = normalizeAgentName(name);
-        const existing = map.get(key);
-        if (existing) {
-          map.set(key, {
-            ...existing,
-            ...m,
-            id: m.id || existing.id,
-            team: m.team || existing.team,
-            direct_manager: m.direct_manager || existing.direct_manager,
-            department_chief: m.department_chief || existing.department_chief,
-            is_deleted: m.is_deleted === true || existing.is_deleted === true,
-            is_active: m.is_active === false ? false : (existing.is_active ?? true),
-            resigned_month: m.resigned_month || existing.resigned_month,
-            resigned_year: m.resigned_year || existing.resigned_year,
-          });
+        if (!deletedNormSet.has(key) && !deletedRawSet.has(m.id?.toLowerCase().trim())) {
+          const existing = map.get(key);
+          if (existing) {
+            map.set(key, {
+              ...existing,
+              ...m,
+              id: m.id || existing.id,
+              team: m.team || existing.team,
+              direct_manager: m.direct_manager || existing.direct_manager,
+              department_chief: m.department_chief || existing.department_chief,
+              is_deleted: m.is_deleted === true || existing.is_deleted === true,
+              is_active: m.is_active === false ? false : (existing.is_active ?? true),
+              resigned_month: m.resigned_month || existing.resigned_month,
+              resigned_year: m.resigned_year || existing.resigned_year,
+            });
+          }
         }
       }
     });
 
     return Array.from(map.values())
-      .filter(m => m.is_deleted !== true && m.is_active !== false)
+      .filter(m => {
+        const norm = normalizeAgentName(m.agent_name || m.name || "");
+        if (deletedNormSet.has(norm) || deletedRawSet.has(m.id?.toLowerCase().trim())) return false;
+        return m.is_deleted !== true && m.is_active !== false;
+      })
       .sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
-  }, [allMembers, internalMembers, dynamicEmployees]);
+  }, [allMembers, internalMembers, dynamicEmployees, deletedEmployeeNames]);
 
   // Detect direct subordinates under the current user (Multi-level evaluation hierarchy)
   // "المنجر يكدر يشوف موظفين الي تحته و يقيمهم لكن ميشوف مال المدير الي فوكة"
@@ -1729,6 +1893,9 @@ export default function AnnualEvaluationDashboard({
       ];
     }
 
+    const deletedCritSet = new Set(deletedCriteriaIds || []);
+    list = list.filter(item => !deletedCritSet.has(item.id));
+
     if (isAr) {
       return list.map(item => {
         const ar = KPI_DEFINITIONS_AR[item.id];
@@ -1740,7 +1907,7 @@ export default function AnnualEvaluationDashboard({
       });
     }
     return list;
-  }, [currentMemberRoleType, isSelectedEmployeeChat, actualMetricsSummary, dynamicCriteria, isAr]);
+  }, [currentMemberRoleType, isSelectedEmployeeChat, actualMetricsSummary, dynamicCriteria, deletedCriteriaIds, isAr]);
 
   // Dynamic Competencies List matching specific role templates
   const currentCompetenciesList = useMemo(() => {
@@ -1780,6 +1947,9 @@ export default function AnnualEvaluationDashboard({
       ];
     }
 
+    const deletedCritSet = new Set(deletedCriteriaIds || []);
+    list = list.filter(item => !deletedCritSet.has(item.id));
+
     if (isAr) {
       return list.map(c => ({
         ...c,
@@ -1788,7 +1958,7 @@ export default function AnnualEvaluationDashboard({
       }));
     }
     return list;
-  }, [selectedEmployeeName, currentMember, currentMemberRoleType, isAr]);
+  }, [selectedEmployeeName, currentMember, currentMemberRoleType, deletedCriteriaIds, isAr]);
 
   // Helper to reliably read KPI score whether keyed by 'exam' or 'knowledge'
   const getKpiScore = (kpisMap: Record<string, number>, id: string) => {
@@ -4274,7 +4444,7 @@ export default function AnnualEvaluationDashboard({
           lang={lang}
           isOpen={showManageCriteriaModal}
           onClose={() => setShowManageCriteriaModal(false)}
-          criteria={dynamicCriteria}
+          criteria={dynamicCriteria.filter(c => !deletedCriteriaIds.includes(c.id))}
           sections={dynamicSections}
           onSaveCriteria={handleSaveCriteria}
           onSaveSections={handleSaveSections}
@@ -4287,8 +4457,17 @@ export default function AnnualEvaluationDashboard({
           lang={lang}
           isOpen={showManageStaffModal}
           onClose={() => setShowManageStaffModal(false)}
-          employees={dynamicEmployees}
-          departments={dynamicDepartments}
+          employees={dynamicEmployees.filter(e => {
+            const norm = normalizeAgentName(e.name);
+            const rawId = (e.id || "").toLowerCase().trim();
+            const rawName = (e.name || "").toLowerCase().trim();
+            return !deletedEmployeeNames.includes(norm) && !deletedEmployeeNames.includes(rawId) && !deletedEmployeeNames.includes(rawName);
+          })}
+          departments={dynamicDepartments.filter(d => {
+            const rawId = (d.id || "").toLowerCase().trim();
+            const rawName = (d.name || "").toLowerCase().trim();
+            return !deletedDepartmentIds.includes(d.id) && !deletedDepartmentIds.includes(d.name) && !deletedDepartmentIds.includes(rawId) && !deletedDepartmentIds.includes(rawName);
+          })}
           onSaveEmployees={handleSaveEmployees}
           onSaveDepartments={handleSaveDepartments}
           onSelectEmployeeForEval={(empName) => {
