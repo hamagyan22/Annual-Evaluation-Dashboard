@@ -354,7 +354,7 @@ export function ManageCriteriaModal({
             <div className="p-12 text-center text-gray-400 bg-gray-50 dark:bg-gray-800/40 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700">
               <AlertCircle size={32} className="mx-auto mb-2 text-gray-300 dark:text-gray-600" />
               <p className="text-sm font-bold text-gray-600 dark:text-gray-300">
-                {critSearch ? (isAr ? "لا توجد معايير مطابقة للبحث" : "No criteria match your search") : (isAr ? "لا توجد معايير في هذا القسم" : "No criteria in this section")}
+                {critSearch ? (isAr ? "لا توجد معايير مطابقة للبحث" : "No criteria match your search") : (isAr ? "لا توجد معايير مضافة حالياً. يمكنك إضافة مؤشرات الأداء والكفاءات الخاصة بك من الزر أدناه." : "No criteria added yet. You can add your custom KPIs and competencies using the button below.")}
               </p>
               <button
                 type="button"

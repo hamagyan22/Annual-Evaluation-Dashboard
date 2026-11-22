@@ -66,159 +66,14 @@ export const DEFAULT_SECTIONS: DynamicSection[] = [
   }
 ];
 
-// Default Criteria
-export const DEFAULT_CRITERIA: DynamicCriterion[] = [
-  // Section 1: Role KPIs
-  {
-    id: "leadership",
-    name: "Leadership & Team Management",
-    nameAr: "القيادة وإدارة الفريق",
-    description: "Effectively guiding, mentoring, motivating, and supporting team members toward operational excellence.",
-    descriptionAr: "التوجيه الفعال، التحفيز، ودعم أعضاء الفريق نحو التميز التشغيلي وتحقيق الأهداف.",
-    sectionId: "kpi",
-    sectionName: "Leadership & Role KPI Evaluation",
-    isDefault: true
-  },
-  {
-    id: "team_kpi",
-    name: "Team KPI Achievement",
-    nameAr: "تحقيق مؤشرات الأداء للفريق",
-    description: "Achieving target Service Level, QA averages, AHT/ART benchmarks, and operational KPIs across the assigned team.",
-    descriptionAr: "تحقيق مستويات الخدمة المستهدفة، معدلات الجودة، ومعايير الأداء التشغيلي المعتمدة.",
-    sectionId: "kpi",
-    sectionName: "Leadership & Role KPI Evaluation",
-    isDefault: true
-  },
-  {
-    id: "reporting",
-    name: "Operational Reporting & Workflow",
-    nameAr: "التقارير التشغيلية وسير العمل",
-    description: "Timely submission of shift handovers, daily logs, SLA reports, escalation handling, and incident tracking.",
-    descriptionAr: "تسليم تقارير المناوبة، سجلات الأداء، تقارير اتفاقية مستوى الخدمة، ومتابعة الحالات الطارئة بدقة.",
-    sectionId: "kpi",
-    sectionName: "Leadership & Role KPI Evaluation",
-    isDefault: true
-  },
-  {
-    id: "attendance",
-    name: "Attendance & Team Discipline",
-    nameAr: "الانضباط والالتزام بالدوام",
-    description: "Team schedule adherence, punctuality, shift coverage management, and strict policy compliance.",
-    descriptionAr: "الالتزام التام بجدول العمل، مواعيد المناوبات، وتطبيق السياسات التنظيمية للبنك.",
-    sectionId: "kpi",
-    sectionName: "Leadership & Role KPI Evaluation",
-    isDefault: true
-  },
-  {
-    id: "team_improvement",
-    name: "Team Development & Coaching",
-    nameAr: "تطوير وتدريب الفريق",
-    description: "Continuous coaching, one-on-one reviews, skill improvement, and reducing low-performance outliers.",
-    descriptionAr: "تقديم جلسات التدريب الفردية المستمرة، وتطوير مهارات الكادر ورفع الكفاءة التشغيلية.",
-    sectionId: "kpi",
-    sectionName: "Leadership & Role KPI Evaluation",
-    isDefault: true
-  },
+// Default Criteria (Starts completely clean - ready for custom additions)
+export const DEFAULT_CRITERIA: DynamicCriterion[] = [];
 
-  // Section 2: Core Competencies
-  {
-    id: "communication",
-    name: "Communication",
-    nameAr: "التواصل الفعّال",
-    description: "Conveys information clearly and professionally. Actively listens, demonstrates empathy, and maintains high standards of courteous communication with customers and colleagues.",
-    descriptionAr: "إيصال المعلومات بوضوح واحترافية، الاستماع الفعال، وإظهار اللباقة والاحترام مع الزملاء والعملاء.",
-    sectionId: "competencies",
-    sectionName: "Core Competencies Evaluation",
-    isDefault: true
-  },
-  {
-    id: "problem_solving",
-    name: "Problem Solving",
-    nameAr: "حل المشكلات واتخاذ القرار",
-    description: "Quickly diagnoses customer needs and formulates compliant, practical solutions. Maintains composure and analytical clarity during escalations.",
-    descriptionAr: "السرعة في تشخيص المشكلات وابتكار حلول عملية متوافقة مع السياسات، والمحافظة على الهدوء أثناء الضغط.",
-    sectionId: "competencies",
-    sectionName: "Core Competencies Evaluation",
-    isDefault: true
-  },
-  {
-    id: "accountability",
-    name: "Accountability",
-    nameAr: "المسؤولية والاعتمادية",
-    description: "Takes ownership of tasks and outcomes. Follows through on commitments and addresses mistakes constructively without requiring close supervision.",
-    descriptionAr: "تحمل مسؤولية المهام والنتائج، الوفاء بالالتزامات، وتصحيح الأخطاء بإيجابية دون الحاجة لإشراف مستمر.",
-    sectionId: "competencies",
-    sectionName: "Core Competencies Evaluation",
-    isDefault: true
-  },
-  {
-    id: "responsibility",
-    name: "Responsibility & Integrity",
-    nameAr: "النزاهة والالتزام المهني",
-    description: "Strictly complies with banking policies, data security guidelines, and work schedules. Demonstrates high integrity and reliability.",
-    descriptionAr: "الالتزام الصارم بالسياسات المصرفية، أمن المعلومات، والسرية المهنية العالية.",
-    sectionId: "competencies",
-    sectionName: "Core Competencies Evaluation",
-    isDefault: true
-  },
-  {
-    id: "initiative",
-    name: "Initiative & Proactivity",
-    nameAr: "المبادرة والتحسين المستمر",
-    description: "Proactively suggests workflow enhancements, assists team members, and seeks professional self-development opportunities independently.",
-    descriptionAr: "اقتراح تحسينات لسير العمل، مساعدة الزملاء بشكل استباقي، والسعي للتطوير المهني الذاتي.",
-    sectionId: "competencies",
-    sectionName: "Core Competencies Evaluation",
-    isDefault: true
-  },
-  {
-    id: "team_work",
-    name: "Team Work & Collaboration",
-    nameAr: "العمل الجماعي وروح الفريق",
-    description: "Collaborates positively with peers and leaders. Shares domain knowledge, supports team members during peak volumes, and fosters high team morale.",
-    descriptionAr: "التعاون الإيجابي مع الزملاء والمسؤولين، تبادل الخبرات، ودعم الفريق خلال أوقات الذروة.",
-    sectionId: "competencies",
-    sectionName: "Core Competencies Evaluation",
-    isDefault: true
-  },
-  {
-    id: "digitalization",
-    name: "Digitalization & Innovation",
-    nameAr: "التحول الرقمي والابتكار",
-    description: "Actively adopts and champions digital tools, automated workflows, and innovative solutions to enhance operational quality and productivity.",
-    descriptionAr: "تبني الأدوات الرقمية الحديثة، أتمتة الإجراءات، واستخدام الحلول التقنية المبتكرة لرفع الإنتاجية.",
-    sectionId: "competencies",
-    sectionName: "Core Competencies Evaluation",
-    isDefault: true
-  }
-];
+// Default Departments (Starts completely clean - ready for custom additions)
+export const DEFAULT_DEPARTMENTS: DynamicDepartment[] = [];
 
-// Default Departments
-export const DEFAULT_DEPARTMENTS: DynamicDepartment[] = [
-  { id: "dept_cc", name: "Contact Center", nameAr: "مركز خدمة العملاء", color: "emerald", description: "Customer Support & Contact Center Operations", direct_manager: "Team Leaders", department_chief: "Omer Ayad", icon: "Headphones" },
-  { id: "dept_qa", name: "Quality Assurance", nameAr: "إدارة الجودة والتدقيق", color: "purple", description: "Call & Chat Quality Auditing and Compliance", direct_manager: "Lara Kamil", department_chief: "Omer Ayad", icon: "ShieldCheck" },
-  { id: "dept_training", name: "Training & Development", nameAr: "التدريب والتطوير", color: "indigo", description: "Onboarding and Continuous Professional Training", direct_manager: "Mohammed Azad", department_chief: "Omer Ayad", icon: "GraduationCap" },
-  { id: "dept_backoffice", name: "Back Office Operations", nameAr: "العمليات المصرفية والدعم", color: "blue", description: "Backend Case Processing, Ticketing and SLA Tracking", direct_manager: "Shireen Waisi", department_chief: "Omer Ayad", icon: "Briefcase" },
-  { id: "dept_it", name: "IT & Digital Services", nameAr: "تكنولوجيا المعلومات والخدمات الرقمية", color: "slate", description: "Infrastructure, Systems & Digital Applications", department_chief: "Omer Ayad", icon: "Laptop" },
-  { id: "dept_hr", name: "Human Resources", nameAr: "الموارد البشرية", color: "amber", description: "People, Talent and Performance Management", department_chief: "Omer Ayad", icon: "Users" },
-  { id: "dept_finance", name: "Finance & Accounts", nameAr: "المالية والحسابات", color: "emerald", description: "Financial Operations, Budgeting & Audits", department_chief: "Omer Ayad", icon: "CircleDollarSign" }
-];
-
-// Default Initial Employees
-export const DEFAULT_EMPLOYEES: DynamicEmployee[] = [
-  { id: "emp_373", name: "Younis Kamal", employee_id: "373", department: "Contact Center", role: "Team Leader", team: "Younis Kamal Team", direct_manager: "Omer Ayad", department_chief: "Omer Ayad", role_type: "tl" },
-  { id: "emp_340", name: "Ankido Buya", employee_id: "340", department: "Contact Center", role: "Team Leader", team: "Ankido Buya Team", direct_manager: "Omer Ayad", department_chief: "Omer Ayad", role_type: "tl" },
-  { id: "emp_338", name: "Mohammed Dlshad", employee_id: "338", department: "Contact Center", role: "Team Leader", team: "Mohammed Dlshad Team", direct_manager: "Omer Ayad", department_chief: "Omer Ayad", role_type: "tl" },
-  { id: "emp_353", name: "Mohammed Azad", employee_id: "353", department: "Training & Development", role: "Trainer", team: "Training Team", direct_manager: "Omer Ayad", department_chief: "Omer Ayad", role_type: "trainer" },
-  { id: "emp_356", name: "Mohammed Jihad", employee_id: "356", department: "Quality Assurance", role: "QA Auditor", team: "Quality Assurance Team", direct_manager: "Lara Kamil", department_chief: "Omer Ayad", role_type: "qa" },
-  { id: "emp_351", name: "Lara Kamil", employee_id: "351", department: "Quality Assurance", role: "QA Specialist", team: "Quality Assurance Team", direct_manager: "Omer Ayad", department_chief: "Omer Ayad", role_type: "qa" },
-  { id: "emp_370", name: "Shireen Waisi", employee_id: "370", department: "Back Office Operations", role: "Senior Operations Specialist", team: "Back Office", direct_manager: "Omer Ayad", department_chief: "Omer Ayad", role_type: "backoffice" },
-  { id: "emp_339", name: "Alla Satar", employee_id: "339", department: "Contact Center", role: "Customer Care Agent", team: "Younis Kamal Team", direct_manager: "Younis Kamal", department_chief: "Omer Ayad", role_type: "agent" },
-  { id: "emp_377", name: "Zhalla Salam", employee_id: "377", department: "Contact Center", role: "Customer Care Agent", team: "Ankido Buya Team", direct_manager: "Ankido Buya", department_chief: "Omer Ayad", role_type: "agent" },
-  { id: "emp_364", name: "Rabar Mohammed", employee_id: "364", department: "Contact Center", role: "Customer Care Agent", team: "Mohammed Dlshad Team", direct_manager: "Mohammed Dlshad", department_chief: "Omer Ayad", role_type: "agent" },
-  { id: "emp_372", name: "Taban Sirwan", employee_id: "372", department: "Contact Center", role: "Customer Care Agent", team: "Younis Kamal Team", direct_manager: "Younis Kamal", department_chief: "Omer Ayad", role_type: "agent" },
-  { id: "emp_344", name: "Dhuha Khanjer", employee_id: "344", department: "Contact Center", role: "Customer Care Agent", team: "Ankido Buya Team", direct_manager: "Ankido Buya", department_chief: "Omer Ayad", role_type: "agent" }
-];
+// Default Initial Employees (Starts completely clean - ready for custom additions)
+export const DEFAULT_EMPLOYEES: DynamicEmployee[] = [];
 
 // LocalStorage Keys
 const STORAGE_CRITERIA_KEY = "fib_annual_eval_criteria_v2";
@@ -307,25 +162,20 @@ export function sanitizeCriterion(c: DynamicCriterion): DynamicCriterion {
 
 // Helpers
 export function loadStoredCriteria(): DynamicCriterion[] {
-  if (typeof window === "undefined") return DEFAULT_CRITERIA.map(sanitizeCriterion);
+  if (typeof window === "undefined") return [];
   const deletedIds = new Set(loadStoredDeletedCriteria());
   try {
     const raw = localStorage.getItem(STORAGE_CRITERIA_KEY);
-    if (!raw) {
-      const sanitized = DEFAULT_CRITERIA.filter(c => !deletedIds.has(c.id)).map(sanitizeCriterion);
-      localStorage.setItem(STORAGE_CRITERIA_KEY, JSON.stringify(sanitized));
-      return sanitized;
-    }
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
       const filtered = parsed.filter(c => !deletedIds.has(c.id));
       const sanitized = filtered.map(sanitizeCriterion);
       return sanitized;
     }
-    return DEFAULT_CRITERIA.filter(c => !deletedIds.has(c.id)).map(sanitizeCriterion);
+    return [];
   } catch (e) {
-    console.error("Error loading criteria from localStorage:", e);
-    return DEFAULT_CRITERIA.filter(c => !deletedIds.has(c.id)).map(sanitizeCriterion);
+    return [];
   }
 }
 
@@ -347,7 +197,7 @@ export function loadStoredSections(): DynamicSection[] {
       return DEFAULT_SECTIONS;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : DEFAULT_SECTIONS;
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_SECTIONS;
   } catch (e) {
     console.error("Error loading sections from localStorage:", e);
     return DEFAULT_SECTIONS;
@@ -364,23 +214,18 @@ export function saveStoredSections(sections: DynamicSection[]): void {
 }
 
 export function loadStoredDepartments(): DynamicDepartment[] {
-  if (typeof window === "undefined") return DEFAULT_DEPARTMENTS;
+  if (typeof window === "undefined") return [];
   const deletedSet = new Set(loadStoredDeletedDepartments());
   try {
     const raw = localStorage.getItem(STORAGE_DEPARTMENTS_KEY);
-    if (!raw) {
-      const filtered = DEFAULT_DEPARTMENTS.filter(d => !deletedSet.has(d.id) && !deletedSet.has(d.name));
-      localStorage.setItem(STORAGE_DEPARTMENTS_KEY, JSON.stringify(filtered));
-      return filtered;
-    }
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
       return parsed.filter(d => !deletedSet.has(d.id) && !deletedSet.has(d.name));
     }
-    return DEFAULT_DEPARTMENTS.filter(d => !deletedSet.has(d.id) && !deletedSet.has(d.name));
+    return [];
   } catch (e) {
-    console.error("Error loading departments from localStorage:", e);
-    return DEFAULT_DEPARTMENTS.filter(d => !deletedSet.has(d.id) && !deletedSet.has(d.name));
+    return [];
   }
 }
 
@@ -394,18 +239,11 @@ export function saveStoredDepartments(depts: DynamicDepartment[]): void {
 }
 
 export function loadStoredEmployees(): DynamicEmployee[] {
-  if (typeof window === "undefined") return DEFAULT_EMPLOYEES;
+  if (typeof window === "undefined") return [];
   const deletedSet = new Set(loadStoredDeletedEmployees().map(s => s.toLowerCase().trim()));
   try {
     const raw = localStorage.getItem(STORAGE_EMPLOYEES_KEY);
-    if (!raw) {
-      const filtered = DEFAULT_EMPLOYEES.filter(e => 
-        !deletedSet.has(e.id.toLowerCase().trim()) && 
-        !deletedSet.has(e.name.toLowerCase().trim())
-      );
-      localStorage.setItem(STORAGE_EMPLOYEES_KEY, JSON.stringify(filtered));
-      return filtered;
-    }
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
       return parsed.filter(e => 
@@ -413,16 +251,9 @@ export function loadStoredEmployees(): DynamicEmployee[] {
         !deletedSet.has(e.name.toLowerCase().trim())
       );
     }
-    return DEFAULT_EMPLOYEES.filter(e => 
-      !deletedSet.has(e.id.toLowerCase().trim()) && 
-      !deletedSet.has(e.name.toLowerCase().trim())
-    );
+    return [];
   } catch (e) {
-    console.error("Error loading employees from localStorage:", e);
-    return DEFAULT_EMPLOYEES.filter(e => 
-      !deletedSet.has(e.id.toLowerCase().trim()) && 
-      !deletedSet.has(e.name.toLowerCase().trim())
-    );
+    return [];
   }
 }
 

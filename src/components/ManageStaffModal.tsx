@@ -66,7 +66,7 @@ export function ManageStaffModal({
   const [editingEmpId, setEditingEmpId] = useState<string | null>(null);
   const [empName, setEmpName] = useState<string>("");
   const [empIdNum, setEmpIdNum] = useState<string>("");
-  const [empDept, setEmpDept] = useState<string>(departments[0]?.name || "Contact Center");
+  const [empDept, setEmpDept] = useState<string>(departments[0]?.name || "");
   const [empRole, setEmpRole] = useState<string>("Team Leader");
   const [empTeam, setEmpTeam] = useState<string>("");
   const [empDirectManager, setEmpDirectManager] = useState<string>("");
@@ -199,10 +199,10 @@ export function ManageStaffModal({
     setEmpIdNum(String(Math.floor(100 + Math.random() * 900)));
     const initialDept = (selectedDeptFilter !== "all" && departments.some(d => d.name === selectedDeptFilter))
       ? selectedDeptFilter
-      : (departments[0]?.name || "Contact Center");
+      : (departments[0]?.name || "");
     setEmpDept(initialDept);
     setEmpRoleType("agent");
-    setEmpRole("Customer Care Agent");
+    setEmpRole("Staff");
     setEmpTeam("");
     setEmpCustomPosition("");
 
@@ -629,9 +629,21 @@ export function ManageStaffModal({
             {/* Employee Cards List */}
             <div className="space-y-2">
               {filteredEmployees.length === 0 ? (
-                <div className="p-8 text-center text-gray-400 bg-gray-50 dark:bg-gray-800/40 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700">
-                  <AlertCircle size={28} className="mx-auto mb-2 text-gray-300" />
-                  <p className="text-xs font-bold">{isAr ? "لا يوجد موظفون مطابقون لبحثك" : "No employees match your search"}</p>
+                <div className="p-10 text-center text-gray-400 bg-gray-50 dark:bg-gray-800/40 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center gap-2">
+                  <Users size={32} className="mx-auto text-gray-300 dark:text-gray-600" />
+                  <p className="text-xs font-bold text-gray-600 dark:text-gray-300">
+                    {empSearch ? (isAr ? "لا يوجد موظفون مطابقون لبحثك" : "No employees match your search") : (isAr ? "لا يوجد موظفون مضافون حالياً. اضغط على 'إضافة موظف' أعلاه لإضافة أول موظف." : "No employees added yet. Click 'Add Employee' above to register your first employee.")}
+                  </p>
+                  {!empSearch && (
+                    <button
+                      type="button"
+                      onClick={handleStartAddEmployee}
+                      className="mt-2 px-3.5 py-1.5 rounded-xl text-white text-xs font-bold shadow-xs transition"
+                      style={{ backgroundColor: brandPrimary }}
+                    >
+                      {isAr ? "+ إضافة أول موظف" : "+ Add First Employee"}
+                    </button>
+                  )}
                 </div>
               ) : (
                 filteredEmployees.map((emp) => (
@@ -784,9 +796,21 @@ export function ManageStaffModal({
             {/* Departments Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {filteredDepartments.length === 0 ? (
-                <div className="col-span-full p-8 text-center text-gray-400 bg-gray-50 dark:bg-gray-800/40 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700">
-                  <AlertCircle size={28} className="mx-auto mb-2 text-gray-300" />
-                  <p className="text-xs font-bold">{isAr ? "لا توجد أقسام مطابقة لبحثك" : "No departments match your search"}</p>
+                <div className="col-span-full p-10 text-center text-gray-400 bg-gray-50 dark:bg-gray-800/40 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center gap-2">
+                  <Building2 size={32} className="mx-auto text-gray-300 dark:text-gray-600" />
+                  <p className="text-xs font-bold text-gray-600 dark:text-gray-300">
+                    {deptSearch ? (isAr ? "لا توجد أقسام مطابقة لبحثك" : "No departments match your search") : (isAr ? "لا توجد أقسام مضافة حالياً. اضغط على 'إضافة قسم جديد' أعلاه لإنشاء أول قسم." : "No departments added yet. Click 'Add Department' above to create your first department.")}
+                  </p>
+                  {!deptSearch && (
+                    <button
+                      type="button"
+                      onClick={handleStartAddDept}
+                      className="mt-2 px-3.5 py-1.5 rounded-xl text-white text-xs font-bold shadow-xs transition"
+                      style={{ backgroundColor: brandPrimary }}
+                    >
+                      {isAr ? "+ إضافة أول قسم" : "+ Add First Department"}
+                    </button>
+                  )}
                 </div>
               ) : (
                 filteredDepartments.map((dept) => {
@@ -944,16 +968,27 @@ export function ManageStaffModal({
                   <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                     {isAr ? "القسم *" : "Department *"}
                   </label>
-                  <ModernDropdown
-                    value={empDept}
-                    onChange={(val) => handleEmpDeptChange(val)}
-                    options={departments.map(d => ({
-                      value: d.name,
-                      label: isAr ? (d.nameAr ? `${d.nameAr} (${d.name})` : d.name) : d.name
-                    }))}
-                    fullWidth
-                    variant="input"
-                  />
+                  {departments.length === 0 ? (
+                    <input
+                      type="text"
+                      required
+                      value={empDept}
+                      onChange={(e) => handleEmpDeptChange(e.target.value)}
+                      placeholder={isAr ? "اكتب اسم القسم (مثال: IT, Finance)..." : "e.g. IT, Finance, Operations"}
+                      className="w-full h-10 px-3.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden font-bold"
+                    />
+                  ) : (
+                    <ModernDropdown
+                      value={empDept}
+                      onChange={(val) => handleEmpDeptChange(val)}
+                      options={departments.map(d => ({
+                        value: d.name,
+                        label: isAr ? (d.nameAr ? `${d.nameAr} (${d.name})` : d.name) : d.name
+                      }))}
+                      fullWidth
+                      variant="input"
+                    />
+                  )}
                 </div>
               </div>
 

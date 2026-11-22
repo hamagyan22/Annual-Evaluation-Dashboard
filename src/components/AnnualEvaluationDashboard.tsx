@@ -33,6 +33,7 @@ import {
   loadStoredDeletedEmployees, saveStoredDeletedEmployees,
   loadStoredDeletedDepartments, saveStoredDeletedDepartments,
   loadStoredDeletedCriteria, saveStoredDeletedCriteria,
+  DEFAULT_SECTIONS,
   DynamicCriterion, DynamicSection, DynamicDepartment, DynamicEmployee
 } from "@/lib/customCriteriaManager";
 import { getDepartmentIcon } from "@/lib/bankDepartmentIcons";
@@ -563,6 +564,39 @@ export default function AnnualEvaluationDashboard({
   const [deletedDepartmentIds, setDeletedDepartmentIds] = useState<string[]>([]);
   const [deletedCriteriaIds, setDeletedCriteriaIds] = useState<string[]>([]);
 
+  // One-time automatic cleanup to wipe old defaults and start 100% clean for custom entries
+  useEffect(() => {
+    const WIPE_FLAG_KEY = "fib_annual_eval_wiped_v4";
+    if (typeof window !== "undefined" && !localStorage.getItem(WIPE_FLAG_KEY)) {
+      localStorage.setItem(WIPE_FLAG_KEY, "true");
+      localStorage.removeItem("fib_annual_eval_criteria_v2");
+      localStorage.removeItem("fib_annual_eval_departments_v2");
+      localStorage.removeItem("fib_annual_eval_employees_v2");
+      localStorage.removeItem("fib_annual_eval_deleted_employees_v2");
+      localStorage.removeItem("fib_annual_eval_deleted_departments_v2");
+      localStorage.removeItem("fib_annual_eval_deleted_criteria_v2");
+      setDynamicCriteria([]);
+      setDynamicDepartments([]);
+      setDynamicEmployees([]);
+      setDeletedEmployeeNames([]);
+      setDeletedDepartmentIds([]);
+      setDeletedCriteriaIds([]);
+      setSelectedEmployeeName("");
+
+      const docRef = doc(db, "annual_evaluations", "config_roster_and_criteria");
+      setDoc(docRef, {
+        departments: [],
+        employees: [],
+        criteria: [],
+        sections: DEFAULT_SECTIONS,
+        deletedEmployeeNames: [],
+        deletedDepartmentIds: [],
+        deletedCriteriaIds: [],
+        updatedAt: new Date().toISOString()
+      }, { merge: false }).catch(() => null);
+    }
+  }, []);
+
   // Initial local loading for instant rendering
   useEffect(() => {
     setDynamicCriteria(loadStoredCriteria());
@@ -746,7 +780,7 @@ export default function AnnualEvaluationDashboard({
   const [selectedEmployeeName, setSelectedEmployeeName] = useState<string>("");
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState<string>("");
   const [employeeDropdownOpen, setEmployeeDropdownOpen] = useState<boolean>(false);
-  const [teamTabFilter, setTeamTabFilter] = useState<string>("Younis");
+  const [teamTabFilter, setTeamTabFilter] = useState<string>("all");
   const tlAssignedTeam: "Younis" | "Ankido" | "Mohammed" | null = null;
 
   // Guide Modal State
@@ -874,8 +908,8 @@ export default function AnnualEvaluationDashboard({
     };
   }, []);
 
-  // Internal loaded members list (initialized with full official roster + live Firestore sync)
-  const [internalMembers, setInternalMembers] = useState<any[]>(DEFAULT_COMPANY_EMPLOYEES);
+  // Internal loaded members list (initialized empty + live Firestore sync)
+  const [internalMembers, setInternalMembers] = useState<any[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(false);
 
   // 1. Live real-time listener on team_members collection
@@ -977,88 +1011,38 @@ export default function AnnualEvaluationDashboard({
     return () => { isMounted = false; };
   }, [allMembers, selectedYear]);
 
-  // Combined master members list: 38 official agents + Special Staff + Dynamic Employees (Respecting permanent deletions)
+  // Master members list: Strictly from Dynamic Employees configured by the user
   const effectiveAllMembers = useMemo(() => {
     const deletedNormSet = new Set((deletedEmployeeNames || []).map(normalizeAgentName));
     const deletedRawSet = new Set((deletedEmployeeNames || []).map(s => s.toLowerCase().trim()));
     const map = new Map<string, any>();
-    
-    // 1. Initial base: All 38 Company employees
-    DEFAULT_COMPANY_EMPLOYEES.forEach(m => {
-      const k = normalizeAgentName(m.agent_name);
-      if (!deletedNormSet.has(k) && !deletedRawSet.has(m.id?.toLowerCase().trim())) {
-        map.set(k, { ...m });
-      }
-    });
 
-    // 1b. Add Special Staff (Trainer, QA, Team Leaders)
-    SPECIAL_STAFF_MEMBERS.forEach(s => {
-      const k = normalizeAgentName(s.agent_name);
-      if (!deletedNormSet.has(k) && !deletedRawSet.has(s.id?.toLowerCase().trim())) {
-        if (!map.has(k)) {
-          map.set(k, { ...s });
-        } else {
-          const existing = map.get(k);
-          map.set(k, { ...existing, ...s });
-        }
-      }
-    });
-
-    // 1c. Add/merge Dynamic Employees from ManageStaffModal
+    // Add Dynamic Employees from ManageStaffModal
     dynamicEmployees.forEach(de => {
       const k = normalizeAgentName(de.name);
-      if (!deletedNormSet.has(k) && !deletedRawSet.has(de.id?.toLowerCase().trim())) {
-        const existing = map.get(k) || {};
+      if (!deletedNormSet.has(k) && !deletedRawSet.has(de.id?.toLowerCase().trim()) && !deletedRawSet.has(de.name?.toLowerCase().trim())) {
         map.set(k, {
-          ...existing,
-          id: de.id || existing.id,
+          id: de.id || `emp_${de.employee_id || de.name}`,
           agent_name: de.name,
           name: de.name,
-          employee_id: de.employee_id || existing.employee_id,
-          department: de.department || existing.department || "Contact Center",
-          role: de.role || existing.role,
-          role_type: de.role_type || existing.role_type || "agent",
-          team: de.team || existing.team,
-          direct_manager: de.direct_manager || existing.direct_manager,
-          department_chief: de.department_chief || existing.department_chief,
-          custom_position: de.custom_position || existing.custom_position,
+          employee_id: de.employee_id || "",
+          department: de.department || "",
+          role: de.role || "Staff",
+          role_type: de.role_type || "agent",
+          team: de.team || (de.department ? `${de.department} Team` : "General Team"),
+          direct_manager: de.direct_manager || "",
+          department_chief: de.department_chief || "",
+          custom_position: de.custom_position || "",
+          is_active: true,
+          is_deleted: false,
         });
       }
     });
 
-    // 2. Attach any Firestore metadata
-    (allMembers || []).concat(internalMembers || []).forEach(m => {
-      const name = (m.agent_name || m.name || m.display_name || "").trim();
-      if (name) {
-        const key = normalizeAgentName(name);
-        if (!deletedNormSet.has(key) && !deletedRawSet.has(m.id?.toLowerCase().trim())) {
-          const existing = map.get(key);
-          if (existing) {
-            map.set(key, {
-              ...existing,
-              ...m,
-              id: m.id || existing.id,
-              team: m.team || existing.team,
-              direct_manager: m.direct_manager || existing.direct_manager,
-              department_chief: m.department_chief || existing.department_chief,
-              is_deleted: m.is_deleted === true || existing.is_deleted === true,
-              is_active: m.is_active === false ? false : (existing.is_active ?? true),
-              resigned_month: m.resigned_month || existing.resigned_month,
-              resigned_year: m.resigned_year || existing.resigned_year,
-            });
-          }
-        }
-      }
-    });
-
     return Array.from(map.values())
-      .filter(m => {
-        const norm = normalizeAgentName(m.agent_name || m.name || "");
-        if (deletedNormSet.has(norm) || deletedRawSet.has(m.id?.toLowerCase().trim())) return false;
-        return m.is_deleted !== true && m.is_active !== false;
-      })
+      .filter(m => m.is_deleted !== true && m.is_active !== false)
       .sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
-  }, [allMembers, internalMembers, dynamicEmployees, deletedEmployeeNames]);
+  }, [dynamicEmployees, deletedEmployeeNames]);
 
   // Detect direct subordinates under the current user (Multi-level evaluation hierarchy)
   // "المنجر يكدر يشوف موظفين الي تحته و يقيمهم لكن ميشوف مال المدير الي فوكة"
@@ -1196,32 +1180,14 @@ export default function AnnualEvaluationDashboard({
 
     // Only apply team / department filter for Admin (since Admin sees all teams)
     if (isAdmin && teamTabFilter !== "all") {
-      if (teamTabFilter === "Ankido") {
-        list = list.filter(m => (m.team || "").toLowerCase().includes("ankido"));
-      } else if (teamTabFilter === "Mohammed") {
-        list = list.filter(m => (m.team || "").toLowerCase().includes("mohammed") || (m.team || "").toLowerCase().includes("dlshad"));
-      } else if (teamTabFilter === "QA_Training") {
-        list = list.filter(m => (m.team || "").toLowerCase().includes("quality") || (m.team || "").toLowerCase().includes("training") || (m.team || "").toLowerCase().includes("back office") || m.role_type === "trainer" || m.role_type === "qa" || m.role_type === "backoffice");
-      } else if (teamTabFilter === "Younis") {
-        list = list.filter(m => (m.team || "").toLowerCase().includes("younis"));
+      if (teamTabFilter.startsWith("team_")) {
+        const targetTeam = teamTabFilter.replace("team_", "").toLowerCase();
+        list = list.filter(m => (m.team || "").trim().toLowerCase() === targetTeam);
       } else if (teamTabFilter.startsWith("dept_")) {
-        const targetDept = teamTabFilter.replace("dept_", "");
-        list = list.filter(m => {
-          const itemDept = getCanonicalDept(m.department || "");
-          if (targetDept === "Quality Assurance") {
-            return itemDept === targetDept || m.role_type === "qa";
-          }
-          if (targetDept === "Training & Development") {
-            return itemDept === targetDept || m.role_type === "trainer";
-          }
-          if (targetDept === "Back Office Operations") {
-            return itemDept === targetDept || m.role_type === "backoffice";
-          }
-          if (targetDept === "Contact Center") {
-            return itemDept === targetDept || (!m.role_type || m.role_type === "agent" || m.role_type === "tl");
-          }
-          return itemDept === targetDept || m.department === targetDept;
-        });
+        const targetDept = teamTabFilter.replace("dept_", "").toLowerCase();
+        list = list.filter(m => (m.department || "").trim().toLowerCase() === targetDept || getCanonicalDept(m.department || "").toLowerCase() === targetDept);
+      } else {
+        list = list.filter(m => (m.team || "").toLowerCase().includes(teamTabFilter.toLowerCase()));
       }
     }
 
@@ -1432,16 +1398,25 @@ export default function AnnualEvaluationDashboard({
       });
     });
 
-    // Teams
-    opts.push(
-      { value: "Younis", label: isAr ? `فريق يونس كمال (${teamCounts.Younis})` : `Younis Kamal Team (${teamCounts.Younis})`, icon: PhoneCall },
-      { value: "Ankido", label: isAr ? `فريق أنكيدو بويا (${teamCounts.Ankido})` : `Ankido Buya Team (${teamCounts.Ankido})`, icon: PhoneCall },
-      { value: "Mohammed", label: isAr ? `فريق محمد دلشاد (${teamCounts.Mohammed})` : `Mohammed Dlshad Team (${teamCounts.Mohammed})`, icon: MessageSquare },
-      { value: "QA_Training", label: isAr ? `الجودة، التدريب والعمليات (${teamCounts.QA_Training})` : `QA, Training & Operations (${teamCounts.QA_Training})`, icon: ShieldCheck }
-    );
+    // Teams dynamically discovered from active members
+    const teamCountsMap = new Map<string, number>();
+    activeMembers.forEach(m => {
+      const t = (m.team || "").trim();
+      if (t) {
+        teamCountsMap.set(t, (teamCountsMap.get(t) || 0) + 1);
+      }
+    });
+
+    Array.from(teamCountsMap.entries()).forEach(([teamName, count]) => {
+      opts.push({
+        value: `team_${teamName}`,
+        label: `${teamName} (${count})`,
+        icon: Users,
+      });
+    });
 
     return opts;
-  }, [allowedMembersForUser, selectedYear, dynamicDepartments, departmentOptions, teamCounts, isAr]);
+  }, [allowedMembersForUser, selectedYear, dynamicDepartments, departmentOptions, isAr]);
 
   // Filtered members list for Coverage Modal
   const filteredCoverageList = useMemo(() => {
@@ -1518,11 +1493,10 @@ export default function AnnualEvaluationDashboard({
       return;
     }
 
-    // 3. Admin / Top Manager: default to Younis Kamal or first member
+    // 3. Admin / Top Manager: default to first member if available
     if (isAdmin && !selectedEmployeeName && effectiveAllMembers.length > 0) {
-      const defaultMember = effectiveAllMembers.find(m => normalizeAgentName(m.agent_name) === "younis kamal") || effectiveAllMembers[0];
-      setSelectedEmployeeName(defaultMember.agent_name);
-      setTeamTabFilter("Younis");
+      setSelectedEmployeeName(effectiveAllMembers[0].agent_name);
+      setTeamTabFilter("all");
     }
   }, [isAdmin, hasSubordinates, allowedMembersForUser, userProfile, effectiveAllMembers, selectedEmployeeName]);
 
@@ -1543,16 +1517,7 @@ export default function AnnualEvaluationDashboard({
   // Sync team tab filter when a newly selected employee changes (e.g. from search, direct select or modal)
   useEffect(() => {
     if (currentMember && !tlAssignedTeam) {
-      const t = (currentMember.team || "").toLowerCase();
-      if (currentMember.role_type === "trainer" || currentMember.role_type === "qa" || currentMember.role_type === "backoffice" || t.includes("training") || t.includes("quality") || t.includes("back office")) {
-        setTeamTabFilter("QA_Training");
-      } else if (t.includes("ankido")) {
-        setTeamTabFilter("Ankido");
-      } else if (t.includes("mohammed") || t.includes("dlshad")) {
-        setTeamTabFilter("Mohammed");
-      } else if (t.includes("younis")) {
-        setTeamTabFilter("Younis");
-      }
+      setTeamTabFilter("all");
     }
   }, [selectedEmployeeName]);
 
@@ -1848,117 +1813,35 @@ export default function AnnualEvaluationDashboard({
     return () => { isMounted = false; };
   }, [selectedEmployeeName, selectedYear, currentMember?.team]);
 
-  // Operational KPIs dynamic definitions matching Role and Templates
+  // Operational KPIs dynamic definitions: Strictly from Dynamic Criteria configured by user
   const kpiDefinitions: KpiItemDefinition[] = useMemo(() => {
-    let list: KpiItemDefinition[];
-    if (currentMemberRoleType === "trainer") {
-      list = TRAINER_KPIS;
-    } else if (currentMemberRoleType === "qa") {
-      list = QA_KPIS;
-    } else if (currentMemberRoleType === "tl") {
-      list = TL_KPIS;
-    } else if (currentMemberRoleType === "backoffice") {
-      list = BACKOFFICE_KPIS;
-    } else if (currentMemberRoleType === "custom") {
-      const customItems = dynamicCriteria.filter(c => c.sectionId === "kpi" || c.targetRole === "all");
-      if (customItems.length > 0) {
-        list = customItems.map(c => ({
-          id: c.id,
-          name: c.name,
-          description: c.description,
-        }));
-      } else {
-        list = [
-          { id: "custom_kpi_1", name: "Core Job Performance & Objectives", description: "Executing role-specific primary duties, accuracy, and operational KPIs." },
-          { id: "custom_kpi_2", name: "Process & Delivery Quality", description: "Maintaining zero defect rate, standard compliance, and timely execution." },
-          { id: "custom_kpi_3", name: "Problem Solving & Initiative", description: "Proactive issue diagnosis, innovative solutions, and independent workflow." },
-          { id: "custom_kpi_4", name: "Attendance & Professional Commitment", description: "Punctuality, SLA adherence, and team collaboration." },
-        ];
-      }
-    } else if (isSelectedEmployeeChat) {
-      list = [
-        { id: "qa", name: "Quality Assurance", actual: actualMetricsSummary?.qa },
-        { id: "art", name: "ART", actual: actualMetricsSummary?.art },
-        { id: "attendance", name: "Attendance", actual: null },
-        { id: "aht", name: "AHT", actual: actualMetricsSummary?.aht },
-        { id: "knowledge", name: "Knowledge", actual: actualMetricsSummary?.exam },
-      ];
-    } else {
-      list = [
-        { id: "qa", name: "Quality Assurance", actual: actualMetricsSummary?.qa },
-        { id: "productivity", name: "Productivity", actual: actualMetricsSummary?.productivity },
-        { id: "attendance", name: "Attendance", actual: null },
-        { id: "aht", name: "AHT", actual: actualMetricsSummary?.aht },
-        { id: "knowledge", name: "Knowledge", actual: actualMetricsSummary?.exam },
-      ];
-    }
-
     const deletedCritSet = new Set(deletedCriteriaIds || []);
-    list = list.filter(item => !deletedCritSet.has(item.id));
+    const items = dynamicCriteria.filter(c => 
+      (c.sectionId === "kpi" || c.sectionId === "role_kpis" || (!c.sectionId || c.sectionId === "")) &&
+      !deletedCritSet.has(c.id)
+    );
 
-    if (isAr) {
-      return list.map(item => {
-        const ar = KPI_DEFINITIONS_AR[item.id];
-        return {
-          ...item,
-          name: ar?.name || item.name,
-          description: ar?.description || item.description
-        };
-      });
-    }
-    return list;
-  }, [currentMemberRoleType, isSelectedEmployeeChat, actualMetricsSummary, dynamicCriteria, deletedCriteriaIds, isAr]);
+    return items.map(c => ({
+      id: c.id,
+      name: (isAr && c.nameAr) ? c.nameAr : c.name,
+      description: (isAr && c.descriptionAr) ? c.descriptionAr : c.description,
+    }));
+  }, [dynamicCriteria, deletedCriteriaIds, isAr]);
 
-  // Dynamic Competencies List matching specific role templates
+  // Dynamic Competencies List: Strictly from Dynamic Criteria configured by user
   const currentCompetenciesList = useMemo(() => {
-    const norm = normalizeAgentName(selectedEmployeeName || currentMember?.agent_name || "");
-    const isJihad = norm.includes("jihad");
-
-    let list: { id: string; name: string; description: string }[];
-    if (isJihad) {
-      list = [
-        COMPETENCY_DEFINITIONS.communication,
-        COMPETENCY_DEFINITIONS.problem_solving,
-        COMPETENCY_DEFINITIONS.accountability,
-        COMPETENCY_DEFINITIONS.customer_focus,
-        COMPETENCY_DEFINITIONS.responsibility,
-        COMPETENCY_DEFINITIONS.team_work,
-        COMPETENCY_DEFINITIONS.digitalization,
-      ];
-    } else if (currentMemberRoleType === "qa" || currentMemberRoleType === "tl") {
-      list = [
-        COMPETENCY_DEFINITIONS.communication,
-        COMPETENCY_DEFINITIONS.problem_solving,
-        COMPETENCY_DEFINITIONS.accountability,
-        COMPETENCY_DEFINITIONS.responsibility,
-        COMPETENCY_DEFINITIONS.initiative,
-        COMPETENCY_DEFINITIONS.team_work,
-        COMPETENCY_DEFINITIONS.digitalization,
-      ];
-    } else {
-      // Trainer & Regular Agents (6 standard competencies)
-      list = [
-        COMPETENCY_DEFINITIONS.communication,
-        COMPETENCY_DEFINITIONS.problem_solving,
-        COMPETENCY_DEFINITIONS.accountability,
-        COMPETENCY_DEFINITIONS.initiative,
-        COMPETENCY_DEFINITIONS.responsibility,
-        COMPETENCY_DEFINITIONS.team_work,
-      ];
-    }
-
     const deletedCritSet = new Set(deletedCriteriaIds || []);
-    list = list.filter(item => !deletedCritSet.has(item.id));
+    const items = dynamicCriteria.filter(c => 
+      (c.sectionId === "competencies" || c.sectionId === "core_competencies") &&
+      !deletedCritSet.has(c.id)
+    );
 
-    if (isAr) {
-      return list.map(c => ({
-        ...c,
-        name: COMPETENCY_DEFINITIONS_AR[c.id]?.name || c.name,
-        description: COMPETENCY_DEFINITIONS_AR[c.id]?.description || c.description
-      }));
-    }
-    return list;
-  }, [selectedEmployeeName, currentMember, currentMemberRoleType, deletedCriteriaIds, isAr]);
+    return items.map(c => ({
+      id: c.id,
+      name: (isAr && c.nameAr) ? c.nameAr : c.name,
+      description: (isAr && c.descriptionAr) ? c.descriptionAr : c.description,
+    }));
+  }, [dynamicCriteria, deletedCriteriaIds, isAr]);
 
   // Helper to reliably read KPI score whether keyed by 'exam' or 'knowledge'
   const getKpiScore = (kpisMap: Record<string, number>, id: string) => {
@@ -2302,6 +2185,8 @@ export default function AnnualEvaluationDashboard({
     }, 100);
   };
 
+  const brandGradient = 'var(--brand-gradient, linear-gradient(135deg, #0C382E 0%, #135B47 50%, #1C6B53 100%))';
+
   return (
     <div dir={isAr ? "rtl" : "ltr"} className="min-h-screen p-3.5 sm:p-6 md:p-8 font-sans bg-[#F9F8F4] dark:bg-gray-950 text-gray-800 dark:text-gray-100 transition-colors pb-16 print:bg-white print:text-black print:p-0">
       
@@ -2474,44 +2359,48 @@ export default function AnnualEvaluationDashboard({
                           </div>
                           <div className="flex items-center gap-1.5 truncate text-left">
                             <span className="truncate font-black text-xs sm:text-sm text-gray-900 dark:text-white leading-tight">
-                              {toTitleCase(selectedEmployeeName) || t.selectEmployeePrompt}
+                              {selectedEmployeeName ? toTitleCase(selectedEmployeeName) : (isAr ? "اختر أو أضف موظفاً" : t.selectEmployeePrompt)}
                             </span>
-                            {!selectedEmployeeName?.toLowerCase().includes((currentMember?.team || '').toLowerCase().split(' ')[0]) && (
+                            {selectedEmployeeName && currentMember?.team && !selectedEmployeeName?.toLowerCase().includes((currentMember?.team || '').toLowerCase().split(' ')[0]) && (
                               <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium truncate">
                                 • {currentMember?.team?.replace(' Team', '') || 'Contact Center'}
                               </span>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0 ml-1">
-                          <span className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md border font-black flex items-center gap-1 ${
-                            currentMemberRoleType === 'trainer'
-                              ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
-                              : currentMemberRoleType === 'qa'
-                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                              : currentMemberRoleType === 'tl'
-                              ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
-                              : currentMemberRoleType === 'backoffice'
-                              ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
-                              : isSelectedEmployeeChat
-                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                              : "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
-                          }`}>
-                            {currentMemberRoleType === 'trainer' ? <Award size={11} /> :
-                             currentMemberRoleType === 'qa' ? <ShieldCheck size={11} /> :
-                             currentMemberRoleType === 'tl' ? <Star size={11} /> :
-                             currentMemberRoleType === 'backoffice' ? <ListChecks size={11} /> :
-                             isSelectedEmployeeChat ? <MessageSquare size={11} /> : <PhoneCall size={11} />}
-                            <span>
-                              {currentMemberRoleType === 'trainer' ? 'Trainer' :
-                               currentMemberRoleType === 'qa' ? 'QA' :
-                               currentMemberRoleType === 'tl' ? 'Team Leader' :
-                               currentMemberRoleType === 'backoffice' ? 'Back Office' :
-                               isSelectedEmployeeChat ? 'Chat' : 'Calls'}
+                        {selectedEmployeeName ? (
+                          <div className="flex items-center gap-2 shrink-0 ml-1">
+                            <span className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md border font-black flex items-center gap-1 ${
+                              currentMemberRoleType === 'trainer'
+                                ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                                : currentMemberRoleType === 'qa'
+                                ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                                : currentMemberRoleType === 'tl'
+                                ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                                : currentMemberRoleType === 'backoffice'
+                                ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                                : isSelectedEmployeeChat
+                                ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                                : "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
+                            }`}>
+                              {currentMemberRoleType === 'trainer' ? <Award size={11} /> :
+                               currentMemberRoleType === 'qa' ? <ShieldCheck size={11} /> :
+                               currentMemberRoleType === 'tl' ? <Star size={11} /> :
+                               currentMemberRoleType === 'backoffice' ? <ListChecks size={11} /> :
+                               isSelectedEmployeeChat ? <MessageSquare size={11} /> : <PhoneCall size={11} />}
+                              <span>
+                                {currentMemberRoleType === 'trainer' ? 'Trainer' :
+                                 currentMemberRoleType === 'qa' ? 'QA' :
+                                 currentMemberRoleType === 'tl' ? 'Team Leader' :
+                                 currentMemberRoleType === 'backoffice' ? 'Back Office' :
+                                 isSelectedEmployeeChat ? 'Chat' : 'Calls'}
+                              </span>
                             </span>
-                          </span>
+                            <ChevronDown size={14} className={`text-gray-400 transition-transform ${employeeDropdownOpen ? 'rotate-180' : ''}`} />
+                          </div>
+                        ) : (
                           <ChevronDown size={14} className={`text-gray-400 transition-transform ${employeeDropdownOpen ? 'rotate-180' : ''}`} />
-                        </div>
+                        )}
                       </button>
 
                   {employeeDropdownOpen && (
@@ -2610,8 +2499,25 @@ export default function AnnualEvaluationDashboard({
                                 </>
                               ) : (
                                 <>
-                                  <Users size={20} className="text-gray-300 dark:text-gray-600" />
-                                  <span>{employeeSearchTerm.trim() ? `${isAr ? 'لا يوجد موظف مطابق لـ' : 'No employees matching'} "${employeeSearchTerm}"` : t.noEmployeesFound}</span>
+                                  <Users size={24} className="text-gray-300 dark:text-gray-600" />
+                                  <span className="font-bold text-gray-700 dark:text-gray-200">
+                                    {employeeSearchTerm.trim() 
+                                      ? `${isAr ? 'لا يوجد موظف مطابق لـ' : 'No employees matching'} "${employeeSearchTerm}"` 
+                                      : (isAr ? "لا يوجد موظفون مسجلون حالياً" : "No employees registered yet")}
+                                  </span>
+                                  {!employeeSearchTerm.trim() && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEmployeeDropdownOpen(false);
+                                        setShowManageStaffModal(true);
+                                      }}
+                                      className="mt-1 px-3 py-1.5 rounded-xl text-white font-bold text-xs shadow-xs transition hover:opacity-90 cursor-pointer"
+                                      style={{ background: brandGradient }}
+                                    >
+                                      {isAr ? "+ إضافة أول موظف" : "+ Add First Employee"}
+                                    </button>
+                                  )}
                                 </>
                               )}
                             </div>
@@ -2769,36 +2675,48 @@ export default function AnnualEvaluationDashboard({
                   </div>
 
                   <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                    {toTitleCase(selectedEmployeeName || "Select Employee")}
+                    {selectedEmployeeName ? toTitleCase(selectedEmployeeName) : (isAr ? "يرجى اختيار أو إضافة موظف للتقييم" : "Select or Add Staff for Evaluation")}
                   </h2>
 
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs text-emerald-100/90 font-medium">
-                    <span className="font-bold text-white">{currentMember?.team || 'Contact Center'}</span>
-                    <span>•</span>
-                    <span>{currentMember?.department || 'Contact Center'}</span>
-                    {currentMemberRoleType !== 'agent' && (
+                    {currentMember ? (
                       <>
-                        <span>•</span>
-                        <span className="px-2 py-0.5 rounded-full bg-white/20 text-white font-black text-[10px] uppercase tracking-wider print-card-badge">
-                          {currentMemberRoleType === 'trainer' ? 'Trainer' : currentMemberRoleType === 'qa' ? 'Quality Assurance' : currentMemberRoleType === 'backoffice' ? 'Back Office' : 'Team Leader'}
-                        </span>
+                        <span className="font-bold text-white">{currentMember?.team || currentMember?.department || ""}</span>
+                        {currentMember?.department && (
+                          <>
+                            <span>•</span>
+                            <span>{currentMember?.department}</span>
+                          </>
+                        )}
+                        {currentMemberRoleType !== 'agent' && (
+                          <>
+                            <span>•</span>
+                            <span className="px-2 py-0.5 rounded-full bg-white/20 text-white font-black text-[10px] uppercase tracking-wider print-card-badge">
+                              {currentMemberRoleType === 'trainer' ? 'Trainer' : currentMemberRoleType === 'qa' ? 'Quality Assurance' : currentMemberRoleType === 'backoffice' ? 'Back Office' : 'Team Leader'}
+                            </span>
+                          </>
+                        )}
+                        {currentMemberDirectManager && (
+                          <>
+                            <span>•</span>
+                            <span className="bg-emerald-950/40 text-emerald-100 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold border border-white/15 print-card-badge">
+                              {t.directManagerLabel} <strong className="text-white font-bold">{currentMemberDirectManager}</strong>
+                            </span>
+                          </>
+                        )}
+                        {currentMemberDeptChief && (
+                          <>
+                            <span>•</span>
+                            <span className="bg-emerald-950/40 text-emerald-100 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold border border-white/15 print-card-badge">
+                              {t.departmentChiefLabel} <strong className="text-white font-bold">{currentMemberDeptChief}</strong>
+                            </span>
+                          </>
+                        )}
                       </>
-                    )}
-                    {currentMemberDirectManager && (
-                      <>
-                        <span>•</span>
-                        <span className="bg-emerald-950/40 text-emerald-100 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold border border-white/15 print-card-badge">
-                          {t.directManagerLabel} <strong className="text-white font-bold">{currentMemberDirectManager}</strong>
-                        </span>
-                      </>
-                    )}
-                    {currentMemberDeptChief && (
-                      <>
-                        <span>•</span>
-                        <span className="bg-emerald-950/40 text-emerald-100 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold border border-white/15 print-card-badge">
-                          {t.departmentChiefLabel} <strong className="text-white font-bold">{currentMemberDeptChief}</strong>
-                        </span>
-                      </>
+                    ) : (
+                      <span className="text-white/80">
+                        {isAr ? "النظام مهيأ لإدخال بياناتك. ابدأ بإضافة الأقسام والموظفين والمعايير من الأزرار أعلاه." : "System is ready for custom data. Use the buttons above to add departments, staff, and criteria."}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -2949,7 +2867,29 @@ export default function AnnualEvaluationDashboard({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800 text-xs font-medium">
-                  {kpiDefinitions.map((kpi) => {
+                  {kpiDefinitions.length === 0 ? (
+                    <tr>
+                      <td colSpan={currentMemberRoleType === "agent" ? 6 : 5} className="p-10 text-center">
+                        <div className="flex flex-col items-center justify-center gap-2.5 text-gray-400 dark:text-gray-500">
+                          <Sparkles size={30} className="text-gray-300 dark:text-gray-600" />
+                          <p className="font-bold text-gray-700 dark:text-gray-200 text-xs">
+                            {isAr ? "لا توجد مؤشرات أداء (KPIs) مضافة حالياً" : "No KPIs defined yet"}
+                          </p>
+                          <p className="text-[11px] text-gray-400 max-w-sm">
+                            {isAr ? "يمكنك إضافة وتخصيص مؤشرات الأداء الوظيفي والقيادي من زر 'إدارة المعايير والأقسام' أعلاه." : "You can add and customize your operational and leadership KPIs using 'Manage Criteria' above."}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setShowManageCriteriaModal(true)}
+                            className="mt-1 px-4 py-1.5 text-xs font-bold rounded-xl text-white shadow-xs transition hover:opacity-90 cursor-pointer"
+                            style={{ background: brandGradient }}
+                          >
+                            {isAr ? "+ إضافة مؤشرات أداء (KPIs)" : "+ Add Performance KPIs"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : kpiDefinitions.map((kpi) => {
                     const selfVal = getKpiScore(selfKpis, kpi.id);
                     const mgrVal = getKpiScore(managerKpis, kpi.id);
                     const diff = mgrVal > 0 && selfVal > 0 ? (mgrVal - selfVal) : null;
@@ -3159,7 +3099,29 @@ export default function AnnualEvaluationDashboard({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800 text-xs font-medium">
-                  {currentCompetenciesList.map((comp) => {
+                  {currentCompetenciesList.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-10 text-center">
+                        <div className="flex flex-col items-center justify-center gap-2.5 text-gray-400 dark:text-gray-500">
+                          <Sparkles size={30} className="text-gray-300 dark:text-gray-600" />
+                          <p className="font-bold text-gray-700 dark:text-gray-200 text-xs">
+                            {isAr ? "لا توجد كفاءات سلوكية مضافة حالياً" : "No competencies defined yet"}
+                          </p>
+                          <p className="text-[11px] text-gray-400 max-w-sm">
+                            {isAr ? "يمكنك إضافة وتخصيص الكفاءات والسلوكيات المؤسسية من زر 'إدارة المعايير والأقسام' أعلاه." : "You can add and customize institutional core competencies using 'Manage Criteria' above."}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setShowManageCriteriaModal(true)}
+                            className="mt-1 px-4 py-1.5 text-xs font-bold rounded-xl text-white shadow-xs transition hover:opacity-90 cursor-pointer"
+                            style={{ background: brandGradient }}
+                          >
+                            {isAr ? "+ إضافة كفاءات سلوكية" : "+ Add Core Competencies"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : currentCompetenciesList.map((comp) => {
                     const selfVal = selfCompetencies[comp.id] || 0;
                     const mgrVal = managerCompetencies[comp.id] || 0;
                     const diff = mgrVal > 0 && selfVal > 0 ? (mgrVal - selfVal) : null;
