@@ -5,7 +5,7 @@ import {
   X, Plus, Trash2, Edit2, Users, Building2, 
   Search, Sparkles, UserCheck, RefreshCw, AlertCircle,
   AlertTriangle, Check, ShieldAlert, Crown,
-  CheckCircle2, Mail, Send
+  CheckCircle2, Mail, Send, Copy, ExternalLink
 } from "lucide-react";
 import { 
   DynamicDepartment, 
@@ -24,6 +24,13 @@ import { useAppTheme } from "@/lib/themeManager";
 import ModernDropdown from "@/components/ModernDropdown";
 import { db } from "@/lib/firebaseClient";
 import { doc, setDoc } from "firebase/firestore";
+
+export interface InviteActionDetail {
+  recipientEmail: string;
+  recipientName: string;
+  role: string;
+  department: string;
+}
 
 export interface CurrentUserScope {
   name?: string;
@@ -116,6 +123,44 @@ export function ManageStaffModal({
 
   // Toast / Feedback State
   const [toastNotice, setToastNotice] = useState<{ message: string; type: "success" | "info" } | null>(null);
+
+  // Invitation Action Modal State
+  const [pendingInviteModal, setPendingInviteModal] = useState<InviteActionDetail[] | null>(null);
+  const [copiedInviteIndex, setCopiedInviteIndex] = useState<number | null>(null);
+
+  const handleOpenEmailClient = (invite: InviteActionDetail) => {
+    const subject = encodeURIComponent(`FIB Annual Evaluation Portal Invitation | دعوة نظام التقييم السنوي للمصرف`);
+    const body = encodeURIComponent(
+      `Dear ${invite.recipientName},\n\n` +
+      `You have been invited and registered on the First Iraqi Bank (FIB) Annual Evaluation System.\n\n` +
+      `• Assigned Role: ${invite.role}\n` +
+      `• Department: ${invite.department}\n` +
+      `• Direct Portal Link: https://fib-annual-evaluation.web.app/evaluation\n\n` +
+      `Please access the portal using your official email to review and complete your annual performance evaluations.\n\n` +
+      `Best regards,\n` +
+      `Performance & Talent Management Team\n` +
+      `First Iraqi Bank (FIB)`
+    );
+    window.location.href = `mailto:${invite.recipientEmail}?subject=${subject}&body=${body}`;
+  };
+
+  const handleCopyInviteText = (invite: InviteActionDetail, index: number) => {
+    const text = 
+      `FIB Annual Evaluation Portal Invitation | دعوة نظام التقييم السنوي للمصرف\n` +
+      `--------------------------------------------------\n` +
+      `Dear ${invite.recipientName},\n\n` +
+      `You have been registered on the First Iraqi Bank Annual Evaluation Portal.\n` +
+      `Role: ${invite.role}\n` +
+      `Department: ${invite.department}\n` +
+      `Direct Portal Link: https://fib-annual-evaluation.web.app/evaluation\n\n` +
+      `يرجى الدخول إلى الرابط أعلاه بواسطة بريدك الإلكتروني المعتمد للبدء في إجراءات التقييم السنوي.`;
+
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedInviteIndex(index);
+      setTimeout(() => setCopiedInviteIndex(null), 3000);
+    }
+  };
 
   // Employee Search & Filters
   const [empSearch, setEmpSearch] = useState<string>("");
@@ -432,6 +477,12 @@ export function ManageStaffModal({
           : `System invitation sent & employee profile registered for (${empEmail.trim()})`,
         type: "success"
       });
+      setPendingInviteModal([{
+        recipientEmail: empEmail.trim(),
+        recipientName: empName.trim(),
+        role: empRoleType === 'tl' ? 'Team Leader' : (empCustomPosition.trim() || empRole.trim() || 'Staff / Specialist'),
+        department: empDept
+      }]);
     }
 
     setIsAddingEmployee(false);
@@ -552,6 +603,27 @@ export function ManageStaffModal({
           : `System invitations sent & leadership registered for (${invitedEmails})`,
         type: "success"
       });
+
+      const invites: InviteActionDetail[] = [];
+      if (deptManagerEmail.trim()) {
+        invites.push({
+          recipientEmail: deptManagerEmail.trim(),
+          recipientName: deptDirectManager.trim() || `${deptName} Manager`,
+          role: "Department Manager",
+          department: deptName.trim()
+        });
+      }
+      if (deptChiefEmail.trim()) {
+        invites.push({
+          recipientEmail: deptChiefEmail.trim(),
+          recipientName: deptChief.trim() || `${deptName} Chief`,
+          role: "Department Chief / Head",
+          department: deptName.trim()
+        });
+      }
+      if (invites.length > 0) {
+        setPendingInviteModal(invites);
+      }
     }
 
     setIsAddingDept(false);
@@ -883,6 +955,21 @@ export function ManageStaffModal({
                           <span className="hidden sm:inline">{isAr ? "تقييم الآن" : "Evaluate"}</span>
                         </button>
                       )}
+                      {emp.email && (
+                        <button
+                          type="button"
+                          onClick={() => setPendingInviteModal([{
+                            recipientEmail: emp.email!,
+                            recipientName: emp.name,
+                            role: emp.role || "Staff",
+                            department: emp.department
+                          }])}
+                          className="p-2 rounded-xl text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
+                          title={isAr ? "إرسال / نسخ دعوة الموظف" : "Send / Copy Employee Invite"}
+                        >
+                          <Mail size={15} />
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => handleStartEditEmployee(emp)}
@@ -1055,6 +1142,35 @@ export function ManageStaffModal({
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
+                      {(dept.manager_email || dept.chief_email) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const invites: InviteActionDetail[] = [];
+                            if (dept.manager_email) {
+                              invites.push({
+                                recipientEmail: dept.manager_email,
+                                recipientName: dept.direct_manager || `${dept.name} Manager`,
+                                role: "Department Manager",
+                                department: dept.name
+                              });
+                            }
+                            if (dept.chief_email) {
+                              invites.push({
+                                recipientEmail: dept.chief_email,
+                                recipientName: dept.department_chief || `${dept.name} Chief`,
+                                role: "Department Chief / Head",
+                                department: dept.name
+                              });
+                            }
+                            setPendingInviteModal(invites);
+                          }}
+                          className="p-2 rounded-xl text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
+                          title={isAr ? "إرسال / نسخ دعوة إدارة القسم" : "Send / Copy Leadership Invite"}
+                        >
+                          <Mail size={15} />
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => handleStartEditDept(dept)}
@@ -1985,6 +2101,99 @@ export function ManageStaffModal({
                     : (isAr ? "نعم، احذف نهائياً" : "Yes, Delete Permanently")}
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* System Invitation Dispatch Dialog */}
+      {pendingInviteModal && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200" dir={isAr ? "rtl" : "ltr"}>
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-xs">
+                <Mail size={24} />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-base font-black text-gray-900 dark:text-white">
+                  {isAr ? "إرسال دعوة التقييم السنوي" : "Annual Evaluation Invitation"}
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {isAr 
+                    ? "تم تسجيل البيانات والصلاحيات في قاعدة البيانات سحابياً. يمكنك الآن إرسال الرسالة الرسمية برابط النظام مباشرة:"
+                    : "Account & permissions registered in Firestore. You can now dispatch the invitation message with portal link:"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPendingInviteModal(null)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-gray-500 hover:text-gray-800 flex items-center justify-center transition cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-3 my-4">
+              {pendingInviteModal.map((inv, idx) => (
+                <div key={idx} className="p-3.5 rounded-2xl bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-2">
+                        <span>{inv.recipientName}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
+                          {inv.role}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">
+                        {inv.recipientEmail}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-gray-200 dark:border-gray-700/60">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEmailClient(inv)}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black text-white shadow-xs transition active:scale-95 cursor-pointer hover:opacity-90"
+                      style={{ backgroundColor: brandPrimary }}
+                    >
+                      <Send size={13} />
+                      <span>{isAr ? "إرسال عبر Outlook / الإيميل" : "Send via Outlook / Email"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyInviteText(inv, idx)}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition cursor-pointer"
+                    >
+                      {copiedInviteIndex === idx ? (
+                        <>
+                          <Check size={13} className="text-emerald-500" />
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">{isAr ? "تم النسخ!" : "Copied!"}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={13} />
+                          <span>{isAr ? "نسخ نص الدعوة والرابط" : "Copy Message & Link"}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-800">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 size={13} className="text-emerald-500" />
+                <span>{isAr ? "الرابط المباشر: fib-annual-evaluation.web.app" : "Portal link: fib-annual-evaluation.web.app"}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setPendingInviteModal(null)}
+                className="px-4 py-1.5 rounded-xl font-bold bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 text-gray-700 transition cursor-pointer"
+              >
+                {isAr ? "إتمام" : "Done"}
+              </button>
             </div>
           </div>
         </div>
