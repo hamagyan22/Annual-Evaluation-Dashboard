@@ -5,7 +5,7 @@ import {
   X, Plus, Trash2, Edit2, Users, Building2, 
   Search, Sparkles, UserCheck, RefreshCw, AlertCircle,
   AlertTriangle, Check, ShieldAlert, Crown,
-  CheckCircle2, Mail, Send, Copy, ExternalLink
+  CheckCircle2, Mail, Send, Copy, ExternalLink, ShieldCheck
 } from "lucide-react";
 import { 
   DynamicDepartment, 
@@ -118,8 +118,11 @@ export function ManageStaffModal({
   const [activeTab, setActiveTab] = useState<"employees" | "departments">("employees");
 
   // Manager Scoping
-  const isManagerOnly = currentUser?.role === "manager" && !currentUser?.isAdmin;
-  const managerDept = currentUser?.department || "";
+  const isManagerOnly = !currentUser?.isAdmin && (
+    (currentUser?.role || "").toLowerCase() === "manager" || 
+    Boolean(currentUser?.department && (currentUser?.role || "").toLowerCase() !== "admin")
+  );
+  const managerDept = (currentUser?.department || "").trim();
 
   // Toast / Feedback State
   const [toastNotice, setToastNotice] = useState<{ message: string; type: "success" | "info" } | null>(null);
@@ -289,8 +292,9 @@ export function ManageStaffModal({
     const chief = (dept?.department_chief || "Omer Ayad").trim();
     
     let deptMgr = (dept?.direct_manager || "").trim();
-    // If empty or "Team Leaders", look for specific team leader if available
-    if (!deptMgr || deptMgr.toLowerCase() === "team leaders") {
+    if (isManagerOnly && currentUser?.name) {
+      deptMgr = currentUser.name.trim();
+    } else if (!deptMgr || deptMgr.toLowerCase() === "team leaders") {
       const firstTL = employees.find(e => 
         e.department === deptName && 
         (e.role_type === "tl" || (e.role && /leader|manager/i.test(e.role)))
@@ -299,9 +303,9 @@ export function ManageStaffModal({
     }
 
     // Key rule requested by user:
-    // If the employee is a manager -> Direct Manager is the Department Chief
-    // If the employee is regular staff -> Direct Manager is the Department Manager
-    const targetDm = isMgr ? chief : (deptMgr || chief);
+    // If manager is adding staff -> Direct Manager is ALWAYS the manager himself, and Chief is the department's chief
+    // If admin is adding staff -> Manager role reports to Chief; Staff reports to Dept Manager
+    const targetDm = (isManagerOnly && currentUser?.name) ? currentUser.name.trim() : (isMgr ? chief : (deptMgr || chief));
 
     return {
       directManager: targetDm,
@@ -330,9 +334,11 @@ export function ManageStaffModal({
     setEmpCustomPosition("");
 
     const hierarchy = resolveManagerHierarchy(initialDept, "agent", "Customer Care Agent", "");
-    const initialDm = isManagerOnly && currentUser?.name ? currentUser.name : hierarchy.directManager;
+    const deptObj = departments.find(d => d.name === initialDept || d.nameAr === initialDept);
+    const initialDm = isManagerOnly && currentUser?.name ? currentUser.name.trim() : hierarchy.directManager;
+    const initialChief = isManagerOnly && deptObj?.department_chief ? deptObj.department_chief.trim() : hierarchy.departmentChief;
     setEmpDirectManager(initialDm);
-    setEmpDeptChief(hierarchy.departmentChief);
+    setEmpDeptChief(initialChief);
     if (initialDm && initialDm !== "Omer Ayad") {
       setEmpTeam(`${initialDm} Team`);
     } else {
@@ -352,19 +358,25 @@ export function ManageStaffModal({
     setEmpRoleType(emp.role_type || "agent");
     setEmpCustomPosition(emp.custom_position || (emp.role_type === 'custom' ? emp.role : ""));
 
+    const deptObj = departments.find(d => d.name === emp.department || d.nameAr === emp.department);
     const hierarchy = resolveManagerHierarchy(emp.department, emp.role_type || "agent", emp.role, emp.custom_position);
-    setEmpDirectManager(emp.direct_manager || hierarchy.directManager);
-    setEmpDeptChief(emp.department_chief || hierarchy.departmentChief);
+    const initialDm = isManagerOnly && currentUser?.name ? currentUser.name.trim() : (emp.direct_manager || hierarchy.directManager);
+    const initialChief = isManagerOnly && deptObj?.department_chief ? deptObj.department_chief.trim() : (emp.department_chief || hierarchy.departmentChief);
+    setEmpDirectManager(initialDm);
+    setEmpDeptChief(initialChief);
     setIsAddingEmployee(true);
   };
 
   const handleEmpDeptChange = (newDept: string) => {
     setEmpDept(newDept);
     const hierarchy = resolveManagerHierarchy(newDept, empRoleType, empRole, empCustomPosition);
-    setEmpDirectManager(hierarchy.directManager);
-    setEmpDeptChief(hierarchy.departmentChief);
+    const deptObj = departments.find(d => d.name === newDept || d.nameAr === newDept);
+    const dm = isManagerOnly && currentUser?.name ? currentUser.name.trim() : hierarchy.directManager;
+    const chief = isManagerOnly && deptObj?.department_chief ? deptObj.department_chief.trim() : hierarchy.departmentChief;
+    setEmpDirectManager(dm);
+    setEmpDeptChief(chief);
     if (!empTeam || empTeam.endsWith("Team")) {
-      setEmpTeam(hierarchy.directManager ? `${hierarchy.directManager} Team` : "");
+      setEmpTeam(dm ? `${dm} Team` : "");
     }
   };
 
@@ -385,10 +397,13 @@ export function ManageStaffModal({
     setEmpRole(newRole);
 
     const hierarchy = resolveManagerHierarchy(empDept, val, newRole, empCustomPosition);
-    setEmpDirectManager(hierarchy.directManager);
-    setEmpDeptChief(hierarchy.departmentChief);
+    const deptObj = departments.find(d => d.name === empDept || d.nameAr === empDept);
+    const dm = isManagerOnly && currentUser?.name ? currentUser.name.trim() : hierarchy.directManager;
+    const chief = isManagerOnly && deptObj?.department_chief ? deptObj.department_chief.trim() : hierarchy.departmentChief;
+    setEmpDirectManager(dm);
+    setEmpDeptChief(chief);
     if (!empTeam || empTeam.endsWith("Team")) {
-      setEmpTeam(hierarchy.directManager ? `${hierarchy.directManager} Team` : "");
+      setEmpTeam(dm ? `${dm} Team` : "");
     }
   };
 
@@ -398,8 +413,11 @@ export function ManageStaffModal({
     const isNowMgr = isManagerialRole(empRoleType, val, empCustomPosition);
     if (wasMgr !== isNowMgr) {
       const hierarchy = resolveManagerHierarchy(empDept, empRoleType, val, empCustomPosition);
-      setEmpDirectManager(hierarchy.directManager);
-      setEmpDeptChief(hierarchy.departmentChief);
+      const deptObj = departments.find(d => d.name === empDept || d.nameAr === empDept);
+      const dm = isManagerOnly && currentUser?.name ? currentUser.name.trim() : hierarchy.directManager;
+      const chief = isManagerOnly && deptObj?.department_chief ? deptObj.department_chief.trim() : hierarchy.departmentChief;
+      setEmpDirectManager(dm);
+      setEmpDeptChief(chief);
     }
   };
 
@@ -410,8 +428,11 @@ export function ManageStaffModal({
     const isNowMgr = isManagerialRole(empRoleType, val, val);
     if (wasMgr !== isNowMgr) {
       const hierarchy = resolveManagerHierarchy(empDept, empRoleType, val, val);
-      setEmpDirectManager(hierarchy.directManager);
-      setEmpDeptChief(hierarchy.departmentChief);
+      const deptObj = departments.find(d => d.name === empDept || d.nameAr === empDept);
+      const dm = isManagerOnly && currentUser?.name ? currentUser.name.trim() : hierarchy.directManager;
+      const chief = isManagerOnly && deptObj?.department_chief ? deptObj.department_chief.trim() : hierarchy.departmentChief;
+      setEmpDirectManager(dm);
+      setEmpDeptChief(chief);
     }
   };
 
@@ -419,12 +440,24 @@ export function ManageStaffModal({
     e.preventDefault();
     if (!empName.trim()) return;
 
+    const currentDeptObj = departments.find(d => d.name === empDept || d.nameAr === empDept);
     const finalRole = empRoleType === 'custom' 
       ? (empCustomPosition.trim() || empRole.trim() || "Specialist")
       : (empRole.trim() || "Staff");
-    const finalDm = empDirectManager.trim() || empTeam.trim() || "Omer Ayad";
-    const finalChief = empDeptChief.trim() || "Omer Ayad";
+
+    const finalDm = (isManagerOnly && currentUser?.name) 
+      ? currentUser.name.trim() 
+      : (empDirectManager.trim() || empTeam.trim() || "Omer Ayad");
+
+    const finalChief = (isManagerOnly)
+      ? (currentDeptObj?.department_chief?.trim() || empDeptChief.trim() || "Omer Ayad")
+      : (empDeptChief.trim() || currentDeptObj?.department_chief?.trim() || "Omer Ayad");
+
     const finalTeam = empTeam.trim() || (finalDm ? `${finalDm} Team` : "General");
+    const finalManagerEmail = (isManagerOnly && currentUser?.email)
+      ? currentUser.email.trim()
+      : currentDeptObj?.manager_email;
+    const finalChiefEmail = currentDeptObj?.chief_email;
 
     if (editingEmpId) {
       const updated = employees.map(emp => {
@@ -438,7 +471,9 @@ export function ManageStaffModal({
             role: finalRole,
             team: finalTeam,
             direct_manager: finalDm,
+            manager_email: finalManagerEmail,
             department_chief: finalChief,
+            chief_email: finalChiefEmail,
             custom_position: empRoleType === 'custom' ? finalRole : undefined,
             role_type: empRoleType
           };
@@ -456,7 +491,9 @@ export function ManageStaffModal({
         role: finalRole,
         team: finalTeam,
         direct_manager: finalDm,
+        manager_email: finalManagerEmail,
         department_chief: finalChief,
+        chief_email: finalChiefEmail,
         custom_position: empRoleType === 'custom' ? finalRole : undefined,
         role_type: empRoleType
       };
@@ -1396,9 +1433,75 @@ export function ManageStaffModal({
               {/* Direct Manager Field with Smart Auto-Hierarchy & Quick Suggestion Pills */}
               {(() => {
                 const currentDeptObj = departments.find(d => d.name === empDept || d.nameAr === empDept);
+                const currentDeptChief = currentDeptObj?.department_chief?.trim() || "Omer Ayad";
+
+                if (isManagerOnly) {
+                  return (
+                    <div 
+                      className="p-4 rounded-2xl border transition space-y-3"
+                      style={{ 
+                        backgroundColor: brandLightBg,
+                        borderColor: brandLightBorder 
+                      }}
+                    >
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 text-xs font-black" style={{ color: brandPrimary }}>
+                          <ShieldCheck size={16} />
+                          <span>{isAr ? "التسلسل الإداري للموظف (محدد تلقائياً)" : "Management Hierarchy (Auto-Assigned)"}</span>
+                        </div>
+                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 shadow-2xs">
+                          <Check size={11} />
+                          <span>{isAr ? "تلقائي حسب القسم" : "Auto-Linked"}</span>
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        {/* Direct Manager Card */}
+                        <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-emerald-200/80 dark:border-emerald-800/80 flex items-center gap-3 shadow-2xs">
+                          <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                            <Building2 size={17} />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 block uppercase tracking-wider">
+                              {isAr ? "المدير المباشر (Direct Manager)" : "Direct Manager"}
+                            </span>
+                            <span className="text-xs font-black text-gray-900 dark:text-white truncate block">
+                              {currentUser?.name || "Dept Manager"} <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">({isAr ? "أنت" : "You"})</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Department Chief Card */}
+                        <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-purple-200/80 dark:border-purple-800/80 flex items-center gap-3 shadow-2xs">
+                          <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                            <Crown size={17} />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 block uppercase tracking-wider">
+                              {isAr ? "رئيس القسم (Dept Chief)" : "Department Chief"}
+                            </span>
+                            <span className="text-xs font-black text-gray-900 dark:text-white truncate block">
+                              {currentDeptChief || (isAr ? "غير محدد" : "Not Specified")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-[11px] text-gray-600 dark:text-gray-300 font-medium flex items-center gap-1.5 pt-0.5">
+                        <Sparkles size={13} className="text-emerald-600 shrink-0" />
+                        <span>
+                          {isAr 
+                            ? `يتبع هذا الموظف لإدارتك المباشرة بصفتك مديراً للقسم تلقائياً، وتُرفع درجات التقييم إلى رئيس القسم (${currentDeptChief}).`
+                            : `Staff member automatically reports to you as Department Manager, with final reviews rolling up to Department Chief (${currentDeptChief}).`}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // If Admin: show full manual selection & quick suggestions
                 const isMgr = isManagerialRole(empRoleType, empRole, empCustomPosition);
                 const currentDeptMgr = currentDeptObj?.direct_manager?.trim();
-                const currentDeptChief = currentDeptObj?.department_chief?.trim() || "Omer Ayad";
                 
                 // Available TLs in this department
                 const availableDeptTLs = employees.filter(e => 
