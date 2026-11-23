@@ -30,7 +30,15 @@ export default function SystemSignatureGuard() {
       ensureMeta("copyright", `© ${new Date().getFullYear()} ${author}`);
 
       // 2. Ensure visible footer signature element exists and is not hidden or tampered with
+      const hasInline = !!document.querySelector('[data-role="architect-signature-inline"]');
       let el = document.getElementById(SIGNATURE_DOM_ID);
+      if (hasInline) {
+        if (el) {
+          el.style.setProperty("display", "none", "important");
+        }
+        return;
+      }
+
       if (!el) {
         el = document.createElement("footer");
         el.id = SIGNATURE_DOM_ID;
@@ -66,6 +74,14 @@ export default function SystemSignatureGuard() {
     enforceWatermark();
 
     const observer = new MutationObserver(() => {
+      const hasInline = !!document.querySelector('[data-role="architect-signature-inline"]');
+      if (hasInline) {
+        const el = document.getElementById(SIGNATURE_DOM_ID);
+        if (el && el.style.display !== "none") {
+          el.style.setProperty("display", "none", "important");
+        }
+        return;
+      }
       const el = document.getElementById(SIGNATURE_DOM_ID);
       if (
         !el ||

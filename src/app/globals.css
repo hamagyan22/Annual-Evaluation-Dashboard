@@ -573,3 +573,8 @@ body.modal-open {
     display: none !important;
   }
 }
+
+/* Hide global body-level watermark if inline architect watermark exists */
+body:has([data-role="architect-signature-inline"]) #sys-architect-watermark-root {
+  display: none !important;
+}

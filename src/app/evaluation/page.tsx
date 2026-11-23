@@ -102,7 +102,6 @@ export default function StandaloneEvaluationPage() {
 
   // Inspect email status against Firestore users & invitations
   const inspectEmailStatus = async (targetEmail: string) => {
-    setPageLoading(true);
     setAuthError(null);
     const cleanEmail = targetEmail.toLowerCase().trim();
     const docId = "user_" + cleanEmail.replace(/[^a-z0-9]/gi, "_");
@@ -522,11 +521,6 @@ export default function StandaloneEvaluationPage() {
                     readOnly={isInviteMode && !!detectedInvite}
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    onBlur={() => {
-                      if (emailInput && emailInput.includes("@")) {
-                        inspectEmailStatus(emailInput);
-                      }
-                    }}
                     placeholder="user@fib.iq"
                     className={`w-full h-12 ${isAr ? "pr-10 pl-3.5" : "pl-10 pr-3.5"} text-xs bg-transparent text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none font-semibold ${isInviteMode && detectedInvite ? 'opacity-85 cursor-not-allowed' : ''}`}
                   />
@@ -600,6 +594,16 @@ export default function StandaloneEvaluationPage() {
                   </>
                 )}
               </button>
+
+              {/* Architect Watermark - Raised directly under the action button */}
+              <div className="pt-2 flex justify-center" data-role="architect-signature-inline">
+                <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-50/80 dark:bg-gray-800/80 border border-[#10664F]/20 dark:border-[#10664F]/30 text-[11px] font-bold text-gray-500 dark:text-gray-400 select-none shadow-2xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]"></span>
+                  <span>
+                    Designed by <strong className="text-[#10664F] dark:text-emerald-400 font-black">Omer Ayad</strong> • © 2026
+                  </span>
+                </div>
+              </div>
 
             </form>
 
