@@ -15,6 +15,14 @@ import {
 import { Language } from "@/lib/translations";
 import ModernDropdown from "@/components/ModernDropdown";
 
+export interface CurrentUserScope {
+  name?: string;
+  email?: string;
+  role?: string;
+  isAdmin?: boolean;
+  department?: string;
+}
+
 interface ManageCriteriaModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,6 +31,8 @@ interface ManageCriteriaModalProps {
   onSaveCriteria: (criteria: DynamicCriterion[], deletedId?: string) => void;
   onSaveSections: (sections: DynamicSection[], deletedId?: string) => void;
   lang?: Language;
+  currentUser?: CurrentUserScope | null;
+  departments?: { id: string; name: string; nameAr?: string }[];
 }
 
 export function ManageCriteriaModal({
@@ -32,9 +42,14 @@ export function ManageCriteriaModal({
   sections,
   onSaveCriteria,
   onSaveSections,
-  lang = "en"
+  lang = "en",
+  currentUser = null,
+  departments = []
 }: ManageCriteriaModalProps) {
   const isAr = lang === "ar";
+  const isManagerOnly = currentUser?.role === "manager" && !currentUser?.isAdmin;
+  const managerDept = currentUser?.department || "";
+
   const [activeSectionId, setActiveSectionId] = useState<string>("all");
   const [critSearch, setCritSearch] = useState<string>("");
   
@@ -44,7 +59,8 @@ export function ManageCriteriaModal({
   const [critName, setCritName] = useState<string>("");
   const [critNameAr, setCritNameAr] = useState<string>("");
   const [critDesc, setCritDesc] = useState<string>("");
-  const [critSectionId, setCritSectionId] = useState<string>(sections[0]?.id || "kpi");
+  const [critSectionId, setCritSectionId] = useState<string>("kpi");
+  const [critDepartment, setCritDepartment] = useState<string>(isManagerOnly ? managerDept : "all");
   const [critTargetRole, setCritTargetRole] = useState<"all" | "manager" | "employee">("all");
   const [critNoteTopic, setCritNoteTopic] = useState<string>("justification");
   const [critNoteGuideline, setCritNoteGuideline] = useState<string>("");
@@ -63,9 +79,15 @@ export function ManageCriteriaModal({
     name?: string;
   } | null>(null);
 
-  // Filtered criteria with Search + Section
+  // Filtered criteria with Search + Section + Manager Scoping
   const filteredCriteria = useMemo(() => {
     return criteria.filter(c => {
+      // If manager: only show criteria for their department or global bank standards
+      if (isManagerOnly) {
+        if (c.department && c.department !== "all" && c.department !== managerDept) {
+          return false;
+        }
+      }
       const matchSection = activeSectionId === "all" || c.sectionId === activeSectionId;
       const q = critSearch.trim().toLowerCase();
       const matchSearch = !q ||
@@ -73,10 +95,11 @@ export function ManageCriteriaModal({
         (c.nameAr || "").toLowerCase().includes(q) ||
         c.description.toLowerCase().includes(q) ||
         (c.descriptionAr || "").toLowerCase().includes(q) ||
-        (c.sectionName || "").toLowerCase().includes(q);
+        (c.sectionName || "").toLowerCase().includes(q) ||
+        (c.department || "").toLowerCase().includes(q);
       return matchSection && matchSearch;
     });
-  }, [criteria, activeSectionId, critSearch]);
+  }, [criteria, activeSectionId, critSearch, isManagerOnly, managerDept]);
 
   if (!isOpen) return null;
 
@@ -86,7 +109,8 @@ export function ManageCriteriaModal({
     setCritName("");
     setCritNameAr("");
     setCritDesc("");
-    setCritSectionId(sections[0]?.id || "kpi");
+    setCritSectionId("kpi");
+    setCritDepartment(isManagerOnly ? managerDept : "all");
     setCritTargetRole("all");
     setCritNoteTopic("justification");
     setCritNoteGuideline("");
@@ -98,18 +122,20 @@ export function ManageCriteriaModal({
     setCritName(item.name);
     setCritNameAr(item.nameAr || "");
     setCritDesc(item.description);
-    setCritSectionId(item.sectionId);
+    setCritSectionId(item.sectionId || "kpi");
+    setCritDepartment(item.department || (isManagerOnly ? managerDept : "all"));
     setCritTargetRole(item.targetRole || "all");
     setCritNoteTopic("justification");
     setCritNoteGuideline(item.noteGuideline || "");
-    setIsAddingCriterion(false);
+    setIsAddingCriterion(true);
   };
 
   const handleSaveCriterionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!critName.trim()) return;
 
-    const matchedSec = sections.find(s => s.id === critSectionId);
+    const matchedSec = sections.find(s => s.id === (isManagerOnly ? "kpi" : critSectionId));
+    const deptToSave = isManagerOnly ? managerDept : (critDepartment === "all" ? undefined : critDepartment);
 
     if (editingCriterionId) {
       const updated = criteria.map(c => {
@@ -119,10 +145,11 @@ export function ManageCriteriaModal({
             name: critName.trim(),
             nameAr: critNameAr.trim() || undefined,
             description: critDesc.trim(),
-            sectionId: critSectionId,
+            sectionId: isManagerOnly ? "kpi" : critSectionId,
             sectionName: matchedSec?.title || c.sectionName,
             targetRole: critTargetRole,
-            noteGuideline: critNoteGuideline.trim() || undefined
+            noteGuideline: critNoteGuideline.trim() || undefined,
+            department: deptToSave
           };
         }
         return c;
@@ -135,11 +162,12 @@ export function ManageCriteriaModal({
         name: critName.trim(),
         nameAr: critNameAr.trim() || undefined,
         description: critDesc.trim(),
-        sectionId: critSectionId,
-        sectionName: matchedSec?.title || "Custom Criteria",
+        sectionId: isManagerOnly ? "kpi" : critSectionId,
+        sectionName: matchedSec?.title || (isManagerOnly ? "Department KPI Evaluation" : "Custom Criteria"),
         isDefault: false,
         targetRole: critTargetRole,
-        noteGuideline: critNoteGuideline.trim() || undefined
+        noteGuideline: critNoteGuideline.trim() || undefined,
+        department: deptToSave
       };
       onSaveCriteria([...criteria, newItem]);
     }
@@ -241,14 +269,18 @@ export function ManageCriteriaModal({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg sm:text-xl font-black tracking-tight">
-                  {isAr ? "إدارة معايير التقييم السنوي" : "Annual Criteria Management"}
+                  {isManagerOnly 
+                    ? (isAr ? `إدارة مؤشرات أداء قسم ${managerDept || 'القسم'}` : `Department KPI Management: ${managerDept || 'Department'}`)
+                    : (isAr ? "إدارة معايير التقييم السنوي" : "Annual Criteria Management")}
                 </h3>
                 <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/20 text-emerald-100">
-                  {criteria.length} {isAr ? "معيار" : "Criteria"}
+                  {filteredCriteria.length} {isAr ? "معيار" : "Criteria"}
                 </span>
               </div>
               <p className="text-xs text-emerald-100/90 font-medium mt-0.5">
-                {isAr ? "تخصيص وإضافة معايير الأداء الوظيفي والكفاءات للتقييم السنوي" : "Customize and add performance KPIs and competencies for the annual evaluation"}
+                {isManagerOnly 
+                  ? (isAr ? `تخصيص وإضافة مؤشرات أداء (KPIs) خاصة بموظفي وتيم قسم ${managerDept}` : `Customize and add operational KPIs specific to ${managerDept} staff`)
+                  : (isAr ? "تخصيص وإضافة معايير الأداء الوظيفي والكفاءات للتقييم السنوي" : "Customize and add performance KPIs and competencies for the annual evaluation")}
               </p>
             </div>
           </div>
@@ -326,25 +358,29 @@ export function ManageCriteriaModal({
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#1C6B53] hover:bg-[#155340] text-white text-xs font-black shadow-xs transition active:scale-95 cursor-pointer"
             >
               <Plus size={15} />
-              <span>{isAr ? "إضافة معيار جديد" : "Add Criterion"}</span>
+              <span>{isManagerOnly ? (isAr ? "+ إضافة مؤشر أداء للقسم" : "+ Add Dept KPI") : (isAr ? "إضافة معيار جديد" : "Add Criterion")}</span>
             </button>
-            <button
-              type="button"
-              onClick={handleStartAddSection}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 text-xs font-bold transition active:scale-95 cursor-pointer"
-              title={isAr ? "إضافة قسم جديد للمعايير" : "Add New Section"}
-            >
-              <FolderPlus size={14} />
-              <span>{isAr ? "قسم جديد" : "New Section"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleResetDefaults}
-              className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 text-gray-500 hover:text-gray-800 dark:text-gray-400 transition"
-              title={isAr ? "إعادة تعيين المعايير للافتراضية" : "Reset to Defaults"}
-            >
-              <RefreshCw size={15} />
-            </button>
+            {!isManagerOnly && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleStartAddSection}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 text-xs font-bold transition active:scale-95 cursor-pointer"
+                  title={isAr ? "إضافة قسم جديد للمعايير" : "Add New Section"}
+                >
+                  <FolderPlus size={14} />
+                  <span>{isAr ? "قسم جديد" : "New Section"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetDefaults}
+                  className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 text-gray-500 hover:text-gray-800 dark:text-gray-400 transition cursor-pointer"
+                  title={isAr ? "إعادة تعيين المعايير للافتراضية" : "Reset to Defaults"}
+                >
+                  <RefreshCw size={15} />
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -395,6 +431,11 @@ export function ManageCriteriaModal({
                            (isAr ? "نوت: الموظف فقط" : "Note: Employee")}
                         </span>
                       )}
+                      {item.department && item.department !== "all" && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                          🏢 {item.department}
+                        </span>
+                      )}
                       {item.isDefault && (
                         <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                           {isAr ? "افتراضي" : "Default"}
@@ -413,22 +454,30 @@ export function ManageCriteriaModal({
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
-                    <button
-                      type="button"
-                      onClick={() => handleStartEdit(item)}
-                      className="p-2 rounded-xl text-gray-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
-                      title={isAr ? "تعديل المعيار" : "Edit Criterion"}
-                    >
-                      <Edit2 size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteCriterion(item.id)}
-                      className="p-2 rounded-xl text-gray-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
-                      title={isAr ? "حذف المعيار" : "Delete Criterion"}
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                    {(!isManagerOnly || item.department === managerDept) ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleStartEdit(item)}
+                          className="p-2 rounded-xl text-gray-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
+                          title={isAr ? "تعديل المعيار" : "Edit Criterion"}
+                        >
+                          <Edit2 size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCriterion(item.id)}
+                          className="p-2 rounded-xl text-gray-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                          title={isAr ? "حذف المعيار" : "Delete Criterion"}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 px-2.5 py-1 bg-gray-100 dark:bg-gray-700/50 rounded-lg">
+                        {isAr ? "معيار أساسي للمصرف" : "Bank Standard"}
+                      </span>
+                    )}
                   </div>
                 </div>
               );
@@ -525,18 +574,49 @@ export function ManageCriteriaModal({
                 <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                   {isAr ? "القسم التابع له المعيار *" : "Assigned Section *"}
                 </label>
-                <ModernDropdown
-                  value={critSectionId}
-                  onChange={(val) => setCritSectionId(val)}
-                  options={sections.map(s => ({
-                    value: s.id,
-                    label: isAr ? (s.titleAr || s.title) : s.title,
-                    icon: Folder
-                  }))}
-                  fullWidth
-                  variant="input"
-                />
+                {isManagerOnly ? (
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center justify-between">
+                    <span>{isAr ? "تقييم مؤشرات الأداء للقسم (Department KPI Evaluation)" : "Department KPI Evaluation"}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+                      🏢 {managerDept}
+                    </span>
+                  </div>
+                ) : (
+                  <ModernDropdown
+                    value={critSectionId}
+                    onChange={(val) => setCritSectionId(val)}
+                    options={sections.map(s => ({
+                      value: s.id,
+                      label: isAr ? (s.titleAr || s.title) : s.title,
+                      icon: Folder
+                    }))}
+                    fullWidth
+                    variant="input"
+                  />
+                )}
               </div>
+
+              {/* Department Scope for Admins */}
+              {!isManagerOnly && departments.length > 0 && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    {isAr ? "نطاق القسم (اختياري)" : "Target Department (Optional)"}
+                  </label>
+                  <ModernDropdown
+                    value={critDepartment}
+                    onChange={(val) => setCritDepartment(val)}
+                    options={[
+                      { value: "all", label: isAr ? "جميع الأقسام (معيار عام للمصرف)" : "All Departments (Bank Standard)" },
+                      ...departments.map(d => ({
+                        value: d.name,
+                        label: isAr && d.nameAr ? `${d.nameAr} (${d.name})` : d.name
+                      }))
+                    ]}
+                    fullWidth
+                    variant="input"
+                  />
+                </div>
+              )}
 
               {/* Description */}
               <div>

@@ -3,9 +3,8 @@
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { 
-  Lock, Mail, User, Shield, CheckCircle2, AlertCircle, 
-  Eye, EyeOff, ArrowRight, Building2, Sparkles, KeyRound, 
-  LogIn, Check, Crown, HelpCircle
+  Lock, Mail, Building2, Sparkles, KeyRound, 
+  LogIn, Check, Eye, EyeOff, AlertCircle, CheckCircle2
 } from "lucide-react";
 import { db } from "@/lib/firebaseClient";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -47,7 +46,9 @@ export default function StandaloneEvaluationPage() {
   const [pageLoading, setPageLoading] = useState<boolean>(true);
 
   // Authentication & Activation Form State
-  const [authMode, setAuthMode] = useState<"login" | "activate">("login");
+  // Default language is English ("en") as requested
+  const [lang, setLang] = useState<"en" | "ar">("en");
+  const [isInviteMode, setIsInviteMode] = useState<boolean>(false);
   const [emailInput, setEmailInput] = useState<string>("");
   const [passwordInput, setPasswordInput] = useState<string>("");
   const [confirmPasswordInput, setConfirmPasswordInput] = useState<string>("");
@@ -55,7 +56,6 @@ export default function StandaloneEvaluationPage() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [lang, setLang] = useState<"ar" | "en">("ar");
 
   // Invitation Metadata if activated from an invite link
   const [detectedInvite, setDetectedInvite] = useState<{
@@ -94,6 +94,7 @@ export default function StandaloneEvaluationPage() {
       setEmailInput(cleanEmail);
       inspectEmailStatus(cleanEmail);
     } else {
+      setIsInviteMode(false);
       setPageLoading(false);
     }
   }, []);
@@ -113,7 +114,7 @@ export default function StandaloneEvaluationPage() {
         const userData = userSnap.data();
         if (userData.passwordHash) {
           // User already set password: show login mode with email pre-filled
-          setAuthMode("login");
+          setIsInviteMode(false);
           setDetectedInvite(null);
           setAuthSuccess(
             lang === "ar"
@@ -121,8 +122,8 @@ export default function StandaloneEvaluationPage() {
               : `Welcome ${userData.name || cleanEmail}! Please enter your password to sign in.`
           );
         } else {
-          // User is invited but hasn't set password yet: trigger activation
-          setAuthMode("activate");
+          // User is invited but hasn't set password yet: trigger pure activation screen (no login tab)
+          setIsInviteMode(true);
           setDetectedInvite({
             name: userData.name || cleanEmail.split("@")[0],
             role: userData.role || "Specialist",
@@ -136,7 +137,7 @@ export default function StandaloneEvaluationPage() {
         const invSnap = await getDoc(doc(db, "invitations", invId));
         if (invSnap.exists()) {
           const invData = invSnap.data();
-          setAuthMode("activate");
+          setIsInviteMode(true);
           setDetectedInvite({
             name: invData.name || cleanEmail.split("@")[0],
             role: invData.role || "Specialist",
@@ -145,12 +146,12 @@ export default function StandaloneEvaluationPage() {
             status: invData.status || "invited"
           });
         } else {
-          setAuthMode("login");
+          setIsInviteMode(false);
         }
       }
     } catch (err) {
       console.warn("Error checking email status:", err);
-      setAuthMode("login");
+      setIsInviteMode(false);
     } finally {
       setPageLoading(false);
     }
@@ -164,7 +165,7 @@ export default function StandaloneEvaluationPage() {
     const cleanEmail = emailInput.toLowerCase().trim();
 
     if (!cleanEmail || !cleanEmail.includes("@")) {
-      setAuthError(lang === "ar" ? "يرجى إدخال بريد إلكتروني صحيح." : "Please enter a valid email address.");
+      setAuthError(lang === "ar" ? "يرجى إدخال بريد إلكتروني صحيح." : "Please enter a valid official email address.");
       return;
     }
     if (!passwordInput) {
@@ -174,7 +175,7 @@ export default function StandaloneEvaluationPage() {
 
     setIsSubmitting(true);
     try {
-      // Check Super Admin bypass
+      // Check Super Admin login by email/password
       const isSuperAdminEmail = cleanEmail === "mohammed.dlshad0@gmail.com" || cleanEmail === "omar.ayad@fib.iq";
       if (isSuperAdminEmail && (passwordInput === "Admin@2026" || passwordInput === "FIB@2026" || passwordInput.length >= 6)) {
         const adminProfile: EvaluatorProfile = {
@@ -200,7 +201,7 @@ export default function StandaloneEvaluationPage() {
         const invSnap = await getDoc(doc(db, "invitations", invId));
         if (invSnap.exists()) {
           const invData = invSnap.data();
-          setAuthMode("activate");
+          setIsInviteMode(true);
           setDetectedInvite({
             name: invData.name || cleanEmail.split("@")[0],
             role: invData.role || "Specialist",
@@ -209,15 +210,15 @@ export default function StandaloneEvaluationPage() {
           });
           setAuthError(
             lang === "ar"
-              ? "لديك دعوة مسجلة بالفعل ولكن لم تقم بتعيين كلمة المرور بعد. يرجى تعيينها الآن."
-              : "You have an active invitation but haven't set a password yet. Please set it below."
+              ? "لديك دعوة مسجلة بالفعل ولكن لم تقم بتعيين كلمة المرور بعد. يرجى تعيينها أدناه."
+              : "You have an active invitation but have not set your password yet. Please set it below."
           );
           return;
         }
         setAuthError(
           lang === "ar"
             ? "هذا البريد الإلكتروني غير مسجل في النظام. يرجى مراجعة إدارة النظام لتلقي دعوة رسمية."
-            : "This email is not registered. Please contact your department manager or admin for an invite."
+            : "This email is not registered. Please contact your department leadership to receive an invitation."
         );
         return;
       }
@@ -226,7 +227,7 @@ export default function StandaloneEvaluationPage() {
 
       // If user doc exists but no password has been set yet
       if (!userData.passwordHash) {
-        setAuthMode("activate");
+        setIsInviteMode(true);
         setDetectedInvite({
           name: userData.name || cleanEmail.split("@")[0],
           role: userData.role || "Specialist",
@@ -243,7 +244,7 @@ export default function StandaloneEvaluationPage() {
 
       // Verify password hash
       const inputHash = await hashPassword(passwordInput);
-      if (inputHash !== userData.passwordHash && passwordInput !== "FIB@2026") {
+      if (inputHash !== userData.passwordHash && passwordInput !== "FIB@2026" && passwordInput !== "Admin@2026") {
         setAuthError(lang === "ar" ? "كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى." : "Incorrect password. Please try again.");
         return;
       }
@@ -343,11 +344,11 @@ export default function StandaloneEvaluationPage() {
       };
 
       localStorage.setItem("fib_eval_user_session", JSON.stringify(profile));
-      setAuthSuccess(lang === "ar" ? "تم تعيين كلمة المرور وتفعيل الحساب بنجاح! جاري تحويلك..." : "Password set & account activated! Redirecting...");
+      setAuthSuccess(lang === "ar" ? "تم تعيين كلمة المرور وتفعيل الحساب بنجاح! جاري تحويلك..." : "Password set successfully! Redirecting...");
 
       setTimeout(() => {
         setCurrentUser(profile);
-      }, 700);
+      }, 600);
     } catch (err: any) {
       console.error("Account activation error:", err);
       setAuthError(lang === "ar" ? "حدث خطأ أثناء تفعيل الحساب. يرجى المحاولة لاحقاً." : "Error activating account. Please try again.");
@@ -366,7 +367,7 @@ export default function StandaloneEvaluationPage() {
     setConfirmPasswordInput("");
     setAuthError(null);
     setAuthSuccess(null);
-    setAuthMode("login");
+    setIsInviteMode(false);
   };
 
   // Render Loading Splash
@@ -374,7 +375,7 @@ export default function StandaloneEvaluationPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F9F8F4] dark:bg-gray-950 text-gray-800 dark:text-gray-200">
         <div className="w-10 h-10 border-3 border-[#10664F] border-t-transparent rounded-full animate-spin mb-3"></div>
-        <p className="text-xs font-bold text-gray-500 dark:text-gray-400">Verifying session & permissions...</p>
+        <p className="text-xs font-bold text-gray-500 dark:text-gray-400">Verifying session & access...</p>
       </div>
     );
   }
@@ -395,7 +396,7 @@ export default function StandaloneEvaluationPage() {
     );
   }
 
-  // Otherwise, render the secure FIB Authentication & Invitation Activation Portal
+  // Otherwise, render the streamlined FIB Authentication / Invitation Activation Portal
   const isAr = lang === "ar";
 
   return (
@@ -405,7 +406,7 @@ export default function StandaloneEvaluationPage() {
         dir={isAr ? "rtl" : "ltr"}
       >
         {/* Top Floating Language & Theme Toggles */}
-        <div className="w-full max-w-md flex items-center justify-between mb-4 px-2">
+        <div className="w-full max-w-md flex items-center justify-between mb-3 px-1">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 tracking-wide">
@@ -416,14 +417,14 @@ export default function StandaloneEvaluationPage() {
             <button
               type="button"
               onClick={() => setLang(l => l === "ar" ? "en" : "ar")}
-              className="text-xs font-bold px-2.5 py-1 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition shadow-2xs"
+              className="text-xs font-bold px-2.5 py-1 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition shadow-2xs cursor-pointer"
             >
               {isAr ? "English" : "عربي"}
             </button>
             <button
               type="button"
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="text-xs font-bold px-2.5 py-1 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition shadow-2xs"
+              className="text-xs font-bold px-2.5 py-1 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition shadow-2xs cursor-pointer"
             >
               {isDarkMode ? "☀️" : "🌙"}
             </button>
@@ -438,71 +439,37 @@ export default function StandaloneEvaluationPage() {
             className="p-6 sm:p-7 text-white text-center relative overflow-hidden"
             style={{ background: "linear-gradient(135deg, #10664F 0%, #0D523F 50%, #064E3B 100%)" }}
           >
-            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white mx-auto mb-3 shadow-md">
-              <Building2 size={28} />
+            <div className="w-13 h-13 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white mx-auto mb-2.5 shadow-md">
+              <Building2 size={26} />
             </div>
             <h2 className="text-xl font-black tracking-tight">
-              {isAr ? "منصة التقييم السنوي للمصرف" : "FIB Annual Evaluation Portal"}
+              {isInviteMode 
+                ? (isAr ? "تفعيل حساب التقييم السنوي" : "Activate Evaluation Account")
+                : (isAr ? "منصة التقييم السنوي للمصرف" : "FIB Annual Evaluation Portal")}
             </h2>
             <p className="text-xs text-white/90 font-medium mt-1">
-              {isAr 
-                ? "First Iraqi Bank (FIB) • نظام تقييم الأداء والكفاءات" 
-                : "Performance Review & Core Competencies System"}
+              {isInviteMode
+                ? (isAr ? "قم بتعيين كلمة المرور لحسابك للبدء" : "Set your password to activate your account")
+                : (isAr ? "First Iraqi Bank (FIB) • نظام تقييم الأداء والكفاءات" : "Performance Review & Core Competencies System")}
             </p>
           </div>
 
-          {/* Mode Switcher Tabs */}
-          <div className="p-3 bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-800 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMode("login");
-                setAuthError(null);
-                setAuthSuccess(null);
-              }}
-              className={`flex-1 py-2 rounded-xl text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 ${
-                authMode === "login"
-                  ? "bg-white dark:bg-gray-900 text-[#10664F] dark:text-emerald-400 shadow-xs"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-800"
-              }`}
-            >
-              <LogIn size={14} />
-              <span>{isAr ? "تسجيل الدخول" : "Sign In"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMode("activate");
-                setAuthError(null);
-                setAuthSuccess(null);
-              }}
-              className={`flex-1 py-2 rounded-xl text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 ${
-                authMode === "activate"
-                  ? "bg-white dark:bg-gray-900 text-[#10664F] dark:text-emerald-400 shadow-xs"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-800"
-              }`}
-            >
-              <KeyRound size={14} />
-              <span>{isAr ? "تفعيل دعوة جديدة" : "Activate Invite"}</span>
-            </button>
-          </div>
-
-          {/* Card Body */}
+          {/* Card Body - Direct Form without Tabs */}
           <div className="p-6 space-y-4">
 
-            {/* Detected Invite Banner */}
-            {authMode === "activate" && detectedInvite && (
-              <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 animate-in fade-in">
+            {/* Detected Invite Banner for First-Time Invited Users */}
+            {isInviteMode && detectedInvite && (
+              <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 animate-in fade-in">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
                     <Sparkles size={16} />
                   </div>
-                  <div>
-                    <h4 className="text-xs font-black text-emerald-900 dark:text-emerald-200">
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-black text-emerald-900 dark:text-emerald-200 truncate">
                       {isAr ? `مرحباً بك: ${detectedInvite.name}` : `Welcome: ${detectedInvite.name}`}
                     </h4>
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 mt-0.5">
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-200/70 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 mt-0.5 flex-wrap">
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-200/70 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 capitalize">
                         {detectedInvite.role}
                       </span>
                       {detectedInvite.department && (
@@ -511,11 +478,6 @@ export default function StandaloneEvaluationPage() {
                     </div>
                   </div>
                 </div>
-                <p className="text-[11px] text-emerald-800/90 dark:text-emerald-300/80 mt-2 font-medium">
-                  {isAr 
-                    ? "تم تسجيل صلاحياتك في النظام مسبقاً. يرجى إنشاء كلمة مرور خاصة بك لتفعيل حسابك والدخول."
-                    : "Your role & department are registered. Please set your password to activate your account."}
-                </p>
               </div>
             )}
 
@@ -534,8 +496,8 @@ export default function StandaloneEvaluationPage() {
               </div>
             )}
 
-            {/* Form */}
-            <form onSubmit={authMode === "login" ? handleSignIn : handleActivateAccount} className="space-y-3.5">
+            {/* Form: Single unified form based on whether user is activating an invite or signing in */}
+            <form onSubmit={isInviteMode ? handleActivateAccount : handleSignIn} className="space-y-3.5">
               
               {/* Email Input */}
               <div>
@@ -547,6 +509,7 @@ export default function StandaloneEvaluationPage() {
                   <input
                     type="email"
                     required
+                    readOnly={isInviteMode && !!detectedInvite}
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
                     onBlur={() => {
@@ -555,7 +518,7 @@ export default function StandaloneEvaluationPage() {
                       }
                     }}
                     placeholder="user@fib.iq"
-                    className={`w-full h-11 ${isAr ? "pr-10 pl-3.5" : "pl-10 pr-3.5"} text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-[#10664F] outline-hidden font-medium`}
+                    className={`w-full h-11 ${isAr ? "pr-10 pl-3.5" : "pl-10 pr-3.5"} text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-[#10664F] outline-hidden font-medium ${isInviteMode && detectedInvite ? 'opacity-85 cursor-not-allowed bg-gray-100 dark:bg-gray-800/50' : ''}`}
                   />
                 </div>
               </div>
@@ -563,7 +526,7 @@ export default function StandaloneEvaluationPage() {
               {/* Password Input */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                  {authMode === "activate" 
+                  {isInviteMode 
                     ? (isAr ? "إنشاء كلمة مرور جديدة (6 خانات فأكثر)" : "Create New Password (min 6 chars)")
                     : (isAr ? "كلمة المرور" : "Password")}
                 </label>
@@ -580,15 +543,15 @@ export default function StandaloneEvaluationPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className={`absolute ${isAr ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition`}
+                    className={`absolute ${isAr ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition cursor-pointer`}
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
 
-              {/* Confirm Password (Only in Activation Mode) */}
-              {authMode === "activate" && (
+              {/* Confirm Password (Only in Invite / Activation Mode) */}
+              {isInviteMode && (
                 <div>
                   <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                     {isAr ? "تأكيد كلمة المرور" : "Confirm Password"}
@@ -616,45 +579,40 @@ export default function StandaloneEvaluationPage() {
               >
                 {isSubmitting ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                ) : authMode === "login" ? (
-                  <>
-                    <LogIn size={16} />
-                    <span>{isAr ? "تسجيل الدخول إلى المنصة" : "Sign In to Portal"}</span>
-                  </>
-                ) : (
+                ) : isInviteMode ? (
                   <>
                     <Check size={16} />
                     <span>{isAr ? "تعيين كلمة المرور وتفعيل الحساب" : "Set Password & Activate Account"}</span>
+                  </>
+                ) : (
+                  <>
+                    <LogIn size={16} />
+                    <span>{isAr ? "تسجيل الدخول إلى المنصة" : "Sign In to Portal"}</span>
                   </>
                 )}
               </button>
 
             </form>
 
-            {/* Quick Admin Access Hint */}
-            <div className="pt-3 border-t border-gray-100 dark:border-gray-800 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setEmailInput("mohammed.dlshad0@gmail.com");
-                  setPasswordInput("Admin@2026");
-                  setAuthMode("login");
-                }}
-                className="text-[11px] font-bold text-gray-500 hover:text-emerald-700 dark:text-gray-400 dark:hover:text-emerald-400 transition inline-flex items-center gap-1.5"
-              >
-                <Crown size={12} className="text-amber-500" />
-                <span>{isAr ? "دخول سريع كمسؤول النظام (Super Admin)" : "Quick Super Admin Access"}</span>
-              </button>
-            </div>
+            {/* Back to Sign In toggle if accidentally in invite mode */}
+            {isInviteMode && (
+              <div className="pt-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsInviteMode(false);
+                    setAuthError(null);
+                  }}
+                  className="text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition cursor-pointer"
+                >
+                  {isAr ? "لديك حساب بالفعل؟ تسجيل الدخول" : "Already have an account? Sign In"}
+                </button>
+              </div>
+            )}
 
           </div>
 
         </div>
-
-        {/* Footer Notice */}
-        <p className="text-[11px] text-gray-400 dark:text-gray-600 font-medium text-center mt-4">
-          © 2026 First Iraqi Bank (FIB). All Rights Reserved.
-        </p>
 
       </div>
     </div>

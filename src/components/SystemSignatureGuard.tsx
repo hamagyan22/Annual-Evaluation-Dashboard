@@ -47,12 +47,13 @@ export default function SystemSignatureGuard() {
         `;
       }
 
-      // Prevent CSS hiding tampering
+      // Prevent CSS hiding tampering & raise positioning nicely
       el.style.setProperty("display", "flex", "important");
       el.style.setProperty("justify-content", "center", "important");
       el.style.setProperty("align-items", "center", "important");
       el.style.setProperty("width", "100%", "important");
-      el.style.setProperty("padding", "10px 16px 18px 16px", "important");
+      el.style.setProperty("padding", "0px 16px 20px 16px", "important");
+      el.style.setProperty("margin-top", "-22px", "important");
       el.style.setProperty("visibility", "visible", "important");
       el.style.setProperty("opacity", "1", "important");
       el.style.setProperty("pointer-events", "auto", "important");
@@ -96,7 +97,7 @@ export default function SystemSignatureGuard() {
     <footer
       id={SIGNATURE_DOM_ID}
       data-architect={author}
-      className="w-full flex justify-center items-center py-3 px-4 select-none"
+      className="w-full flex justify-center items-center pt-0 pb-5 px-4 -mt-5 select-none"
     >
       <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#1C6B53]/[0.06] dark:bg-emerald-950/40 border border-[#1C6B53]/15 dark:border-emerald-800/40 text-[11px] font-bold text-gray-500 dark:text-gray-400 tracking-wide shadow-2xs">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />

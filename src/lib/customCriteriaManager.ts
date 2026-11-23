@@ -13,6 +13,7 @@ export interface DynamicCriterion {
   noteGuideline?: string;
   noteGuidelineAr?: string;
   targetRole?: "all" | "manager" | "employee";
+  department?: string;
 }
 
 export interface DynamicSection {

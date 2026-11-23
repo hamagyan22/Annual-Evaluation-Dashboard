@@ -556,6 +556,12 @@ export default function AnnualEvaluationDashboard({
   // Dynamic Custom Criteria & Staff Modals State
   const [showManageCriteriaModal, setShowManageCriteriaModal] = useState<boolean>(false);
   const [showManageStaffModal, setShowManageStaffModal] = useState<boolean>(false);
+  const [showUserProfileModal, setShowUserProfileModal] = useState<boolean>(false);
+  const [newPasswordInput, setNewPasswordInput] = useState<string>("");
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState<string>("");
+  const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
+  const [profileStatusMsg, setProfileStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState<boolean>(false);
   const [dynamicCriteria, setDynamicCriteria] = useState<DynamicCriterion[]>([]);
   const [dynamicSections, setDynamicSections] = useState<DynamicSection[]>([]);
   const [dynamicDepartments, setDynamicDepartments] = useState<DynamicDepartment[]>([]);
@@ -839,6 +845,71 @@ export default function AnnualEvaluationDashboard({
       }, { merge: true });
     } catch (e) {
       console.warn("Error syncing employees to Firestore:", e);
+    }
+  };
+
+  // User Profile: Update Password
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileStatusMsg(null);
+    if (!newPasswordInput || newPasswordInput.length < 6) {
+      setProfileStatusMsg({
+        type: 'error',
+        text: isAr ? "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل." : "Password must be at least 6 characters."
+      });
+      return;
+    }
+    if (newPasswordInput !== confirmPasswordInput) {
+      setProfileStatusMsg({
+        type: 'error',
+        text: isAr ? "كلمتا المرور غير متطابقتين." : "Passwords do not match."
+      });
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      const cleanEmail = (userProfile?.email || "").toLowerCase().trim();
+      if (!cleanEmail) {
+        setProfileStatusMsg({
+          type: 'error',
+          text: isAr ? "تعذر تحديد البريد الإلكتروني للمستخدم." : "Unable to identify user email."
+        });
+        setIsUpdatingPassword(false);
+        return;
+      }
+
+      // SHA-256 hash
+      const msgUint8 = new TextEncoder().encode(newPasswordInput + "_fib_salt_2026");
+      const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const passwordHash = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+
+      const docId = "user_" + cleanEmail.replace(/[^a-z0-9]/gi, "_");
+      await setDoc(doc(db, "users", docId), {
+        email: cleanEmail,
+        passwordHash,
+        name: userProfile?.name || userProfile?.agent_name || cleanEmail.split("@")[0],
+        role: roleLower || "agent",
+        department: userProfile?.department || "",
+        team: userProfile?.team || "",
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      setProfileStatusMsg({
+        type: 'success',
+        text: isAr ? "تم تحديث كلمة المرور بنجاح!" : "Password successfully updated!"
+      });
+      setNewPasswordInput("");
+      setConfirmPasswordInput("");
+    } catch (err: any) {
+      console.error("Password update error:", err);
+      setProfileStatusMsg({
+        type: 'error',
+        text: isAr ? "حدث خطأ أثناء تحديث كلمة المرور." : "Failed to update password."
+      });
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -1970,35 +2041,50 @@ export default function AnnualEvaluationDashboard({
     return () => { isMounted = false; };
   }, [selectedEmployeeName, selectedYear, currentMember?.team]);
 
-  // Operational KPIs dynamic definitions: Strictly from Dynamic Criteria configured by user
+  // Operational KPIs dynamic definitions: Strictly from Dynamic Criteria configured by user (filtered by department)
   const kpiDefinitions: KpiItemDefinition[] = useMemo(() => {
     const deletedCritSet = new Set(deletedCriteriaIds || []);
-    const items = dynamicCriteria.filter(c => 
-      (c.sectionId === "kpi" || c.sectionId === "role_kpis" || (!c.sectionId || c.sectionId === "")) &&
-      !deletedCritSet.has(c.id)
-    );
+    const memberDept = (currentMember?.department || currentMember?.team || "").toLowerCase().trim();
+
+    const items = dynamicCriteria.filter(c => {
+      if (deletedCritSet.has(c.id)) return false;
+      const isKpiSec = (c.sectionId === "kpi" || c.sectionId === "role_kpis" || (!c.sectionId || c.sectionId === ""));
+      if (!isKpiSec) return false;
+
+      // Department filter:
+      if (!c.department || c.department === "all") return true;
+      if (memberDept && c.department.toLowerCase().trim() === memberDept) return true;
+      return false;
+    });
 
     return items.map(c => ({
       id: c.id,
       name: (isAr && c.nameAr) ? c.nameAr : c.name,
       description: (isAr && c.descriptionAr) ? c.descriptionAr : c.description,
     }));
-  }, [dynamicCriteria, deletedCriteriaIds, isAr]);
+  }, [dynamicCriteria, deletedCriteriaIds, isAr, currentMember]);
 
   // Dynamic Competencies List: Strictly from Dynamic Criteria configured by user
   const currentCompetenciesList = useMemo(() => {
     const deletedCritSet = new Set(deletedCriteriaIds || []);
-    const items = dynamicCriteria.filter(c => 
-      (c.sectionId === "competencies" || c.sectionId === "core_competencies") &&
-      !deletedCritSet.has(c.id)
-    );
+    const memberDept = (currentMember?.department || currentMember?.team || "").toLowerCase().trim();
+
+    const items = dynamicCriteria.filter(c => {
+      if (deletedCritSet.has(c.id)) return false;
+      const isComp = (c.sectionId === "competencies" || c.sectionId === "core_competencies");
+      if (!isComp) return false;
+
+      if (!c.department || c.department === "all") return true;
+      if (memberDept && c.department.toLowerCase().trim() === memberDept) return true;
+      return false;
+    });
 
     return items.map(c => ({
       id: c.id,
       name: (isAr && c.nameAr) ? c.nameAr : c.name,
       description: (isAr && c.descriptionAr) ? c.descriptionAr : c.description,
     }));
-  }, [dynamicCriteria, deletedCriteriaIds, isAr]);
+  }, [dynamicCriteria, deletedCriteriaIds, isAr, currentMember]);
 
   // Helper to reliably read KPI score whether keyed by 'exam' or 'knowledge'
   const getKpiScore = (kpisMap: Record<string, number>, id: string) => {
@@ -2381,7 +2467,10 @@ export default function AnnualEvaluationDashboard({
               userProfile={userProfile}
               onNavigate={onNavigate}
               onLogout={onLogout || onBack}
-              onOpenProfile={onOpenProfile}
+              onOpenProfile={() => {
+                setShowUserProfileModal(true);
+                if (onOpenProfile) onOpenProfile();
+              }}
               onOpenSettings={onOpenSettings}
               isDarkMode={isDarkMode}
               toggleDarkMode={toggleDarkMode}
@@ -2408,18 +2497,24 @@ export default function AnnualEvaluationDashboard({
                   <span>{t.annualBadge}</span>
                 </div>
 
-                {/* Admin Management Button: Criteria */}
-                {isAdmin && (
+                {/* Management Button: Criteria (Admin & Department Manager) */}
+                {(isAdmin || isDeptManager) && (
                   <button
                     type="button"
                     onClick={() => setShowManageCriteriaModal(true)}
                     className="flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-xl bg-gray-100/90 hover:bg-gray-200/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/80 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
-                    title="Manage Custom Evaluation Criteria"
+                    title={isDeptManager && !isAdmin ? (isAr ? `إدارة معايير قسم ${userManagedDepts[0]?.name || ''}` : `Manage ${userManagedDepts[0]?.name || ''} Department Criteria`) : "Manage Custom Evaluation Criteria"}
                   >
                     <Sliders size={15} className="text-[#1C6B53] dark:text-emerald-400" />
-                    <span>{t.criteriaButton}</span>
+                    <span>{isDeptManager && !isAdmin ? (isAr ? "معايير القسم" : "Dept Criteria") : t.criteriaButton}</span>
                     <span className="px-1.5 py-0.5 bg-[#1C6B53] text-white rounded-full text-[10px] font-black shadow-2xs">
-                      {dynamicCriteria.length}
+                      {isDeptManager && !isAdmin 
+                        ? dynamicCriteria.filter(c => {
+                            if (deletedCriteriaIds.includes(c.id)) return false;
+                            const mDept = (userManagedDepts[0]?.name || userProfile?.department || "").toLowerCase().trim();
+                            return !c.department || c.department === "all" || c.department.toLowerCase().trim() === mDept;
+                          }).length
+                        : dynamicCriteria.length}
                     </span>
                   </button>
                 )}
@@ -3034,14 +3129,16 @@ export default function AnnualEvaluationDashboard({
                           <p className="text-[11px] text-gray-400 max-w-sm">
                             {isAr ? "يمكنك إضافة وتخصيص مؤشرات الأداء الوظيفي والقيادي من زر 'إدارة المعايير والأقسام' أعلاه." : "You can add and customize your operational and leadership KPIs using 'Manage Criteria' above."}
                           </p>
-                          <button
-                            type="button"
-                            onClick={() => setShowManageCriteriaModal(true)}
-                            className="mt-1 px-4 py-1.5 text-xs font-bold rounded-xl text-white shadow-xs transition hover:opacity-90 cursor-pointer"
-                            style={{ background: brandGradient }}
-                          >
-                            {isAr ? "+ إضافة مؤشرات أداء (KPIs)" : "+ Add Performance KPIs"}
-                          </button>
+                          {(isAdmin || isDeptManager) && (
+                            <button
+                              type="button"
+                              onClick={() => setShowManageCriteriaModal(true)}
+                              className="mt-1 px-4 py-1.5 text-xs font-bold rounded-xl text-white shadow-xs transition hover:opacity-90 cursor-pointer"
+                              style={{ background: brandGradient }}
+                            >
+                              {isAr ? "+ إضافة مؤشرات أداء (KPIs)" : "+ Add Performance KPIs"}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -3278,14 +3375,16 @@ export default function AnnualEvaluationDashboard({
                           <p className="text-[11px] text-gray-400 max-w-sm">
                             {isAr ? "يمكنك إضافة وتخصيص الكفاءات والسلوكيات المؤسسية من زر 'إدارة المعايير والأقسام' أعلاه." : "You can add and customize institutional core competencies using 'Manage Criteria' above."}
                           </p>
-                          <button
-                            type="button"
-                            onClick={() => setShowManageCriteriaModal(true)}
-                            className="mt-1 px-4 py-1.5 text-xs font-bold rounded-xl text-white shadow-xs transition hover:opacity-90 cursor-pointer"
-                            style={{ background: brandGradient }}
-                          >
-                            {isAr ? "+ إضافة كفاءات سلوكية" : "+ Add Core Competencies"}
-                          </button>
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => setShowManageCriteriaModal(true)}
+                              className="mt-1 px-4 py-1.5 text-xs font-bold rounded-xl text-white shadow-xs transition hover:opacity-90 cursor-pointer"
+                              style={{ background: brandGradient }}
+                            >
+                              {isAr ? "+ إضافة كفاءات سلوكية" : "+ Add Core Competencies"}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -4578,6 +4677,14 @@ export default function AnnualEvaluationDashboard({
           sections={dynamicSections}
           onSaveCriteria={handleSaveCriteria}
           onSaveSections={handleSaveSections}
+          currentUser={{
+            name: userProfile?.name || userProfile?.agent_name || "",
+            email: emailLower,
+            role: isDeptManager && !isAdmin ? 'manager' : (isDeptChief && !isAdmin ? 'chief' : (isAdmin ? 'admin' : roleLower)),
+            isAdmin,
+            department: userManagedDepts[0]?.name || userChiefDepts[0]?.name || userProfile?.department || ""
+          }}
+          departments={dynamicDepartments}
         />
       )}
 
@@ -4612,6 +4719,143 @@ export default function AnnualEvaluationDashboard({
             department: userManagedDepts[0]?.name || userChiefDepts[0]?.name || userProfile?.department || ""
           }}
         />
+      )}
+
+      {/* Interactive User Profile & Security Modal */}
+      {showUserProfileModal && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div 
+            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
+            dir={isAr ? "rtl" : "ltr"}
+          >
+            {/* Modal Header */}
+            <div className="relative bg-gradient-to-br from-[#1C6B53] to-[#144f3d] p-6 text-white text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUserProfileModal(false);
+                  setProfileStatusMsg(null);
+                  setNewPasswordInput("");
+                  setConfirmPasswordInput("");
+                }}
+                className={`absolute top-4 ${isAr ? 'left-4' : 'right-4'} p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition cursor-pointer`}
+              >
+                <X size={18} />
+              </button>
+
+              <div className="w-16 h-16 rounded-full bg-white/20 ring-4 ring-white/30 mx-auto mb-3 flex items-center justify-center font-black text-2xl shadow-lg">
+                {(userProfile?.name || userProfile?.agent_name || emailLower || "U").charAt(0).toUpperCase()}
+              </div>
+              <h3 className="text-lg font-black tracking-tight">
+                {userProfile?.name || userProfile?.agent_name || emailLower}
+              </h3>
+              <p className="text-xs text-emerald-100 font-medium opacity-90 mt-0.5">
+                {emailLower}
+              </p>
+
+              {/* Badges */}
+              <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3">
+                <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[11px] font-bold uppercase tracking-wider backdrop-blur-xs">
+                  {isDeptManager ? (isAr ? "مدير قسم" : "Dept Manager") : (isDeptChief ? (isAr ? "رئيس قسم" : "Dept Chief") : (isAdmin ? (isAr ? "مسؤول النظام" : "Super Admin") : roleLower))}
+                </span>
+                {(userProfile?.department || userManagedDepts[0]?.name) && (
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/30 text-white text-[11px] font-bold backdrop-blur-xs">
+                    {userProfile?.department || userManagedDepts[0]?.name}
+                  </span>
+                )}
+                {userProfile?.team && (
+                  <span className="px-2.5 py-0.5 rounded-full bg-black/20 text-white text-[11px] font-medium backdrop-blur-xs">
+                    {userProfile.team}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5">
+              {/* Change Password Form */}
+              <form onSubmit={handleUpdatePassword} className="space-y-3.5">
+                <div className="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-300">
+                  <Lock size={15} className="text-[#1C6B53] dark:text-emerald-400" />
+                  <span>{isAr ? "تغيير كلمة المرور" : "Change Password"}</span>
+                </div>
+
+                {profileStatusMsg && (
+                  <div className={`p-3 rounded-xl text-xs font-medium flex items-center gap-2 ${
+                    profileStatusMsg.type === 'success' 
+                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                      : 'bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                  }`}>
+                    {profileStatusMsg.type === 'success' ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+                    <span>{profileStatusMsg.text}</span>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPasswordInput}
+                      onChange={(e) => setNewPasswordInput(e.target.value)}
+                      placeholder={isAr ? "كلمة المرور الجديدة (6 خانات فأكثر)" : "New password (min 6 chars)"}
+                      className="w-full text-xs font-medium px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/70 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C6B53] transition"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className={`absolute top-2.5 ${isAr ? 'left-3' : 'right-3'} text-gray-400 hover:text-gray-600 dark:hover:text-gray-200`}
+                    >
+                      <Eye size={15} />
+                    </button>
+                  </div>
+
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    value={confirmPasswordInput}
+                    onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                    placeholder={isAr ? "تأكيد كلمة المرور الجديدة" : "Confirm new password"}
+                    className="w-full text-xs font-medium px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/70 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C6B53] transition"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isUpdatingPassword || !newPasswordInput}
+                  className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-[#1C6B53] hover:bg-[#144f3d] disabled:opacity-50 transition shadow-sm cursor-pointer"
+                >
+                  {isUpdatingPassword ? (isAr ? "جاري الحفظ..." : "Updating...") : (isAr ? "حفظ كلمة المرور الجديدة" : "Update Password")}
+                </button>
+              </form>
+
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowUserProfileModal(false);
+                    if (onLogout) onLogout();
+                    else if (onBack) onBack();
+                  }}
+                  className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>{isAr ? "تسجيل الخروج من الحساب" : "Sign Out"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowUserProfileModal(false);
+                    setProfileStatusMsg(null);
+                    setNewPasswordInput("");
+                    setConfirmPasswordInput("");
+                  }}
+                  className="px-4 py-1.5 rounded-xl text-xs font-bold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 transition cursor-pointer"
+                >
+                  {isAr ? "إغلاق" : "Close"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
     </div>

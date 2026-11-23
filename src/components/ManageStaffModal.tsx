@@ -129,14 +129,15 @@ export function ManageStaffModal({
   const [copiedInviteIndex, setCopiedInviteIndex] = useState<number | null>(null);
 
   const handleOpenEmailClient = (invite: InviteActionDetail) => {
+    const inviteLink = `https://fib-annual-evaluation.web.app/evaluation?invite=${encodeURIComponent(invite.recipientEmail)}`;
     const subject = encodeURIComponent(`FIB Annual Evaluation Portal Invitation | دعوة نظام التقييم السنوي للمصرف`);
     const body = encodeURIComponent(
       `Dear ${invite.recipientName},\n\n` +
       `You have been invited and registered on the First Iraqi Bank (FIB) Annual Evaluation System.\n\n` +
       `• Assigned Role: ${invite.role}\n` +
       `• Department: ${invite.department}\n` +
-      `• Direct Portal Link: https://fib-annual-evaluation.web.app/evaluation\n\n` +
-      `Please access the portal using your official email to review and complete your annual performance evaluations.\n\n` +
+      `• Activation & Login Link: ${inviteLink}\n\n` +
+      `Please click the link above using your official email to set your password and access your evaluation portal according to your permissions.\n\n` +
       `Best regards,\n` +
       `Performance & Talent Management Team\n` +
       `First Iraqi Bank (FIB)`
@@ -145,6 +146,7 @@ export function ManageStaffModal({
   };
 
   const handleCopyInviteText = (invite: InviteActionDetail, index: number) => {
+    const inviteLink = `https://fib-annual-evaluation.web.app/evaluation?invite=${encodeURIComponent(invite.recipientEmail)}`;
     const text = 
       `FIB Annual Evaluation Portal Invitation | دعوة نظام التقييم السنوي للمصرف\n` +
       `--------------------------------------------------\n` +
@@ -152,8 +154,8 @@ export function ManageStaffModal({
       `You have been registered on the First Iraqi Bank Annual Evaluation Portal.\n` +
       `Role: ${invite.role}\n` +
       `Department: ${invite.department}\n` +
-      `Direct Portal Link: https://fib-annual-evaluation.web.app/evaluation\n\n` +
-      `يرجى الدخول إلى الرابط أعلاه بواسطة بريدك الإلكتروني المعتمد للبدء في إجراءات التقييم السنوي.`;
+      `Activation & Login Link: ${inviteLink}\n\n` +
+      `يرجى الدخول إلى الرابط أعلاه لتعيين كلمة المرور وتفعيل حسابك والبدء في إجراءات التقييم السنوي وفق صلاحياتك.`;
 
     if (navigator?.clipboard) {
       navigator.clipboard.writeText(text);
