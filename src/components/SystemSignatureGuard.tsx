@@ -40,9 +40,9 @@ export default function SystemSignatureGuard() {
       const expectedLabel = `${fullText} • © ${new Date().getFullYear()}`;
       if (!verifySystemIntegrity(el.textContent || "") || !el.textContent?.includes(author)) {
         el.innerHTML = `
-          <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:9999px;background:rgba(28,107,83,0.06);border:1px solid rgba(28,107,83,0.15);font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.2px;">
-            <span style="width:6px;height:6px;border-radius:9999px;background:#10b981;display:inline-block;"></span>
-            <span>Designed by <strong style="color:#1C6B53;font-weight:900;">${author}</strong> • © ${new Date().getFullYear()}</span>
+          <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:9999px;background:rgba(255,255,255,0.75);backdrop-filter:blur(8px);border:1px solid rgba(16,102,79,0.18);box-shadow:0 2px 8px rgba(0,0,0,0.03);font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.2px;">
+            <span style="width:6px;height:6px;border-radius:9999px;background:#10b981;box-shadow:0 0 6px rgba(16,185,129,0.5);display:inline-block;"></span>
+            <span>Designed by <strong style="color:#10664F;font-weight:900;">${author}</strong> • © ${new Date().getFullYear()}</span>
           </div>
         `;
       }
@@ -53,7 +53,7 @@ export default function SystemSignatureGuard() {
       el.style.setProperty("align-items", "center", "important");
       el.style.setProperty("width", "100%", "important");
       el.style.setProperty("padding", "0px 16px 20px 16px", "important");
-      el.style.setProperty("margin-top", "-22px", "important");
+      el.style.setProperty("margin-top", "-16px", "important");
       el.style.setProperty("visibility", "visible", "important");
       el.style.setProperty("opacity", "1", "important");
       el.style.setProperty("pointer-events", "auto", "important");

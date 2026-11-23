@@ -13,7 +13,7 @@ import {
   Clock, Eye, Lock, MessageSquare,
   ClipboardList, CheckCircle2, XCircle, AlertCircle,
   Filter, Copy, ListChecks, ExternalLink,
-  Building2, Sliders
+  Building2, Sliders, Camera, Upload, Trash2, LogOut
 } from "lucide-react";
 import { getCanonicalAgentName } from "@/lib/canonicalAgents";
 import { isMemberActiveInPeriod } from "@/lib/companyRoster";
@@ -556,12 +556,22 @@ export default function AnnualEvaluationDashboard({
   // Dynamic Custom Criteria & Staff Modals State
   const [showManageCriteriaModal, setShowManageCriteriaModal] = useState<boolean>(false);
   const [showManageStaffModal, setShowManageStaffModal] = useState<boolean>(false);
+
+  // User Profile & Security Modal State
   const [showUserProfileModal, setShowUserProfileModal] = useState<boolean>(false);
   const [newPasswordInput, setNewPasswordInput] = useState<string>("");
   const [confirmPasswordInput, setConfirmPasswordInput] = useState<string>("");
   const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
   const [profileStatusMsg, setProfileStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState<boolean>(false);
+  const [currentUserPhoto, setCurrentUserPhoto] = useState<string>(userProfile?.photo_url || "");
+  const [isUpdatingPhoto, setIsUpdatingPhoto] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (userProfile?.photo_url) {
+      setCurrentUserPhoto(userProfile.photo_url);
+    }
+  }, [userProfile?.photo_url]);
   const [dynamicCriteria, setDynamicCriteria] = useState<DynamicCriterion[]>([]);
   const [dynamicSections, setDynamicSections] = useState<DynamicSection[]>([]);
   const [dynamicDepartments, setDynamicDepartments] = useState<DynamicDepartment[]>([]);
@@ -911,6 +921,99 @@ export default function AnnualEvaluationDashboard({
     } finally {
       setIsUpdatingPassword(false);
     }
+  };
+
+  // User Profile: Save photo to Firestore, local state and session
+  const saveProfilePhoto = async (photoDataUrl: string) => {
+    setIsUpdatingPhoto(true);
+    setProfileStatusMsg(null);
+    try {
+      const cleanEmail = (userProfile?.email || emailLower || "").toLowerCase().trim();
+      if (!cleanEmail) {
+        setProfileStatusMsg({
+          type: "error",
+          text: isAr ? "تعذر تحديد البريد الإلكتروني للمستخدم." : "User email not found."
+        });
+        return;
+      }
+
+      const docId = "user_" + cleanEmail.replace(/[^a-z0-9]/gi, "_");
+      await setDoc(doc(db, "users", docId), {
+        photo_url: photoDataUrl,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      setCurrentUserPhoto(photoDataUrl);
+      if (userProfile) {
+        userProfile.photo_url = photoDataUrl;
+      }
+
+      if (typeof window !== "undefined") {
+        const rawSession = localStorage.getItem("fib_eval_user_session");
+        if (rawSession) {
+          try {
+            const parsed = JSON.parse(rawSession);
+            parsed.photo_url = photoDataUrl;
+            localStorage.setItem("fib_eval_user_session", JSON.stringify(parsed));
+          } catch {}
+        }
+      }
+
+      setProfileStatusMsg({
+        type: "success",
+        text: photoDataUrl 
+          ? (isAr ? "تم تحديث الصورة الشخصية بنجاح!" : "Profile photo updated successfully!")
+          : (isAr ? "تمت إزالة الصورة الشخصية بنجاح." : "Profile photo removed.")
+      });
+    } catch (err: any) {
+      console.error("Error saving profile photo:", err);
+      setProfileStatusMsg({
+        type: "error",
+        text: isAr ? "حدث خطأ أثناء حفظ الصورة." : "Failed to save profile photo."
+      });
+    } finally {
+      setIsUpdatingPhoto(false);
+    }
+  };
+
+  const handlePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setProfileStatusMsg({
+        type: "error",
+        text: isAr ? "يرجى اختيار ملف صورة صالح (JPEG, PNG, WebP)" : "Please select an image file."
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (readerEvent) => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement("canvas");
+        const maxSize = 256;
+        const minDim = Math.min(img.width, img.height);
+        const sx = (img.width - minDim) / 2;
+        const sy = (img.height - minDim) / 2;
+
+        canvas.width = maxSize;
+        canvas.height = maxSize;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, maxSize, maxSize);
+          const resizedDataUrl = canvas.toDataURL("image/webp", 0.85);
+          await saveProfilePhoto(resizedDataUrl);
+        }
+      };
+      img.src = readerEvent.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = async () => {
+    await saveProfilePhoto("");
   };
 
   // Selected filter: Year (2026-2030) (Pure Annual Evaluation)
@@ -2464,7 +2567,10 @@ export default function AnnualEvaluationDashboard({
           <div className="flex items-center shrink-0 self-stretch sm:self-auto justify-end">
             <UnifiedTopNavbar
               currentDashboard="evaluation"
-              userProfile={userProfile}
+              userProfile={{
+                ...userProfile,
+                photo_url: currentUserPhoto || userProfile?.photo_url
+              }}
               onNavigate={onNavigate}
               onLogout={onLogout || onBack}
               onOpenProfile={() => {
@@ -4723,13 +4829,16 @@ export default function AnnualEvaluationDashboard({
 
       {/* Interactive User Profile & Security Modal */}
       {showUserProfileModal && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
           <div 
-            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
+            className="bg-white dark:bg-gray-900 border border-gray-200/90 dark:border-gray-800 rounded-[28px] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 relative"
             dir={isAr ? "rtl" : "ltr"}
           >
             {/* Modal Header */}
-            <div className="relative bg-gradient-to-br from-[#1C6B53] to-[#144f3d] p-6 text-white text-center">
+            <div className="relative bg-gradient-to-br from-[#0B3D2E] via-[#105942] to-[#0A3326] p-7 text-white text-center overflow-hidden">
+              {/* Subtle ambient light */}
+              <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none" />
+
               <button
                 type="button"
                 onClick={() => {
@@ -4738,33 +4847,89 @@ export default function AnnualEvaluationDashboard({
                   setNewPasswordInput("");
                   setConfirmPasswordInput("");
                 }}
-                className={`absolute top-4 ${isAr ? 'left-4' : 'right-4'} p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition cursor-pointer`}
+                className={`absolute top-4 ${isAr ? 'left-4' : 'right-4'} p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition cursor-pointer backdrop-blur-xs`}
               >
-                <X size={18} />
+                <X size={16} />
               </button>
 
-              <div className="w-16 h-16 rounded-full bg-white/20 ring-4 ring-white/30 mx-auto mb-3 flex items-center justify-center font-black text-2xl shadow-lg">
-                {(userProfile?.name || userProfile?.agent_name || emailLower || "U").charAt(0).toUpperCase()}
+              {/* Profile Avatar with Photo Upload */}
+              <div className="relative mx-auto mb-3 w-20 h-20">
+                <div className="w-20 h-20 rounded-full bg-white/15 ring-4 ring-white/20 shadow-xl overflow-hidden flex items-center justify-center">
+                  {currentUserPhoto ? (
+                    <img src={currentUserPhoto} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white text-2xl font-black shadow-inner">
+                      {(userProfile?.name || userProfile?.agent_name || emailLower || "U").charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+
+                {/* Camera Upload Badge */}
+                <label 
+                  htmlFor="profile-photo-file-input" 
+                  className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white dark:bg-gray-800 text-[#10664F] dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 shadow-md border-2 border-[#105942] flex items-center justify-center cursor-pointer transition transform hover:scale-110 active:scale-95"
+                  title={isAr ? "رفع صورة شخصية جديدة" : "Upload new profile photo"}
+                >
+                  <Camera size={13} />
+                </label>
+                <input 
+                  id="profile-photo-file-input" 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handlePhotoFileChange} 
+                  className="hidden" 
+                />
               </div>
-              <h3 className="text-lg font-black tracking-tight">
+
+              {/* Photo Action Links */}
+              <div className="flex items-center justify-center gap-2 mb-2.5">
+                <label 
+                  htmlFor="profile-photo-file-input" 
+                  className="text-[11px] font-bold text-emerald-200 hover:text-white underline cursor-pointer transition flex items-center gap-1"
+                >
+                  <Upload size={11} />
+                  <span>{currentUserPhoto ? (isAr ? "تغيير الصورة" : "Change Photo") : (isAr ? "إضافة صورة شخصية" : "Add Profile Photo")}</span>
+                </label>
+                {currentUserPhoto && (
+                  <>
+                    <span className="text-white/40 text-xs">•</span>
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      className="text-[11px] font-bold text-rose-300 hover:text-rose-100 underline cursor-pointer transition flex items-center gap-1"
+                    >
+                      <Trash2 size={11} />
+                      <span>{isAr ? "إزالة" : "Remove"}</span>
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {isUpdatingPhoto && (
+                <p className="text-[10px] text-emerald-200 animate-pulse mb-1">
+                  {isAr ? "جاري معالجة وحفظ الصورة..." : "Processing and saving photo..."}
+                </p>
+              )}
+
+              <h3 className="text-lg font-black tracking-tight text-white">
                 {userProfile?.name || userProfile?.agent_name || emailLower}
               </h3>
-              <p className="text-xs text-emerald-100 font-medium opacity-90 mt-0.5">
+              <p className="text-xs text-emerald-100/90 font-medium mt-0.5">
                 {emailLower}
               </p>
 
               {/* Badges */}
               <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3">
-                <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[11px] font-bold uppercase tracking-wider backdrop-blur-xs">
+                <span className="px-3 py-1 rounded-full bg-white/20 text-white text-[10px] font-bold uppercase tracking-wider backdrop-blur-md shadow-2xs">
                   {isDeptManager ? (isAr ? "مدير قسم" : "Dept Manager") : (isDeptChief ? (isAr ? "رئيس قسم" : "Dept Chief") : (isAdmin ? (isAr ? "مسؤول النظام" : "Super Admin") : roleLower))}
                 </span>
                 {(userProfile?.department || userManagedDepts[0]?.name) && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/30 text-white text-[11px] font-bold backdrop-blur-xs">
+                  <span className="px-3 py-1 rounded-full bg-emerald-400/25 border border-white/20 text-white text-[10px] font-bold backdrop-blur-md shadow-2xs">
                     {userProfile?.department || userManagedDepts[0]?.name}
                   </span>
                 )}
                 {userProfile?.team && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-black/20 text-white text-[11px] font-medium backdrop-blur-xs">
+                  <span className="px-3 py-1 rounded-full bg-black/25 text-white/95 text-[10px] font-medium backdrop-blur-md shadow-2xs">
                     {userProfile.team}
                   </span>
                 )}
@@ -4772,61 +4937,66 @@ export default function AnnualEvaluationDashboard({
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-5">
-              {/* Change Password Form */}
-              <form onSubmit={handleUpdatePassword} className="space-y-3.5">
-                <div className="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-300">
-                  <Lock size={15} className="text-[#1C6B53] dark:text-emerald-400" />
+            <div className="p-6 space-y-4 bg-white dark:bg-gray-900">
+              {profileStatusMsg && (
+                <div className={`p-3.5 rounded-2xl text-xs font-semibold flex items-center gap-2 animate-in fade-in ${
+                  profileStatusMsg.type === 'success' 
+                    ? 'bg-emerald-50 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800'
+                    : 'bg-rose-50 text-rose-900 dark:bg-rose-950/60 dark:text-rose-200 border border-rose-200 dark:border-rose-800'
+                }`}>
+                  {profileStatusMsg.type === 'success' ? <CheckCircle2 size={16} className="text-emerald-600 shrink-0" /> : <AlertCircle size={16} className="text-rose-600 shrink-0" />}
+                  <span>{profileStatusMsg.text}</span>
+                </div>
+              )}
+
+              {/* Change Password Card */}
+              <div className="bg-gray-50/70 dark:bg-gray-800/50 border border-gray-200/80 dark:border-gray-700/60 rounded-2xl p-4 space-y-3.5">
+                <div className="flex items-center gap-2 text-xs font-bold text-gray-800 dark:text-gray-200">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-600/10 text-[#10664F] dark:text-emerald-400 flex items-center justify-center">
+                    <Lock size={13} />
+                  </div>
                   <span>{isAr ? "تغيير كلمة المرور" : "Change Password"}</span>
                 </div>
 
-                {profileStatusMsg && (
-                  <div className={`p-3 rounded-xl text-xs font-medium flex items-center gap-2 ${
-                    profileStatusMsg.type === 'success' 
-                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-                      : 'bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
-                  }`}>
-                    {profileStatusMsg.type === 'success' ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
-                    <span>{profileStatusMsg.text}</span>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <div className="relative">
+                <form onSubmit={handleUpdatePassword} className="space-y-3">
+                  <div className="relative rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/80 focus-within:ring-2 focus-within:ring-[#10664F] shadow-2xs transition">
                     <input
                       type={showNewPassword ? "text" : "password"}
                       value={newPasswordInput}
                       onChange={(e) => setNewPasswordInput(e.target.value)}
                       placeholder={isAr ? "كلمة المرور الجديدة (6 خانات فأكثر)" : "New password (min 6 chars)"}
-                      className="w-full text-xs font-medium px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/70 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C6B53] transition"
+                      className="w-full text-xs font-semibold px-3.5 py-2.5 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      className={`absolute top-2.5 ${isAr ? 'left-3' : 'right-3'} text-gray-400 hover:text-gray-600 dark:hover:text-gray-200`}
+                      className={`absolute top-2.5 ${isAr ? 'left-3' : 'right-3'} text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 cursor-pointer`}
                     >
-                      <Eye size={15} />
+                      <Eye size={14} />
                     </button>
                   </div>
 
-                  <input
-                    type={showNewPassword ? "text" : "password"}
-                    value={confirmPasswordInput}
-                    onChange={(e) => setConfirmPasswordInput(e.target.value)}
-                    placeholder={isAr ? "تأكيد كلمة المرور الجديدة" : "Confirm new password"}
-                    className="w-full text-xs font-medium px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/70 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C6B53] transition"
-                  />
-                </div>
+                  <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/80 focus-within:ring-2 focus-within:ring-[#10664F] shadow-2xs transition">
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      value={confirmPasswordInput}
+                      onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                      placeholder={isAr ? "تأكيد كلمة المرور الجديدة" : "Confirm new password"}
+                      className="w-full text-xs font-semibold px-3.5 py-2.5 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
+                    />
+                  </div>
 
-                <button
-                  type="submit"
-                  disabled={isUpdatingPassword || !newPasswordInput}
-                  className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-[#1C6B53] hover:bg-[#144f3d] disabled:opacity-50 transition shadow-sm cursor-pointer"
-                >
-                  {isUpdatingPassword ? (isAr ? "جاري الحفظ..." : "Updating...") : (isAr ? "حفظ كلمة المرور الجديدة" : "Update Password")}
-                </button>
-              </form>
+                  <button
+                    type="submit"
+                    disabled={isUpdatingPassword || !newPasswordInput}
+                    className="w-full h-10 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#10664F] to-[#147a5f] hover:from-[#0d5541] hover:to-[#10664F] disabled:opacity-50 transition shadow-md shadow-[#10664F]/20 active:scale-98 cursor-pointer"
+                  >
+                    {isUpdatingPassword ? (isAr ? "جاري الحفظ..." : "Updating...") : (isAr ? "حفظ كلمة المرور الجديدة" : "Update Password")}
+                  </button>
+                </form>
+              </div>
 
+              {/* Modal Footer */}
               <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
                 <button
                   type="button"
@@ -4835,8 +5005,9 @@ export default function AnnualEvaluationDashboard({
                     if (onLogout) onLogout();
                     else if (onBack) onBack();
                   }}
-                  className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer flex items-center gap-1.5"
+                  className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5"
                 >
+                  <LogOut size={14} />
                   <span>{isAr ? "تسجيل الخروج من الحساب" : "Sign Out"}</span>
                 </button>
                 <button
@@ -4847,7 +5018,7 @@ export default function AnnualEvaluationDashboard({
                     setNewPasswordInput("");
                     setConfirmPasswordInput("");
                   }}
-                  className="px-4 py-1.5 rounded-xl text-xs font-bold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 transition cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition cursor-pointer"
                 >
                   {isAr ? "إغلاق" : "Close"}
                 </button>

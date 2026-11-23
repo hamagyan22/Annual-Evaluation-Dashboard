@@ -30,6 +30,7 @@ export interface EvaluatorProfile {
   isAdmin?: boolean;
   team?: string;
   department?: string;
+  photo_url?: string;
 }
 
 // Client-side SHA-256 cryptographic password hashing
@@ -262,7 +263,8 @@ export default function StandaloneEvaluationPage() {
         role: isAdmin ? "admin" : (isChief ? "chief" : (isManager ? "manager" : role)),
         isAdmin,
         department: userData.department || "",
-        team: userData.team || ""
+        team: userData.team || "",
+        photo_url: userData.photo_url || ""
       };
 
       localStorage.setItem("fib_eval_user_session", JSON.stringify(profile));
@@ -340,7 +342,8 @@ export default function StandaloneEvaluationPage() {
         role: isSuperAdmin ? "admin" : assignedRole,
         isAdmin: isSuperAdmin,
         department: assignedDept,
-        team: assignedTeam
+        team: assignedTeam,
+        photo_url: existingData?.photo_url || ""
       };
 
       localStorage.setItem("fib_eval_user_session", JSON.stringify(profile));
@@ -402,29 +405,33 @@ export default function StandaloneEvaluationPage() {
   return (
     <div className={isDarkMode ? "dark" : ""}>
       <div 
-        className="min-h-screen bg-[#F6F5EE] dark:bg-gray-950 flex flex-col items-center justify-center p-4 sm:p-6 transition-colors duration-200"
+        className="min-h-screen bg-[#F8F9FA] dark:bg-[#0B0F17] flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden transition-colors duration-300"
         dir={isAr ? "rtl" : "ltr"}
       >
+        {/* Soft Ambient Eye-Friendly Lighting */}
+        <div className="absolute -top-32 -left-32 w-96 h-96 bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[#10664F]/10 dark:bg-[#10664F]/5 rounded-full blur-3xl pointer-events-none" />
+
         {/* Top Floating Language & Theme Toggles */}
-        <div className="w-full max-w-md flex items-center justify-between mb-3 px-1">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 tracking-wide">
+        <div className="w-full max-w-md flex items-center justify-between mb-4 px-1 relative z-10">
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-gray-200/60 dark:border-gray-800/80 shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-[11px] font-bold text-gray-600 dark:text-gray-300 tracking-wide">
               {isAr ? "بوابة مصرف العراق الأول (FIB)" : "First Iraqi Bank Portal"}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-gray-200/60 dark:border-gray-800/80 shadow-2xs">
             <button
               type="button"
               onClick={() => setLang(l => l === "ar" ? "en" : "ar")}
-              className="text-xs font-bold px-2.5 py-1 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition shadow-2xs cursor-pointer"
+              className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition cursor-pointer"
             >
               {isAr ? "English" : "عربي"}
             </button>
             <button
               type="button"
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="text-xs font-bold px-2.5 py-1 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition shadow-2xs cursor-pointer"
+              className="text-xs px-2 py-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
             >
               {isDarkMode ? "☀️" : "🌙"}
             </button>
@@ -432,22 +439,25 @@ export default function StandaloneEvaluationPage() {
         </div>
 
         {/* Central Card */}
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="bg-white dark:bg-gray-900/90 border border-gray-200/80 dark:border-gray-800/80 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative z-10 backdrop-blur-xl">
           
           {/* Header Banner */}
           <div 
-            className="p-6 sm:p-7 text-white text-center relative overflow-hidden"
-            style={{ background: "linear-gradient(135deg, #10664F 0%, #0D523F 50%, #064E3B 100%)" }}
+            className="p-7 text-white text-center relative overflow-hidden bg-gradient-to-br from-[#0B3D2E] via-[#105942] to-[#0A3326]"
           >
-            <div className="w-13 h-13 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white mx-auto mb-2.5 shadow-md">
-              <Building2 size={26} />
+            {/* Subtle decorative glow */}
+            <div className="absolute top-0 right-0 w-44 h-44 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="w-16 h-16 rounded-2xl bg-white p-2.5 shadow-xl mx-auto mb-3.5 flex items-center justify-center ring-4 ring-white/15 relative z-10">
+              <img src="/logo.webp" alt="FIB Logo" className="w-full h-full object-contain" />
             </div>
-            <h2 className="text-xl font-black tracking-tight">
+
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white relative z-10">
               {isInviteMode 
                 ? (isAr ? "تفعيل حساب التقييم السنوي" : "Activate Evaluation Account")
                 : (isAr ? "منصة التقييم السنوي للمصرف" : "FIB Annual Evaluation Portal")}
             </h2>
-            <p className="text-xs text-white/90 font-medium mt-1">
+            <p className="text-xs text-emerald-100/90 font-medium mt-1 tracking-wide relative z-10">
               {isInviteMode
                 ? (isAr ? "قم بتعيين كلمة المرور لحسابك للبدء" : "Set your password to activate your account")
                 : (isAr ? "First Iraqi Bank (FIB) • نظام تقييم الأداء والكفاءات" : "Performance Review & Core Competencies System")}
@@ -455,21 +465,21 @@ export default function StandaloneEvaluationPage() {
           </div>
 
           {/* Card Body - Direct Form without Tabs */}
-          <div className="p-6 space-y-4">
+          <div className="p-6 sm:p-7 space-y-4">
 
             {/* Detected Invite Banner for First-Time Invited Users */}
             {isInviteMode && detectedInvite && (
-              <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 animate-in fade-in">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                    <Sparkles size={16} />
+              <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/80 animate-in fade-in">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <Sparkles size={17} />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-xs font-black text-emerald-900 dark:text-emerald-200 truncate">
+                    <h4 className="text-xs font-black text-emerald-950 dark:text-emerald-200 truncate">
                       {isAr ? `مرحباً بك: ${detectedInvite.name}` : `Welcome: ${detectedInvite.name}`}
                     </h4>
                     <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 mt-0.5 flex-wrap">
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-200/70 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 capitalize">
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-200/70 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200 capitalize">
                         {detectedInvite.role}
                       </span>
                       {detectedInvite.department && (
@@ -483,28 +493,28 @@ export default function StandaloneEvaluationPage() {
 
             {/* Error & Success Messages */}
             {authError && (
-              <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 flex items-center gap-2 text-xs font-bold text-rose-700 dark:text-rose-300 animate-in fade-in">
+              <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 flex items-center gap-2 text-xs font-bold text-rose-700 dark:text-rose-300 animate-in fade-in">
                 <AlertCircle size={15} className="shrink-0" />
                 <span>{authError}</span>
               </div>
             )}
 
             {authSuccess && (
-              <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center gap-2 text-xs font-bold text-emerald-700 dark:text-emerald-300 animate-in fade-in">
+              <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center gap-2 text-xs font-bold text-emerald-700 dark:text-emerald-300 animate-in fade-in">
                 <CheckCircle2 size={15} className="shrink-0" />
                 <span>{authSuccess}</span>
               </div>
             )}
 
             {/* Form: Single unified form based on whether user is activating an invite or signing in */}
-            <form onSubmit={isInviteMode ? handleActivateAccount : handleSignIn} className="space-y-3.5">
+            <form onSubmit={isInviteMode ? handleActivateAccount : handleSignIn} className="space-y-4">
               
               {/* Email Input */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1.5">
                   {isAr ? "البريد الإلكتروني الرسمي" : "Official Email Address"}
                 </label>
-                <div className="relative">
+                <div className="relative rounded-2xl border border-gray-200 dark:border-gray-700/80 bg-gray-50/70 dark:bg-gray-800/60 transition-all focus-within:bg-white dark:focus-within:bg-gray-800 focus-within:border-[#10664F] focus-within:ring-4 focus-within:ring-[#10664F]/10 shadow-2xs">
                   <Mail size={16} className={`absolute ${isAr ? "right-3.5" : "left-3.5"} top-1/2 -translate-y-1/2 text-gray-400`} />
                   <input
                     type="email"
@@ -518,19 +528,19 @@ export default function StandaloneEvaluationPage() {
                       }
                     }}
                     placeholder="user@fib.iq"
-                    className={`w-full h-11 ${isAr ? "pr-10 pl-3.5" : "pl-10 pr-3.5"} text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-[#10664F] outline-hidden font-medium ${isInviteMode && detectedInvite ? 'opacity-85 cursor-not-allowed bg-gray-100 dark:bg-gray-800/50' : ''}`}
+                    className={`w-full h-12 ${isAr ? "pr-10 pl-3.5" : "pl-10 pr-3.5"} text-xs bg-transparent text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none font-semibold ${isInviteMode && detectedInvite ? 'opacity-85 cursor-not-allowed' : ''}`}
                   />
                 </div>
               </div>
 
               {/* Password Input */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1.5">
                   {isInviteMode 
                     ? (isAr ? "إنشاء كلمة مرور جديدة (6 خانات فأكثر)" : "Create New Password (min 6 chars)")
                     : (isAr ? "كلمة المرور" : "Password")}
                 </label>
-                <div className="relative">
+                <div className="relative rounded-2xl border border-gray-200 dark:border-gray-700/80 bg-gray-50/70 dark:bg-gray-800/60 transition-all focus-within:bg-white dark:focus-within:bg-gray-800 focus-within:border-[#10664F] focus-within:ring-4 focus-within:ring-[#10664F]/10 shadow-2xs">
                   <Lock size={16} className={`absolute ${isAr ? "right-3.5" : "left-3.5"} top-1/2 -translate-y-1/2 text-gray-400`} />
                   <input
                     type={showPassword ? "text" : "password"}
@@ -538,12 +548,12 @@ export default function StandaloneEvaluationPage() {
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
                     placeholder="••••••••"
-                    className={`w-full h-11 ${isAr ? "pr-10 pl-10" : "pl-10 pr-10"} text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-[#10664F] outline-hidden font-medium`}
+                    className={`w-full h-12 ${isAr ? "pr-10 pl-10" : "pl-10 pr-10"} text-xs bg-transparent text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none font-semibold`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className={`absolute ${isAr ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition cursor-pointer`}
+                    className={`absolute ${isAr ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition p-1 cursor-pointer`}
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -553,10 +563,10 @@ export default function StandaloneEvaluationPage() {
               {/* Confirm Password (Only in Invite / Activation Mode) */}
               {isInviteMode && (
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1.5">
                     {isAr ? "تأكيد كلمة المرور" : "Confirm Password"}
                   </label>
-                  <div className="relative">
+                  <div className="relative rounded-2xl border border-gray-200 dark:border-gray-700/80 bg-gray-50/70 dark:bg-gray-800/60 transition-all focus-within:bg-white dark:focus-within:bg-gray-800 focus-within:border-[#10664F] focus-within:ring-4 focus-within:ring-[#10664F]/10 shadow-2xs">
                     <KeyRound size={16} className={`absolute ${isAr ? "right-3.5" : "left-3.5"} top-1/2 -translate-y-1/2 text-gray-400`} />
                     <input
                       type={showPassword ? "text" : "password"}
@@ -564,7 +574,7 @@ export default function StandaloneEvaluationPage() {
                       value={confirmPasswordInput}
                       onChange={(e) => setConfirmPasswordInput(e.target.value)}
                       placeholder="••••••••"
-                      className={`w-full h-11 ${isAr ? "pr-10 pl-3.5" : "pl-10 pr-3.5"} text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-[#10664F] outline-hidden font-medium`}
+                      className={`w-full h-12 ${isAr ? "pr-10 pl-3.5" : "pl-10 pr-3.5"} text-xs bg-transparent text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none font-semibold`}
                     />
                   </div>
                 </div>
@@ -574,8 +584,7 @@ export default function StandaloneEvaluationPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-11 rounded-2xl text-white font-black text-xs shadow-md transition active:scale-98 cursor-pointer flex items-center justify-center gap-2 hover:opacity-95 disabled:opacity-50 mt-2"
-                style={{ background: "linear-gradient(135deg, #10664F 0%, #0D523F 100%)" }}
+                className="w-full h-12 rounded-2xl text-white font-black text-xs sm:text-sm shadow-lg shadow-[#10664F]/25 bg-gradient-to-r from-[#10664F] to-[#147a5f] hover:from-[#0d5541] hover:to-[#10664F] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
