@@ -30,7 +30,9 @@ export interface DynamicDepartment {
   description?: string;
   color?: string;
   direct_manager?: string;
+  manager_email?: string;
   department_chief?: string;
+  chief_email?: string;
   icon?: string;
 }
 
@@ -42,7 +44,9 @@ export interface DynamicEmployee {
   role: string;
   team?: string;
   direct_manager?: string;
+  manager_email?: string;
   department_chief?: string;
+  chief_email?: string;
   custom_position?: string;
   email?: string;
   role_type?: "trainer" | "qa" | "tl" | "backoffice" | "agent" | "custom";
@@ -52,16 +56,16 @@ export interface DynamicEmployee {
 export const DEFAULT_SECTIONS: DynamicSection[] = [
   {
     id: "kpi",
-    title: "Leadership & Role KPI Evaluation",
-    titleAr: "مؤشرات الأداء الوظيفي والقيادي",
-    description: "Role-specific operational and leadership KPIs evaluated manually on an executive 1 to 5 scale.",
+    title: "Department KPI Evaluation",
+    titleAr: "تقييم مؤشرات الأداء للقسم (KPIs)",
+    description: "Department operational and performance metrics evaluation (Rate 1 to 5).",
     order: 1
   },
   {
     id: "competencies",
-    title: "Core Competencies Evaluation",
-    titleAr: "تقييم الكفاءات والسلوكيات المؤسسية",
-    description: "Assessment of institutional core competencies and behavioral indicators (Rate 1 to 5).",
+    title: "Bank Core Competencies Evaluation",
+    titleAr: "تقييم الكفاءات الجوهرية للمصرف",
+    description: "Assessment of bank core competencies and institutional behaviors (Rate 1 to 5).",
     order: 2
   }
 ];

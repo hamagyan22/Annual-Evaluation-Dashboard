@@ -26,6 +26,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Invitations collection
+    match /invitations/{inviteId} {
+      allow read, write: if true;
+    }
+
     // Team members directory
     match /team_members/{memberId} {
       allow read, write: if true;

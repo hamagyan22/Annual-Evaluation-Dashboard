@@ -4,7 +4,8 @@ import React, { useState, useMemo } from "react";
 import { 
   X, Plus, Trash2, Edit2, Users, Building2, 
   Search, Sparkles, UserCheck, RefreshCw, AlertCircle,
-  AlertTriangle, Check, ShieldAlert, Crown
+  AlertTriangle, Check, ShieldAlert, Crown,
+  CheckCircle2, Mail, Send
 } from "lucide-react";
 import { 
   DynamicDepartment, 
@@ -21,6 +22,16 @@ import {
 import { Language } from "@/lib/translations";
 import { useAppTheme } from "@/lib/themeManager";
 import ModernDropdown from "@/components/ModernDropdown";
+import { db } from "@/lib/firebaseClient";
+import { doc, setDoc } from "firebase/firestore";
+
+export interface CurrentUserScope {
+  name?: string;
+  email?: string;
+  role?: string;
+  isAdmin?: boolean;
+  department?: string;
+}
 
 interface ManageStaffModalProps {
   isOpen: boolean;
@@ -31,6 +42,51 @@ interface ManageStaffModalProps {
   onSaveEmployees: (emps: DynamicEmployee[], deletedName?: string, deletedId?: string) => void;
   onSelectEmployeeForEval?: (employeeName: string) => void;
   lang?: Language;
+  currentUser?: CurrentUserScope | null;
+}
+
+// System Invitation & Pre-Provisioning Helper for Firestore
+async function sendSystemInviteAndRegisterUser(userData: {
+  email: string;
+  name: string;
+  role: string;
+  department?: string;
+  team?: string;
+  invitedBy?: string;
+}) {
+  const cleanEmail = (userData.email || "").toLowerCase().trim();
+  if (!cleanEmail || !cleanEmail.includes("@")) return;
+
+  try {
+    const inviteId = "inv_" + cleanEmail.replace(/[^a-z0-9]/gi, "_");
+    // 1. Write to invitations collection
+    await setDoc(doc(db, "invitations", inviteId), {
+      email: cleanEmail,
+      name: userData.name || "",
+      role: userData.role || "agent",
+      department: userData.department || "",
+      team: userData.team || "",
+      invitedBy: userData.invitedBy || "Admin",
+      status: "invited",
+      invitedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
+    }, { merge: true });
+
+    // 2. Pre-provision in users collection so login/role resolution works instantly
+    const userId = "user_" + cleanEmail.replace(/[^a-z0-9]/gi, "_");
+    await setDoc(doc(db, "users", userId), {
+      email: cleanEmail,
+      name: userData.name || "",
+      agent_name: userData.name || "",
+      role: userData.role || "agent",
+      department: userData.department || "",
+      team: userData.team || "",
+      invited: true,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  } catch (err) {
+    console.warn("Error registering user invitation to Firestore:", err);
+  }
 }
 
 export function ManageStaffModal({
@@ -41,7 +97,8 @@ export function ManageStaffModal({
   onSaveDepartments,
   onSaveEmployees,
   onSelectEmployeeForEval,
-  lang = "en"
+  lang = "en",
+  currentUser = null
 }: ManageStaffModalProps) {
   const isAr = lang === "ar";
   const { currentTheme } = useAppTheme();
@@ -53,9 +110,16 @@ export function ManageStaffModal({
   const brandLightBorder = currentTheme?.borderLight || "#A7F3D0";
   const [activeTab, setActiveTab] = useState<"employees" | "departments">("employees");
 
+  // Manager Scoping
+  const isManagerOnly = currentUser?.role === "manager" && !currentUser?.isAdmin;
+  const managerDept = currentUser?.department || "";
+
+  // Toast / Feedback State
+  const [toastNotice, setToastNotice] = useState<{ message: string; type: "success" | "info" } | null>(null);
+
   // Employee Search & Filters
   const [empSearch, setEmpSearch] = useState<string>("");
-  const [selectedDeptFilter, setSelectedDeptFilter] = useState<string>("all");
+  const [selectedDeptFilter, setSelectedDeptFilter] = useState<string>(isManagerOnly && managerDept ? managerDept : "all");
 
   // Department Search & Filters
   const [deptSearch, setDeptSearch] = useState<string>("");
@@ -65,8 +129,9 @@ export function ManageStaffModal({
   const [isAddingEmployee, setIsAddingEmployee] = useState<boolean>(false);
   const [editingEmpId, setEditingEmpId] = useState<string | null>(null);
   const [empName, setEmpName] = useState<string>("");
+  const [empEmail, setEmpEmail] = useState<string>("");
   const [empIdNum, setEmpIdNum] = useState<string>("");
-  const [empDept, setEmpDept] = useState<string>(departments[0]?.name || "");
+  const [empDept, setEmpDept] = useState<string>(isManagerOnly && managerDept ? managerDept : (departments[0]?.name || ""));
   const [empRole, setEmpRole] = useState<string>("Team Leader");
   const [empTeam, setEmpTeam] = useState<string>("");
   const [empDirectManager, setEmpDirectManager] = useState<string>("");
@@ -81,7 +146,9 @@ export function ManageStaffModal({
   const [deptNameAr, setDeptNameAr] = useState<string>("");
   const [deptDesc, setDeptDesc] = useState<string>("");
   const [deptDirectManager, setDeptDirectManager] = useState<string>("");
+  const [deptManagerEmail, setDeptManagerEmail] = useState<string>("");
   const [deptChief, setDeptChief] = useState<string>("Omer Ayad");
+  const [deptChiefEmail, setDeptChiefEmail] = useState<string>("");
   const [deptColor, setDeptColor] = useState<string>("emerald");
   const [deptIcon, setDeptIcon] = useState<string>("Landmark");
   const [showIconPicker, setShowIconPicker] = useState<boolean>(false);
@@ -117,9 +184,16 @@ export function ManageStaffModal({
   // Filtered employees
   const filteredEmployees = useMemo(() => {
     return employees.filter(emp => {
+      // If Department Manager, strictly scoped to their department
+      if (isManagerOnly && managerDept) {
+        const isSameDept = emp.department === managerDept || (emp.department || "").toLowerCase() === managerDept.toLowerCase();
+        if (!isSameDept) return false;
+      }
+
       const matchSearch = !empSearch || 
         emp.name.toLowerCase().includes(empSearch.toLowerCase()) ||
         emp.employee_id.includes(empSearch) ||
+        (emp.email || "").toLowerCase().includes(empSearch.toLowerCase()) ||
         (emp.role || "").toLowerCase().includes(empSearch.toLowerCase()) ||
         (emp.direct_manager || "").toLowerCase().includes(empSearch.toLowerCase()) ||
         (emp.department_chief || "").toLowerCase().includes(empSearch.toLowerCase()) ||
@@ -129,7 +203,7 @@ export function ManageStaffModal({
       const matchDept = selectedDeptFilter === "all" || emp.department === selectedDeptFilter;
       return matchSearch && matchDept;
     });
-  }, [employees, empSearch, selectedDeptFilter]);
+  }, [employees, empSearch, selectedDeptFilter, isManagerOnly, managerDept]);
 
   // Filtered departments
   const filteredDepartments = useMemo(() => {
@@ -196,21 +270,24 @@ export function ManageStaffModal({
   const handleStartAddEmployee = () => {
     setEditingEmpId(null);
     setEmpName("");
+    setEmpEmail("");
     setEmpIdNum(String(Math.floor(100 + Math.random() * 900)));
-    const initialDept = (selectedDeptFilter !== "all" && departments.some(d => d.name === selectedDeptFilter))
-      ? selectedDeptFilter
-      : (departments[0]?.name || "");
+    const initialDept = isManagerOnly && managerDept
+      ? managerDept
+      : ((selectedDeptFilter !== "all" && departments.some(d => d.name === selectedDeptFilter))
+        ? selectedDeptFilter
+        : (departments[0]?.name || ""));
     setEmpDept(initialDept);
     setEmpRoleType("agent");
     setEmpRole("Staff");
-    setEmpTeam("");
     setEmpCustomPosition("");
 
     const hierarchy = resolveManagerHierarchy(initialDept, "agent", "Customer Care Agent", "");
-    setEmpDirectManager(hierarchy.directManager);
+    const initialDm = isManagerOnly && currentUser?.name ? currentUser.name : hierarchy.directManager;
+    setEmpDirectManager(initialDm);
     setEmpDeptChief(hierarchy.departmentChief);
-    if (hierarchy.directManager && hierarchy.directManager !== "Omer Ayad") {
-      setEmpTeam(`${hierarchy.directManager} Team`);
+    if (initialDm && initialDm !== "Omer Ayad") {
+      setEmpTeam(`${initialDm} Team`);
     } else {
       setEmpTeam("");
     }
@@ -220,6 +297,7 @@ export function ManageStaffModal({
   const handleStartEditEmployee = (emp: DynamicEmployee) => {
     setEditingEmpId(emp.id);
     setEmpName(emp.name);
+    setEmpEmail(emp.email || "");
     setEmpIdNum(emp.employee_id);
     setEmpDept(emp.department);
     setEmpRole(emp.role);
@@ -308,6 +386,7 @@ export function ManageStaffModal({
             ...emp,
             name: empName.trim(),
             employee_id: empIdNum.trim() || emp.employee_id,
+            email: empEmail.trim() || undefined,
             department: empDept,
             role: finalRole,
             team: finalTeam,
@@ -325,6 +404,7 @@ export function ManageStaffModal({
         id: "emp_" + Date.now(),
         name: empName.trim(),
         employee_id: empIdNum.trim() || String(Math.floor(300 + Math.random() * 600)),
+        email: empEmail.trim() || undefined,
         department: empDept,
         role: finalRole,
         team: finalTeam,
@@ -334,6 +414,24 @@ export function ManageStaffModal({
         role_type: empRoleType
       };
       onSaveEmployees([...employees, newEmp]);
+    }
+
+    // Trigger system invite and Firestore user registration if email provided
+    if (empEmail.trim()) {
+      sendSystemInviteAndRegisterUser({
+        email: empEmail.trim(),
+        name: empName.trim(),
+        role: empRoleType === 'tl' ? 'tl' : 'agent',
+        department: empDept,
+        team: finalTeam,
+        invitedBy: currentUser?.name || 'Manager'
+      });
+      setToastNotice({
+        message: isAr
+          ? `تم إرسال دعوة النظام وتسجيل الموظف بنجاح (${empEmail.trim()})`
+          : `System invitation sent & employee profile registered for (${empEmail.trim()})`,
+        type: "success"
+      });
     }
 
     setIsAddingEmployee(false);
@@ -356,7 +454,9 @@ export function ManageStaffModal({
     setDeptNameAr("");
     setDeptDesc("");
     setDeptDirectManager("");
+    setDeptManagerEmail("");
     setDeptChief("Omer Ayad");
+    setDeptChiefEmail("omar.ayad@fib.iq");
     setDeptColor("emerald");
     setDeptIcon("Landmark");
     setShowIconPicker(false);
@@ -371,7 +471,9 @@ export function ManageStaffModal({
     setDeptNameAr(dept.nameAr || "");
     setDeptDesc(dept.description || "");
     setDeptDirectManager(dept.direct_manager || "");
+    setDeptManagerEmail(dept.manager_email || "");
     setDeptChief(dept.department_chief || "Omer Ayad");
+    setDeptChiefEmail(dept.chief_email || "");
     setDeptColor(dept.color || "emerald");
     setDeptIcon(dept.icon || "Building2");
     setShowIconPicker(false);
@@ -393,7 +495,9 @@ export function ManageStaffModal({
             nameAr: deptNameAr.trim() || undefined,
             description: deptDesc.trim() || undefined,
             direct_manager: deptDirectManager.trim() || undefined,
+            manager_email: deptManagerEmail.trim() || undefined,
             department_chief: deptChief.trim() || undefined,
+            chief_email: deptChiefEmail.trim() || undefined,
             color: deptColor,
             icon: deptIcon
           };
@@ -408,11 +512,46 @@ export function ManageStaffModal({
         nameAr: deptNameAr.trim() || undefined,
         description: deptDesc.trim() || undefined,
         direct_manager: deptDirectManager.trim() || undefined,
+        manager_email: deptManagerEmail.trim() || undefined,
         department_chief: deptChief.trim() || undefined,
+        chief_email: deptChiefEmail.trim() || undefined,
         color: deptColor,
         icon: deptIcon
       };
       onSaveDepartments([...departments, newDept]);
+    }
+
+    // Trigger system invitations for Department Manager and Department Chief
+    if (deptManagerEmail.trim()) {
+      sendSystemInviteAndRegisterUser({
+        email: deptManagerEmail.trim(),
+        name: deptDirectManager.trim() || `${deptName} Manager`,
+        role: "manager",
+        department: deptName.trim(),
+        team: `${deptName.trim()} Team`,
+        invitedBy: currentUser?.name || "Admin"
+      });
+    }
+
+    if (deptChiefEmail.trim()) {
+      sendSystemInviteAndRegisterUser({
+        email: deptChiefEmail.trim(),
+        name: deptChief.trim() || `${deptName} Chief`,
+        role: "chief",
+        department: deptName.trim(),
+        team: deptName.trim(),
+        invitedBy: currentUser?.name || "Admin"
+      });
+    }
+
+    if (deptManagerEmail.trim() || deptChiefEmail.trim()) {
+      const invitedEmails = [deptManagerEmail.trim(), deptChiefEmail.trim()].filter(Boolean).join(", ");
+      setToastNotice({
+        message: isAr
+          ? `تم إرسال دعوات النظام وتسجيل مدير وشيف القسم بنجاح (${invitedEmails})`
+          : `System invitations sent & leadership registered for (${invitedEmails})`,
+        type: "success"
+      });
     }
 
     setIsAddingDept(false);
@@ -482,14 +621,19 @@ export function ManageStaffModal({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg sm:text-xl font-black tracking-tight">
-                  {isAr ? "إدارة الموظفين والأقسام" : "Employees & Departments Management"}
+                  {isManagerOnly 
+                    ? (isAr ? `إدارة موظفي قسم ${managerDept || 'القسم'}` : `Department Staff Management: ${managerDept || 'Department'}`)
+                    : (isAr ? "إدارة الموظفين والأقسام" : "Employees & Departments Management")}
                 </h3>
                 <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/20 text-white">
-                  {employees.length} {isAr ? "موظف" : "Employees"} • {departments.length} {isAr ? "أقسام" : "Departments"}
+                  {filteredEmployees.length} {isAr ? "موظف" : "Employees"}
+                  {!isManagerOnly && ` • ${departments.length} ${isAr ? "أقسام" : "Departments"}`}
                 </span>
               </div>
               <p className="text-xs text-white/90 font-medium mt-0.5">
-                {isAr ? "إضافة وتعديل بيانات الموظفين والأقسام للتقييم السنوي" : "Add, edit, and organize staff rosters and departments for annual evaluation"}
+                {isManagerOnly 
+                  ? (isAr ? `إضافة موظفين جدد إلى قسم ${managerDept} وإرسال دعوات النظام للتقييم` : `Add new staff to ${managerDept} department and dispatch system invitations`)
+                  : (isAr ? "إضافة وتعديل بيانات الموظفين والأقسام للتقييم السنوي" : "Add, edit, and organize staff rosters and departments for annual evaluation")}
               </p>
             </div>
           </div>
@@ -518,21 +662,23 @@ export function ManageStaffModal({
               style={activeTab === "employees" ? { color: brandPrimary } : {}}
             >
               <Users size={15} />
-              <span>{isAr ? `الموظفين (${employees.length})` : `Employees (${employees.length})`}</span>
+              <span>{isAr ? `الموظفين (${filteredEmployees.length})` : `Employees (${filteredEmployees.length})`}</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("departments")}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
-                activeTab === "departments"
-                  ? "bg-white dark:bg-gray-800 shadow-xs"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
-              }`}
-              style={activeTab === "departments" ? { color: brandPrimary } : {}}
-            >
-              <Building2 size={15} />
-              <span>{isAr ? `الأقسام (${departments.length})` : `Departments (${departments.length})`}</span>
-            </button>
+            {!isManagerOnly && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("departments")}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                  activeTab === "departments"
+                    ? "bg-white dark:bg-gray-800 shadow-xs"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
+                }`}
+                style={activeTab === "departments" ? { color: brandPrimary } : {}}
+              >
+                <Building2 size={15} />
+                <span>{isAr ? `الأقسام (${departments.length})` : `Departments (${departments.length})`}</span>
+              </button>
+            )}
           </div>
 
           {/* Quick Actions */}
@@ -545,7 +691,7 @@ export function ManageStaffModal({
                 style={{ backgroundColor: brandPrimary }}
               >
                 <Plus size={15} />
-                <span>{isAr ? "إضافة موظف جديد" : "Add Employee"}</span>
+                <span>{isManagerOnly ? (isAr ? `+ إضافة موظف لقسم ${managerDept || ''}` : `+ Add Employee to ${managerDept || 'Dept'}`) : (isAr ? "إضافة موظف جديد" : "Add Employee")}</span>
               </button>
             ) : (
               <button
@@ -559,16 +705,35 @@ export function ManageStaffModal({
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={handleRequestResetDefaults}
-              className="p-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 text-gray-500 hover:text-gray-800 dark:text-gray-400 transition"
-              title={isAr ? "إعادة التعيين للافتراضي" : "Reset to Defaults"}
-            >
-              <RefreshCw size={14} />
-            </button>
+            {!isManagerOnly && (
+              <button
+                type="button"
+                onClick={handleRequestResetDefaults}
+                className="p-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 text-gray-500 hover:text-gray-800 dark:text-gray-400 transition cursor-pointer"
+                title={isAr ? "إعادة التعيين للافتراضي" : "Reset to Defaults"}
+              >
+                <RefreshCw size={14} />
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Instant Notification Banner for Dispatched Invites */}
+        {toastNotice && (
+          <div className="mx-4 mt-3 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-200 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span>{toastNotice.message}</span>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => setToastNotice(null)}
+              className="p-1 rounded-lg hover:bg-emerald-200/50 dark:hover:bg-emerald-900/50 transition cursor-pointer"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
 
         {/* Tab 1: Employees View */}
         {activeTab === "employees" && (
@@ -666,6 +831,12 @@ export function ManageStaffModal({
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#1C6B53] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                             {emp.department}
                           </span>
+                          {emp.email && (
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1 font-bold">
+                              <Mail size={10} />
+                              <span>{emp.email}</span>
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
                           <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
@@ -852,16 +1023,24 @@ export function ManageStaffModal({
                           {dept.direct_manager && (
                             <>
                               <span>•</span>
-                              <span className="text-gray-600 dark:text-gray-300 font-medium">
-                                {isAr ? "مدير القسم:" : "Dept Manager:"} <strong className="font-bold text-gray-900 dark:text-white">{dept.direct_manager}</strong>
+                              <span className="text-gray-600 dark:text-gray-300 font-medium flex items-center gap-1">
+                                <span>{isAr ? "مدير القسم:" : "Dept Manager:"}</span>
+                                <strong className="font-bold text-gray-900 dark:text-white">{dept.direct_manager}</strong>
+                                {dept.manager_email && (
+                                  <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">({dept.manager_email})</span>
+                                )}
                               </span>
                             </>
                           )}
                           {dept.department_chief && (
                             <>
                               <span>•</span>
-                              <span className="text-purple-700 dark:text-purple-300 font-medium">
-                                {isAr ? "شيف القسم:" : "Chief:"} <strong className="font-bold text-purple-900 dark:text-purple-200">{dept.department_chief}</strong>
+                              <span className="text-purple-700 dark:text-purple-300 font-medium flex items-center gap-1">
+                                <span>{isAr ? "شيف القسم:" : "Chief:"}</span>
+                                <strong className="font-bold text-purple-900 dark:text-purple-200">{dept.department_chief}</strong>
+                                {dept.chief_email && (
+                                  <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400">({dept.chief_email})</span>
+                                )}
                               </span>
                             </>
                           )}
@@ -936,7 +1115,8 @@ export function ManageStaffModal({
 
             {/* Dedicated Form Body */}
             <form onSubmit={handleSaveEmployeeSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              {/* Row 1: Name and Email */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                     {isAr ? "اسم الموظف الكامل *" : "Employee Full Name *"}
@@ -951,6 +1131,31 @@ export function ManageStaffModal({
                     autoFocus
                   />
                 </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
+                    <span>{isAr ? "البريد الإلكتروني للموظف (Email) *" : "Employee Email (System Invite) *"}</span>
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <Send size={10} />
+                      <span>{isAr ? "دعوة نظام" : "Invite"}</span>
+                    </span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      required
+                      value={empEmail}
+                      onChange={(e) => setEmpEmail(e.target.value)}
+                      placeholder="e.g. employee.name@fib.iq"
+                      className="w-full h-10 px-3.5 pr-8 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden font-mono font-bold"
+                    />
+                    <Mail size={14} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2: ID and Department */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                     {isAr ? "الرقم الوظيفي (ID) *" : "Employee ID *"}
@@ -964,11 +1169,23 @@ export function ManageStaffModal({
                     className="w-full h-10 px-3.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#1C6B53] outline-hidden font-mono font-bold"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                    {isAr ? "القسم *" : "Department *"}
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
+                    <span>{isAr ? "القسم *" : "Department *"}</span>
+                    {isManagerOnly && (
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <Building2 size={10} />
+                        <span>{isAr ? "(قسمك)" : "(Your Department)"}</span>
+                      </span>
+                    )}
                   </label>
-                  {departments.length === 0 ? (
+                  {isManagerOnly ? (
+                    <div className="w-full h-10 px-3.5 flex items-center bg-gray-100 dark:bg-gray-800/90 border border-gray-300 dark:border-gray-700 rounded-xl font-bold text-xs text-gray-800 dark:text-gray-200">
+                      <Building2 size={14} className="mr-2 text-emerald-600 dark:text-emerald-400" />
+                      <span>{empDept || managerDept}</span>
+                    </div>
+                  ) : departments.length === 0 ? (
                     <input
                       type="text"
                       required
@@ -1365,7 +1582,7 @@ export function ManageStaffModal({
                 );
               })()}
 
-              {/* Department Manager & Department Chief Fields (Themed dynamically) */}
+              {/* Department Manager & Department Chief Fields (Themed dynamically with Email Invitations) */}
               <div 
                 className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-3.5 rounded-2xl border transition"
                 style={{ 
@@ -1373,40 +1590,96 @@ export function ManageStaffModal({
                   borderColor: brandLightBorder 
                 }}
               >
-                <div>
-                  <label className="block text-xs font-black mb-1" style={{ color: brandPrimary }}>
-                    {isAr ? "مدير القسم (Department Manager)" : "Department Manager"}
-                  </label>
-                  <input
-                    type="text"
-                    value={deptDirectManager}
-                    onChange={(e) => setDeptDirectManager(e.target.value)}
-                    placeholder={isAr ? "اكتب اسم مدير القسم..." : "Enter department manager name..."}
-                    className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border rounded-xl outline-hidden font-bold transition focus:ring-2"
-                    style={{ 
-                      borderColor: brandLightBorder,
-                      // @ts-ignore
-                      "--tw-ring-color": brandPrimary 
-                    }}
-                  />
+                {/* Manager Column */}
+                <div className="space-y-2.5">
+                  <div>
+                    <label className="block text-xs font-black mb-1" style={{ color: brandPrimary }}>
+                      {isAr ? "مدير القسم (Department Manager)" : "Department Manager"}
+                    </label>
+                    <input
+                      type="text"
+                      value={deptDirectManager}
+                      onChange={(e) => setDeptDirectManager(e.target.value)}
+                      placeholder={isAr ? "اكتب اسم مدير القسم..." : "Enter department manager name..."}
+                      className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border rounded-xl outline-hidden font-bold transition focus:ring-2"
+                      style={{ 
+                        borderColor: brandLightBorder,
+                        // @ts-ignore
+                        "--tw-ring-color": brandPrimary 
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black mb-1 flex items-center justify-between" style={{ color: brandPrimary }}>
+                      <span>{isAr ? "البريد الإلكتروني للمدير *" : "Manager Email *"}</span>
+                      <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                        <Send size={10} />
+                        <span>{isAr ? "دعوة نظام" : "System Invite"}</span>
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={deptManagerEmail}
+                        onChange={(e) => setDeptManagerEmail(e.target.value)}
+                        placeholder="e.g. manager.name@fib.iq"
+                        className="w-full h-10 px-3.5 pr-8 text-xs bg-white dark:bg-gray-800 border rounded-xl outline-hidden font-mono font-bold transition focus:ring-2"
+                        style={{ 
+                          borderColor: brandLightBorder,
+                          // @ts-ignore
+                          "--tw-ring-color": brandPrimary 
+                        }}
+                      />
+                      <Mail size={14} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-black mb-1" style={{ color: brandPrimary }}>
-                    {isAr ? "شيف القسم (Department Chief / Head)" : "Department Chief / Head"}
-                  </label>
-                  <input
-                    type="text"
-                    value={deptChief}
-                    onChange={(e) => setDeptChief(e.target.value)}
-                    placeholder={isAr ? "اكتب اسم شيف القسم..." : "Enter department chief name..."}
-                    className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border rounded-xl outline-hidden font-bold transition focus:ring-2"
-                    style={{ 
-                      borderColor: brandLightBorder,
-                      // @ts-ignore
-                      "--tw-ring-color": brandPrimary 
-                    }}
-                  />
+                {/* Chief Column */}
+                <div className="space-y-2.5">
+                  <div>
+                    <label className="block text-xs font-black mb-1" style={{ color: brandPrimary }}>
+                      {isAr ? "شيف القسم (Department Chief / Head)" : "Department Chief / Head"}
+                    </label>
+                    <input
+                      type="text"
+                      value={deptChief}
+                      onChange={(e) => setDeptChief(e.target.value)}
+                      placeholder={isAr ? "اكتب اسم شيف القسم..." : "Enter department chief name..."}
+                      className="w-full h-10 px-3.5 text-xs bg-white dark:bg-gray-800 border rounded-xl outline-hidden font-bold transition focus:ring-2"
+                      style={{ 
+                        borderColor: brandLightBorder,
+                        // @ts-ignore
+                        "--tw-ring-color": brandPrimary 
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black mb-1 flex items-center justify-between" style={{ color: brandPrimary }}>
+                      <span>{isAr ? "البريد الإلكتروني للشيف *" : "Chief / Head Email *"}</span>
+                      <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                        <Send size={10} />
+                        <span>{isAr ? "دعوة نظام" : "System Invite"}</span>
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={deptChiefEmail}
+                        onChange={(e) => setDeptChiefEmail(e.target.value)}
+                        placeholder="e.g. chief.name@fib.iq"
+                        className="w-full h-10 px-3.5 pr-8 text-xs bg-white dark:bg-gray-800 border rounded-xl outline-hidden font-mono font-bold transition focus:ring-2"
+                        style={{ 
+                          borderColor: brandLightBorder,
+                          // @ts-ignore
+                          "--tw-ring-color": brandPrimary 
+                        }}
+                      />
+                      <Mail size={14} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
                 </div>
               </div>
 

@@ -96,15 +96,15 @@ export const RATING_LEVELS = [
   },
   { 
     level: 2, 
-    label: "Developing", 
+    label: "Improvement Required", 
     color: "text-white", 
     bg: "bg-amber-600 text-white border-amber-700 shadow-xs", 
     badgeBg: "bg-amber-50 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300",
-    desc: "Meets some expectations but requires further development and regular guidance in certain areas." 
+    desc: "Meets some expectations but regular improvement and guidance is required in certain areas." 
   },
   { 
     level: 1, 
-    label: "Needs Improvement", 
+    label: "Below Expectations", 
     color: "text-white", 
     bg: "bg-rose-600 text-white border-rose-700 shadow-xs", 
     badgeBg: "bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-700 text-rose-800 dark:text-rose-300",
@@ -242,20 +242,20 @@ export function getRatingInfo(score: number, lang: Language = "en") {
   if (score >= 1.5) {
     return {
       level: 2,
-      label: isAr ? "يحتاج إلى تطوير" : "Developing",
+      label: isAr ? "يحتاج إلى تحسين" : "Improvement Required",
       color: "text-white",
       bg: "bg-amber-600 text-white border-amber-700 shadow-xs",
       badgeBg: "bg-amber-50 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300",
-      desc: isAr ? "أداء يلبي بعض المعايير ولكنه يحتاج لمزيد من التدريب والمتابعة لتحقيق المستوى المطلوب." : "Meets some job requirements but needs development and coaching to reach the expected standard."
+      desc: isAr ? "أداء يلبي بعض المعايير ولكنه يحتاج لمزيد من التحسين والمتابعة لتحقيق المستوى المطلوب." : "Meets some job requirements but needs improvement and coaching to reach the expected standard."
     };
   }
   return {
     level: 1,
-    label: isAr ? "غير مرضٍ / يحتاج تحسين" : "Needs Improvement",
+    label: isAr ? "دون التوقعات" : "Below Expectations",
     color: "text-white",
     bg: "bg-rose-600 text-white border-rose-700 shadow-xs",
     badgeBg: "bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-700 text-rose-800 dark:text-rose-300",
-    desc: isAr ? "الأداء أقل من المتوقع ويتطلب خطة تحسين عاجلة ومتابعة فورية ومكثفة." : "Performance is below expectations and significant improvement is required to meet the role requirements."
+    desc: isAr ? "الأداء دون التوقعات ويتطلب خطة تحسين عاجلة ومتابعة فورية ومكثفة." : "Performance is below expectations and significant improvement is required to meet the role requirements."
   };
 }
 
@@ -601,7 +601,28 @@ export default function AnnualEvaluationDashboard({
   // Initial local loading for instant rendering
   useEffect(() => {
     setDynamicCriteria(loadStoredCriteria());
-    setDynamicSections(loadStoredSections());
+    const initialSecs = loadStoredSections();
+    const upgradedInitialSecs = (initialSecs && initialSecs.length > 0 ? initialSecs : DEFAULT_SECTIONS).map(s => {
+      if (s.id === "kpi") {
+        return {
+          ...s,
+          title: "Department KPI Evaluation",
+          titleAr: "تقييم مؤشرات الأداء للقسم (KPIs)",
+          description: "Department operational and performance metrics evaluation (Rate 1 to 5)."
+        };
+      }
+      if (s.id === "competencies") {
+        return {
+          ...s,
+          title: "Bank Core Competencies Evaluation",
+          titleAr: "تقييم الكفاءات الجوهرية للمصرف",
+          description: "Assessment of bank core competencies and institutional behaviors (Rate 1 to 5)."
+        };
+      }
+      return s;
+    });
+    setDynamicSections(upgradedInitialSecs);
+    saveStoredSections(upgradedInitialSecs);
     setDynamicDepartments(loadStoredDepartments());
     setDynamicEmployees(loadStoredEmployees());
     setDeletedEmployeeNames(loadStoredDeletedEmployees());
@@ -660,8 +681,30 @@ export default function AnnualEvaluationDashboard({
           saveStoredCriteria(data.criteria);
         }
         if (Array.isArray(data.sections)) {
-          setDynamicSections(data.sections);
-          saveStoredSections(data.sections);
+          const upgradedSecs = data.sections.map((s: DynamicSection) => {
+            if (s.id === "kpi") {
+              return {
+                ...s,
+                title: "Department KPI Evaluation",
+                titleAr: "تقييم مؤشرات الأداء للقسم (KPIs)",
+                description: "Department operational and performance metrics evaluation (Rate 1 to 5)."
+              };
+            }
+            if (s.id === "competencies") {
+              return {
+                ...s,
+                title: "Bank Core Competencies Evaluation",
+                titleAr: "تقييم الكفاءات الجوهرية للمصرف",
+                description: "Assessment of bank core competencies and institutional behaviors (Rate 1 to 5)."
+              };
+            }
+            return s;
+          });
+          setDynamicSections(upgradedSecs);
+          saveStoredSections(upgradedSecs);
+        } else {
+          setDynamicSections(DEFAULT_SECTIONS);
+          saveStoredSections(DEFAULT_SECTIONS);
         }
         if (Array.isArray(data.deletedEmployeeNames)) {
           setDeletedEmployeeNames(data.deletedEmployeeNames);
@@ -1047,12 +1090,15 @@ export default function AnnualEvaluationDashboard({
           agent_name: de.name,
           name: de.name,
           employee_id: de.employee_id || "",
+          email: de.email || "",
           department: de.department || "",
           role: de.role || "Staff",
           role_type: de.role_type || "agent",
           team: de.team || (de.department ? `${de.department} Team` : "General Team"),
           direct_manager: de.direct_manager || "",
+          manager_email: de.manager_email || "",
           department_chief: de.department_chief || "",
+          chief_email: de.chief_email || "",
           custom_position: de.custom_position || "",
           is_active: true,
           is_deleted: false,
@@ -1065,8 +1111,28 @@ export default function AnnualEvaluationDashboard({
       .sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
   }, [dynamicEmployees, deletedEmployeeNames]);
 
+  // Department Chief & Department Manager detection based on email, name, and role
+  const userChiefDepts = useMemo(() => {
+    return dynamicDepartments.filter(d => {
+      const chEmail = (d.chief_email || "").toLowerCase().trim();
+      const chNameNorm = normalizeAgentName(d.department_chief || "");
+      return (chEmail && chEmail === emailLower) || (chNameNorm && chNameNorm === currentUserNameNorm);
+    });
+  }, [dynamicDepartments, emailLower, currentUserNameNorm]);
+
+  const isDeptChief = userChiefDepts.length > 0 || roleLower === 'chief';
+
+  const userManagedDepts = useMemo(() => {
+    return dynamicDepartments.filter(d => {
+      const mgrEmail = (d.manager_email || "").toLowerCase().trim();
+      const mgrNameNorm = normalizeAgentName(d.direct_manager || "");
+      return (mgrEmail && mgrEmail === emailLower) || (mgrNameNorm && mgrNameNorm === currentUserNameNorm);
+    });
+  }, [dynamicDepartments, emailLower, currentUserNameNorm]);
+
+  const isDeptManager = userManagedDepts.length > 0 || (userProfile?.role === 'manager' && !isAdmin) || (roleLower === 'manager' && !isAdmin);
+
   // Detect direct subordinates under the current user (Multi-level evaluation hierarchy)
-  // "المنجر يكدر يشوف موظفين الي تحته و يقيمهم لكن ميشوف مال المدير الي فوكة"
   const mySubordinates = useMemo(() => {
     if (!currentUserNameNorm) return [];
     return effectiveAllMembers.filter(m => {
@@ -1094,35 +1160,74 @@ export default function AnnualEvaluationDashboard({
   }, [effectiveAllMembers, currentUserNameNorm, isTL, isManager, roleLower, userProfile?.team]);
 
   const hasSubordinates = mySubordinates.length > 0;
-  const isDirectManager = hasSubordinates || isManager || isAdmin;
+  const isDirectManager = hasSubordinates || isManager || isDeptManager || isAdmin;
 
   // Check if current user is viewing one of their own direct subordinates
+  // "الهيد يشوف درجات المنجر و القسم و المنجر يشوف درجات تيم مالة"
   const isViewingSubordinate = useMemo(() => {
     if (isAdmin) return true;
     const targetNorm = normalizeAgentName(selectedEmployeeName || "");
+    const targetMember = effectiveAllMembers.find(m => normalizeAgentName(m.agent_name || m.name || "") === targetNorm);
+    const targetDept = (targetMember?.department || "").toLowerCase().trim();
+
+    // Department Chief sees all members in their department ("الهيد يشوف درجات المنجر و القسم")
+    if (isDeptChief && userChiefDepts.some(d => (d.name || "").toLowerCase().trim() === targetDept)) {
+      return true;
+    }
+
+    // Department Manager sees members in their department ("المنجر يشوف مال تيم مالة و بس يشوف القسم ماله")
+    if (isDeptManager && userManagedDepts.some(d => (d.name || "").toLowerCase().trim() === targetDept)) {
+      return true;
+    }
+
     return mySubordinates.some(s => {
       const sNorm = normalizeAgentName(s.agent_name || s.name || "");
       return sNorm === targetNorm || sNorm.includes(targetNorm) || targetNorm.includes(sNorm);
     });
-  }, [isAdmin, selectedEmployeeName, mySubordinates]);
+  }, [isAdmin, selectedEmployeeName, effectiveAllMembers, isDeptChief, userChiefDepts, isDeptManager, userManagedDepts, mySubordinates]);
+
+  // Check if current user is the evaluator / manager for the selected member
+  const isManagerEvaluatorForSelected = useMemo(() => {
+    if (isAdmin) return true;
+    if (isViewingSelf) return false;
+    const targetNorm = normalizeAgentName(selectedEmployeeName || "");
+    const targetMember = effectiveAllMembers.find(m => normalizeAgentName(m.agent_name || m.name || "") === targetNorm);
+    if (!targetMember) return false;
+    const targetDept = (targetMember.department || "").toLowerCase().trim();
+
+    // 1. Department Chief evaluates the Department Manager
+    if (isDeptChief && userChiefDepts.some(d => (d.name || "").toLowerCase().trim() === targetDept)) {
+      const isTargetLeader = targetMember.role_type === "tl" || /manager|leader|مدير|قائد/i.test(targetMember.role || "");
+      if (isTargetLeader) return true;
+    }
+
+    // 2. Department Manager evaluates staff in their department (cannot edit the Chief)
+    if (isDeptManager && userManagedDepts.some(d => (d.name || "").toLowerCase().trim() === targetDept)) {
+      const isTargetChief = userChiefDepts.some(d => normalizeAgentName(d.department_chief || "") === targetNorm || (d.chief_email && d.chief_email.toLowerCase() === (targetMember.email || "").toLowerCase()));
+      if (!isTargetChief) return true;
+    }
+
+    // 3. Direct subordinate match
+    return mySubordinates.some(s => normalizeAgentName(s.agent_name || s.name || "") === targetNorm);
+  }, [isAdmin, isViewingSelf, selectedEmployeeName, effectiveAllMembers, isDeptChief, userChiefDepts, isDeptManager, userManagedDepts, mySubordinates]);
 
   // Permissions & Role Access:
   // - Viewing self: can edit self-evaluation (unless finalized). CANNOT edit manager score unless Admin.
   // - Viewing subordinate: Direct Manager or Admin CAN edit manager evaluation and finalize it!
   // - Read-only: when not allowed to edit self or manager.
   const canEditSelf = isViewingSelf && evaluationStatus !== 'manager_finalized';
-  const canEditManager = (isAdmin && !isViewingSelf) || (isViewingSubordinate && !isViewingSelf) || (isAdmin && isViewingSelf);
+  const canEditManager = (isAdmin && !isViewingSelf) || (isManagerEvaluatorForSelected && !isViewingSelf) || (isAdmin && isViewingSelf);
   const isReadOnly = !canEditSelf && !canEditManager;
   const canApplySuggestions = canEditManager && currentMemberRoleType === "agent";
   const canEditEmployeeFeedback = (isAdmin || canEditManager || canEditSelf);
 
-  // Single user self view only when the user has NO subordinates and is not admin
-  const isSingleSelfViewOnly = !isAdmin && !hasSubordinates;
+  // Single user self view only when the user has NO subordinates, is not Chief, and is not Manager
+  const isSingleSelfViewOnly = !isAdmin && !isDeptChief && !isDeptManager && !hasSubordinates;
 
   // Manager data visibility:
   // Subordinates only see manager ratings AFTER manager finalizes
-  // Managers and Admins see manager data immediately
-  const isManagerDataVisible = isAdmin || isViewingSubordinate || evaluationStatus === 'manager_finalized';
+  // Chief & Managers and Admins see manager data immediately
+  const isManagerDataVisible = isAdmin || isDeptChief || isDeptManager || isViewingSubordinate || evaluationStatus === 'manager_finalized';
 
   // Canonical Department Name Helper
   const getCanonicalDept = (rawDept: string): string => {
@@ -1150,11 +1255,42 @@ export default function AnnualEvaluationDashboard({
 
   // Hierarchy-scoped member visibility:
   // - Admin: see everyone across the entire organization
-  // - Manager / TL with subordinates: strictly see ONLY themselves + their direct subordinates (CANNOT see managers above them or peer TLs)
-  // - Staff / Agent with no subordinates: strictly see ONLY themselves
+  // - Department Chief: sees Department Manager and all members in their department ("الهيد يشوف درجات المنجر و القسم")
+  // - Department Manager: strictly sees only themselves and their department team members ("المنجر يشوف و يعدل مال تيم مالة و بس يشوف القسم ماله ويعدل بيه")
+  // - Regular Employee / Staff: strictly see only themselves
   const allowedMembersForUser = useMemo(() => {
     if (isAdmin) {
       return effectiveAllMembers;
+    }
+
+    // 1. Department Chief: see all members of their overseen department(s) ("الهيد يشوف درجات المنجر و القسم")
+    if (isDeptChief && userChiefDepts.length > 0) {
+      const chiefDeptNames = new Set(userChiefDepts.flatMap(d => [
+        (d.name || "").toLowerCase().trim(),
+        (d.nameAr || "").toLowerCase().trim()
+      ].filter(Boolean)));
+
+      const chiefDeptMembers = effectiveAllMembers.filter(m => 
+        chiefDeptNames.has((m.department || "").toLowerCase().trim())
+      );
+      if (chiefDeptMembers.length > 0) {
+        return chiefDeptMembers;
+      }
+    }
+
+    // 2. Department Manager: strictly scoped to their department members only! ("و بس يشوف القسم ماله ويعدل بيه")
+    if (isDeptManager && userManagedDepts.length > 0) {
+      const mgrDeptNames = new Set(userManagedDepts.flatMap(d => [
+        (d.name || "").toLowerCase().trim(),
+        (d.nameAr || "").toLowerCase().trim()
+      ].filter(Boolean)));
+
+      const deptMembers = effectiveAllMembers.filter(m => 
+        mgrDeptNames.has((m.department || "").toLowerCase().trim())
+      );
+      if (deptMembers.length > 0) {
+        return deptMembers;
+      }
     }
 
     const myself = effectiveAllMembers.find(m => {
@@ -1179,7 +1315,7 @@ export default function AnnualEvaluationDashboard({
     if (myself) return [myself];
 
     return effectiveAllMembers.slice(0, 1);
-  }, [isAdmin, hasSubordinates, effectiveAllMembers, currentUserNameNorm, mySubordinates]);
+  }, [isAdmin, isDeptChief, userChiefDepts, isDeptManager, userManagedDepts, hasSubordinates, effectiveAllMembers, currentUserNameNorm, mySubordinates]);
 
   // Filtered members list: Younis Kamal, Ankido Buya, Mohammed Dlshad, or QA & Training
   const filteredMembers = useMemo(() => {
@@ -2272,35 +2408,36 @@ export default function AnnualEvaluationDashboard({
                   <span>{t.annualBadge}</span>
                 </div>
 
-                {/* Admin Management Buttons: Criteria & Staff Rosters */}
+                {/* Admin Management Button: Criteria */}
                 {isAdmin && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setShowManageCriteriaModal(true)}
-                      className="flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-xl bg-gray-100/90 hover:bg-gray-200/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/80 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
-                      title="Manage Custom Evaluation Criteria"
-                    >
-                      <Sliders size={15} className="text-[#1C6B53] dark:text-emerald-400" />
-                      <span>{t.criteriaButton}</span>
-                      <span className="px-1.5 py-0.5 bg-[#1C6B53] text-white rounded-full text-[10px] font-black shadow-2xs">
-                        {dynamicCriteria.length}
-                      </span>
-                    </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowManageCriteriaModal(true)}
+                    className="flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-xl bg-gray-100/90 hover:bg-gray-200/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/80 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
+                    title="Manage Custom Evaluation Criteria"
+                  >
+                    <Sliders size={15} className="text-[#1C6B53] dark:text-emerald-400" />
+                    <span>{t.criteriaButton}</span>
+                    <span className="px-1.5 py-0.5 bg-[#1C6B53] text-white rounded-full text-[10px] font-black shadow-2xs">
+                      {dynamicCriteria.length}
+                    </span>
+                  </button>
+                )}
 
-                    <button
-                      type="button"
-                      onClick={() => setShowManageStaffModal(true)}
-                      className="flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-xl bg-gray-100/90 hover:bg-gray-200/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/80 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
-                      title="Manage Staff & Rosters"
-                    >
-                      <Building2 size={15} className="text-[#1C6B53] dark:text-emerald-400" />
-                      <span>{t.staffButton}</span>
-                      <span className="px-1.5 py-0.5 bg-blue-600 text-white rounded-full text-[10px] font-black shadow-2xs">
-                        {effectiveAllMembers.length}
-                      </span>
-                    </button>
-                  </>
+                {/* Management Button: Staff Rosters (Admin & Department Manager) */}
+                {(isAdmin || isDeptManager) && (
+                  <button
+                    type="button"
+                    onClick={() => setShowManageStaffModal(true)}
+                    className="flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-xl bg-gray-100/90 hover:bg-gray-200/90 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200/80 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 transition active:scale-95 shadow-2xs cursor-pointer shrink-0"
+                    title={isDeptManager && !isAdmin ? (isAr ? `إدارة موظفي قسم ${userManagedDepts[0]?.name || ''}` : `Manage ${userManagedDepts[0]?.name || ''} Department Staff`) : "Manage Staff & Rosters"}
+                  >
+                    <Building2 size={15} className="text-[#1C6B53] dark:text-emerald-400" />
+                    <span>{isDeptManager && !isAdmin ? (isAr ? "موظفي القسم" : "Department Staff") : t.staffButton}</span>
+                    <span className="px-1.5 py-0.5 bg-blue-600 text-white rounded-full text-[10px] font-black shadow-2xs">
+                      {isDeptManager && !isAdmin ? allowedMembersForUser.length : effectiveAllMembers.length}
+                    </span>
+                  </button>
                 )}
 
                 {/* Quick Button: Who's Pending - Manager & Admin Only */}
@@ -2825,15 +2962,23 @@ export default function AnnualEvaluationDashboard({
                     1
                   </div>
                   <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                    {currentMemberRoleType === "trainer" ? t.sec1TrainerTitle :
-                     currentMemberRoleType === "qa" ? t.sec1QaTitle :
-                     currentMemberRoleType === "tl" ? t.sec1TlTitle :
-                     currentMemberRoleType === "backoffice" ? t.sec1BackOfficeTitle :
-                     t.sec1DefaultTitle}
+                    {(() => {
+                      const kpiSec = dynamicSections.find(s => s.id === "kpi");
+                      if (kpiSec) {
+                        return isAr ? (kpiSec.titleAr || t.sec1DefaultTitle) : (kpiSec.title || t.sec1DefaultTitle);
+                      }
+                      return t.sec1DefaultTitle;
+                    })()}
                   </h3>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-9">
-                  {currentMemberRoleType !== "agent" ? t.sec1DescLeadership : t.sec1DescAgent}
+                  {(() => {
+                    const kpiSec = dynamicSections.find(s => s.id === "kpi");
+                    if (kpiSec) {
+                      return kpiSec.description;
+                    }
+                    return t.sec1DescAgent;
+                  })()}
                 </p>
               </div>
 
@@ -3085,11 +3230,23 @@ export default function AnnualEvaluationDashboard({
                   2
                 </div>
                 <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
-                  {t.sec2Title}
+                  {(() => {
+                    const compSec = dynamicSections.find(s => s.id === "competencies");
+                    if (compSec) {
+                      return isAr ? (compSec.titleAr || t.sec2Title) : (compSec.title || t.sec2Title);
+                    }
+                    return t.sec2Title;
+                  })()}
                 </h3>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-9">
-                {isAr ? `تقييم الكفاءات والسلوكيات المؤسسية الأساسية المعتمدة (${currentCompetenciesList.length} كفاءات - من 1 إلى 5 درجات).` : t.sec2Desc}
+                {(() => {
+                  const compSec = dynamicSections.find(s => s.id === "competencies");
+                  if (compSec && compSec.description) {
+                    return compSec.description;
+                  }
+                  return isAr ? `تقييم الكفاءات والسلوكيات المؤسسية الأساسية للمصرف (${currentCompetenciesList.length} كفاءات - من 1 إلى 5 درجات).` : t.sec2Desc;
+                })()}
               </p>
             </div>
 
@@ -3826,12 +3983,12 @@ export default function AnnualEvaluationDashboard({
                           </td>
                         </tr>
 
-                        {/* 2 Developing */}
+                        {/* 2 Improvement Required */}
                         <tr className="bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition">
                           <td className="p-3 text-left">
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
                               <span>2 ⭐</span>
-                              <span>Developing</span>
+                              <span>Improvement Required</span>
                             </span>
                           </td>
                           <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
@@ -3848,12 +4005,12 @@ export default function AnnualEvaluationDashboard({
                           </td>
                         </tr>
 
-                        {/* 1 Needs Improvement */}
+                        {/* 1 Below Expectations */}
                         <tr className="bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition">
                           <td className="p-3 text-left">
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200 border border-rose-300 dark:border-rose-700">
                               <span>1 ⭐</span>
-                              <span>Needs Improvement</span>
+                              <span>Below Expectations</span>
                             </span>
                           </td>
                           <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
@@ -4006,12 +4163,12 @@ export default function AnnualEvaluationDashboard({
                           </td>
                         </tr>
 
-                        {/* 2 Developing */}
+                        {/* 2 Improvement Required */}
                         <tr className="bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition">
                           <td className="p-3 text-left">
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
                               <span>2 ⭐</span>
-                              <span>Developing</span>
+                              <span>Improvement Required</span>
                             </span>
                           </td>
                           <td className="p-3 font-mono font-semibold text-amber-900 dark:text-amber-200">
@@ -4031,12 +4188,12 @@ export default function AnnualEvaluationDashboard({
                           </td>
                         </tr>
 
-                        {/* 1 Needs Improvement */}
+                        {/* 1 Below Expectations */}
                         <tr className="bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition">
                           <td className="p-3 text-left">
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200 border border-rose-300 dark:border-rose-700">
                               <span>1 ⭐</span>
-                              <span>Needs Improvement</span>
+                              <span>Below Expectations</span>
                             </span>
                           </td>
                           <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">
@@ -4446,6 +4603,13 @@ export default function AnnualEvaluationDashboard({
           onSelectEmployeeForEval={(empName) => {
             setSelectedEmployeeName(empName);
             setShowManageStaffModal(false);
+          }}
+          currentUser={{
+            name: userProfile?.name || userProfile?.agent_name || "",
+            email: emailLower,
+            role: isDeptManager && !isAdmin ? 'manager' : (isDeptChief && !isAdmin ? 'chief' : (isAdmin ? 'admin' : roleLower)),
+            isAdmin,
+            department: userManagedDepts[0]?.name || userChiefDepts[0]?.name || userProfile?.department || ""
           }}
         />
       )}

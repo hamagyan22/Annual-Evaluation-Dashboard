@@ -1195,12 +1195,12 @@ export default function TopStarDashboard({
                           <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">90%</td>
                         </tr>
 
-                        {/* 2 Developing */}
+                        {/* 2 Improvement Required */}
                         <tr className="bg-amber-50/50 dark:bg-amber-950/20">
                           <td className="p-3 text-left">
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
                               <span>2 ⭐</span>
-                              <span>Developing</span>
+                              <span>Improvement Required</span>
                             </span>
                           </td>
                           <td className="p-3 font-mono font-semibold text-amber-800 dark:text-amber-300">90% - 94%</td>
@@ -1209,12 +1209,12 @@ export default function TopStarDashboard({
                           <td className="p-3 font-mono font-semibold text-amber-800 dark:text-amber-300">86% - 89%</td>
                         </tr>
 
-                        {/* 1 Needs Improvement */}
+                        {/* 1 Below Expectations */}
                         <tr className="bg-rose-50/50 dark:bg-rose-950/20">
                           <td className="p-3 text-left">
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200 border border-rose-300 dark:border-rose-700">
                               <span>1 ⭐</span>
-                              <span>Needs Imp.</span>
+                              <span>Below Expectations</span>
                             </span>
                           </td>
                           <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">&lt; 89%</td>
@@ -1284,12 +1284,12 @@ export default function TopStarDashboard({
                           <td className="p-3 font-mono font-semibold text-slate-800 dark:text-slate-200">8.5 - 10.99</td>
                         </tr>
 
-                        {/* 2 Developing */}
+                        {/* 2 Improvement Required */}
                         <tr className="bg-amber-50/50 dark:bg-amber-950/20">
                           <td className="p-3 text-left">
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
                               <span>2 ⭐</span>
-                              <span>Developing</span>
+                              <span>Improvement Required</span>
                             </span>
                           </td>
                           <td className="p-3 font-mono font-semibold text-amber-800 dark:text-amber-300">85% - 89%</td>
@@ -1299,12 +1299,12 @@ export default function TopStarDashboard({
                           <td className="p-3 font-mono font-semibold text-amber-800 dark:text-amber-300">7.50 - 8.49</td>
                         </tr>
 
-                        {/* 1 Needs Improvement */}
+                        {/* 1 Below Expectations */}
                         <tr className="bg-rose-50/50 dark:bg-rose-950/20">
                           <td className="p-3 text-left">
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200 border border-rose-300 dark:border-rose-700">
                               <span>1 ⭐</span>
-                              <span>Needs Imp.</span>
+                              <span>Below Expectations</span>
                             </span>
                           </td>
                           <td className="p-3 font-mono font-bold text-rose-700 dark:text-rose-400">&lt; 85%</td>

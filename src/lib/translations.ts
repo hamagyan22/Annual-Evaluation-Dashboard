@@ -240,17 +240,17 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     tier5: "Outstanding",
     tier4: "Exceeds Expectations",
     tier3: "Meets Expectations",
-    tier2: "Developing",
-    tier1: "Needs Improvement",
+    tier2: "Improvement Required",
+    tier1: "Below Expectations",
 
     // Section 1
     sec1TrainerTitle: "Training Performance KPI Evaluation",
     sec1QaTitle: "Quality Assurance KPI Evaluation",
     sec1TlTitle: "Leadership & Team Management KPI Evaluation",
     sec1BackOfficeTitle: "Back Office Operational KPI Evaluation",
-    sec1DefaultTitle: "Operational KPI Evaluation",
+    sec1DefaultTitle: "Department KPI Evaluation",
     sec1DescLeadership: "Role-specific operational KPIs evaluated manually on an executive 1 to 5 scale.",
-    sec1DescAgent: "Operational performance metrics evaluation (Rate 1 to 5).",
+    sec1DescAgent: "Department operational performance metrics evaluation (Rate 1 to 5).",
     colKpiMetric: "Role KPI Metric & Objectives",
     colActualResult: "Actual Result",
     colSelf: "Self-Evaluation",
@@ -263,8 +263,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     finalScoreAverage: "Final Score (1-5 Average)",
 
     // Section 2
-    sec2Title: "Core Competencies Evaluation",
-    sec2Desc: "Assessment of the core institutional competencies (Rate 1 to 5).",
+    sec2Title: "Bank Core Competencies Evaluation",
+    sec2Desc: "Assessment of bank core competencies and institutional behaviors (Rate 1 to 5).",
     colCompetency: "Competency & Behavioral Indicators",
     competencyAverageRow: "Competency Average (1-5)",
 
@@ -421,20 +421,20 @@ export const TRANSLATIONS: Record<Language, Translations> = {
 
     // Rating Scale Legend
     ratingScaleTitle: "مقياس التقييم الرسمي المعتمد (1 إلى 5):",
-    tier5: "متميز جداً",
-    tier4: "يفوق التوقعات",
-    tier3: "يلبي التوقعات",
-    tier2: "يحتاج تطوير",
-    tier1: "غير مرضٍ / يحتاج تحسين",
+    tier5: "متميز (Outstanding)",
+    tier4: "يفوق التوقعات (Exceeds Expectations)",
+    tier3: "يلبي التوقعات (Meets Expectations)",
+    tier2: "يحتاج إلى تحسين (Improvement Required)",
+    tier1: "دون التوقعات (Below Expectations)",
 
     // Section 1
     sec1TrainerTitle: "تقييم مؤشرات أداء التدريب والتأهيل",
     sec1QaTitle: "تقييم مؤشرات أداء إدارة الجودة",
     sec1TlTitle: "تقييم مؤشرات القيادة وإدارة الفرق التشغيلية",
     sec1BackOfficeTitle: "تقييم مؤشرات أداء العمليات الخلفية",
-    sec1DefaultTitle: "تقييم مؤشرات الأداء التشغيلي",
+    sec1DefaultTitle: "تقييم مؤشرات الأداء للقسم (Department KPI Evaluation)",
     sec1DescLeadership: "مؤشرات أداء تشغيلية وقيادية يتم تقييمها على مقياس تنفيذي من 1 إلى 5 درجات.",
-    sec1DescAgent: "تقييم مؤشرات الأداء التشغيلي والمستهدفات (من 1 إلى 5 درجات).",
+    sec1DescAgent: "تقييم مؤشرات الأداء التشغيلي ومستهدفات القسم (من 1 إلى 5 درجات).",
     colKpiMetric: "معيار التقييم والمؤشرات المستهدفة",
     colActualResult: "النتيجة الفعلية",
     colSelf: "التقييم الذاتي",
@@ -447,8 +447,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     finalScoreAverage: "الدرجة النهائية (معدل 1-5)",
 
     // Section 2
-    sec2Title: "تقييم الكفاءات والسلوكيات المؤسسية",
-    sec2Desc: "تقييم الكفاءات والسلوكيات المؤسسية الأساسية المعتمدة (من 1 إلى 5 درجات).",
+    sec2Title: "تقييم الكفاءات الجوهرية للمصرف (Bank Core Competencies)",
+    sec2Desc: "تقييم الكفاءات والسلوكيات المؤسسية الأساسية للمصرف (من 1 إلى 5 درجات).",
     colCompetency: "الكفاءة والمؤشرات السلوكية",
     competencyAverageRow: "معدل الكفاءات (1-5)",
 
