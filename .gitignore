@@ -1,15 +1,35 @@
-node_modules
-.next
+# Dependencies and builds
+node_modules/
+.next/
+out/
+.vercel/
+.firebase/
+*.tsbuildinfo
+
+# Environment and sensitive keys
 .env
 .env.local
 .env.*
-*.tsbuildinfo
-
-# Sensitive credentials and dumps
-emails.txt
-*.txt
+*.pem
+*.key
+*.cert
+*.crt
+serviceAccountKey*.json
+*service-account*.json
 credentials*
 secrets*
+firebase-debug.log*
+firestore-debug.log*
+
+# Scratch, dumps, and user data
+users.json
+users_*.json
+emails.txt
+*.txt
+*.csv
+dump*.json
+*.sqlite
+*.db
 
 # Scratch & Migration scripts
 *.py
@@ -21,7 +41,7 @@ patchAgent3.js
 rewrite.js
 updatePage.js
 
-.vercel
-out
-.firebase
+# OS files
+.DS_Store
+Thumbs.db
 

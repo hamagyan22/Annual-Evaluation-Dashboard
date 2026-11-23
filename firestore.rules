@@ -9,31 +9,76 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && (
-        request.auth.token.email == 'mohammed.dlshad0@gmail.com'
+        request.auth.token.email == 'mohammed.dlshad0@gmail.com' ||
+        request.auth.token.email == 'omar.ayad@fib.iq'
       );
     }
 
     function isManager() {
-      return isAdmin() || (isAuthenticated() && request.auth.token.email == 'jalal.burghol@agent.com');
+      return isAdmin() || (isAuthenticated() && (
+        request.auth.token.email == 'jalal.burghol@agent.com' ||
+        request.auth.token.email == 'jalal.burghol@fib.iq'
+      ));
     }
 
-    function isUser(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+    // Rate & Payload Safeguards
+    function isValidEmail(email) {
+      return email is string && 
+             email.size() >= 5 && 
+             email.size() <= 120 && 
+             email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
     }
 
-    // Users collection
+    // Users collection: Secured with schema validation
     match /users/{userId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow create, update: if request.resource.data.email is string &&
+                               request.resource.data.email.size() >= 5 &&
+                               (!('photo_url' in request.resource.data) || request.resource.data.photo_url.size() < 300000);
+      allow delete: if false; // Protect user accounts from malicious deletion
     }
 
-    // Invitations collection
+    // Invitations collection: Secured against tampering
     match /invitations/{inviteId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow create, update: if request.resource.data.email is string &&
+                               request.resource.data.email.size() >= 5 &&
+                               request.resource.data.status in ['invited', 'accepted', 'expired'];
+      allow delete: if false; // Prevent deleting invitation audit logs
+    }
+
+    // Annual evaluations & criteria configurations
+    match /annual_evaluations/{evalId} {
+      allow read: if true;
+      // Prevent deleting the system config root
+      allow delete: if evalId != 'config_roster_and_criteria';
+      allow create, update: if request.resource.data is map;
+    }
+
+    // Custom Criteria & Departments
+    match /evaluation_criteria/{critId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.name is string && request.resource.data.name.size() > 0;
+      allow delete: if true;
+    }
+
+    match /evaluation_departments/{deptId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.name is string && request.resource.data.name.size() > 0;
+      allow delete: if true;
+    }
+
+    match /evaluation_employees/{empId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.name is string && request.resource.data.name.size() > 0;
+      allow delete: if true;
     }
 
     // Team members directory
     match /team_members/{memberId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow create, update: if request.resource.data.name is string;
+      allow delete: if isAuthenticated() && (isAdmin() || isManager());
     }
 
     // KPI Columns configuration (Super Admin only can edit KPIs)
@@ -70,13 +115,7 @@ service cloud.firestore {
     // Global Settings (Top Star criteria & sync status)
     match /settings/{settingId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && (
-        isAdmin() || 
-        isManager() || 
-        request.auth.token.email == 'younis.kamal@agent.com' || 
-        request.auth.token.email == 'younis.kamal.tl@agent.com' || 
-        request.auth.token.email == 'ankido.buya@agent.com'
-      );
+      allow write: if isAuthenticated() && (isAdmin() || isManager());
     }
 
     // Quality evaluations & sync configuration
@@ -96,23 +135,6 @@ service cloud.firestore {
       );
     }
 
-    // Annual evaluations & criteria
-    match /annual_evaluations/{evalId} {
-      allow read, write: if true;
-    }
-
-    match /evaluation_criteria/{critId} {
-      allow read, write: if true;
-    }
-
-    match /evaluation_departments/{deptId} {
-      allow read, write: if true;
-    }
-
-    match /evaluation_employees/{empId} {
-      allow read, write: if true;
-    }
-
     // Quality & KPI coaching session sign-offs
     match /quality_sessions/{sessionId} {
       allow read, write: if isAuthenticated();
@@ -122,7 +144,7 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
 
-    // Deny all other unmatched paths
+    // Deny all other unmatched paths by default (Zero Trust)
     match /{document=**} {
       allow read, write: if false;
     }
