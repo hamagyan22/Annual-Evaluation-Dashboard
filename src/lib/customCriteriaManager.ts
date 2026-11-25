@@ -45,6 +45,7 @@ export interface DynamicDepartment {
 export interface DynamicEmployee {
   id: string;
   name: string;
+  agent_name?: string;
   nameEn?: string;
   nameAr?: string;
   employee_id: string;

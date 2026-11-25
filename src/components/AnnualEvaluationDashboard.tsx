@@ -1296,7 +1296,7 @@ export default function AnnualEvaluationDashboard({
       }).filter(m => Boolean(m.agent_name));
 
       if (members.length > 0) {
-        setInternalMembers(members.sort((a, b) => a.agent_name.localeCompare(b.agent_name)));
+        setInternalMembers(members.sort((a, b) => (a.agent_name || a.name || "").localeCompare(b.agent_name || b.name || "")));
       }
     }, (err) => {
       console.warn("Annual eval team_members live listener warning:", err);
@@ -1349,7 +1349,7 @@ export default function AnnualEvaluationDashboard({
 
         if (isMounted && membersMap.size > 0) {
           setInternalMembers(Array.from(membersMap.values()).sort((a, b) => 
-            a.agent_name.localeCompare(b.agent_name)
+            (a.agent_name || a.name || "").localeCompare(b.agent_name || b.name || "")
           ));
         }
       } catch (err) {

@@ -129,16 +129,20 @@ const CANONICAL_MAP: Map<string, CompanyEmployee> = new Map();
 const CANONICAL_NAME_SET: Set<string> = new Set();
 
 DEFAULT_COMPANY_EMPLOYEES.forEach(emp => {
-  const norm = cleanStr(emp.agent_name);
-  CANONICAL_MAP.set(norm, emp);
-  CANONICAL_NAME_SET.add(emp.agent_name);
+  const name = emp.agent_name || emp.name || "";
+  const norm = cleanStr(name);
+  if (norm) {
+    CANONICAL_MAP.set(norm, { ...emp, agent_name: name });
+    CANONICAL_NAME_SET.add(name);
+  }
 });
 
 // Also register all aliases into the map
 Object.entries(EXACT_ALIASES).forEach(([alias, canonicalName]) => {
-  const emp = DEFAULT_COMPANY_EMPLOYEES.find(e => e.agent_name === canonicalName);
+  const emp = DEFAULT_COMPANY_EMPLOYEES.find(e => (e.agent_name || e.name) === canonicalName);
   if (emp) {
-    CANONICAL_MAP.set(cleanStr(alias), emp);
+    const name = emp.agent_name || emp.name;
+    CANONICAL_MAP.set(cleanStr(alias), { ...emp, agent_name: name });
   }
 });
 
@@ -172,24 +176,27 @@ export function getCanonicalAgentName(rawName: string): string {
 
     // Check if tokens start with any roster employee's first tokens
     for (const emp of DEFAULT_COMPANY_EMPLOYEES) {
-      const empTokens = cleanStr(emp.agent_name).split(" ").filter(Boolean);
+      const empName = emp.agent_name || emp.name || "";
+      const empTokens = cleanStr(empName).split(" ").filter(Boolean);
       if (empTokens.length >= 2 && empTokens[0] === tokens[0] && empTokens[1] === tokens[1]) {
-        return emp.agent_name;
+        return empName;
       }
     }
   } else if (tokens.length === 1) {
     // Single-word names like "Sawen"
     for (const emp of DEFAULT_COMPANY_EMPLOYEES) {
-      const empClean = cleanStr(emp.agent_name);
-      if (empClean === tokens[0]) return emp.agent_name;
+      const empName = emp.agent_name || emp.name || "";
+      const empClean = cleanStr(empName);
+      if (empClean === tokens[0]) return empName;
     }
   }
 
   // 3. Fallback: check if rawName matches any canonical name ignoring case
   const lowerRaw = rawName.trim().toLowerCase();
   for (const emp of DEFAULT_COMPANY_EMPLOYEES) {
-    if (emp.agent_name.toLowerCase() === lowerRaw) {
-      return emp.agent_name;
+    const empName = emp.agent_name || emp.name || "";
+    if (empName.toLowerCase() === lowerRaw) {
+      return empName;
     }
   }
 
@@ -201,7 +208,11 @@ export function getCanonicalAgentName(rawName: string): string {
  */
 export function getCanonicalAgent(rawName: string): CompanyEmployee | null {
   const canonicalName = getCanonicalAgentName(rawName);
-  return DEFAULT_COMPANY_EMPLOYEES.find(e => e.agent_name === canonicalName) || null;
+  const found = DEFAULT_COMPANY_EMPLOYEES.find(e => (e.agent_name || e.name) === canonicalName) || null;
+  if (found) {
+    return { ...found, agent_name: found.agent_name || found.name || "" };
+  }
+  return null;
 }
 
 /**

@@ -468,7 +468,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ali.al-ameli@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shaimaa Ali Hussein"
   },
   {
     "id": "emp_2",
@@ -490,7 +491,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Hamza Sardal"
   },
   {
     "id": "emp_4",
@@ -512,7 +514,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "leena.yaseen@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Leena Yaseen Abd"
   },
   {
     "id": "emp_11",
@@ -534,7 +537,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "anfal.salman@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Anfal Salman Dawood"
   },
   {
     "id": "emp_604",
@@ -556,7 +560,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdulhadi Abbas Abdulsahib"
   },
   {
     "id": "emp_13",
@@ -578,7 +583,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ali.al-ameli@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hafsa Asim Naseef"
   },
   {
     "id": "emp_15",
@@ -600,7 +606,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "rafid.mohammed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rafid Mohammed Ridha"
   },
   {
     "id": "emp_16",
@@ -622,7 +629,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "zainab.abdalamir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zainab Abdulamir Kadhim"
   },
   {
     "id": "emp_17",
@@ -644,7 +652,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shahad Neama Hassan"
   },
   {
     "id": "emp_18",
@@ -666,7 +675,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Iman Saad Mohammed Hassan"
   },
   {
     "id": "emp_20",
@@ -688,7 +698,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "zainab.abdalamir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shaimaa Zhyr Mahmoud"
   },
   {
     "id": "emp_22",
@@ -710,7 +721,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Bashar Ali Nasser"
   },
   {
     "id": "emp_23",
@@ -732,7 +744,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nisreen.sattar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nisreen Sattar Barani"
   },
   {
     "id": "emp_24",
@@ -754,7 +767,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "dedan.diler@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Fahad Abdullah Younis"
   },
   {
     "id": "emp_26",
@@ -776,7 +790,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "omer.ayad@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rawan Kanaan Khudhair"
   },
   {
     "id": "emp_29",
@@ -798,7 +813,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ali.al-ameli@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Jamal Al-Twyl"
   },
   {
     "id": "emp_30",
@@ -820,7 +836,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shahad Kareem Kamil"
   },
   {
     "id": "emp_31",
@@ -842,7 +859,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ruaa.mowafaq@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ruaa Mowafaq Talib"
   },
   {
     "id": "emp_32",
@@ -864,7 +882,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "mohammed.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Jawad Kadhim"
   },
   {
     "id": "emp_33",
@@ -886,7 +905,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "mohammed.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Afra Younis Naji"
   },
   {
     "id": "emp_34",
@@ -908,7 +928,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Saad Abdulaziz Mehdi"
   },
   {
     "id": "emp_35",
@@ -930,7 +951,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.alhayek@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Huda Salim Abdulkarim"
   },
   {
     "id": "emp_36",
@@ -952,7 +974,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ruaa.mowafaq@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sna Hani Salih"
   },
   {
     "id": "emp_37",
@@ -974,7 +997,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Yasser Akram Shfyq"
   },
   {
     "id": "emp_39",
@@ -996,7 +1020,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sarah Hazim Abdullah"
   },
   {
     "id": "emp_40",
@@ -1018,7 +1043,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sha Abdulkarim Fjr"
   },
   {
     "id": "emp_41",
@@ -1040,7 +1066,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shams Salah Salim"
   },
   {
     "id": "emp_42",
@@ -1062,7 +1089,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Basheer Ibrahim"
   },
   {
     "id": "emp_44",
@@ -1084,7 +1112,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Muhanad Abdulhameed Saeed"
   },
   {
     "id": "emp_46",
@@ -1106,7 +1135,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ruaa.mowafaq@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Lbna Khmys Sbty"
   },
   {
     "id": "emp_47",
@@ -1128,7 +1158,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ali.al-ameli@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdulrahman Ali Hameed"
   },
   {
     "id": "emp_48",
@@ -1150,7 +1181,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.alhayek@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sarah Jabbar Ali"
   },
   {
     "id": "emp_51",
@@ -1172,7 +1204,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "anfal.salman@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hala Ali Khalil"
   },
   {
     "id": "emp_52",
@@ -1194,7 +1227,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nisreen.sattar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zainab Riyadh Ali"
   },
   {
     "id": "emp_54",
@@ -1216,7 +1250,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Abbas Mohammed"
   },
   {
     "id": "emp_55",
@@ -1238,7 +1273,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "omer.ayad@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ibrahim Mohammed Ali"
   },
   {
     "id": "emp_56",
@@ -1260,7 +1296,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ali.al-ameli@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zahraa Raheem Kadhim"
   },
   {
     "id": "emp_58",
@@ -1282,7 +1319,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mustafa Ayad AbdulKadhim"
   },
   {
     "id": "emp_61",
@@ -1304,7 +1342,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "AbdulRaheem Abbas Mohsen"
   },
   {
     "id": "emp_62",
@@ -1326,7 +1365,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dhfar Saad AbdulHussein"
   },
   {
     "id": "emp_63",
@@ -1348,7 +1388,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mais Ahmed Aryby"
   },
   {
     "id": "emp_64",
@@ -1370,7 +1411,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Bilal Mohammed Mahmoud"
   },
   {
     "id": "emp_65",
@@ -1392,7 +1434,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Omer Riyadh Aziz"
   },
   {
     "id": "emp_67",
@@ -1414,7 +1457,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sba Haidar Ali"
   },
   {
     "id": "emp_70",
@@ -1436,7 +1480,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "zainab.abdalamir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mha AbdulWhab Falah"
   },
   {
     "id": "emp_71",
@@ -1458,7 +1503,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ruaa.mowafaq@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Atiya AbdulKadhim"
   },
   {
     "id": "emp_72",
@@ -1480,7 +1526,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Dhiyaa Hussein"
   },
   {
     "id": "emp_75",
@@ -1502,7 +1549,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Hassan Ahmed"
   },
   {
     "id": "emp_76",
@@ -1524,7 +1572,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Haidar Jalal Kadhim"
   },
   {
     "id": "emp_79",
@@ -1546,7 +1595,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.alhayek@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Anwar Kanaan Hashim"
   },
   {
     "id": "emp_82",
@@ -1568,7 +1618,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Jawad Ali"
   },
   {
     "id": "emp_83",
@@ -1590,7 +1641,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Imad Rfat"
   },
   {
     "id": "emp_84",
@@ -1612,7 +1664,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "mohammed.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Adil Hashim"
   },
   {
     "id": "emp_86",
@@ -1634,7 +1687,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hala Riyadh AbdulRhmn"
   },
   {
     "id": "emp_87",
@@ -1656,7 +1710,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Dryd Ahmed"
   },
   {
     "id": "emp_88",
@@ -1678,7 +1733,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sajjad Jmyl Najm"
   },
   {
     "id": "emp_91",
@@ -1700,7 +1756,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abbas Hassan Naji"
   },
   {
     "id": "emp_92",
@@ -1722,7 +1779,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Yasser Ammar Mohammed"
   },
   {
     "id": "emp_93",
@@ -1744,7 +1802,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abtsam Jabbar Khlf"
   },
   {
     "id": "emp_94",
@@ -1766,7 +1825,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Aynas Jasib Khlf"
   },
   {
     "id": "emp_95",
@@ -1788,7 +1848,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ban Salman Hmwd"
   },
   {
     "id": "emp_97",
@@ -1810,7 +1871,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Karwan Salim Mohammed Saleem"
   },
   {
     "id": "emp_98",
@@ -1832,7 +1894,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahnk Hameed Abdullah"
   },
   {
     "id": "emp_99",
@@ -1854,7 +1917,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Hkmt Ali"
   },
   {
     "id": "emp_100",
@@ -1876,7 +1940,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hyrsh Jalal Mohammed"
   },
   {
     "id": "emp_101",
@@ -1898,7 +1963,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dlal Nasser Mohammed"
   },
   {
     "id": "emp_103",
@@ -1920,7 +1986,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mlak Ismail Khalil"
   },
   {
     "id": "emp_104",
@@ -1942,7 +2009,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rywar Tyar Awnbashy"
   },
   {
     "id": "emp_105",
@@ -1964,7 +2032,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sybh R Ahsan Qadir"
   },
   {
     "id": "emp_106",
@@ -1986,7 +2055,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sazan Blnd AbdulHafdh"
   },
   {
     "id": "emp_107",
@@ -2008,7 +2078,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Bdrkhan Ahmed Fth"
   },
   {
     "id": "emp_108",
@@ -2030,7 +2101,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zainab Omer Slyman"
   },
   {
     "id": "emp_109",
@@ -2052,7 +2124,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Laveen Khalil Ahmed"
   },
   {
     "id": "emp_110",
@@ -2074,7 +2147,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Lzkyn Bhjt Ahmed"
   },
   {
     "id": "emp_111",
@@ -2096,7 +2170,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Manwyla Salim Ashq"
   },
   {
     "id": "emp_112",
@@ -2118,7 +2193,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Tahir Nizar Tahir"
   },
   {
     "id": "emp_114",
@@ -2140,7 +2216,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hdyr Wsfy Salim"
   },
   {
     "id": "emp_118",
@@ -2162,7 +2239,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shyan Azt Ibrahim"
   },
   {
     "id": "emp_119",
@@ -2184,7 +2262,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Jihad Kareem Hussein"
   },
   {
     "id": "emp_120",
@@ -2206,7 +2285,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rana Fwzy Danyal"
   },
   {
     "id": "emp_123",
@@ -2228,7 +2308,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zyan Jza Hama Saeed"
   },
   {
     "id": "emp_129",
@@ -2250,7 +2331,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dh Rwn Mustafa Abdullah"
   },
   {
     "id": "emp_132",
@@ -2272,7 +2354,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Ibrahim Brzw"
   },
   {
     "id": "emp_135",
@@ -2294,7 +2377,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rwzy Jamal Rؤwf"
   },
   {
     "id": "emp_137",
@@ -2316,7 +2400,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Lanw Jalal Aziz"
   },
   {
     "id": "emp_139",
@@ -2338,7 +2423,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zyr Ali Abdullah"
   },
   {
     "id": "emp_140",
@@ -2360,7 +2446,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ryfan Amyd Abdulmajeed"
   },
   {
     "id": "emp_142",
@@ -2382,7 +2469,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Amanj Othman Ahmed"
   },
   {
     "id": "emp_143",
@@ -2404,7 +2492,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Goran Mohammed Abd L"
   },
   {
     "id": "emp_145",
@@ -2426,7 +2515,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rh Hh Nd Rykh Wt Rؤf"
   },
   {
     "id": "emp_146",
@@ -2448,7 +2538,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Kwfan Tariq Rafeeq"
   },
   {
     "id": "emp_147",
@@ -2470,7 +2561,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Lyhat Attar Sdraldyn"
   },
   {
     "id": "emp_148",
@@ -2492,7 +2584,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rebwar Haseeb Jawhar"
   },
   {
     "id": "emp_149",
@@ -2514,7 +2607,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "dedan.diler@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dydh N Diler Ali"
   },
   {
     "id": "emp_150",
@@ -2536,7 +2630,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Idris Salih Hamad Ameen"
   },
   {
     "id": "emp_151",
@@ -2558,7 +2653,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Drbaz Dara Mohammed"
   },
   {
     "id": "emp_152",
@@ -2580,7 +2676,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Akram Saleem"
   },
   {
     "id": "emp_153",
@@ -2602,7 +2699,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "sepan.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sepan Adil Mustafa"
   },
   {
     "id": "emp_157",
@@ -2624,7 +2722,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hawsh R Abdullah Jawhar"
   },
   {
     "id": "emp_160",
@@ -2646,7 +2745,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Rwbyth N Ibrahim"
   },
   {
     "id": "emp_161",
@@ -2668,7 +2768,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "sepan.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Arh Sh Luqman Hkym"
   },
   {
     "id": "emp_162",
@@ -2690,7 +2791,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ali.al-ameli@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Srdar Abdullah"
   },
   {
     "id": "emp_165",
@@ -2712,7 +2814,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mardyn Sabah Sadw"
   },
   {
     "id": "emp_166",
@@ -2734,7 +2837,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zyman Mohammed Khidhir"
   },
   {
     "id": "emp_167",
@@ -2756,7 +2860,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Srab Attar Sdraldyn"
   },
   {
     "id": "emp_168",
@@ -2778,7 +2883,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "sepan.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Myfan Adil Mustafa"
   },
   {
     "id": "emp_170",
@@ -2800,7 +2906,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "sepan.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ashh Ahmed Hussein"
   },
   {
     "id": "emp_172",
@@ -2822,7 +2929,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Haydh Hussein Ahmed"
   },
   {
     "id": "emp_175",
@@ -2844,7 +2952,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sarah Sadwn Shareef"
   },
   {
     "id": "emp_176",
@@ -2866,7 +2975,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zyar Shada Hamad Ameen"
   },
   {
     "id": "emp_177",
@@ -2888,7 +2998,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Aya Askr Musa"
   },
   {
     "id": "emp_181",
@@ -2910,7 +3021,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nadyh Saad Mhmdsayd"
   },
   {
     "id": "emp_182",
@@ -2932,7 +3044,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ismayl Ahmed Omer"
   },
   {
     "id": "emp_184",
@@ -2954,7 +3067,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "dedan.diler@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ryam Shakir Najm"
   },
   {
     "id": "emp_185",
@@ -2976,7 +3090,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zynh Omer Taha"
   },
   {
     "id": "emp_186",
@@ -2998,7 +3113,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Fadhl Sabr"
   },
   {
     "id": "emp_187",
@@ -3020,7 +3136,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Salih Hamad Ali"
   },
   {
     "id": "emp_189",
@@ -3042,7 +3159,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nazly Hamad Ameen Ahmed"
   },
   {
     "id": "emp_190",
@@ -3064,7 +3182,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Moayad Ali"
   },
   {
     "id": "emp_191",
@@ -3086,7 +3205,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nhad Nhrw Othman"
   },
   {
     "id": "emp_192",
@@ -3108,7 +3228,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ashna Rshad Rafeeq"
   },
   {
     "id": "emp_193",
@@ -3130,7 +3251,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Jawhar Ahmed"
   },
   {
     "id": "emp_194",
@@ -3152,7 +3274,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hh Wryn Babyr Mustafa"
   },
   {
     "id": "emp_198",
@@ -3174,7 +3297,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dlfyn Omer Rhman"
   },
   {
     "id": "emp_199",
@@ -3196,7 +3320,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Renas Hwshyar Khidhir"
   },
   {
     "id": "emp_200",
@@ -3218,7 +3343,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sarah Raid Farooq"
   },
   {
     "id": "emp_201",
@@ -3240,7 +3366,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Naz Salahaldeen Aziz"
   },
   {
     "id": "emp_202",
@@ -3262,7 +3389,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Aylaf Haidar Qadir"
   },
   {
     "id": "emp_204",
@@ -3284,7 +3412,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hkar Abdulkhaliq Ameen"
   },
   {
     "id": "emp_205",
@@ -3306,7 +3435,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hymn Mohammed Aziz"
   },
   {
     "id": "emp_206",
@@ -3328,7 +3458,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed AbdulQhar Abdulqader"
   },
   {
     "id": "emp_207",
@@ -3350,7 +3481,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Whyd Mahmoud"
   },
   {
     "id": "emp_208",
@@ -3372,7 +3504,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Tafkh Hamd Mohammed"
   },
   {
     "id": "emp_212",
@@ -3394,7 +3527,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ziyad Aslam Naman"
   },
   {
     "id": "emp_213",
@@ -3416,7 +3550,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Malk Antr Bkr"
   },
   {
     "id": "emp_214",
@@ -3438,7 +3573,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hani Ahmed Salih"
   },
   {
     "id": "emp_215",
@@ -3460,7 +3596,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rana Khalil Ibrahim"
   },
   {
     "id": "emp_216",
@@ -3482,7 +3619,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hiwa Hama Shareef Hamad"
   },
   {
     "id": "emp_217",
@@ -3504,7 +3642,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Yaseen Lateef"
   },
   {
     "id": "emp_218",
@@ -3526,7 +3665,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abwbkr Amyd Mustafa"
   },
   {
     "id": "emp_219",
@@ -3548,7 +3688,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Waleed Dilshad Ibrahim"
   },
   {
     "id": "emp_220",
@@ -3570,7 +3711,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Harwn Rasheed Qadir"
   },
   {
     "id": "emp_221",
@@ -3592,7 +3734,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zalh Sherzad Khidhir"
   },
   {
     "id": "emp_223",
@@ -3614,7 +3757,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Hani Ahmed"
   },
   {
     "id": "emp_225",
@@ -3636,7 +3780,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "omer.ayad@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Raad Saad Musa"
   },
   {
     "id": "emp_226",
@@ -3658,7 +3803,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ali.al-ameli@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Al-Yas Fwzy Hassan"
   },
   {
     "id": "emp_228",
@@ -3680,7 +3826,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Kwrdstan Shyrw Hajy"
   },
   {
     "id": "emp_231",
@@ -3702,7 +3849,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Asawr Khudhair Abbas"
   },
   {
     "id": "emp_232",
@@ -3724,7 +3872,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nisreen.sattar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdullah Amer Najm"
   },
   {
     "id": "emp_233",
@@ -3746,7 +3895,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ryfyn Adil Rhmh Al-Lh"
   },
   {
     "id": "emp_235",
@@ -3768,7 +3918,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Alan Majeed Babalh"
   },
   {
     "id": "emp_237",
@@ -3790,7 +3941,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Nadhem Mohammed"
   },
   {
     "id": "emp_238",
@@ -3812,7 +3964,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Omer Abdullah"
   },
   {
     "id": "emp_239",
@@ -3834,7 +3987,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zh Yd Slar Ahmed"
   },
   {
     "id": "emp_240",
@@ -3856,7 +4010,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rghِd Abbas Saad"
   },
   {
     "id": "emp_244",
@@ -3878,7 +4033,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "sepan.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hh Rda Jalal Kareem"
   },
   {
     "id": "emp_246",
@@ -3900,7 +4056,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Brjyn Dywaly Majeed"
   },
   {
     "id": "emp_250",
@@ -3922,7 +4079,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Amnyh Frat Shakir"
   },
   {
     "id": "emp_251",
@@ -3944,7 +4102,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ruaa.mowafaq@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Dhrar Lutfi"
   },
   {
     "id": "emp_252",
@@ -3966,7 +4125,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Lazm Madhy"
   },
   {
     "id": "emp_255",
@@ -3988,7 +4148,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hamnw Dilshad Musa"
   },
   {
     "id": "emp_256",
@@ -4010,7 +4171,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Bnaz Sattar AbdulLa"
   },
   {
     "id": "emp_257",
@@ -4032,7 +4194,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "mohammed.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Israa Jassim Jawad"
   },
   {
     "id": "emp_258",
@@ -4054,7 +4217,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Anas Wajdi Adil"
   },
   {
     "id": "emp_264",
@@ -4076,7 +4240,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "anfal.salman@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Taha Yaseen"
   },
   {
     "id": "emp_265",
@@ -4098,7 +4263,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mustafa Khidhir Abbas"
   },
   {
     "id": "emp_267",
@@ -4120,7 +4286,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dana Dhahir Ahmed"
   },
   {
     "id": "emp_269",
@@ -4142,7 +4309,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ibrahim Shh Mal Mohammed Ameen"
   },
   {
     "id": "emp_270",
@@ -4164,7 +4332,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dlal Fqy Shanh"
   },
   {
     "id": "emp_290",
@@ -4186,7 +4355,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "omer.ayad@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdulsettar Mohammed Basim"
   },
   {
     "id": "emp_296",
@@ -4208,7 +4378,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.alqawaela@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Abdulrahman Mohammed Al-Qwalh"
   },
   {
     "id": "emp_299",
@@ -4230,7 +4401,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "anfal.salman@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Falah Hassan Khalil Kwksh"
   },
   {
     "id": "emp_300",
@@ -4252,7 +4424,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "mohammed.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Marwan Ahmed Shkry Al-Rymawy"
   },
   {
     "id": "emp_301",
@@ -4274,7 +4447,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Bsam Yousif Awn"
   },
   {
     "id": "emp_302",
@@ -4296,7 +4470,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Jalal Mahmoud Salih Burghol"
   },
   {
     "id": "emp_306",
@@ -4318,7 +4493,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yasar.alshawawreh@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Jamal Farooq Al-Msry"
   },
   {
     "id": "emp_307",
@@ -4340,7 +4516,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.alhayek@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdulrahman Hisham Adnan Al-Hayek"
   },
   {
     "id": "emp_308",
@@ -4362,7 +4539,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Aya Aqeel Mtshr"
   },
   {
     "id": "emp_310",
@@ -4384,7 +4562,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.alqawaela@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Haidar Adhyd Hameed"
   },
   {
     "id": "emp_311",
@@ -4406,7 +4585,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rywar AbdulSattar Hamad"
   },
   {
     "id": "emp_315",
@@ -4428,7 +4608,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Taha Tghlb Brhanaldeen"
   },
   {
     "id": "emp_316",
@@ -4450,7 +4631,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zahraa Arkan Mehdi"
   },
   {
     "id": "emp_318",
@@ -4472,7 +4654,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ruaa.mowafaq@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Yahya AbdulSattar"
   },
   {
     "id": "emp_320",
@@ -4494,7 +4677,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nba Ahmed Sabri"
   },
   {
     "id": "emp_321",
@@ -4516,7 +4700,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.alqawaela@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Riyadh Hassan"
   },
   {
     "id": "emp_322",
@@ -4538,7 +4723,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.alqawaela@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Brzy Bdrkhan Ahmed"
   },
   {
     "id": "emp_323",
@@ -4560,7 +4746,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdullah Miqdad Abdullah"
   },
   {
     "id": "emp_324",
@@ -4582,7 +4769,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shyraz Nryman Tawfeeq"
   },
   {
     "id": "emp_325",
@@ -4604,7 +4792,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Lafya Bkhtyar Kamal"
   },
   {
     "id": "emp_326",
@@ -4626,7 +4815,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shr Mohammed Mehdi AbdulKareem"
   },
   {
     "id": "emp_327",
@@ -4648,7 +4838,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rh Nj Abdullah Qadir"
   },
   {
     "id": "emp_328",
@@ -4670,7 +4861,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Kwlan Hkmt Mohammed"
   },
   {
     "id": "emp_330",
@@ -4692,7 +4884,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Alyn Ismail Ali"
   },
   {
     "id": "emp_334",
@@ -4714,7 +4907,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Jalil Mohammed"
   },
   {
     "id": "emp_336",
@@ -4736,7 +4930,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Rwstm Omer"
   },
   {
     "id": "emp_337",
@@ -4758,7 +4953,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Akar Diyar Omer"
   },
   {
     "id": "emp_339",
@@ -4780,7 +4976,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ala Sattar Kareem"
   },
   {
     "id": "emp_340",
@@ -4802,7 +4999,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ankido Buya Sadh"
   },
   {
     "id": "emp_341",
@@ -4824,7 +5022,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Aya Yaseen AbdulRhmn"
   },
   {
     "id": "emp_342",
@@ -4846,7 +5045,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Azad Mohammed Abdullah"
   },
   {
     "id": "emp_343",
@@ -4868,7 +5068,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Banh Frya Ahmed"
   },
   {
     "id": "emp_344",
@@ -4890,7 +5091,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dhuha Khanjer Nwra"
   },
   {
     "id": "emp_345",
@@ -4912,7 +5114,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Frmysk Younis Awzyr"
   },
   {
     "id": "emp_347",
@@ -4934,7 +5137,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Haseeb Adeeb Mhyaldeen"
   },
   {
     "id": "emp_348",
@@ -4956,7 +5160,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hewr Adnan Ismail"
   },
   {
     "id": "emp_349",
@@ -4978,7 +5183,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Kani Sami Othman"
   },
   {
     "id": "emp_350",
@@ -5000,7 +5206,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Lanh Hh Lmh T Rafeeq"
   },
   {
     "id": "emp_351",
@@ -5022,7 +5229,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Lara Kamil Mohammed Saleem"
   },
   {
     "id": "emp_353",
@@ -5044,7 +5252,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Azad Sabr"
   },
   {
     "id": "emp_356",
@@ -5066,7 +5275,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Jihad Nwry"
   },
   {
     "id": "emp_357",
@@ -5088,7 +5298,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Dilshad Omer"
   },
   {
     "id": "emp_358",
@@ -5110,7 +5321,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mjdh Omer Ali"
   },
   {
     "id": "emp_360",
@@ -5132,7 +5344,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nh Wyn Maadh Mohammed"
   },
   {
     "id": "emp_361",
@@ -5154,7 +5367,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "omer.ayad@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Noor Nawzad Aziz"
   },
   {
     "id": "emp_362",
@@ -5176,7 +5390,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ossama Saadi Mahmoud"
   },
   {
     "id": "emp_363",
@@ -5198,7 +5413,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.alhayek@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Brwyn Sabah Saeed"
   },
   {
     "id": "emp_364",
@@ -5220,7 +5436,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rabh R Majeed Mohammed"
   },
   {
     "id": "emp_365",
@@ -5242,7 +5459,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rh Sh N Ismail Musa"
   },
   {
     "id": "emp_366",
@@ -5264,7 +5482,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sja Bashar Anwar"
   },
   {
     "id": "emp_367",
@@ -5286,7 +5505,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sana Diler Fouad"
   },
   {
     "id": "emp_368",
@@ -5308,7 +5528,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sarbaz Namiq Hassan"
   },
   {
     "id": "emp_369",
@@ -5330,7 +5551,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sawyn Srtyb Hussein"
   },
   {
     "id": "emp_370",
@@ -5352,7 +5574,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shireen Wysy Saeed"
   },
   {
     "id": "emp_371",
@@ -5374,7 +5597,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Swma Sherko Mohammed"
   },
   {
     "id": "emp_372",
@@ -5396,7 +5620,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Taban Sirwan Jalal"
   },
   {
     "id": "emp_373",
@@ -5418,7 +5643,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Younis Kamal Ahmed"
   },
   {
     "id": "emp_374",
@@ -5440,7 +5666,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Yousif Rasheed Drwysh"
   },
   {
     "id": "emp_375",
@@ -5462,7 +5689,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zahraa Yousif Tawfeeq"
   },
   {
     "id": "emp_376",
@@ -5484,7 +5712,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zainab Khalid Rasheed"
   },
   {
     "id": "emp_377",
@@ -5506,7 +5735,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zala Sherzad Salam"
   },
   {
     "id": "emp_378",
@@ -5528,7 +5758,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "leena.yaseen@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ayat Nafa Sami"
   },
   {
     "id": "emp_379",
@@ -5550,7 +5781,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sarah Khsrw Khdr"
   },
   {
     "id": "emp_381",
@@ -5572,7 +5804,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shahab Ahmed Mohammed Salih"
   },
   {
     "id": "emp_382",
@@ -5594,7 +5827,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ismail Majeed Ahmed"
   },
   {
     "id": "emp_383",
@@ -5616,7 +5850,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "anfal.salman@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Tybh Alaa Naseef"
   },
   {
     "id": "emp_384",
@@ -5638,7 +5873,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Barzan Qadir"
   },
   {
     "id": "emp_385",
@@ -5660,7 +5896,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shwkhan Othman Hama Salih"
   },
   {
     "id": "emp_386",
@@ -5682,7 +5919,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Jabr Hassan Hwlh"
   },
   {
     "id": "emp_388",
@@ -5704,7 +5942,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "sepan.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mardyn Luqman Omer"
   },
   {
     "id": "emp_389",
@@ -5726,7 +5965,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Musa Hussein Hameed"
   },
   {
     "id": "emp_390",
@@ -5748,7 +5988,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rasha Baqir Jassim"
   },
   {
     "id": "emp_391",
@@ -5770,7 +6011,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Danyh Ammar AbdulQadir"
   },
   {
     "id": "emp_392",
@@ -5792,7 +6034,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hassan Falah Nasser"
   },
   {
     "id": "emp_393",
@@ -5814,7 +6057,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Ali Hussein"
   },
   {
     "id": "emp_394",
@@ -5836,7 +6080,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ruaa.mowafaq@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Ahmed Ali"
   },
   {
     "id": "emp_396",
@@ -5858,7 +6103,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abbas Hassan Mhwt"
   },
   {
     "id": "emp_399",
@@ -5880,7 +6126,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Mansoor Msk"
   },
   {
     "id": "emp_400",
@@ -5902,7 +6149,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mais Raad Mohammed"
   },
   {
     "id": "emp_402",
@@ -5924,7 +6172,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Bh Ryz Saeed AbdulRaheem"
   },
   {
     "id": "emp_403",
@@ -5946,7 +6195,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hyrw Sherzad Mohammed"
   },
   {
     "id": "emp_407",
@@ -5968,7 +6218,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nwraldyn Riyadh Mahmoud"
   },
   {
     "id": "emp_411",
@@ -5990,7 +6241,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rasool Abdulsahib Anybr"
   },
   {
     "id": "emp_413",
@@ -6012,7 +6264,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Anwar Ali Abwd"
   },
   {
     "id": "emp_415",
@@ -6034,7 +6287,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Khalid Hameed"
   },
   {
     "id": "emp_416",
@@ -6056,7 +6310,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Adnan Ahmed Abdo Zakariya"
   },
   {
     "id": "emp_417",
@@ -6078,7 +6333,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Fatnh Abdulrahman Al-Mmlwk"
   },
   {
     "id": "emp_423",
@@ -6100,7 +6356,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Maryam Sabeeh Hassan"
   },
   {
     "id": "emp_424",
@@ -6122,7 +6379,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mrwh Khalil Ali"
   },
   {
     "id": "emp_425",
@@ -6144,7 +6402,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yasar.alshawawreh@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Yasar Abdulqader Hamad Al-Shawawreh"
   },
   {
     "id": "emp_426",
@@ -6166,7 +6425,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.alqawaela@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Basheer Alaaaldeen Jihad"
   },
   {
     "id": "emp_427",
@@ -6188,7 +6448,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.alhayek@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Byan Rasheed Hussein"
   },
   {
     "id": "emp_429",
@@ -6210,7 +6471,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rabh R Hussein Mla"
   },
   {
     "id": "emp_431",
@@ -6232,7 +6494,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zainab Mohammed Aziz"
   },
   {
     "id": "emp_432",
@@ -6254,7 +6517,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sarah Diler Rshdy"
   },
   {
     "id": "emp_433",
@@ -6276,7 +6540,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Soran Brhan Rasheed"
   },
   {
     "id": "emp_434",
@@ -6298,7 +6563,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.alhayek@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sydrh Slyman Asaad"
   },
   {
     "id": "emp_435",
@@ -6320,7 +6586,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shh Mal Mohammed Rasool"
   },
   {
     "id": "emp_436",
@@ -6342,7 +6609,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Ahmed Mohammed"
   },
   {
     "id": "emp_437",
@@ -6364,7 +6632,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.alhayek@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Hama Saeed Hama Shareef"
   },
   {
     "id": "emp_438",
@@ -6386,7 +6655,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Raheem Hamad"
   },
   {
     "id": "emp_439",
@@ -6408,7 +6678,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.alhayek@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Yousif Ali"
   },
   {
     "id": "emp_440",
@@ -6430,7 +6701,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mؤmn Jalal Kareem"
   },
   {
     "id": "emp_441",
@@ -6452,7 +6724,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.alhayek@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mina Tariq Omer"
   },
   {
     "id": "emp_442",
@@ -6474,7 +6747,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nh Hawnd Awni Ahmed"
   },
   {
     "id": "emp_446",
@@ -6496,7 +6770,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sajjad Mad Mohammed"
   },
   {
     "id": "emp_449",
@@ -6518,7 +6793,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "AbdulMؤmn Abdulsalam Abdulkarim"
   },
   {
     "id": "emp_450",
@@ -6540,7 +6816,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Blasm Taha"
   },
   {
     "id": "emp_451",
@@ -6562,7 +6839,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Anmar Mohammed Khidhir"
   },
   {
     "id": "emp_452",
@@ -6584,7 +6862,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hussein Qasim Mohammed"
   },
   {
     "id": "emp_453",
@@ -6606,7 +6885,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Duaa Ahmed Kareem"
   },
   {
     "id": "emp_456",
@@ -6628,7 +6908,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.alhayek@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rh Wa Srdar Ahmed"
   },
   {
     "id": "emp_457",
@@ -6650,7 +6931,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.alhayek@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sarah Waleed Faris"
   },
   {
     "id": "emp_458",
@@ -6672,7 +6954,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Firas Abdulrazzaq Jawad"
   },
   {
     "id": "emp_459",
@@ -6694,7 +6977,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Abdulaziz Ismail"
   },
   {
     "id": "emp_460",
@@ -6716,7 +7000,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ala Ayad Fadhl"
   },
   {
     "id": "emp_461",
@@ -6738,7 +7023,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zainab Laith Rasheed"
   },
   {
     "id": "emp_462",
@@ -6760,7 +7046,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "omer.ayad@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mina Nameer Fakhri"
   },
   {
     "id": "emp_463",
@@ -6782,7 +7069,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rawan Mahmoud Ahmed"
   },
   {
     "id": "emp_464",
@@ -6804,7 +7092,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.alqawaela@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Baqir Asaad Mhmdaly"
   },
   {
     "id": "emp_465",
@@ -6826,7 +7115,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.alqawaela@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Mustafa Njyb"
   },
   {
     "id": "emp_466",
@@ -6848,7 +7138,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Dhahir Abdulrazzaq"
   },
   {
     "id": "emp_467",
@@ -6870,7 +7161,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rawyz Abdulrazzaq Mohammed Tahir"
   },
   {
     "id": "emp_468",
@@ -6892,7 +7184,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Jawad AbdulKadhim"
   },
   {
     "id": "emp_470",
@@ -6914,7 +7207,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Ibrahim Abwd"
   },
   {
     "id": "emp_471",
@@ -6936,7 +7230,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Hazim Sattar"
   },
   {
     "id": "emp_472",
@@ -6958,7 +7253,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Yasser Yaqoob Yousif"
   },
   {
     "id": "emp_473",
@@ -6980,7 +7276,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ibrahim Waddah AbdulGhfwr"
   },
   {
     "id": "emp_474",
@@ -7002,7 +7299,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "mohammed.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Adm Mohammed Abdullah"
   },
   {
     "id": "emp_475",
@@ -7024,7 +7322,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nwraldyn Ali Abbas"
   },
   {
     "id": "emp_478",
@@ -7046,7 +7345,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mjbl Atif Mjbl"
   },
   {
     "id": "emp_480",
@@ -7068,7 +7368,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shams Ali Sadiq"
   },
   {
     "id": "emp_481",
@@ -7090,7 +7391,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rania Abdullah Najm"
   },
   {
     "id": "emp_482",
@@ -7112,7 +7414,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "sepan.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zainab Omer Qadir"
   },
   {
     "id": "emp_483",
@@ -7134,7 +7437,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Danyar Hama Tahir Fqa Mohammed"
   },
   {
     "id": "emp_484",
@@ -7156,7 +7460,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nizar Ali Omer"
   },
   {
     "id": "emp_485",
@@ -7178,7 +7483,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Lanh Shwkt Tyb"
   },
   {
     "id": "emp_486",
@@ -7200,7 +7506,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Bh Sar Jamal Asaad"
   },
   {
     "id": "emp_489",
@@ -7222,7 +7529,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Khalid Firas Khalid"
   },
   {
     "id": "emp_490",
@@ -7244,7 +7552,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "H Za Soran Mohammed"
   },
   {
     "id": "emp_491",
@@ -7266,7 +7575,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Khidhir Mohammed"
   },
   {
     "id": "emp_493",
@@ -7288,7 +7598,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Mohammed Aziz"
   },
   {
     "id": "emp_494",
@@ -7310,7 +7621,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mhmdsadq Raid Ibrahim"
   },
   {
     "id": "emp_495",
@@ -7332,7 +7644,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "dedan.diler@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Fryad Khidhir Saleem"
   },
   {
     "id": "emp_496",
@@ -7354,7 +7667,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "dedan.diler@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Awrfa Ismail Kamal"
   },
   {
     "id": "emp_497",
@@ -7376,7 +7690,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Asamh Shakir Mahmoud"
   },
   {
     "id": "emp_499",
@@ -7398,7 +7713,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sajjad Asaad AbdulZhrh"
   },
   {
     "id": "emp_500",
@@ -7420,7 +7736,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Adm Naseer Salah"
   },
   {
     "id": "emp_502",
@@ -7442,7 +7759,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Wmyd Salih Ahmed"
   },
   {
     "id": "emp_503",
@@ -7464,7 +7782,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "H Lnd Hwar Ismail"
   },
   {
     "id": "emp_505",
@@ -7486,7 +7805,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rh Nw Mmnd Hassan"
   },
   {
     "id": "emp_506",
@@ -7508,7 +7828,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Lafyn Mslh Khalil"
   },
   {
     "id": "emp_507",
@@ -7530,7 +7851,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mokhalad Mdht Ali"
   },
   {
     "id": "emp_509",
@@ -7552,7 +7874,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "sepan.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Abdulhameed Qadir"
   },
   {
     "id": "emp_510",
@@ -7574,7 +7897,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dyakw Jaafar Lateef"
   },
   {
     "id": "emp_512",
@@ -7596,7 +7920,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Bh Lyn Ibrahim Hamad Ameen"
   },
   {
     "id": "emp_513",
@@ -7618,7 +7943,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hana Sarkawt Mohammed"
   },
   {
     "id": "emp_514",
@@ -7640,7 +7966,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Majeed Ali Khan Majeed"
   },
   {
     "id": "emp_515",
@@ -7662,7 +7989,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mh Rywan Rizgar Hassan"
   },
   {
     "id": "emp_516",
@@ -7684,7 +8012,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rebwar Zra Ali"
   },
   {
     "id": "emp_517",
@@ -7706,7 +8035,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hawzyn Omer Jabbar"
   },
   {
     "id": "emp_518",
@@ -7728,7 +8058,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Renas Yaseen Mohammed"
   },
   {
     "id": "emp_519",
@@ -7750,7 +8081,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hh Wal Abdullah Khidhir"
   },
   {
     "id": "emp_520",
@@ -7772,7 +8104,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shadi Nwraldyn Abdullah"
   },
   {
     "id": "emp_521",
@@ -7794,7 +8127,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Fala Ali Mohammed"
   },
   {
     "id": "emp_522",
@@ -7816,7 +8150,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zynh Ahmed Qadir"
   },
   {
     "id": "emp_523",
@@ -7838,7 +8173,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ardlan Anwar Kareem"
   },
   {
     "id": "emp_524",
@@ -7860,7 +8196,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dydar Omer Marwf"
   },
   {
     "id": "emp_525",
@@ -7882,7 +8219,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ismail AbdulQadir Mustafa"
   },
   {
     "id": "emp_526",
@@ -7904,7 +8242,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Lh Ra Shyrwan Abdulrahman"
   },
   {
     "id": "emp_527",
@@ -7926,7 +8265,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Aylaf Saifaldeen Abdulrahman"
   },
   {
     "id": "emp_528",
@@ -7948,7 +8288,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ayoob Ahmed Akram"
   },
   {
     "id": "emp_529",
@@ -7970,7 +8311,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ayoob Abbas Mlkw"
   },
   {
     "id": "emp_530",
@@ -7992,7 +8334,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Bsam Sherzad Majeed"
   },
   {
     "id": "emp_531",
@@ -8014,7 +8357,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ramyar Akram Ahmed"
   },
   {
     "id": "emp_532",
@@ -8036,7 +8380,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ryan Tahir Aziz"
   },
   {
     "id": "emp_533",
@@ -8058,7 +8403,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zyd Moayad Salih"
   },
   {
     "id": "emp_534",
@@ -8080,7 +8426,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Saad Hassan Mustafa"
   },
   {
     "id": "emp_536",
@@ -8102,7 +8449,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Syma Salam Yaqoob"
   },
   {
     "id": "emp_539",
@@ -8124,7 +8472,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Kamyar Yousif Khidhir"
   },
   {
     "id": "emp_540",
@@ -8146,7 +8495,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Mustafa Ismail"
   },
   {
     "id": "emp_541",
@@ -8168,7 +8518,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Ismail Jalil"
   },
   {
     "id": "emp_542",
@@ -8190,7 +8541,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nykar Ghfwr Othman"
   },
   {
     "id": "emp_543",
@@ -8212,7 +8564,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Maryam Rebwar Mohammed"
   },
   {
     "id": "emp_544",
@@ -8234,7 +8587,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nsar Jamal Ahmed"
   },
   {
     "id": "emp_545",
@@ -8256,7 +8610,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Ndhyr Mohammed Shareef"
   },
   {
     "id": "emp_547",
@@ -8278,7 +8633,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Jamal Mal Al-Lh"
   },
   {
     "id": "emp_548",
@@ -8300,7 +8656,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sh Nkh R Mohammed Mustafa"
   },
   {
     "id": "emp_549",
@@ -8322,7 +8679,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Raid Njyb Knw"
   },
   {
     "id": "emp_550",
@@ -8344,7 +8702,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdullah Omer Aziz"
   },
   {
     "id": "emp_551",
@@ -8366,7 +8725,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Omer Yasser Abdulsettar"
   },
   {
     "id": "emp_552",
@@ -8388,7 +8748,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shahad AbdulWahd Musa"
   },
   {
     "id": "emp_553",
@@ -8410,7 +8771,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdulrahman Tahir Abdullah"
   },
   {
     "id": "emp_554",
@@ -8432,7 +8794,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Waddah Abdulhadi Abd Ali"
   },
   {
     "id": "emp_555",
@@ -8454,7 +8817,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Byshkw Aryan Ahmed"
   },
   {
     "id": "emp_556",
@@ -8476,7 +8840,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Jamal Jaafar"
   },
   {
     "id": "emp_557",
@@ -8498,7 +8863,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Wissam Sherzad Majeed"
   },
   {
     "id": "emp_558",
@@ -8520,7 +8886,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Jrw Abwbkr Ahmed"
   },
   {
     "id": "emp_559",
@@ -8542,7 +8909,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdullah Ahmed Abdulhassan"
   },
   {
     "id": "emp_560",
@@ -8564,7 +8932,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zainab Mythm Muneam"
   },
   {
     "id": "emp_561",
@@ -8586,7 +8955,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Rasheed Mahmoud"
   },
   {
     "id": "emp_562",
@@ -8608,7 +8978,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shahad Hazim Hameed"
   },
   {
     "id": "emp_563",
@@ -8630,7 +9001,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Qys Abdulrahman"
   },
   {
     "id": "emp_564",
@@ -8652,7 +9024,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Aslam Faris Mohammed Ibrahim"
   },
   {
     "id": "emp_565",
@@ -8674,7 +9047,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Myran Kawan Hama Kareem"
   },
   {
     "id": "emp_566",
@@ -8696,7 +9070,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Simon Rafid Yousif"
   },
   {
     "id": "emp_567",
@@ -8718,7 +9093,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Noor Bahaa Mohammed"
   },
   {
     "id": "emp_568",
@@ -8740,7 +9116,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rana Ali Hussein"
   },
   {
     "id": "emp_569",
@@ -8762,7 +9139,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "wael.alqadi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rwdaw Abdulrahman Abdullah"
   },
   {
     "id": "emp_570",
@@ -8784,7 +9162,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Bywar Rasheed Ahmed"
   },
   {
     "id": "emp_571",
@@ -8806,7 +9185,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "wael.alqadi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Wael Abbas Farman Al-Qadi"
   },
   {
     "id": "emp_572",
@@ -8828,7 +9208,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "wael.alqadi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Azt Haidar Adnan"
   },
   {
     "id": "emp_573",
@@ -8850,7 +9231,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "wael.alqadi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Zyrh K Basheer"
   },
   {
     "id": "emp_574",
@@ -8872,7 +9254,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "omer.ayad@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Omer Ayad Hamdi"
   },
   {
     "id": "emp_575",
@@ -8894,7 +9277,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Kazfan Wrya Ali"
   },
   {
     "id": "emp_576",
@@ -8916,7 +9300,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Reem Mehdi Ali Al-Khfajy"
   },
   {
     "id": "emp_577",
@@ -8938,7 +9323,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Abdulsalam AbdulSattar"
   },
   {
     "id": "emp_578",
@@ -8960,7 +9346,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Kawan Khalid Baqir"
   },
   {
     "id": "emp_579",
@@ -8982,7 +9369,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Fatn Ali Hussein"
   },
   {
     "id": "emp_580",
@@ -9004,7 +9392,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.alhayek@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Danya Jalal Ahmed"
   },
   {
     "id": "emp_582",
@@ -9026,7 +9415,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "omer.ayad@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ossama Arkan Hameed"
   },
   {
     "id": "emp_583",
@@ -9048,7 +9438,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ali.al-ameli@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Mohammed Hassan AbdulAbbas Al-Ameli"
   },
   {
     "id": "emp_584",
@@ -9070,7 +9461,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Salam Saddam Mohammed Rasheed"
   },
   {
     "id": "emp_585",
@@ -9092,7 +9484,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ammar Hussein Salih"
   },
   {
     "id": "emp_586",
@@ -9114,7 +9507,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Haneen AbdulKareem Askndr"
   },
   {
     "id": "emp_587",
@@ -9136,7 +9530,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Khalil Akbr"
   },
   {
     "id": "emp_589",
@@ -9158,7 +9553,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Abd Ibrahim"
   },
   {
     "id": "emp_591",
@@ -9180,7 +9576,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Afan Ahmed Al-Yas"
   },
   {
     "id": "emp_594",
@@ -9202,7 +9599,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "omer.ayad@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Laith Mohammed"
   },
   {
     "id": "emp_595",
@@ -9224,7 +9622,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "mohammed.adil@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ghfran Thaer Jassim"
   },
   {
     "id": "emp_596",
@@ -9246,7 +9645,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "dedan.diler@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Al-An Mohammed Maswm"
   },
   {
     "id": "emp_597",
@@ -9268,7 +9668,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Abbas Makki"
   },
   {
     "id": "emp_598",
@@ -9290,7 +9691,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Khalid Mohammed Tla"
   },
   {
     "id": "emp_600",
@@ -9312,7 +9714,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Fatima Ziyad AbdulAmyr"
   },
   {
     "id": "emp_601",
@@ -9334,7 +9737,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rsl Sattar Abd"
   },
   {
     "id": "emp_602",
@@ -9356,7 +9760,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Younis Khalid AbdulGhfwr"
   },
   {
     "id": "emp_603",
@@ -9378,7 +9783,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Snan Awni Khidhir"
   },
   {
     "id": "emp_605",
@@ -9400,7 +9806,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nisreen.sattar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rwah Saad Rzwqy"
   },
   {
     "id": "emp_606",
@@ -9422,7 +9829,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nisreen.sattar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Qasim Sabt"
   },
   {
     "id": "emp_607",
@@ -9444,7 +9852,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Al-Nd Azwr Mhmdamyn"
   },
   {
     "id": "emp_609",
@@ -9466,7 +9875,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nja Shfya Mohammed"
   },
   {
     "id": "emp_610",
@@ -9488,7 +9898,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Othman Abw Bkr Ahmed"
   },
   {
     "id": "emp_611",
@@ -9510,7 +9921,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Byrwz Rhmn Qadir"
   },
   {
     "id": "emp_612",
@@ -9532,7 +9944,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Fouad Sawd Mhta"
   },
   {
     "id": "emp_613",
@@ -9554,7 +9967,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Faris Mhawsh"
   },
   {
     "id": "emp_614",
@@ -9576,7 +9990,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abbas Sadiq Wady"
   },
   {
     "id": "emp_616",
@@ -9598,7 +10013,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Asmaa Samir Mahmoud"
   },
   {
     "id": "emp_617",
@@ -9620,7 +10036,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zainab Ali Aysa"
   },
   {
     "id": "emp_618",
@@ -9642,7 +10059,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Muna Abdulhassan Jabr"
   },
   {
     "id": "emp_619",
@@ -9664,7 +10082,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.alqawaela@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Skfan Kamil"
   },
   {
     "id": "emp_621",
@@ -9686,7 +10105,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hsnyn Thaer Hassan"
   },
   {
     "id": "emp_622",
@@ -9708,7 +10128,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Walaa Hassan Ali"
   },
   {
     "id": "emp_623",
@@ -9730,7 +10151,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hwra Waleed Hamad"
   },
   {
     "id": "emp_624",
@@ -9752,7 +10174,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ali.al-ameli@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Abdulrazzaq Ahmed"
   },
   {
     "id": "emp_625",
@@ -9774,7 +10197,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ali.al-ameli@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Thamr Jaafar"
   },
   {
     "id": "emp_626",
@@ -9796,7 +10220,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ahmed.alqawaela@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Waleed Fth Al-Lh"
   },
   {
     "id": "emp_627",
@@ -9818,7 +10243,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rand Mntdhr Hmzh"
   },
   {
     "id": "emp_628",
@@ -9840,7 +10266,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Aya Qusay Abdulqader"
   },
   {
     "id": "emp_629",
@@ -9862,7 +10289,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Jwan Samir Abdulsahib"
   },
   {
     "id": "emp_630",
@@ -9884,7 +10312,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mؤml Issam Mohsen"
   },
   {
     "id": "emp_631",
@@ -9906,7 +10335,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zainab Bashar Ata Al-Lh"
   },
   {
     "id": "emp_632",
@@ -9928,7 +10358,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dja Ady Talal"
   },
   {
     "id": "emp_633",
@@ -9950,7 +10381,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Nabil Kadhim"
   },
   {
     "id": "emp_634",
@@ -9972,7 +10404,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Abdullah Anad"
   },
   {
     "id": "emp_636",
@@ -9994,7 +10427,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Muneam Saad Hameed"
   },
   {
     "id": "emp_639",
@@ -10016,7 +10450,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rasool Mohammed Abd"
   },
   {
     "id": "emp_640",
@@ -10038,7 +10473,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Tmym Kadhim Dakhl"
   },
   {
     "id": "emp_641",
@@ -10060,7 +10496,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "anfal.salman@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rasool Nahy Jawad"
   },
   {
     "id": "emp_642",
@@ -10082,7 +10519,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Swlaf Haidar Ghazi"
   },
   {
     "id": "emp_670",
@@ -10104,7 +10542,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Duaa Raid Khalid"
   },
   {
     "id": "emp_671",
@@ -10126,7 +10565,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zainab Raad Hanoon"
   },
   {
     "id": "emp_643",
@@ -10148,7 +10588,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Awnyl Kmyl Shmawn"
   },
   {
     "id": "emp_644",
@@ -10170,7 +10611,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali AbdulKareem Othman"
   },
   {
     "id": "emp_645",
@@ -10192,7 +10634,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Bzar Omer Mhyaldeen"
   },
   {
     "id": "emp_646",
@@ -10214,7 +10657,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Dhahir Mustafa"
   },
   {
     "id": "emp_647",
@@ -10236,7 +10680,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "wael.alqadi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mahmoud Saad Othman"
   },
   {
     "id": "emp_648",
@@ -10258,7 +10703,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Snharyb Anwya Bwls"
   },
   {
     "id": "emp_649",
@@ -10280,7 +10726,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hnan Fynar Yaqoob"
   },
   {
     "id": "emp_650",
@@ -10302,7 +10749,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "AbdulRhmn AbdulKhalq Mohsen"
   },
   {
     "id": "emp_651",
@@ -10324,7 +10772,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Bh Yam Idris Othman"
   },
   {
     "id": "emp_652",
@@ -10346,7 +10795,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Taha Abdullah Mohammed Shareef"
   },
   {
     "id": "emp_653",
@@ -10368,7 +10818,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Yasser Ammar Abdulhadi"
   },
   {
     "id": "emp_654",
@@ -10390,7 +10841,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sharw Jalal Ahmed"
   },
   {
     "id": "emp_655",
@@ -10412,7 +10864,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdullah Raad Abdulhadi"
   },
   {
     "id": "emp_656",
@@ -10434,7 +10887,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mahmoud Asmayl Hussein"
   },
   {
     "id": "emp_657",
@@ -10456,7 +10910,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Luqman Azad Rasheed"
   },
   {
     "id": "emp_658",
@@ -10478,7 +10933,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mjd Mdhfr Basheer"
   },
   {
     "id": "emp_659",
@@ -10500,7 +10956,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Majid Mohammed"
   },
   {
     "id": "emp_660",
@@ -10522,7 +10979,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Sami Mustafa"
   },
   {
     "id": "emp_661",
@@ -10544,7 +11002,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Salar Aziz Ahmed"
   },
   {
     "id": "emp_662",
@@ -10566,7 +11025,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sherzad Mohammed Mghdyd"
   },
   {
     "id": "emp_663",
@@ -10588,7 +11048,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Lazw Dana Shwkt"
   },
   {
     "id": "emp_666",
@@ -10610,7 +11071,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "rafid.mohammed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ibrahim Idris Hassan"
   },
   {
     "id": "emp_667",
@@ -10632,7 +11094,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "rafid.mohammed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Sirwan Mohammed"
   },
   {
     "id": "emp_668",
@@ -10654,7 +11117,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "rafid.mohammed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Syraj Asif Sabri"
   },
   {
     "id": "emp_669",
@@ -10676,7 +11140,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "rafid.mohammed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Nawfal Yahya"
   },
   {
     "id": "emp_672",
@@ -10698,7 +11163,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dh Wn Shaml Fayq"
   },
   {
     "id": "emp_673",
@@ -10720,7 +11186,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sh Rkar Farooq Mrad"
   },
   {
     "id": "emp_674",
@@ -10742,7 +11209,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Yasa Azaldeen Ghfwr"
   },
   {
     "id": "emp_675",
@@ -10764,7 +11232,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Lajyn Idris Othman"
   },
   {
     "id": "emp_677",
@@ -10786,7 +11255,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mahmoud Msawd Aziz"
   },
   {
     "id": "emp_678",
@@ -10808,7 +11278,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Othman Hamad"
   },
   {
     "id": "emp_679",
@@ -10830,7 +11301,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nynws Ayshw Dnkha"
   },
   {
     "id": "emp_680",
@@ -10852,7 +11324,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hyfar Tawfeeq Hama"
   },
   {
     "id": "emp_681",
@@ -10874,7 +11347,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ayoob Mtlb Mohammed"
   },
   {
     "id": "emp_682",
@@ -10896,7 +11370,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Myr Mrywan Majeed"
   },
   {
     "id": "emp_683",
@@ -10918,7 +11393,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Slaf Attar Sdraldeen"
   },
   {
     "id": "emp_685",
@@ -10940,7 +11416,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Aya Faisal Omer"
   },
   {
     "id": "emp_687",
@@ -10962,7 +11439,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hawkw Abwbkr Ahmed"
   },
   {
     "id": "emp_686",
@@ -10984,7 +11462,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "omer.ayad@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nsar Ghalib Taha"
   },
   {
     "id": "emp_664",
@@ -11006,7 +11485,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "wael.alqadi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Jra Khan Saeed Abdullah"
   },
   {
     "id": "emp_689",
@@ -11028,7 +11508,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "wael.alqadi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Amnh Luay Jwdt"
   },
   {
     "id": "emp_690",
@@ -11050,7 +11531,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mtyn Mohammed Ameen Asaad"
   },
   {
     "id": "emp_691",
@@ -11072,7 +11554,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Marwa Shalaan Hussein"
   },
   {
     "id": "emp_692",
@@ -11094,7 +11577,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Saman Salim"
   },
   {
     "id": "emp_693",
@@ -11116,7 +11600,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdullah Mdhr Mustafa"
   },
   {
     "id": "emp_694",
@@ -11138,7 +11623,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Huda Abdullah Mohammed"
   },
   {
     "id": "emp_695",
@@ -11160,7 +11646,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Diyar Dldar Nooraldeen"
   },
   {
     "id": "emp_696",
@@ -11182,7 +11669,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "lihat.attar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdullah Khals Nafa"
   },
   {
     "id": "emp_697",
@@ -11204,7 +11692,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rozh Mansoor Anwar"
   },
   {
     "id": "emp_698",
@@ -11226,7 +11715,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Maryws Nizar Anwar"
   },
   {
     "id": "emp_699",
@@ -11248,7 +11738,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Nwry Awdh"
   },
   {
     "id": "emp_701",
@@ -11270,7 +11761,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Kardw Mohammed Ahmed"
   },
   {
     "id": "emp_702",
@@ -11292,7 +11784,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dh Shty Qasim Mohammed"
   },
   {
     "id": "emp_703",
@@ -11314,7 +11807,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Aby Majeed Salih"
   },
   {
     "id": "emp_704",
@@ -11336,7 +11830,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "dedan.diler@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Saad Hmwdy"
   },
   {
     "id": "emp_705",
@@ -11358,7 +11853,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "omer.ayad@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zahraa Ghazi Jasib"
   },
   {
     "id": "emp_706",
@@ -11380,7 +11876,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "dedan.diler@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Salih Abdulhadi"
   },
   {
     "id": "emp_707",
@@ -11402,7 +11899,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Yasser Ismail Lazm"
   },
   {
     "id": "emp_709",
@@ -11424,7 +11922,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "wael.alqadi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hajr Ahmed Abdulkarim"
   },
   {
     "id": "emp_710",
@@ -11446,7 +11945,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hwshmnd Yaseen Saeed"
   },
   {
     "id": "emp_711",
@@ -11468,7 +11968,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Lh Nyar Rizgar Qadir"
   },
   {
     "id": "emp_712",
@@ -11490,7 +11991,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hydy Sabah Lateef"
   },
   {
     "id": "emp_713",
@@ -11512,7 +12014,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Basha Mohammed Khalid"
   },
   {
     "id": "emp_714",
@@ -11534,7 +12037,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mty Zwmaya Mrqs"
   },
   {
     "id": "emp_715",
@@ -11556,7 +12060,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Ali Mohammed"
   },
   {
     "id": "emp_716",
@@ -11578,7 +12083,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dlwfan Salah Rmsan"
   },
   {
     "id": "emp_717",
@@ -11600,7 +12106,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shalaan Lwrns Shalaan"
   },
   {
     "id": "emp_718",
@@ -11622,7 +12129,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdulrahman Asaad Ismail"
   },
   {
     "id": "emp_719",
@@ -11644,7 +12152,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hatm Mla Shykh Hatm"
   },
   {
     "id": "emp_720",
@@ -11666,7 +12175,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dh Rya Khalil Hussein"
   },
   {
     "id": "emp_721",
@@ -11688,7 +12198,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Bilal Azad Majeed"
   },
   {
     "id": "emp_722",
@@ -11710,7 +12221,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.alhayek@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Saeed Mukhtar Saeed Al-Hs"
   },
   {
     "id": "emp_723",
@@ -11732,7 +12244,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "wael.alqadi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rhmh Imad Hamad"
   },
   {
     "id": "emp_724",
@@ -11754,7 +12267,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Aya Asamh AbdulWhab"
   },
   {
     "id": "emp_725",
@@ -11776,7 +12290,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zahraa Muneer Ghny"
   },
   {
     "id": "emp_726",
@@ -11798,7 +12313,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hussein Mndyl Hussein"
   },
   {
     "id": "emp_727",
@@ -11820,7 +12336,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ammar Farooq Kadhim"
   },
   {
     "id": "emp_728",
@@ -11842,7 +12359,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zainab Mohsen Al-Bwswdh"
   },
   {
     "id": "emp_729",
@@ -11864,7 +12382,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hassan Ayad Jalal"
   },
   {
     "id": "emp_730",
@@ -11886,7 +12405,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rﯙvyn Talib Kareem"
   },
   {
     "id": "emp_731",
@@ -11908,7 +12428,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdullah Saleem Mahmoud"
   },
   {
     "id": "emp_732",
@@ -11930,7 +12451,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hawkar Abdullah Byrwt"
   },
   {
     "id": "emp_733",
@@ -11952,7 +12474,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Omer Nshat Abdulkarim"
   },
   {
     "id": "emp_734",
@@ -11974,7 +12497,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Kwsrh T Faisal Sfr"
   },
   {
     "id": "emp_735",
@@ -11996,7 +12520,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Rebیn Ibrahim Rasool"
   },
   {
     "id": "emp_736",
@@ -12018,7 +12543,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Amran Ghrkan"
   },
   {
     "id": "emp_737",
@@ -12040,7 +12566,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Jamal Alaa Abdulrazzaq"
   },
   {
     "id": "emp_738",
@@ -12062,7 +12589,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Ghassan Adnan"
   },
   {
     "id": "emp_739",
@@ -12084,7 +12612,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Nba Haidar Mahmoud"
   },
   {
     "id": "emp_740",
@@ -12106,7 +12635,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "ali.al-ameli@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mina Omer Khalid"
   },
   {
     "id": "emp_741",
@@ -12128,7 +12658,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Slwan Ammar Ismail"
   },
   {
     "id": "emp_742",
@@ -12150,7 +12681,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Zhylan Azad Jalil"
   },
   {
     "id": "emp_743",
@@ -12172,7 +12704,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "yousif.nizar@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Yousif Nizar Tariq"
   },
   {
     "id": "emp_744",
@@ -12194,7 +12727,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ali Talib Ibrahim"
   },
   {
     "id": "emp_745",
@@ -12216,7 +12750,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "rafid.mohammed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Omer Adil Abdullah"
   },
   {
     "id": "emp_747",
@@ -12238,7 +12773,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "rafid.mohammed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Amyr Naseer Jassim"
   },
   {
     "id": "emp_748",
@@ -12260,7 +12796,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "rafid.mohammed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Abdullah Adnan Khalid"
   },
   {
     "id": "emp_749",
@@ -12282,7 +12819,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "adnan.ahmed@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Frh Ghanim Jdan"
   },
   {
     "id": "emp_750",
@@ -12304,7 +12842,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mais Mohammed Mohsen"
   },
   {
     "id": "emp_751",
@@ -12326,7 +12865,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Hajr Jalal Abdulmajeed"
   },
   {
     "id": "emp_752",
@@ -12348,7 +12888,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "jalal.burghol@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Mohammed Salih Mnaf"
   },
   {
     "id": "emp_753",
@@ -12370,7 +12911,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "idris.salih@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Amnh Shkyb Shareef"
   },
   {
     "id": "emp_754",
@@ -12392,7 +12934,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Ahmed Musaab Salman"
   },
   {
     "id": "emp_755",
@@ -12414,7 +12957,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "abdulrahman.tahir@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Barq Maadh Mohsen"
   },
   {
     "id": "emp_756",
@@ -12436,7 +12980,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Moayad Jaafar Mohammed"
   },
   {
     "id": "emp_757",
@@ -12458,7 +13003,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Sadiq Haidar Hashim"
   },
   {
     "id": "emp_758",
@@ -12480,7 +13026,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "omer.ayad@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Saly Jabr Gorgis"
   },
   {
     "id": "emp_759",
@@ -12502,7 +13049,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Dnya Ywarsh Zya"
   },
   {
     "id": "emp_760",
@@ -12524,7 +13072,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "nouraldeen.ali@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shh Ngh Abdullah Aziz"
   },
   {
     "id": "emp_761",
@@ -12546,7 +13095,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "hazim.altamimi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Iman Abd Ali Jassim"
   },
   {
     "id": "emp_762",
@@ -12568,7 +13118,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "reem.mehdi@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Tariq Abbas Fyadh"
   },
   {
     "id": "emp_2010",
@@ -12590,7 +13141,8 @@ export const INITIAL_BANK_EMPLOYEES: DynamicEmployee[] = [
     "department_chief_en": "Ali Mohammed Hassan Al-Ameli",
     "department_chief_ar": "علي محمد حسن العاملي",
     "manager_email": "dedan.diler@fib.iq",
-    "chief_email": "ali.al-ameli@fib.iq"
+    "chief_email": "ali.al-ameli@fib.iq",
+    "agent_name": "Shyfa Abdulrazzaq Abdulrahman"
   }
 ];
 
