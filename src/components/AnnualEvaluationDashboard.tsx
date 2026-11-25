@@ -70,6 +70,40 @@ export function normalizeAgentName(raw: string): string {
     .trim();
 }
 
+// Helper to check if two names match across Arabic/English, short/full versions, or token subsets
+export function isNameTokenMatch(nameA: string, nameB: string): boolean {
+  if (!nameA || !nameB) return false;
+  const normA = normalizeAgentName(nameA);
+  const normB = normalizeAgentName(nameB);
+  if (!normA || !normB) return false;
+  if (normA === normB) return true;
+  if (normA.includes(normB) || normB.includes(normA)) return true;
+
+  const tokensA = normA.split(/\s+/).filter(t => t.length > 1);
+  const tokensB = normB.split(/\s+/).filter(t => t.length > 1);
+  if (tokensA.length === 0 || tokensB.length === 0) return false;
+
+  // First and last token match (e.g. Jalal ... Burghol matches Jalal Burghol)
+  if (tokensA[0] === tokensB[0] && tokensA[tokensA.length - 1] === tokensB[tokensB.length - 1]) {
+    return true;
+  }
+
+  // Subsets: all tokens of shorter name exist in longer name
+  const [shorter, longer] = tokensA.length <= tokensB.length ? [tokensA, tokensB] : [tokensB, tokensA];
+  if (shorter.length >= 2 && shorter.every(t => longer.includes(t))) {
+    return true;
+  }
+
+  return false;
+}
+
+export function isEmailMatchName(email: string, targetName: string): boolean {
+  if (!email || !targetName) return false;
+  const userPart = email.split('@')[0].toLowerCase().replace(/[^a-z]/g, ' ').trim();
+  if (!userPart) return false;
+  return isNameTokenMatch(userPart, targetName);
+}
+
 // Distinct, vibrant, executive rating levels (Scale 1 to 5) - Exact Official Corporate Rubric
 export const RATING_LEVELS = [
   { 
@@ -591,7 +625,8 @@ export default function AnnualEvaluationDashboard({
   const isAdmin = userProfile?.role === 'admin' || 
                   emailLower === 'mohammed.dlshad0@gmail.com' ||
                   emailLower === 'omar.ayad@fib.iq';
-  const isManager = isAdmin || userProfile?.role === 'manager' || emailLower === 'jalal.burghol@agent.com';
+  const isChief = userProfile?.role === 'chief' || emailLower === 'ali.al-ameli@fib.iq';
+  const isManager = isAdmin || isChief || userProfile?.role === 'manager' || emailLower === 'jalal.burghol@agent.com' || emailLower === 'jalal.burghol@fib.iq';
   const isTL = userProfile?.role === 'tl';
   const isQA = userProfile?.role === 'qa' || userProfile?.role === 'trainer' || userProfile?.role === 'auditor';
   const isAgent = userProfile?.role === 'agent';
@@ -1379,37 +1414,110 @@ export default function AnnualEvaluationDashboard({
     return dynamicDepartments.filter(d => {
       const chEmail = (d.chief_email || "").toLowerCase().trim();
       const chNameNorm = normalizeAgentName(d.department_chief || "");
-      return (chEmail && chEmail === emailLower) || (chNameNorm && chNameNorm === currentUserNameNorm);
-    });
-  }, [dynamicDepartments, emailLower, currentUserNameNorm]);
+      const chNameEn = normalizeAgentName(d.department_chief_en || "");
+      const chNameAr = normalizeAgentName(d.department_chief_ar || "");
 
-  const isDeptChief = userChiefDepts.length > 0 || roleLower === 'chief';
+      if (chEmail && chEmail === emailLower) return true;
+      if (emailLower && (emailLower === 'ali.al-ameli@fib.iq' || isEmailMatchName(emailLower, d.department_chief || ""))) return true;
+      if (chNameNorm && (chNameNorm === currentUserNameNorm || isNameTokenMatch(chNameNorm, currentUserNameNorm) || isNameTokenMatch(chNameNorm, nameLower))) return true;
+      if (chNameEn && (chNameEn === currentUserNameNorm || isNameTokenMatch(chNameEn, currentUserNameNorm) || isNameTokenMatch(chNameEn, nameLower))) return true;
+      if (chNameAr && (chNameAr === currentUserNameNorm || isNameTokenMatch(chNameAr, currentUserNameNorm) || isNameTokenMatch(chNameAr, nameLower))) return true;
+
+      if (roleLower === 'chief' && userProfile?.department && (d.name === userProfile.department || d.nameAr === userProfile.department)) return true;
+      return false;
+    });
+  }, [dynamicDepartments, emailLower, currentUserNameNorm, nameLower, roleLower, userProfile?.department]);
+
+  const isDeptChief = userChiefDepts.length > 0 || roleLower === 'chief' || emailLower === 'ali.al-ameli@fib.iq';
 
   const userManagedDepts = useMemo(() => {
     return dynamicDepartments.filter(d => {
       const mgrEmail = (d.manager_email || "").toLowerCase().trim();
       const mgrNameNorm = normalizeAgentName(d.direct_manager || "");
-      return (mgrEmail && mgrEmail === emailLower) || (mgrNameNorm && mgrNameNorm === currentUserNameNorm);
+      const mgrNameEn = normalizeAgentName(d.direct_manager_en || "");
+      const mgrNameAr = normalizeAgentName(d.direct_manager_ar || "");
+
+      if (mgrEmail && mgrEmail === emailLower) return true;
+      if (emailLower && (emailLower === 'jalal.burghol@fib.iq' || emailLower === 'jalal.burghol@agent.com') && (d.name.includes("Contact") || d.nameAr?.includes("الاتصال"))) return true;
+      if (emailLower && isEmailMatchName(emailLower, d.direct_manager || "")) return true;
+      if (mgrNameNorm && (mgrNameNorm === currentUserNameNorm || isNameTokenMatch(mgrNameNorm, currentUserNameNorm) || isNameTokenMatch(mgrNameNorm, nameLower))) return true;
+      if (mgrNameEn && (mgrNameEn === currentUserNameNorm || isNameTokenMatch(mgrNameEn, currentUserNameNorm) || isNameTokenMatch(mgrNameEn, nameLower))) return true;
+      if (mgrNameAr && (mgrNameAr === currentUserNameNorm || isNameTokenMatch(mgrNameAr, currentUserNameNorm) || isNameTokenMatch(mgrNameAr, nameLower))) return true;
+
+      if ((roleLower === 'manager' || userProfile?.role === 'manager') && userProfile?.department && (d.name === userProfile.department || d.nameAr === userProfile.department)) return true;
+      return false;
     });
-  }, [dynamicDepartments, emailLower, currentUserNameNorm]);
+  }, [dynamicDepartments, emailLower, currentUserNameNorm, nameLower, roleLower, userProfile?.department, userProfile?.role]);
 
   const isDeptManager = userManagedDepts.length > 0 || (userProfile?.role === 'manager' && !isAdmin) || (roleLower === 'manager' && !isAdmin);
 
   // Detect direct subordinates under the current user (Multi-level evaluation hierarchy)
   const mySubordinates = useMemo(() => {
-    if (!currentUserNameNorm) return [];
+    if (!currentUserNameNorm && !emailLower) return [];
+
+    const managedDeptNames = new Set(userManagedDepts.flatMap(d => [
+      (d.name || "").toLowerCase().trim(),
+      (d.nameAr || "").toLowerCase().trim()
+    ].filter(Boolean)));
+
     return effectiveAllMembers.filter(m => {
       const mNameNorm = normalizeAgentName(m.agent_name || m.name || "");
-      if (mNameNorm === currentUserNameNorm) return false;
-      const dm = normalizeAgentName(m.direct_manager || "");
-      const mgr = normalizeAgentName(m.manager_name || "");
-      const mTeam = (m.team || "").toLowerCase();
+      const mNameEn = normalizeAgentName(m.nameEn || "");
+      const mNameAr = normalizeAgentName(m.nameAr || "");
       
-      // Match by direct_manager or manager_name
-      if (dm && (dm === currentUserNameNorm || dm.includes(currentUserNameNorm) || currentUserNameNorm.includes(dm))) return true;
-      if (mgr && (mgr === currentUserNameNorm || mgr.includes(currentUserNameNorm) || currentUserNameNorm.includes(mgr))) return true;
+      // Exclude myself from my subordinates
+      if (currentUserNameNorm && (
+        mNameNorm === currentUserNameNorm || 
+        mNameEn === currentUserNameNorm || 
+        mNameAr === currentUserNameNorm ||
+        isNameTokenMatch(mNameNorm, currentUserNameNorm) ||
+        isNameTokenMatch(mNameEn, currentUserNameNorm) ||
+        isNameTokenMatch(mNameAr, currentUserNameNorm)
+      )) return false;
+      if (nameLower && (
+        isNameTokenMatch(mNameNorm, nameLower) ||
+        isNameTokenMatch(mNameEn, nameLower) ||
+        isNameTokenMatch(mNameAr, nameLower)
+      )) return false;
+      if (emailLower && m.email && m.email.toLowerCase().trim() === emailLower) return false;
 
-      // Match by team for TLs
+      // 1. If current user manages this department, ALL non-chief department members are their subordinates
+      const mDept = (m.department || "").toLowerCase().trim();
+      const mDeptAr = (m.departmentAr || "").toLowerCase().trim();
+      if (managedDeptNames.size > 0 && (managedDeptNames.has(mDept) || managedDeptNames.has(mDeptAr))) {
+        if (m.role_type === "chief" || /chief|هيد/i.test(m.role || "")) return false;
+        return true;
+      }
+
+      // 2. Direct match by manager email
+      if (m.manager_email && emailLower && m.manager_email.toLowerCase().trim() === emailLower) {
+        return true;
+      }
+
+      // 3. Match by direct_manager, direct_manager_en, direct_manager_ar, or manager_name
+      const dm = m.direct_manager || "";
+      const dmEn = m.direct_manager_en || "";
+      const dmAr = m.direct_manager_ar || "";
+      const mgr = m.manager_name || "";
+
+      if (emailLower && (isEmailMatchName(emailLower, dm) || isEmailMatchName(emailLower, dmEn))) return true;
+
+      if (currentUserNameNorm) {
+        if (dm && (dm === currentUserNameNorm || isNameTokenMatch(dm, currentUserNameNorm))) return true;
+        if (dmEn && (dmEn === currentUserNameNorm || isNameTokenMatch(dmEn, currentUserNameNorm))) return true;
+        if (dmAr && (dmAr === currentUserNameNorm || isNameTokenMatch(dmAr, currentUserNameNorm))) return true;
+        if (mgr && (mgr === currentUserNameNorm || isNameTokenMatch(mgr, currentUserNameNorm))) return true;
+      }
+
+      if (nameLower) {
+        if (dm && isNameTokenMatch(dm, nameLower)) return true;
+        if (dmEn && isNameTokenMatch(dmEn, nameLower)) return true;
+        if (dmAr && isNameTokenMatch(dmAr, nameLower)) return true;
+        if (mgr && isNameTokenMatch(mgr, nameLower)) return true;
+      }
+
+      // 4. Special Contact Center TL matching
+      const mTeam = (m.team || "").toLowerCase();
       if (isTL || isManager || roleLower === 'tl' || (userProfile?.team && userProfile.team.toLowerCase().includes(mTeam))) {
         if (currentUserNameNorm.includes("younis") && mTeam.includes("younis")) return true;
         if (currentUserNameNorm.includes("ankido") && mTeam.includes("ankido")) return true;
@@ -1418,9 +1526,10 @@ export default function AnnualEvaluationDashboard({
           return true;
         }
       }
+
       return false;
     });
-  }, [effectiveAllMembers, currentUserNameNorm, isTL, isManager, roleLower, userProfile?.team]);
+  }, [effectiveAllMembers, currentUserNameNorm, nameLower, emailLower, userManagedDepts, isTL, isManager, roleLower, userProfile?.team]);
 
   const hasSubordinates = mySubordinates.length > 0;
   const isDirectManager = hasSubordinates || isManager || isDeptManager || isAdmin;
@@ -1431,15 +1540,24 @@ export default function AnnualEvaluationDashboard({
     if (isAdmin) return true;
     const targetNorm = normalizeAgentName(selectedEmployeeName || "");
     const targetMember = effectiveAllMembers.find(m => normalizeAgentName(m.agent_name || m.name || "") === targetNorm);
-    const targetDept = (targetMember?.department || "").toLowerCase().trim();
+    const mDept = (targetMember?.department || "").toLowerCase().trim();
+    const mDeptAr = (targetMember?.departmentAr || "").toLowerCase().trim();
 
     // Department Chief sees all members in their department ("الهيد يشوف درجات المنجر و القسم")
-    if (isDeptChief && userChiefDepts.some(d => (d.name || "").toLowerCase().trim() === targetDept)) {
+    if (isDeptChief && userChiefDepts.some(d => {
+      const dName = (d.name || "").toLowerCase().trim();
+      const dAr = (d.nameAr || "").toLowerCase().trim();
+      return (dName && (dName === mDept || dName === mDeptAr)) || (dAr && (dAr === mDept || dAr === mDeptAr));
+    })) {
       return true;
     }
 
     // Department Manager sees members in their department ("المنجر يشوف مال تيم مالة و بس يشوف القسم ماله")
-    if (isDeptManager && userManagedDepts.some(d => (d.name || "").toLowerCase().trim() === targetDept)) {
+    if (isDeptManager && userManagedDepts.some(d => {
+      const dName = (d.name || "").toLowerCase().trim();
+      const dAr = (d.nameAr || "").toLowerCase().trim();
+      return (dName && (dName === mDept || dName === mDeptAr)) || (dAr && (dAr === mDept || dAr === mDeptAr));
+    })) {
       return true;
     }
 
@@ -1456,16 +1574,25 @@ export default function AnnualEvaluationDashboard({
     const targetNorm = normalizeAgentName(selectedEmployeeName || "");
     const targetMember = effectiveAllMembers.find(m => normalizeAgentName(m.agent_name || m.name || "") === targetNorm);
     if (!targetMember) return false;
-    const targetDept = (targetMember.department || "").toLowerCase().trim();
+    const mDept = (targetMember.department || "").toLowerCase().trim();
+    const mDeptAr = (targetMember.departmentAr || "").toLowerCase().trim();
 
     // 1. Department Chief evaluates the Department Manager
-    if (isDeptChief && userChiefDepts.some(d => (d.name || "").toLowerCase().trim() === targetDept)) {
+    if (isDeptChief && userChiefDepts.some(d => {
+      const dName = (d.name || "").toLowerCase().trim();
+      const dAr = (d.nameAr || "").toLowerCase().trim();
+      return (dName && (dName === mDept || dName === mDeptAr)) || (dAr && (dAr === mDept || dAr === mDeptAr));
+    })) {
       const isTargetLeader = targetMember.role_type === "tl" || /manager|leader|مدير|قائد/i.test(targetMember.role || "");
       if (isTargetLeader) return true;
     }
 
     // 2. Department Manager evaluates staff in their department (cannot edit the Chief)
-    if (isDeptManager && userManagedDepts.some(d => (d.name || "").toLowerCase().trim() === targetDept)) {
+    if (isDeptManager && userManagedDepts.some(d => {
+      const dName = (d.name || "").toLowerCase().trim();
+      const dAr = (d.nameAr || "").toLowerCase().trim();
+      return (dName && (dName === mDept || dName === mDeptAr)) || (dAr && (dAr === mDept || dAr === mDeptAr));
+    })) {
       const isTargetChief = userChiefDepts.some(d => normalizeAgentName(d.department_chief || "") === targetNorm || (d.chief_email && d.chief_email.toLowerCase() === (targetMember.email || "").toLowerCase()));
       if (!isTargetChief) return true;
     }
@@ -1534,7 +1661,8 @@ export default function AnnualEvaluationDashboard({
       ].filter(Boolean)));
 
       const chiefDeptMembers = effectiveAllMembers.filter(m => 
-        chiefDeptNames.has((m.department || "").toLowerCase().trim())
+        chiefDeptNames.has((m.department || "").toLowerCase().trim()) ||
+        chiefDeptNames.has((m.departmentAr || "").toLowerCase().trim())
       );
       if (chiefDeptMembers.length > 0) {
         return chiefDeptMembers;
@@ -1542,17 +1670,21 @@ export default function AnnualEvaluationDashboard({
     }
 
     // 2. Department Manager: strictly scoped to their department members only! ("و بس يشوف القسم ماله ويعدل بيه")
-    if (isDeptManager && userManagedDepts.length > 0) {
+    if (isDeptManager && (userManagedDepts.length > 0 || mySubordinates.length > 0)) {
       const mgrDeptNames = new Set(userManagedDepts.flatMap(d => [
         (d.name || "").toLowerCase().trim(),
         (d.nameAr || "").toLowerCase().trim()
       ].filter(Boolean)));
 
       const deptMembers = effectiveAllMembers.filter(m => 
-        mgrDeptNames.has((m.department || "").toLowerCase().trim())
+        mgrDeptNames.has((m.department || "").toLowerCase().trim()) ||
+        mgrDeptNames.has((m.departmentAr || "").toLowerCase().trim())
       );
       if (deptMembers.length > 0) {
         return deptMembers;
+      }
+      if (mySubordinates.length > 0) {
+        return mySubordinates;
       }
     }
 
@@ -1685,7 +1817,7 @@ export default function AnnualEvaluationDashboard({
 
   // Coverage Tracking Computation (Who's evaluated and who's pending)
   const coverageData = useMemo(() => {
-    let activeMembers = (isAdmin ? effectiveAllMembers : (hasSubordinates ? mySubordinates : allowedMembersForUser)).filter(m => 
+    let activeMembers = (isAdmin ? effectiveAllMembers : allowedMembersForUser).filter(m => 
       isMemberActiveInPeriod(m, "YEAR - AVG", String(selectedYear))
     );
 
@@ -1909,7 +2041,7 @@ export default function AnnualEvaluationDashboard({
   // Initialize selected employee on load
   useEffect(() => {
     // 1. Regular Agent / Staff with NO subordinates: strictly lock to their own self profile
-    if (!isAdmin && !hasSubordinates) {
+    if (!isAdmin && !hasSubordinates && !isDeptManager && !isDeptChief) {
       const myName = toTitleCase(userProfile?.name || userProfile?.agent_name || "");
       if (myName && selectedEmployeeName !== myName) {
         setSelectedEmployeeName(myName);
@@ -1917,8 +2049,8 @@ export default function AnnualEvaluationDashboard({
       return;
     }
 
-    // 2. Direct Manager / TL with subordinates: default to themselves first, or first subordinate
-    if (!isAdmin && hasSubordinates) {
+    // 2. Direct Manager / TL / Chief with subordinates or managed department: default to themselves first, or first subordinate
+    if (!isAdmin && (hasSubordinates || isDeptManager || isDeptChief)) {
       if (!selectedEmployeeName) {
         const myName = toTitleCase(userProfile?.name || userProfile?.agent_name || "");
         if (myName && allowedMembersForUser.some(m => normalizeAgentName(m.agent_name || m.name) === normalizeAgentName(myName))) {
@@ -1935,7 +2067,7 @@ export default function AnnualEvaluationDashboard({
       setSelectedEmployeeName(effectiveAllMembers[0].agent_name);
       setTeamTabFilter("all");
     }
-  }, [isAdmin, hasSubordinates, allowedMembersForUser, userProfile, effectiveAllMembers, selectedEmployeeName]);
+  }, [isAdmin, hasSubordinates, isDeptManager, isDeptChief, allowedMembersForUser, userProfile, effectiveAllMembers, selectedEmployeeName]);
 
   // Auto-fill Employee info when currentMember changes
   useEffect(() => {
@@ -2870,7 +3002,7 @@ export default function AnnualEvaluationDashboard({
                               {isAdmin ? t.selectEmployeePrompt.replace('...', '') : t.directTeamSubordinates}
                             </h4>
                             <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
-                              {isAdmin ? `${effectiveAllMembers.length} ${t.totalEmployees}` : `${mySubordinates.length} ${t.membersInScope}`}
+                              {isAdmin ? `${effectiveAllMembers.length} ${t.totalEmployees}` : `${allowedMembersForUser.length} ${t.membersInScope}`}
                             </p>
                           </div>
                           <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">

@@ -251,9 +251,9 @@ export default function StandaloneEvaluationPage() {
 
       // Successful Authentication: Resolve Profile & Role
       const role = userData.role || "agent";
-      const isChief = role === "chief";
-      const isManager = role === "manager";
-      const isAdmin = role === "admin" || cleanEmail === "mohammed.dlshad0@gmail.com" || cleanEmail === "omar.ayad@fib.iq";
+      const isChief = role === "chief" || cleanEmail === "ali.al-ameli@fib.iq";
+      const isManager = role === "manager" || cleanEmail === "jalal.burghol@fib.iq" || cleanEmail === "jalal.burghol@agent.com";
+      const isAdmin = role === "admin" || cleanEmail === "mohammed.dlshad0@gmail.com" || cleanEmail === "omar.ayad@fib.iq" || cleanEmail === "omer.ayad@fib.iq";
 
       const profile: EvaluatorProfile = {
         email: cleanEmail,

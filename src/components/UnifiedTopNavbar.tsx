@@ -49,8 +49,9 @@ export function UnifiedTopNavbar({
   const nameLower = (userProfile?.name || userProfile?.agent_name || "").toLowerCase().trim();
   const roleLower = (userProfile?.role || "").toLowerCase().trim();
 
-  const isAdmin = userProfile?.isAdmin === true || roleLower === "admin" || emailLower === "mohammed.dlshad0@gmail.com";
-  const isManager = isAdmin || roleLower === "manager" || emailLower === "jalal.burghol@agent.com";
+  const isAdmin = userProfile?.isAdmin === true || roleLower === "admin" || emailLower === "mohammed.dlshad0@gmail.com" || emailLower === "omar.ayad@fib.iq";
+  const isChief = roleLower === "chief" || emailLower === "ali.al-ameli@fib.iq";
+  const isManager = isAdmin || isChief || roleLower === "manager" || emailLower === "jalal.burghol@agent.com" || emailLower === "jalal.burghol@fib.iq";
   const isTL = roleLower === "tl" || emailLower.includes("younis.kamal") || emailLower.includes("ankido.buya");
   const isQA = roleLower === "qa" || emailLower.includes("lara.kamil") || emailLower.includes("mohammed.jihad");
   const isTrainer = roleLower === "trainer" || (emailLower.includes("mohammed.azad") && !emailLower.includes("azad.muhammad"));
@@ -71,6 +72,9 @@ export function UnifiedTopNavbar({
   if (isAdmin) {
     roleBadgeText = lang === "ar" ? "مسؤول" : "ADMIN";
     roleBadgeClass = "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700/60";
+  } else if (isChief) {
+    roleBadgeText = lang === "ar" ? "رئيس قطاع" : "CHIEF";
+    roleBadgeClass = "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border-purple-300 dark:border-purple-700/60";
   } else if (isManager) {
     roleBadgeText = lang === "ar" ? "مدير" : "MANAGER";
     roleBadgeClass = "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-700/60";
