@@ -2,6 +2,8 @@ export interface CompanyEmployee {
   id: string;
   agent_name: string;
   name: string;
+  nameEn?: string;
+  nameAr?: string;
   team: string;
   direct_manager?: string;
 }

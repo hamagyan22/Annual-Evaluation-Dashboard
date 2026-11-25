@@ -195,18 +195,88 @@ export const KPI_DEFINITIONS_AR: Record<string, { name: string; description?: st
   session: { name: "جلسات التدريب والمعايرة", description: "عقد جلسات تدريبية وتوجيهية وتغذية راجعة دورية لرفع الكفاءة." }
 };
 
+const DEPT_TRANSLATION_MAP: Record<string, { ar: string; en: string }> = {
+  "ادارة الفروع": { ar: "إدارة الفروع", en: "Branch Management" },
+  "branch management": { ar: "إدارة الفروع", en: "Branch Management" },
+  "التجاري": { ar: "التجاري", en: "Commercial" },
+  "commercial": { ar: "التجاري", en: "Commercial" },
+  "مركز الاتصال": { ar: "مركز الاتصال", en: "Contact Center" },
+  "contact center": { ar: "مركز الاتصال", en: "Contact Center" },
+  "تقنية المعلومات": { ar: "تقنية المعلومات", en: "Information Technology" },
+  "information technology": { ar: "تقنية المعلومات", en: "Information Technology" },
+  "المكتب الخلفي - العمليات": { ar: "المكتب الخلفي - العمليات", en: "Back Office - Operations" },
+  "back office - operations": { ar: "المكتب الخلفي - العمليات", en: "Back Office - Operations" },
+  "العمليات": { ar: "العمليات", en: "Operations" },
+  "operations": { ar: "العمليات", en: "Operations" },
+  "المبيعات": { ar: "المبيعات", en: "Sales" },
+  "sales": { ar: "المبيعات", en: "Sales" },
+  "الابلاغ عن غسل الاموال وتمويل الارهاب": { ar: "الإبلاغ عن غسل الأموال وتمويل الإرهاب", en: "AML / CFT Compliance" },
+  "aml / cft compliance": { ar: "الإبلاغ عن غسل الأموال وتمويل الإرهاب", en: "AML / CFT Compliance" },
+  "الهندسية والادارية": { ar: "الهندسية والإدارية", en: "Engineering & Administration" },
+  "engineering & administration": { ar: "الهندسية والإدارية", en: "Engineering & Administration" },
+  "المالية": { ar: "المالية", en: "Finance" },
+  "finance": { ar: "المالية", en: "Finance" },
+  "الدفع الالكتروني": { ar: "الدفع الإلكتروني", en: "Electronic Payment" },
+  "electronic payment": { ar: "الدفع الإلكتروني", en: "Electronic Payment" },
+  "الامتثال الشرعي ومراقبة الامتثال": { ar: "الامتثال الشرعي ومراقبة الامتثال", en: "Sharia & Regulatory Compliance" },
+  "sharia & regulatory compliance": { ar: "الامتثال الشرعي ومراقبة الامتثال", en: "Sharia & Regulatory Compliance" },
+  "الموارد البشرية": { ar: "الموارد البشرية", en: "Human Resources" },
+  "human resources": { ar: "الموارد البشرية", en: "Human Resources" },
+  "الادارة": { ar: "الإدارة العامة", en: "Executive Management" },
+  "executive management": { ar: "الإدارة العامة", en: "Executive Management" },
+  "القانوني": { ar: "القسم القانوني", en: "Legal Department" },
+  "legal department": { ar: "القسم القانوني", en: "Legal Department" },
+  "الرقابة والتدقيق الشرعي الداخلي": { ar: "الرقابة والتدقيق الشرعي الداخلي", en: "Internal Sharia Audit & Control" },
+  "internal sharia audit & control": { ar: "الرقابة والتدقيق الشرعي الداخلي", en: "Internal Sharia Audit & Control" },
+  "ادارة المشاريع": { ar: "إدارة المشاريع", en: "Project Management" },
+  "project management": { ar: "إدارة المشاريع", en: "Project Management" },
+  "أمن المعلومات": { ar: "أمن المعلومات", en: "Information Security" },
+  "information security": { ar: "أمن المعلومات", en: "Information Security" },
+  "التسويق": { ar: "التسويق", en: "Marketing" },
+  "marketing": { ar: "التسويق", en: "Marketing" },
+  "الشمول المالي": { ar: "الشمول المالي", en: "Financial Inclusion" },
+  "financial inclusion": { ar: "الشمول المالي", en: "Financial Inclusion" },
+  "الخزينة والاستثمار والمؤسسات المالية": { ar: "الخزينة والاستثمار والمؤسسات المالية", en: "Treasury & Investment" },
+  "treasury & investment": { ar: "الخزينة والاستثمار والمؤسسات المالية", en: "Treasury & Investment" },
+  "ادارة المخاطر": { ar: "إدارة المخاطر", en: "Risk Management" },
+  "risk management": { ar: "إدارة المخاطر", en: "Risk Management" },
+  "ادارة الجودة والتطوير المؤسسي": { ar: "إدارة الجودة والتطوير المؤسسي", en: "Quality & Institutional Development" },
+  "quality & institutional development": { ar: "إدارة الجودة والتطوير المؤسسي", en: "Quality & Institutional Development" },
+  "الائتمان": { ar: "الائتمان", en: "Credit" },
+  "credit": { ar: "الائتمان", en: "Credit" },
+  "العلاقات العامة وخدمة كبار العملاء": { ar: "العلاقات العامة وخدمة كبار العملاء", en: "Public Relations & VIP Services" },
+  "public relations & vip services": { ar: "العلاقات العامة وخدمة كبار العملاء", en: "Public Relations & VIP Services" },
+  "الشركات": { ar: "الشركات", en: "Corporate Banking" },
+  "corporate banking": { ar: "الشركات", en: "Corporate Banking" },
+};
+
 export function getLocalizedDeptName(deptName: string, isAr: boolean) {
   if (!deptName) return isAr ? "مركز خدمة العملاء" : "Contact Center";
-  if (!isAr) return deptName;
+  const key = deptName.toLowerCase().trim();
+  if (DEPT_TRANSLATION_MAP[key]) {
+    return isAr ? DEPT_TRANSLATION_MAP[key].ar : DEPT_TRANSLATION_MAP[key].en;
+  }
   const l = deptName.toLowerCase();
-  if (l.includes("quality") || l.includes("qa")) return "إدارة الجودة (Quality Assurance)";
-  if (l.includes("train")) return "التدريب والتطوير (Training & Development)";
-  if (l.includes("back") || l.includes("office")) return "العمليات والدعم (Back Office)";
-  if (l.includes("contact") || l.includes("call")) return "مركز خدمة العملاء (Contact Center)";
-  if (l.includes("it") || l.includes("digital")) return "تكنولوجيا المعلومات والخدمات الرقمية";
-  if (l.includes("human") || l.includes("hr")) return "الموارد البشرية (Human Resources)";
-  if (l.includes("finan")) return "المالية والحسابات (Finance & Accounts)";
+  if (l.includes("quality") || l.includes("qa")) return isAr ? "إدارة الجودة" : "Quality Assurance";
+  if (l.includes("train")) return isAr ? "التدريب والتطوير" : "Training & Development";
+  if (l.includes("back") || l.includes("office")) return isAr ? "العمليات والمكتب الخلفي" : "Back Office";
+  if (l.includes("contact") || l.includes("call")) return isAr ? "مركز الاتصال" : "Contact Center";
+  if (l.includes("it") || l.includes("digital")) return isAr ? "تكنولوجيا المعلومات" : "Information Technology";
+  if (l.includes("human") || l.includes("hr")) return isAr ? "الموارد البشرية" : "Human Resources";
+  if (l.includes("finan")) return isAr ? "المالية" : "Finance";
   return deptName;
+}
+
+export function getLocalizedMemberName(
+  member: any,
+  isAr: boolean
+): string {
+  if (!member) return "";
+  if (typeof member === "string") return member;
+  if (isAr) {
+    return member.nameAr || member.name || member.agent_name || "";
+  }
+  return member.nameEn || member.name || member.agent_name || "";
 }
 
 export function getRatingInfo(score: number, lang: Language = "en") {
@@ -1272,15 +1342,25 @@ export default function AnnualEvaluationDashboard({
           id: de.id || `emp_${de.employee_id || de.name}`,
           agent_name: de.name,
           name: de.name,
+          nameEn: de.nameEn || de.name,
+          nameAr: de.nameAr || de.name,
           employee_id: de.employee_id || "",
           email: de.email || "",
           department: de.department || "",
+          departmentEn: de.departmentEn || de.department,
+          departmentAr: de.departmentAr || de.department,
           role: de.role || "Staff",
+          roleEn: de.roleEn || de.role,
+          roleAr: de.roleAr || de.role,
           role_type: de.role_type || "agent",
           team: de.team || (de.department ? `${de.department} Team` : "General Team"),
           direct_manager: de.direct_manager || "",
+          direct_manager_en: de.direct_manager_en || de.direct_manager || "",
+          direct_manager_ar: de.direct_manager_ar || de.direct_manager || "",
           manager_email: de.manager_email || "",
           department_chief: de.department_chief || "",
+          department_chief_en: de.department_chief_en || de.department_chief || "",
+          department_chief_ar: de.department_chief_ar || de.department_chief || "",
           chief_email: de.chief_email || "",
           custom_position: de.custom_position || "",
           is_active: true,
@@ -1511,11 +1591,20 @@ export default function AnnualEvaluationDashboard({
       const term = normalizeAgentName(employeeSearchTerm);
       return list.filter(m => 
         normalizeAgentName(m.agent_name || m.name || "").includes(term) ||
+        normalizeAgentName(m.nameEn || "").includes(term) ||
+        normalizeAgentName(m.nameAr || "").includes(term) ||
+        (m.employee_id || "").includes(term) ||
         (m.team || "").toLowerCase().includes(term) ||
         (m.department || "").toLowerCase().includes(term) ||
+        (m.departmentAr || "").toLowerCase().includes(term) ||
         (m.role || "").toLowerCase().includes(term) ||
+        (m.roleAr || "").toLowerCase().includes(term) ||
         (m.custom_position || "").toLowerCase().includes(term)
-      ).sort((a, b) => (a.agent_name || "").localeCompare(b.agent_name || ""));
+      ).sort((a, b) => {
+        const nameA = isAr ? (a.nameAr || a.name || "") : (a.nameEn || a.name || "");
+        const nameB = isAr ? (b.nameAr || b.name || "") : (b.nameEn || b.name || "");
+        return nameA.localeCompare(nameB, isAr ? "ar" : "en");
+      });
     }
 
     // Only apply team / department filter for Admin (since Admin sees all teams)
@@ -1539,14 +1628,22 @@ export default function AnnualEvaluationDashboard({
       if (bNorm === currentUserNameNorm) return 1;
       if (a.role_type === "tl" && b.role_type !== "tl") return -1;
       if (b.role_type === "tl" && a.role_type !== "tl") return 1;
-      return (a.agent_name || "").localeCompare(b.agent_name || "");
+      const nameA = isAr ? (a.nameAr || a.name || "") : (a.nameEn || a.name || "");
+      const nameB = isAr ? (b.nameAr || b.name || "") : (b.nameEn || b.name || "");
+      return nameA.localeCompare(nameB, isAr ? "ar" : "en");
     });
-  }, [allowedMembersForUser, employeeSearchTerm, teamTabFilter, isAdmin, selectedYear, currentUserNameNorm]);
+  }, [allowedMembersForUser, employeeSearchTerm, teamTabFilter, isAdmin, selectedYear, currentUserNameNorm, isAr]);
 
   // Current selected member object
   const currentMember = useMemo(() => {
+    if (!selectedEmployeeName) return null;
     const targetNorm = normalizeAgentName(selectedEmployeeName);
-    return effectiveAllMembers.find(m => normalizeAgentName(m.agent_name) === targetNorm) || null;
+    return effectiveAllMembers.find(m => 
+      normalizeAgentName(m.agent_name || m.name || "") === targetNorm ||
+      normalizeAgentName(m.nameEn || "") === targetNorm ||
+      normalizeAgentName(m.nameAr || "") === targetNorm ||
+      m.id === selectedEmployeeName
+    ) || null;
   }, [effectiveAllMembers, selectedEmployeeName]);
 
   // Direct Manager & Department Chief for current member
@@ -2693,7 +2790,7 @@ export default function AnnualEvaluationDashboard({
                         {userProfile?.name?.charAt(0) || userProfile?.agent_name?.charAt(0) || "A"}
                       </div>
                       <span className="font-black text-gray-900 dark:text-white truncate">
-                        {toTitleCase(selectedEmployeeName)}
+                        {currentMember ? getLocalizedMemberName(currentMember, isAr) : toTitleCase(selectedEmployeeName)}
                       </span>
                       <span className="text-xs text-[#1C6B53] dark:text-emerald-400 font-bold shrink-0">
                         • {currentMember?.custom_position ||
@@ -2701,7 +2798,7 @@ export default function AnnualEvaluationDashboard({
                             currentMemberRoleType === 'qa' ? 'QA' :
                             currentMemberRoleType === 'tl' ? 'Team Leader' :
                             currentMemberRoleType === 'backoffice' ? 'Back Office' :
-                            currentMember?.role || currentMember?.team?.replace(' Team', '') || 'Contact Center')}
+                            getLocalizedDeptName(currentMember?.department || currentMember?.team?.replace(' Team', '') || 'Contact Center', isAr))}
                       </span>
                     </div>
                   ) : (
@@ -2717,11 +2814,11 @@ export default function AnnualEvaluationDashboard({
                           </div>
                           <div className="flex items-center gap-1.5 truncate text-left">
                             <span className="truncate font-black text-xs sm:text-sm text-gray-900 dark:text-white leading-tight">
-                              {selectedEmployeeName ? toTitleCase(selectedEmployeeName) : (isAr ? "اختر أو أضف موظفاً" : t.selectEmployeePrompt)}
+                              {currentMember ? getLocalizedMemberName(currentMember, isAr) : (selectedEmployeeName ? toTitleCase(selectedEmployeeName) : (isAr ? "اختر أو أضف موظفاً" : t.selectEmployeePrompt))}
                             </span>
-                            {selectedEmployeeName && currentMember?.team && !selectedEmployeeName?.toLowerCase().includes((currentMember?.team || '').toLowerCase().split(' ')[0]) && (
+                            {selectedEmployeeName && (currentMember?.team || currentMember?.department) && (
                               <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium truncate">
-                                • {currentMember?.team?.replace(' Team', '') || 'Contact Center'}
+                                • {getLocalizedDeptName(currentMember?.department || currentMember?.team?.replace(' Team', '') || 'Contact Center', isAr)}
                               </span>
                             )}
                           </div>
@@ -2926,17 +3023,17 @@ export default function AnnualEvaluationDashboard({
                                           </div>
                                           <div className="truncate">
                                             <div className="font-bold truncate text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
-                                              <span>{toTitleCase(m.agent_name)}</span>
+                                              <span>{getLocalizedMemberName(m, isAr)}</span>
                                               {isSelf && (
                                                 <span className="text-[9px] font-black px-1.5 py-0.2 rounded-md bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 shrink-0">
-                                                  ⭐ Myself
+                                                  {isAr ? "⭐ حسابي" : "⭐ Myself"}
                                                 </span>
                                               )}
                                             </div>
                                             <div className="text-[10px] text-gray-400 dark:text-gray-500 font-medium truncate flex items-center gap-1">
-                                              <span>{m.custom_position || (m.role_type === "tl" ? "Team Leader" : teamStr.replace(' Team', ''))}</span>
+                                              <span>{m.custom_position || (m.role_type === "tl" ? (isAr ? "قائد فريق" : "Team Leader") : getLocalizedDeptName(m.department || teamStr.replace(' Team', ''), isAr))}</span>
                                               {m.direct_manager && !isSelf && (
-                                                <span className="text-gray-400 dark:text-gray-500">• Mgr: {m.direct_manager}</span>
+                                                <span className="text-gray-400 dark:text-gray-500">• {isAr ? "المدير: " : "Mgr: "}{isAr ? (m.direct_manager_ar || m.direct_manager) : (m.direct_manager_en || m.direct_manager)}</span>
                                               )}
                                             </div>
                                           </div>
@@ -3033,13 +3130,13 @@ export default function AnnualEvaluationDashboard({
                   </div>
 
                   <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                    {selectedEmployeeName ? toTitleCase(selectedEmployeeName) : (isAr ? "يرجى اختيار أو إضافة موظف للتقييم" : "Select or Add Staff for Evaluation")}
+                    {currentMember ? getLocalizedMemberName(currentMember, isAr) : (selectedEmployeeName ? toTitleCase(selectedEmployeeName) : (isAr ? "يرجى اختيار أو إضافة موظف للتقييم" : "Select or Add Staff for Evaluation"))}
                   </h2>
 
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs text-emerald-100/90 font-medium">
                     {currentMember ? (
                       <>
-                        <span className="font-bold text-white">{currentMember?.team || currentMember?.department || ""}</span>
+                        <span className="font-bold text-white">{getLocalizedDeptName(currentMember?.department || currentMember?.team || "", isAr)}</span>
                         {currentMember?.department && (
                           <>
                             <span>•</span>
@@ -3893,7 +3990,7 @@ export default function AnnualEvaluationDashboard({
               <div className="p-3.5 border border-gray-300 rounded-2xl bg-gray-50/60 shadow-2xs">
                 <div className="text-xs font-black text-gray-700">{t.empSig}</div>
                 <div className="h-12 border-b border-gray-400 mt-2"></div>
-                <div className="text-[11px] font-bold text-gray-600 mt-1.5">{toTitleCase(selectedEmployeeName)}</div>
+                <div className="text-[11px] font-bold text-gray-600 mt-1.5">{currentMember ? getLocalizedMemberName(currentMember, isAr) : toTitleCase(selectedEmployeeName)}</div>
               </div>
               <div className="p-3.5 border border-gray-300 rounded-2xl bg-gray-50/60 shadow-2xs">
                 <div className="text-xs font-black text-gray-700">{t.mgrSig}</div>
@@ -4688,7 +4785,7 @@ export default function AnnualEvaluationDashboard({
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-black text-sm text-gray-900 dark:text-white">
-                            {toTitleCase(item.name)}
+                            {getLocalizedMemberName(item.member || item, isAr)}
                           </span>
                           {item.knownId && (
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
@@ -4704,7 +4801,7 @@ export default function AnnualEvaluationDashboard({
                           </span>
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">{item.department || "Contact Center"}</span>
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">{getLocalizedDeptName(item.department || item.member?.department || "Contact Center", isAr)}</span>
                           <span>•</span>
                           <span>{item.team}</span>
                         </div>

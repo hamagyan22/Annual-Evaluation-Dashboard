@@ -27,12 +27,17 @@ export interface DynamicSection {
 export interface DynamicDepartment {
   id: string;
   name: string;
+  nameEn?: string;
   nameAr?: string;
   description?: string;
   color?: string;
   direct_manager?: string;
+  direct_manager_en?: string;
+  direct_manager_ar?: string;
   manager_email?: string;
   department_chief?: string;
+  department_chief_en?: string;
+  department_chief_ar?: string;
   chief_email?: string;
   icon?: string;
 }
@@ -40,13 +45,23 @@ export interface DynamicDepartment {
 export interface DynamicEmployee {
   id: string;
   name: string;
+  nameEn?: string;
+  nameAr?: string;
   employee_id: string;
   department: string;
+  departmentEn?: string;
+  departmentAr?: string;
   role: string;
+  roleEn?: string;
+  roleAr?: string;
   team?: string;
   direct_manager?: string;
+  direct_manager_en?: string;
+  direct_manager_ar?: string;
   manager_email?: string;
   department_chief?: string;
+  department_chief_en?: string;
+  department_chief_ar?: string;
   chief_email?: string;
   custom_position?: string;
   email?: string;
