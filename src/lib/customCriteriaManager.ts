@@ -50,7 +50,7 @@ export interface DynamicEmployee {
   chief_email?: string;
   custom_position?: string;
   email?: string;
-  role_type?: "trainer" | "qa" | "tl" | "backoffice" | "agent" | "custom";
+  role_type?: "trainer" | "qa" | "tl" | "backoffice" | "agent" | "manager" | "custom";
 }
 
 // Default Sections
@@ -71,14 +71,16 @@ export const DEFAULT_SECTIONS: DynamicSection[] = [
   }
 ];
 
+import { INITIAL_DEPARTMENTS, INITIAL_EMPLOYEES } from "./initialBankRoster";
+
 // Default Criteria (Starts completely clean - ready for custom additions)
 export const DEFAULT_CRITERIA: DynamicCriterion[] = [];
 
-// Default Departments (Starts completely clean - ready for custom additions)
-export const DEFAULT_DEPARTMENTS: DynamicDepartment[] = [];
+// Default Departments (Official Bank Structure - 26 Departments)
+export const DEFAULT_DEPARTMENTS: DynamicDepartment[] = INITIAL_DEPARTMENTS;
 
-// Default Initial Employees (Starts completely clean - ready for custom additions)
-export const DEFAULT_EMPLOYEES: DynamicEmployee[] = [];
+// Default Initial Employees (Official Bank Roster - 552 Employees)
+export const DEFAULT_EMPLOYEES: DynamicEmployee[] = INITIAL_EMPLOYEES;
 
 // LocalStorage Keys
 const STORAGE_CRITERIA_KEY = "fib_annual_eval_criteria_v2";
@@ -219,18 +221,23 @@ export function saveStoredSections(sections: DynamicSection[]): void {
 }
 
 export function loadStoredDepartments(): DynamicDepartment[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined") return DEFAULT_DEPARTMENTS;
   const deletedSet = new Set(loadStoredDeletedDepartments());
   try {
     const raw = localStorage.getItem(STORAGE_DEPARTMENTS_KEY);
-    if (!raw) return [];
+    if (!raw) {
+      if (DEFAULT_DEPARTMENTS.length > 0) {
+        localStorage.setItem(STORAGE_DEPARTMENTS_KEY, JSON.stringify(DEFAULT_DEPARTMENTS));
+      }
+      return DEFAULT_DEPARTMENTS;
+    }
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
+    if (Array.isArray(parsed) && parsed.length > 0) {
       return parsed.filter(d => !deletedSet.has(d.id) && !deletedSet.has(d.name));
     }
-    return [];
+    return DEFAULT_DEPARTMENTS;
   } catch (e) {
-    return [];
+    return DEFAULT_DEPARTMENTS;
   }
 }
 
@@ -244,21 +251,26 @@ export function saveStoredDepartments(depts: DynamicDepartment[]): void {
 }
 
 export function loadStoredEmployees(): DynamicEmployee[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined") return DEFAULT_EMPLOYEES;
   const deletedSet = new Set(loadStoredDeletedEmployees().map(s => s.toLowerCase().trim()));
   try {
     const raw = localStorage.getItem(STORAGE_EMPLOYEES_KEY);
-    if (!raw) return [];
+    if (!raw) {
+      if (DEFAULT_EMPLOYEES.length > 0) {
+        localStorage.setItem(STORAGE_EMPLOYEES_KEY, JSON.stringify(DEFAULT_EMPLOYEES));
+      }
+      return DEFAULT_EMPLOYEES;
+    }
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
+    if (Array.isArray(parsed) && parsed.length > 0) {
       return parsed.filter(e => 
         !deletedSet.has(e.id.toLowerCase().trim()) && 
         !deletedSet.has(e.name.toLowerCase().trim())
       );
     }
-    return [];
+    return DEFAULT_EMPLOYEES;
   } catch (e) {
-    return [];
+    return DEFAULT_EMPLOYEES;
   }
 }
 

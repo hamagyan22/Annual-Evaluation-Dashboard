@@ -34,6 +34,8 @@ import {
   loadStoredDeletedDepartments, saveStoredDeletedDepartments,
   loadStoredDeletedCriteria, saveStoredDeletedCriteria,
   DEFAULT_SECTIONS,
+  DEFAULT_DEPARTMENTS,
+  DEFAULT_EMPLOYEES,
   DynamicCriterion, DynamicSection, DynamicDepartment, DynamicEmployee
 } from "@/lib/customCriteriaManager";
 import { getDepartmentIcon } from "@/lib/bankDepartmentIcons";
@@ -684,13 +686,20 @@ export default function AnnualEvaluationDashboard({
         }
 
         // Clean-slate document verified: load custom user data
-        if (Array.isArray(data.departments)) {
+        if (Array.isArray(data.departments) && data.departments.length > 0) {
           setDynamicDepartments(data.departments);
           saveStoredDepartments(data.departments);
+        } else if (!data.departments || data.departments.length === 0) {
+          setDynamicDepartments(DEFAULT_DEPARTMENTS);
+          saveStoredDepartments(DEFAULT_DEPARTMENTS);
         }
-        if (Array.isArray(data.employees)) {
+
+        if (Array.isArray(data.employees) && data.employees.length > 0) {
           setDynamicEmployees(data.employees);
           saveStoredEmployees(data.employees);
+        } else if (!data.employees || data.employees.length === 0) {
+          setDynamicEmployees(DEFAULT_EMPLOYEES);
+          saveStoredEmployees(DEFAULT_EMPLOYEES);
         }
         if (Array.isArray(data.criteria)) {
           setDynamicCriteria(data.criteria);
@@ -1104,7 +1113,7 @@ export default function AnnualEvaluationDashboard({
   }, [currentUserNameNorm, selectedEmployeeName, emailLower, roleLower]);
 
   // Current member role type
-  const currentMemberRoleType: "trainer" | "qa" | "tl" | "backoffice" | "agent" | "custom" = useMemo(() => {
+  const currentMemberRoleType: "trainer" | "qa" | "tl" | "backoffice" | "agent" | "manager" | "custom" = useMemo(() => {
     const norm = normalizeAgentName(selectedEmployeeName || "");
     const special = SPECIAL_STAFF_MEMBERS.find(s => normalizeAgentName(s.agent_name) === norm);
     if (special) return special.role_type;
